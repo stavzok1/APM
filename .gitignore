@@ -50,6 +50,10 @@ analysis/**/run_20*/
 # --- Jupyter ---
 .ipynb_checkpoints/
 
+# --- Editor swap files ---
+*.swp
+*.swo
+
 # --- OS / Office noise ---
 .DS_Store
 Thumbs.db
