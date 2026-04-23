@@ -1,0 +1,241 @@
+
+## Human Gene Links Files Header details
+### 3D Chromatin
+### CRISPR
+### eQTL
+A549
+A673
+AG04449
+AG04450
+Adipose Subcutaneous
+Adipose Visceral Omentum
+Adrenal Gland
+Artery Aorta
+Artery Coronary
+Artery Tibial
+BJ
+B_cell_male_adult_(22_years)
+Brain Amygdala
+Brain Anterior cingulate cortex BA24
+Brain Caudate basal ganglia
+Brain Cerebellar Hemisphere
+Brain Cerebellum
+Brain Cortex
+Brain Frontal Cortex BA9
+Brain Hippocampus
+Brain Hypothalamus
+Brain Nucleus accumbens basal ganglia
+Brain Putamen basal ganglia
+Brain Spinal cord cervical c-1
+Brain Substantia nigra
+Breast Mammary Tissue
+CD14-positive_monocyte_male_adult_(30_years)
+CD14-positive_monocyte_male_adult_(51_years)
+CD4-positive,_alpha-beta_T_cell_male_adult_(20_years)
+CD4-positive,_alpha-beta_memory_T_cell_male_adult_(43_years)
+CD8-positive,_alpha-beta_T_cell_male_adult_(21_years)
+Caco-2
+Calu3
+Cells Cultured fibroblasts
+Cells EBV-transformed lymphocytes
+Colon Sigmoid
+Colon Transverse
+ENCSR006WCB
+ENCSR020TLT
+ENCSR108MPF
+ENCSR114BIZ
+ENCSR116BPW
+ENCSR138CXY
+ENCSR144TTP
+ENCSR176XPW
+ENCSR194SMN
+ENCSR245ZZP
+ENCSR273LJW
+ENCSR324QDY
+ENCSR380BWA
+ENCSR416EUJ
+ENCSR525DAZ
+ENCSR532VIG
+ENCSR617XYY
+ENCSR661PUY
+ENCSR752CCF
+ENCSR760TSA
+ENCSR810OLG
+ENCSR884HBT
+ENCSR884XXE
+ENCSR905FEH
+ENCSR905MSH
+Esophagus Gastroesophageal Junction
+Esophagus Mucosa
+Esophagus Muscularis
+GM10248
+GM12878
+H1
+HCT116
+HCT116_genetically_modified_(insertion)_using_CRISPR_inserting_O._sativa_LOC4335696,_(insertion)_using_CRISPR_targeting_H._sapiens_BRD4
+HCT116_genetically_modified_(insertion)_using_CRISPR_inserting_O._sativa_LOC4335696,_(insertion)_using_CRISPR_targeting_H._sapiens_BRD4_treated_with_1_μM_5-Phenyl-1H-indole-3-acetic_acid_for_6_hours
+HCT116_genetically_modified_(insertion)_using_CRISPR_inserting_O._sativa_LOC4335696,_(insertion)_using_CRISPR_targeting_H._sapiens_CDK7
+HCT116_genetically_modified_(insertion)_using_CRISPR_inserting_O._sativa_LOC4335696,_(insertion)_using_CRISPR_targeting_H._sapiens_CDK7_treated_with_1_μM_5-Phenyl-1H-indole-3-acetic_acid_for_6_hours
+HCT116_genetically_modified_(insertion)_using_CRISPR_inserting_O._sativa_LOC4335696,_(insertion)_using_CRISPR_targeting_H._sapiens_CTCF
+HCT116_genetically_modified_(insertion)_using_CRISPR_inserting_O._sativa_LOC4335696,_(insertion)_using_CRISPR_targeting_H._sapiens_CTCF_treated_with_1_μM_5-Phenyl-1H-indole-3-acetic_acid_for_6_hours
+HCT116_genetically_modified_(insertion)_using_CRISPR_inserting_O._sativa_LOC4335696,_(insertion)_using_CRISPR_targeting_H._sapiens_MED14
+HCT116_genetically_modified_(insertion)_using_CRISPR_inserting_O._sativa_LOC4335696,_(insertion)_using_CRISPR_targeting_H._sapiens_MED14_treated_with_1_μM_5-Phenyl-1H-indole-3-acetic_acid_for_6_hours
+HCT116_genetically_modified_(insertion)_using_CRISPR_inserting_O._sativa_LOC4335696,_(insertion)_using_CRISPR_targeting_H._sapiens_POLR2A
+HCT116_genetically_modified_(insertion)_using_CRISPR_inserting_O._sativa_LOC4335696,_(insertion)_using_CRISPR_targeting_H._sapiens_POLR2A_treated_with_1_μM_5-Phenyl-1H-indole-3-acetic_acid_for_6_hours
+HCT116_genetically_modified_(insertion)_using_CRISPR_inserting_O._sativa_LOC4335696,_(insertion)_using_CRISPR_targeting_H._sapiens_RAD21
+HCT116_genetically_modified_(insertion)_using_CRISPR_inserting_O._sativa_LOC4335696,_(insertion)_using_CRISPR_targeting_H._sapiens_RAD21_treated_with_1_μM_5-Phenyl-1H-indole-3-acetic_acid_for_6_hours
+HCT116_genetically_modified_(insertion)_using_CRISPR_inserting_O._sativa_LOC4335696,_(insertion)_using_CRISPR_targeting_H._sapiens_SMARCA5
+HCT116_genetically_modified_(insertion)_using_CRISPR_inserting_O._sativa_LOC4335696,_(insertion)_using_CRISPR_targeting_H._sapiens_SMARCA5_treated_with_1_μM_5-Phenyl-1H-indole-3-acetic_acid_for_6_hours
+HCT116_genetically_modified_(insertion)_using_CRISPR_inserting_O._sativa_LOC4335696,_(insertion)_using_CRISPR_targeting_H._sapiens_SUPT16H
+HCT116_genetically_modified_(insertion)_using_CRISPR_inserting_O._sativa_LOC4335696,_(insertion)_using_CRISPR_targeting_H._sapiens_SUPT16H_treated_with_1_μM_5-Phenyl-1H-indole-3-acetic_acid_for_6_hours
+HEK293
+HEK293T
+Heart Atrial Appendage
+Heart Left Ventricle
+HepG2
+IMR-90
+K562
+Kidney Cortex
+Liver
+Lung
+MCF-7
+MCF_10A
+Minor Salivary Gland
+Muscle Skeletal
+Nerve Tibial
+OCI-LY7
+Ovary
+PC-3
+PC-9
+Panc1
+Pancreas
+Pituitary
+Prostate
+RWPE1
+Right_ventricle_myocardium_inferior_tissue_male_adult_(60_years)
+Right_ventricle_myocardium_superior_tissue_male_adult_(60_years)
+SK-N-SH
+Skin Not Sun Exposed Suprapubic
+Skin Sun Exposed Lower leg
+Small Intestine Terminal Ileum
+Spleen
+Stomach
+T-cell_male_adult_(35_years)
+T-helper_2_cell_male_adult_(35_years)_treated_with_100_ng/mL_Interleukin-4_for_36_hours,_5_μg/mL_Interferon-gamma_antibody_for_36_hours
+Testis
+Thyroid
+Uterus
+Vagina
+WTC11
+WTC11_genetically_modified_(insertion)_using_CRISPR
+Whole Blood
+activated_CD4-positive,_alpha-beta_T_cell_male_adult_(20_years)_treated_with_anti-CD3_and_anti-CD28_coated_beads
+activated_CD4-positive,_alpha-beta_T_cell_male_adult_(20_years)_treated_with_anti-CD3_and_anti-CD28_coated_beads_for_36_hours
+activated_CD4-positive,_alpha-beta_T_cell_male_adult_(35_years)_treated_with_10_ng/mL_Interleukin-2_for_14_days,_anti-CD3_and_anti-CD28_coated_beads_for_24_hours,_anti-CD3_and_anti-CD28_coated_beads_for_14_days
+activated_CD4-positive,_alpha-beta_memory_T_cell_male_adult_(43_years)_treated_with_anti-CD3_and_anti-CD28_coated_beads
+activated_CD4-positive,_alpha-beta_memory_T_cell_male_adult_(43_years)_treated_with_anti-CD3_and_anti-CD28_coated_beads_for_36_hours
+activated_CD8-positive,_alpha-beta_T_cell_male_adult_(21_years)_treated_with_anti-CD3_and_anti-CD28_coated_beads_for_36_hours
+activated_T-cell_male_adult_(35_years)_treated_with_50_U/mL_Interleukin-2_for_72_hours,_anti-CD3_and_anti-CD28_coated_beads_for_72_hours
+activated_T-cell_male_adult_(43_years)_treated_with_50_U/mL_Interleukin-2_for_72_hours,_anti-CD3_and_anti-CD28_coated_beads_for_72_hours
+activated_T-helper_2_cell_male_adult_(35_years)_treated_with_5_μg/mL_Interferon-gamma_antibody_for_36_hours,_anti-CD3_and_anti-CD28_coated_beads_for_24_hours,_10_ng/mL_Interleukin-2_for_14_days,_anti-CD3_and_anti-CD28_coated_beads_for_14_days,_100_ng/mL_Interleukin-4_for_36_hours
+activated_naive_CD4-positive,_alpha-beta_T_cell_male_adult_(43_years)_treated_with_anti-CD3_and_anti-CD28_coated_beads
+activated_naive_CD4-positive,_alpha-beta_T_cell_male_adult_(43_years)_treated_with_anti-CD3_and_anti-CD28_coated_beads_for_36_hours
+adrenal_gland_tissue_female_adult_(41_years)
+adrenal_gland_tissue_male_adult_(54_years)
+aorta_tissue_female_adult_(41_years)
+aorta_tissue_female_adult_(59_years)
+ascending_aorta_tissue_female_adult_(53_years)
+body_of_pancreas_tissue_female_adult_(53_years)
+breast_epithelium_tissue_female_adult_(53_years)
+cardiac_septum_tissue_female_adult_(41_years)
+colonic_mucosa_tissue_female_adult_(41_years)
+common_myeloid_progenitor,_CD34-positive
+dendritic_cell_male_adult_(51_years)_treated_with_50_ng/mL_granulocyte-macrophage_colony-stimulating_factor_for_4_days,_40_ng/mL_Interleukin-4_for_4_days
+dorsolateral_prefrontal_cortex_tissue_male_adult_(78_years)
+endothelial_cell_of_umbilical_vein_male_newborn
+endothelial_cell_of_umbilical_vein_newborn
+esophagus_muscularis_mucosa_tissue_female_adult_(53_years)
+esophagus_squamous_epithelium_tissue_female_adult_(53_years)
+gastrocnemius_medialis_tissue_female_adult_(53_years)
+head_of_caudate_nucleus_tissue_female_adult_(89_years)
+heart_left_ventricle_tissue_female_adult_(46_years)
+heart_left_ventricle_tissue_female_adult_(59_years)
+heart_left_ventricle_tissue_male_adult_(40_years)
+heart_left_ventricle_tissue_male_adult_(43_years)
+heart_left_ventricle_tissue_male_adult_(54_years)
+heart_left_ventricle_tissue_male_adult_(55_years)
+heart_left_ventricle_tissue_male_adult_(61_years)
+heart_left_ventricle_tissue_male_adult_(66_years)
+heart_left_ventricle_tissue_male_adult_(69_years)
+heart_left_ventricle_tissue_male_adult_(73_years)
+heart_right_ventricle_tissue_female_adult_(46_years)
+heart_right_ventricle_tissue_female_adult_(56_years)
+heart_right_ventricle_tissue_female_adult_(59_years)
+heart_right_ventricle_tissue_male_adult_(40_years)
+heart_right_ventricle_tissue_male_adult_(43_years)
+heart_right_ventricle_tissue_male_adult_(55_years)
+heart_right_ventricle_tissue_male_adult_(61_years)
+heart_right_ventricle_tissue_male_adult_(66_years)
+heart_right_ventricle_tissue_male_adult_(69_years)
+heart_right_ventricle_tissue_male_adult_(73_years)
+kidney_tissue_female_adult_(47_years)
+left_cardiac_atrium_tissue_female_adult_(59_years)
+left_cardiac_atrium_tissue_male_adult_(60_years)
+left_colon_tissue_female_adult_(46_years)
+left_colon_tissue_female_adult_(59_years)
+left_lung_tissue_female_child_(16_years)
+left_lung_tissue_male_adult_(40_years)
+left_ventricle_myocardium_inferior_tissue_male_adult_(60_years)
+left_ventricle_myocardium_superior_tissue_male_adult_(60_years)
+lower_leg_skin_tissue_female_adult_(53_years)
+lower_lobe_of_left_lung_tissue_female_adult_(59_years)
+lower_lobe_of_left_lung_tissue_male_adult_(60_years)
+lower_lobe_of_right_lung_tissue_male_adult_(60_years)
+mammary_epithelial_cell_female_adult_(19_years)
+mucosa_of_descending_colon_tissue_female_adult_(61_years)
+mucosa_of_descending_colon_tissue_male_adult_(40_years)
+naive_thymus-derived_CD4-positive,_alpha-beta_T_cell_male_adult_(35_years)
+naive_thymus-derived_CD4-positive,_alpha-beta_T_cell_male_adult_(43_years)
+natural_killer_cell_male_adult_(33_years)
+ovary_tissue_female_adult_(41_years)
+ovary_tissue_female_adult_(53_years)
+ovary_tissue_female_adult_(59_years)
+ovary_tissue_female_adult_(61_years)
+pancreas_tissue_female_adult_(59_years)
+pancreas_tissue_female_adult_(61_years)
+pancreas_tissue_female_child_(16_years)
+placenta_tissue_female_embryo
+posterior_cingulate_gyrus_tissue_female_adult_(89_years)
+posterior_vena_cava_tissue_female_adult_(59_years)
+prostate_gland_tissue_male_adult_(54_years)
+psoas_muscle_tissue_female_adult_(41_years)
+psoas_muscle_tissue_female_adult_(61_years)
+right_cardiac_atrium_tissue_female_adult_(46_years)
+right_cardiac_atrium_tissue_female_adult_(59_years)
+right_cardiac_atrium_tissue_male_adult_(40_years)
+right_cardiac_atrium_tissue_male_adult_(60_years)
+right_lobe_of_liver_tissue_female_adult_(41_years)
+right_lobe_of_liver_tissue_female_adult_(47_years)
+sciatic_nerve_tissue_female_adult_(41_years)
+sigmoid_colon_tissue_female_adult_(53_years)
+spleen_tissue_female_adult_(61_years)
+stimulated_activated_CD4-positive,_alpha-beta_T_cell_male_adult_(20_years)_treated_with_10_ng/mL_Interleukin-2,_anti-CD3_and_anti-CD28_coated_beads
+stimulated_activated_CD4-positive,_alpha-beta_memory_T_cell_male_adult_(43_years)_treated_with_10_ng/mL_Interleukin-2,_anti-CD3_and_anti-CD28_coated_beads
+stimulated_activated_naive_CD4-positive,_alpha-beta_T_cell_male_adult_(43_years)_treated_with_10_ng/mL_Interleukin-2,_anti-CD3_and_anti-CD28_coated_beads
+stomach_tissue_female_adult_(53_years)
+testis_tissue_male_adult_(54_years)
+thyroid_gland_tissue_female_adult_(53_years)
+tibial_artery_tissue_female_adult_(53_years)
+transverse_colon_tissue_female_adult_(53_years)
+upper_lobe_of_right_lung_tissue_male_adult_(60_years)
+uterus_tissue_female_adult_(53_years)
+vagina_tissue_female_adult_(53_years)
+| cCRE ID | Gene ID | Common Gene Name | Gene Type | Assay Type | Experiment ID | Biosample | Score | P-value |
+| cCRE ID | Gene ID | Common Gene Name | Gene Type | Variant ID | Source | Tissue | Slope | P-value |
+| cCRE ID | Gene ID | Common Gene Name | Gene Type | gRNA ID | Assay Type | Experiment ID | Biosample | Effect size | P-value |
+| | | | | | | | | |
+| | | | | | | | | |
+| | | | | | | | | | |
+|---------|---------|-----------------|-----------|------------|---------------|-----------|--------|----------|
+|---------|---------|-----------------|-----------|------------|--------|---------|--------|----------|
+|---------|---------|-----------------|-----------|---------|------------|---------------|-----------|-------------|----------|

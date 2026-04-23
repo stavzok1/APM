@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>gene_links Schema Structure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .node { transition: all 0.2s ease; }
+        .node:hover { background-color: #f8fafc; }
+        .collapsed > .children { display: none; }
+        .arrow { transition: transform 0.2s ease; }
+        .collapsed .arrow { transform: rotate(-90deg); }
+    </style>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">gene_links Schema Structure</h1>
+        <p class="text-gray-600 mb-4">
+            Nested data structure for enhancer-gene regulatory links from ENCODE SCREEN and ABC model
+        </p>
+        
+        <!-- Legend -->
+        <div class="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg mb-6">
+            <div class="text-sm font-semibold text-gray-600">Legend:</div>
+            <div class="flex items-center gap-1">
+                <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-blue-500">{ }</span>
+                <span class="text-sm text-gray-600">Dictionary</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-purple-500">[ ]</span>
+                <span class="text-sm text-gray-600">List</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-emerald-500">str</span>
+                <span class="text-sm text-gray-600">String</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-amber-500">#</span>
+                <span class="text-sm text-gray-600">Number</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-red-500">T/F</span>
+                <span class="text-sm text-gray-600">Boolean</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <span class="text-gray-500 italic text-sm">&lt;name&gt;</span>
+                <span class="text-sm text-gray-600">= dynamic key</span>
+            </div>
+        </div>
+        
+        <!-- Schema Tree -->
+        <div class="border rounded-xl p-4 bg-white" id="schema-tree">
+            <!-- Root -->
+            <div class="node" data-depth="0">
+                <div class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:shadow-md bg-slate-100" onclick="toggleNode(this)">
+                    <span class="arrow text-gray-400 w-4 text-center font-mono">▼</span>
+                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-blue-500">{ }</span>
+                    <span class="font-bold text-gray-800">gene_links</span>
+                    <span class="text-xs text-gray-400 ml-2">root element table</span>
+                </div>
+                <div class="children ml-6 border-l-2 border-gray-200">
+                    
+                    <!-- Gene Name Key -->
+                    <div class="node" data-depth="1">
+                        <div class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:shadow-md border-l-4 border-blue-500 ml-2 mt-1 bg-blue-50" onclick="toggleNode(this)">
+                            <span class="arrow text-gray-400 w-4 text-center font-mono">▼</span>
+                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-blue-500">{ }</span>
+                            <span class="font-medium text-gray-500 italic">&lt;gene_name&gt;</span>
+                            <span class="text-xs text-gray-400 ml-1">(e.g., "TAP1", "HLA-A")</span>
+                        </div>
+                        <div class="children ml-6 border-l-2 border-gray-200">
+                            
+                            <!-- Gene metadata -->
+                            <div class="node ml-2 mt-1">
+                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-emerald-500 bg-emerald-50">
+                                    <span class="w-4"></span>
+                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-emerald-500">str</span>
+                                    <span class="font-medium text-gray-800">gene_id</span>
+                                    <span class="text-xs text-gray-400">"ENSG00000168394"</span>
+                                </div>
+                            </div>
+                            <div class="node ml-2 mt-1">
+                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-emerald-500 bg-emerald-50">
+                                    <span class="w-4"></span>
+                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-emerald-500">str</span>
+                                    <span class="font-medium text-gray-800">gene_type</span>
+                                    <span class="text-xs text-gray-400">"protein_coding"</span>
+                                </div>
+                            </div>
+                            <div class="node ml-2 mt-1">
+                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-emerald-500 bg-emerald-50">
+                                    <span class="w-4"></span>
+                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-emerald-500">str</span>
+                                    <span class="font-medium text-gray-800">region</span>
+                                    <span class="text-xs text-gray-400">"proximal" | "distal"</span>
+                                </div>
+                            </div>
+                            
+                            <!-- screen_exp -->
+                            <div class="node ml-2 mt-2" data-depth="2">
+                                <div class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:shadow-md border-l-4 border-blue-500 bg-blue-50" onclick="toggleNode(this)">
+                                    <span class="arrow text-gray-400 w-4 text-center font-mono">▼</span>
+                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-blue-500">{ }</span>
+                                    <span class="font-semibold text-blue-800">screen_exp</span>
+                                    <span class="text-xs text-blue-600 ml-1">ENCODE SCREEN 3D-Chromatin</span>
+                                </div>
+                                <div class="children ml-6 border-l-2 border-blue-200">
+                                    
+                                    <!-- per_biosample -->
+                                    <div class="node ml-2 mt-1" data-depth="3">
+                                        <div class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:shadow-md border-l-4 border-blue-400" onclick="toggleNode(this)">
+                                            <span class="arrow text-gray-400 w-4 text-center font-mono">▼</span>
+                                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-blue-500">{ }</span>
+                                            <span class="font-medium text-gray-800">per_biosample</span>
+                                        </div>
+                                        <div class="children ml-6 border-l-2 border-gray-200">
+                                            <div class="node ml-2 mt-1" data-depth="4">
+                                                <div class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:shadow-md border-l-4 border-blue-300" onclick="toggleNode(this)">
+                                                    <span class="arrow text-gray-400 w-4 text-center font-mono">▼</span>
+                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-blue-500">{ }</span>
+                                                    <span class="font-medium text-gray-500 italic">&lt;biosample_name&gt;</span>
+                                                    <span class="text-xs text-gray-400">(e.g., "MCF-7")</span>
+                                                </div>
+                                                <div class="children ml-6 border-l-2 border-gray-200">
+                                                    <div class="node ml-2 mt-1" data-depth="5">
+                                                        <div class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:shadow-md border-l-4 border-blue-200" onclick="toggleNode(this)">
+                                                            <span class="arrow text-gray-400 w-4 text-center font-mono">▼</span>
+                                                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-blue-500">{ }</span>
+                                                            <span class="font-medium text-gray-500 italic">&lt;assay_type&gt;</span>
+                                                            <span class="text-xs text-gray-400">(e.g., "ChIA-PET")</span>
+                                                        </div>
+                                                        <div class="children ml-6 border-l-2 border-gray-200">
+                                                            <div class="node ml-2 mt-1">
+                                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-amber-500">
+                                                                    <span class="w-4"></span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-amber-500">#</span>
+                                                                    <span class="font-medium text-gray-800">score</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="node ml-2 mt-1">
+                                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-amber-500">
+                                                                    <span class="w-4"></span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-amber-500">#</span>
+                                                                    <span class="font-medium text-gray-800">p_value</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="node ml-2 mt-1">
+                                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-emerald-500">
+                                                                    <span class="w-4"></span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-emerald-500">str</span>
+                                                                    <span class="font-medium text-gray-800">strength</span>
+                                                                    <span class="text-xs text-gray-400">"strong" | "weak" | "none"</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- conservation_global -->
+                                    <div class="node ml-2 mt-1" data-depth="3">
+                                        <div class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:shadow-md border-l-4 border-blue-400" onclick="toggleNode(this)">
+                                            <span class="arrow text-gray-400 w-4 text-center font-mono">▼</span>
+                                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-blue-500">{ }</span>
+                                            <span class="font-medium text-gray-800">conservation_global</span>
+                                        </div>
+                                        <div class="children ml-6 border-l-2 border-gray-200">
+                                            <div class="node ml-2 mt-1" data-depth="4">
+                                                <div class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:shadow-md border-l-4 border-blue-300" onclick="toggleNode(this)">
+                                                    <span class="arrow text-gray-400 w-4 text-center font-mono">▼</span>
+                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-blue-500">{ }</span>
+                                                    <span class="font-medium text-gray-500 italic">&lt;assay_type&gt;</span>
+                                                </div>
+                                                <div class="children ml-6 border-l-2 border-gray-200">
+                                                    <div class="node ml-2 mt-1">
+                                                        <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-amber-500">
+                                                            <span class="w-4"></span>
+                                                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-amber-500">#</span>
+                                                            <span class="font-medium text-gray-800">n_biosamples</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="node ml-2 mt-1">
+                                                        <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-amber-500">
+                                                            <span class="w-4"></span>
+                                                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-amber-500">#</span>
+                                                            <span class="font-medium text-gray-800">n_strong</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="node ml-2 mt-1">
+                                                        <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-amber-500">
+                                                            <span class="w-4"></span>
+                                                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-amber-500">#</span>
+                                                            <span class="font-medium text-gray-800">n_weak</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- conservation_breast -->
+                                    <div class="node ml-2 mt-1" data-depth="3">
+                                        <div class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:shadow-md border-l-4 border-blue-400" onclick="toggleNode(this)">
+                                            <span class="arrow text-gray-400 w-4 text-center font-mono">▶</span>
+                                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-blue-500">{ }</span>
+                                            <span class="font-medium text-gray-800">conservation_breast</span>
+                                            <span class="text-xs text-gray-400">(same as conservation_global)</span>
+                                        </div>
+                                        <div class="children ml-6 border-l-2 border-gray-200 hidden"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- screen_comp -->
+                            <div class="node ml-2 mt-2" data-depth="2">
+                                <div class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:shadow-md border-l-4 border-green-500 bg-green-50" onclick="toggleNode(this)">
+                                    <span class="arrow text-gray-400 w-4 text-center font-mono">▶</span>
+                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-blue-500">{ }</span>
+                                    <span class="font-semibold text-green-800">screen_comp</span>
+                                    <span class="text-xs text-green-600 ml-1">ENCODE SCREEN Computational</span>
+                                    <span class="text-xs text-gray-400">(same structure as screen_exp)</span>
+                                </div>
+                                <div class="children ml-6 border-l-2 border-green-200 hidden"></div>
+                            </div>
+                            
+                            <!-- ABC_enhancers -->
+                            <div class="node ml-2 mt-2" data-depth="2">
+                                <div class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:shadow-md border-l-4 border-purple-500 bg-purple-50" onclick="toggleNode(this)">
+                                    <span class="arrow text-gray-400 w-4 text-center font-mono">▼</span>
+                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-purple-500">[ ]</span>
+                                    <span class="font-semibold text-purple-800">ABC_enhancers</span>
+                                    <span class="text-xs text-purple-600 ml-1">ABC Model Predictions</span>
+                                </div>
+                                <div class="children ml-6 border-l-2 border-purple-200">
+                                    <div class="node ml-2 mt-1" data-depth="3">
+                                        <div class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:shadow-md border-l-4 border-purple-400" onclick="toggleNode(this)">
+                                            <span class="arrow text-gray-400 w-4 text-center font-mono">▼</span>
+                                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-blue-500">{ }</span>
+                                            <span class="font-medium text-gray-500 italic">&lt;enhancer&gt;</span>
+                                            <span class="text-xs text-gray-400">(list item)</span>
+                                        </div>
+                                        <div class="children ml-6 border-l-2 border-gray-200">
+                                            <div class="node ml-2 mt-1">
+                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-amber-500">
+                                                    <span class="w-4"></span>
+                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-amber-500">#</span>
+                                                    <span class="font-medium text-gray-800">start</span>
+                                                    <span class="text-xs text-gray-400">genomic coordinate</span>
+                                                </div>
+                                            </div>
+                                            <div class="node ml-2 mt-1">
+                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-amber-500">
+                                                    <span class="w-4"></span>
+                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-amber-500">#</span>
+                                                    <span class="font-medium text-gray-800">end</span>
+                                                    <span class="text-xs text-gray-400">genomic coordinate</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- ABC_full -->
+                                            <div class="node ml-2 mt-1" data-depth="4">
+                                                <div class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:shadow-md border-l-4 border-purple-300" onclick="toggleNode(this)">
+                                                    <span class="arrow text-gray-400 w-4 text-center font-mono">▼</span>
+                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-blue-500">{ }</span>
+                                                    <span class="font-medium text-gray-800">ABC_full</span>
+                                                </div>
+                                                <div class="children ml-6 border-l-2 border-gray-200">
+                                                    <div class="node ml-2 mt-1" data-depth="5">
+                                                        <div class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:shadow-md border-l-4 border-purple-200" onclick="toggleNode(this)">
+                                                            <span class="arrow text-gray-400 w-4 text-center font-mono">▼</span>
+                                                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-blue-500">{ }</span>
+                                                            <span class="font-medium text-gray-500 italic">&lt;celltype&gt;</span>
+                                                            <span class="text-xs text-gray-400">(e.g., "MCF-7-ENCODE")</span>
+                                                        </div>
+                                                        <div class="children ml-6 border-l-2 border-gray-200">
+                                                            <div class="node ml-2 mt-1">
+                                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-amber-500">
+                                                                    <span class="w-4"></span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-amber-500">#</span>
+                                                                    <span class="font-medium text-gray-800">ABC_score</span>
+                                                                    <span class="text-xs text-gray-400">0.0 - 1.0</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="node ml-2 mt-1">
+                                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-amber-500">
+                                                                    <span class="w-4"></span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-amber-500">#</span>
+                                                                    <span class="font-medium text-gray-800">ABC_num</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="node ml-2 mt-1">
+                                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-amber-500">
+                                                                    <span class="w-4"></span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-amber-500">#</span>
+                                                                    <span class="font-medium text-gray-800">activity</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="node ml-2 mt-1">
+                                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-amber-500">
+                                                                    <span class="w-4"></span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-amber-500">#</span>
+                                                                    <span class="font-medium text-gray-800">distance</span>
+                                                                    <span class="text-xs text-gray-400">bp to TSS</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="node ml-2 mt-1">
+                                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-emerald-500">
+                                                                    <span class="w-4"></span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-emerald-500">str</span>
+                                                                    <span class="font-medium text-gray-800">element_class</span>
+                                                                    <span class="text-xs text-gray-400">"enhancer" | "promoter"</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="node ml-2 mt-1">
+                                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-red-500">
+                                                                    <span class="w-4"></span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-red-500">T/F</span>
+                                                                    <span class="font-medium text-gray-800">is_self_promoter</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="node ml-2 mt-1">
+                                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-amber-500">
+                                                                    <span class="w-4"></span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-amber-500">#</span>
+                                                                    <span class="font-medium text-gray-800">hic_pl_scaled</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="node ml-2 mt-1">
+                                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-amber-500">
+                                                                    <span class="w-4"></span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-amber-500">#</span>
+                                                                    <span class="font-medium text-gray-800">powerlaw_score</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="node ml-2 mt-1">
+                                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-amber-500">
+                                                                    <span class="w-4"></span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-amber-500">#</span>
+                                                                    <span class="font-medium text-gray-800">gene_expr</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="node ml-2 mt-1">
+                                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-amber-500">
+                                                                    <span class="w-4"></span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-amber-500">#</span>
+                                                                    <span class="font-medium text-gray-800">promoter_activity_q</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="node ml-2 mt-1">
+                                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-red-500">
+                                                                    <span class="w-4"></span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-red-500">T/F</span>
+                                                                    <span class="font-medium text-gray-800">gene_is_expressed</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="node ml-2 mt-1">
+                                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-amber-500">
+                                                                    <span class="w-4"></span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-amber-500">#</span>
+                                                                    <span class="font-medium text-gray-800">rank_within_gene</span>
+                                                                    <span class="text-xs text-gray-400">0.0 - 1.0</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="node ml-2 mt-1">
+                                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-red-500">
+                                                                    <span class="w-4"></span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-red-500">T/F</span>
+                                                                    <span class="font-medium text-gray-800">is_present</span>
+                                                                    <span class="text-xs text-gray-400">ABC ≥ 0.015</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="node ml-2 mt-1">
+                                                                <div class="flex items-center gap-2 p-2 rounded-lg border-l-4 border-red-500">
+                                                                    <span class="w-4"></span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold text-white bg-red-500">T/F</span>
+                                                                    <span class="font-medium text-gray-800">is_strong</span>
+                                                                    <span class="text-xs text-gray-400">ABC ≥ 0.05</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Query Path Examples -->
+        <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+            <h3 class="font-semibold text-gray-700 mb-3">Example Query Paths</h3>
+            <div class="space-y-2 font-mono text-sm">
+                <div class="p-2 bg-white rounded border flex items-center">
+                    <code class="flex-1">
+                        <span class="text-gray-600">screen_exp.per_biosample.</span><span class="text-purple-600 font-bold">*</span><span class="text-gray-600">.</span><span class="text-purple-600 font-bold">*</span><span class="text-gray-600">.strength</span>
+                    </code>
+                    <span class="text-gray-400 text-xs">→ any biosample, any assay</span>
+                </div>
+                <div class="p-2 bg-white rounded border flex items-center">
+                    <code class="flex-1">
+                        <span class="text-gray-600">ABC_enhancers.</span><span class="text-purple-600 font-bold">[*]</span><span class="text-gray-600">.ABC_full.</span><span class="text-purple-600 font-bold">*</span><span class="text-gray-600">.ABC_score</span>
+                    </code>
+                    <span class="text-gray-400 text-xs">→ all enhancers, any celltype</span>
+                </div>
+                <div class="p-2 bg-white rounded border flex items-center">
+                    <code class="flex-1">
+                        <span class="text-gray-600">screen_exp.conservation_breast.</span><span class="text-purple-600 font-bold">*</span><span class="text-gray-600">.n_strong</span>
+                    </code>
+                    <span class="text-gray-400 text-xs">→ any assay conservation</span>
+                </div>
+                <div class="p-2 bg-white rounded border flex items-center">
+                    <code class="flex-1">
+                        <span class="text-gray-600">ABC_enhancers.</span><span class="text-purple-600 font-bold">[?ABC_score>=0.05]</span><span class="text-gray-600">.ABC_full.MCF-7-ENCODE.is_strong</span>
+                    </code>
+                    <span class="text-gray-400 text-xs">→ filtered list</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Data Sources -->
+        <div class="mt-6 grid grid-cols-3 gap-4">
+            <div class="p-4 rounded-lg bg-blue-50 border border-blue-200">
+                <div class="font-bold text-blue-800">screen_exp</div>
+                <div class="text-sm text-blue-600 mt-1">ENCODE SCREEN 3D-Chromatin</div>
+                <div class="text-xs text-blue-500 mt-2">
+                    <div>• Intact-HiC</div>
+                    <div>• ChIA-PET</div>
+                    <div>•RNAPII-ChIAPET </div>
+                </div>
+            </div>
+            <div class="p-4 rounded-lg bg-green-50 border border-green-200">
+                <div class="font-bold text-green-800">screen_comp</div>
+                <div class="text-sm text-green-600 mt-1">ENCODE SCREEN Computational</div>
+                <div class="text-xs text-green-500 mt-2">
+                    <div>• ABC-DNase</div>
+                    <div>• EPIraction</div>
+                    <div>• rE2G</div>
+                </div>
+            </div>
+            <div class="p-4 rounded-lg bg-purple-50 border border-purple-200">
+                <div class="font-bold text-purple-800">ABC_enhancers</div>
+                <div class="text-sm text-purple-600 mt-1">ABC Model Predictions</div>
+                <div class="text-xs text-purple-500 mt-2">
+                    <div>• Full Hi-C based</div>
+                    <div>• Multiple cell types</div>
+                    <div>• Per-enhancer scores</div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <script>
+        function toggleNode(element) {
+            const node = element.closest('.node');
+            const children = node.querySelector('.children');
+            const arrow = element.querySelector('.arrow');
+            
+            if (children) {
+                children.classList.toggle('hidden');
+                if (arrow) {
+                    if (children.classList.contains('hidden')) {
+                        arrow.textContent = '▶';
+                    } else {
+                        arrow.textContent = '▼';
+                    }
+                }
+            }
+        }
+        
+        // Initialize collapsed state for some nodes
+        document.addEventListener('DOMContentLoaded', function() {
+            // Collapse conservation_breast initially
+            const nodes = document.querySelectorAll('.node');
+            nodes.forEach(node => {
+                const text = node.textContent;
+                if (text.includes('conservation_breast') || text.includes('screen_comp')) {
+                    const children = node.querySelector('.children');
+                    if (children) {
+                        children.classList.add('hidden');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

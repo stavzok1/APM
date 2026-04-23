@@ -1,0 +1,23 @@
+---
+description: >-
+  Windows agent shells lose stdout when cwd is a WSL UNC path; run WSL from a
+  native Windows working directory and cd inside bash.
+alwaysApply: true
+---
+
+# WSL command bridge (Windows + `\\wsl.localhost\...` workspace)
+
+When running **terminal / shell** commands for this repo from a **Windows** host while the workspace lives under **`\\wsl.localhost\...` or `\\wsl$\...`**:
+
+1. **Set the shell working directory to a native Windows path** before running commands (PowerShell: `Set-Location $env:USERPROFILE`, or `C:\Users\<you>` / `%USERPROFILE%`). Do **not** leave the runner’s persisted cwd on the WSL UNC share for follow-up commands—stdout may come back **empty** even when exit code is `0`.
+2. **Run real work inside WSL** in one shot, `cd`’ing to the Linux path:
+
+```powershell
+Set-Location $env:USERPROFILE
+wsl.exe -d Ubuntu -- bash -lc 'cd /home/stavz/masters/gdc/APM; <bash commands here>'
+```
+
+3. Wrap the **`-lc` script in single quotes** so PowerShell does not expand `$VAR` or `$(...)`. Use normal bash syntax inside that string.
+4. **Prefer** opening this folder via **Remote - WSL** when you can; then the default environment is Linux and this bridge is unnecessary.
+
+See also `AGENTS.md` §5.

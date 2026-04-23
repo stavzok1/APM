@@ -1,0 +1,276 @@
+{
+  "abc_celltype_entry": {
+    "ABC_num": "NoneType",
+    "ABC_score": "NoneType",
+    "activity": "NoneType",
+    "distance": "NoneType",
+    "element_class": "NoneType",
+    "gene_expr": "NoneType",
+    "gene_is_expressed": "bool",
+    "hic_pl_scaled": "NoneType",
+    "is_present": "bool",
+    "is_self_promoter": "bool",
+    "is_strong": "bool",
+    "powerlaw_score": "NoneType",
+    "promoter_activity_q": "NoneType",
+    "rank_within_gene": "NoneType"
+  },
+  "abc_enhancer_entry": {
+    "ABC_full": {
+      "MCF10A-Ji2017": {
+        "ABC_num": "NoneType",
+        "ABC_score": "NoneType",
+        "activity": "NoneType",
+        "distance": "NoneType",
+        "element_class": "NoneType",
+        "gene_expr": "NoneType",
+        "gene_is_expressed": "bool",
+        "hic_pl_scaled": "NoneType",
+        "is_present": "bool",
+        "is_self_promoter": "bool",
+        "is_strong": "bool",
+        "powerlaw_score": "NoneType",
+        "promoter_activity_q": "NoneType",
+        "rank_within_gene": "NoneType"
+      },
+      "MCF7_ENCODE": {
+        "ABC_num": "NoneType",
+        "ABC_score": "NoneType",
+        "activity": "NoneType",
+        "distance": "NoneType",
+        "element_class": "NoneType",
+        "gene_expr": "NoneType",
+        "gene_is_expressed": "bool",
+        "hic_pl_scaled": "NoneType",
+        "is_present": "bool",
+        "is_self_promoter": "bool",
+        "is_strong": "bool",
+        "powerlaw_score": "NoneType",
+        "promoter_activity_q": "NoneType",
+        "rank_within_gene": "NoneType"
+      }
+    },
+    "end": "NoneType",
+    "start": "NoneType"
+  },
+  "atac_body_overlap_entry": {
+    "overlap_bp": "int",
+    "overlap_frac_of_gene": "float",
+    "overlap_frac_of_peak": "float",
+    "overlap_interval": "NoneType",
+    "overlap_type": "NoneType",
+    "overlaps": "bool"
+  },
+  "cell_line_signals": {
+    "DNase": "NoneType",
+    "H3K27ac": "NoneType"
+  },
+  "gene_link_entry": {
+    "ABC_enhancers": [],
+    "gene_id": "NoneType",
+    "gene_type": "NoneType",
+    "hichip": {
+      "HMEC": {
+        "loops": [],
+        "max_counts": "NoneType",
+        "max_score": "NoneType",
+        "n_loops": "int"
+      },
+      "MCF7": {
+        "loops": [],
+        "max_counts": "NoneType",
+        "max_score": "NoneType",
+        "n_loops": "int"
+      }
+    },
+    "screen_comp": {
+      "conservation_breast": {
+        "ABC": {
+          "n_biosamples": "int",
+          "n_strong": "int",
+          "n_weak": "int"
+        },
+        "EPI": {
+          "n_biosamples": "int",
+          "n_strong": "int",
+          "n_weak": "int"
+        }
+      },
+      "conservation_global": {
+        "ABC": {
+          "n_biosamples": "int",
+          "n_strong": "int",
+          "n_weak": "int"
+        },
+        "EPI": {
+          "n_biosamples": "int",
+          "n_strong": "int",
+          "n_weak": "int"
+        }
+      },
+      "per_biosample": {
+        "MCF7": {
+          "ABC": {
+            "p_value": "NoneType",
+            "score": "NoneType",
+            "strength": "str"
+          },
+          "EPI": {
+            "p_value": "NoneType",
+            "score": "NoneType",
+            "strength": "str"
+          }
+        }
+      }
+    },
+    "screen_exp": {
+      "conservation_breast": {
+        "Intact-HiC": {
+          "n_biosamples": "int",
+          "n_strong": "int",
+          "n_weak": "int"
+        },
+        "RNAPII-ChIAPET": {
+          "n_biosamples": "int",
+          "n_strong": "int",
+          "n_weak": "int"
+        }
+      },
+      "conservation_global": {
+        "Intact-HiC": {
+          "n_biosamples": "int",
+          "n_strong": "int",
+          "n_weak": "int"
+        },
+        "RNAPII-ChIAPET": {
+          "n_biosamples": "int",
+          "n_strong": "int",
+          "n_weak": "int"
+        }
+      },
+      "per_biosample": {
+        "HMEC": {
+          "Intact-HiC": {
+            "p_value": "NoneType",
+            "score": "NoneType",
+            "strength": "str"
+          },
+          "RNAPII-ChIAPET": {
+            "p_value": "NoneType",
+            "score": "NoneType",
+            "strength": "str"
+          }
+        },
+        "MCF7": {
+          "Intact-HiC": {
+            "p_value": "NoneType",
+            "score": "NoneType",
+            "strength": "str"
+          },
+          "RNAPII-ChIAPET": {
+            "p_value": "NoneType",
+            "score": "NoneType",
+            "strength": "str"
+          }
+        }
+      }
+    }
+  },
+  "hichip_block": {
+    "HMEC": {
+      "loops": [],
+      "max_counts": "NoneType",
+      "max_score": "NoneType",
+      "n_loops": "int"
+    },
+    "MCF7": {
+      "loops": [],
+      "max_counts": "NoneType",
+      "max_score": "NoneType",
+      "n_loops": "int"
+    }
+  },
+  "hichip_celltype_entry": {
+    "loops": [],
+    "max_counts": "NoneType",
+    "max_score": "NoneType",
+    "n_loops": "int"
+  },
+  "hichip_loop_entry": {
+    "anchor_a": {
+      "chr": "NoneType",
+      "end": "NoneType",
+      "start": "NoneType"
+    },
+    "anchor_b": {
+      "chr": "NoneType",
+      "end": "NoneType",
+      "start": "NoneType"
+    },
+    "counts": "NoneType",
+    "loop_id": "NoneType",
+    "n_reps": "int",
+    "partner_cCREs": [],
+    "partner_genes": [],
+    "score": "NoneType"
+  },
+  "mirna_entry": {
+    "UTR_ends": [],
+    "UTR_starts": [],
+    "miRNA": "NoneType",
+    "num_sites": "int",
+    "weighted_context_score": "NoneType"
+  },
+  "screen_block": {
+    "conservation_breast": {
+      "Intact-HiC": {
+        "n_biosamples": "int",
+        "n_strong": "int",
+        "n_weak": "int"
+      },
+      "RNAPII-ChIAPET": {
+        "n_biosamples": "int",
+        "n_strong": "int",
+        "n_weak": "int"
+      }
+    },
+    "conservation_global": {
+      "Intact-HiC": {
+        "n_biosamples": "int",
+        "n_strong": "int",
+        "n_weak": "int"
+      },
+      "RNAPII-ChIAPET": {
+        "n_biosamples": "int",
+        "n_strong": "int",
+        "n_weak": "int"
+      }
+    },
+    "per_biosample": {
+      "HMEC": {
+        "Intact-HiC": {
+          "p_value": "NoneType",
+          "score": "NoneType",
+          "strength": "str"
+        },
+        "RNAPII-ChIAPET": {
+          "p_value": "NoneType",
+          "score": "NoneType",
+          "strength": "str"
+        }
+      },
+      "MCF7": {
+        "Intact-HiC": {
+          "p_value": "NoneType",
+          "score": "NoneType",
+          "strength": "str"
+        },
+        "RNAPII-ChIAPET": {
+          "p_value": "NoneType",
+          "score": "NoneType",
+          "strength": "str"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+    "TCGA_RAW_ATAC_COUNTS_PATH": "data/TCGA_ATAC/TCGA-ATAC_PanCan_Raw_Counts.txt",
+    "HEALTHY_COUNTS_DIR": "data/TCGA_ATAC/normal_counts",
+    "TCGA_SAMPLES_TABLE_PATH": "data/TCGA.tsv",
+    "ATAC_META_PATH": "data/TCGA_ATAC/TCGA_identifier_mapping.txt",
+  
+    "OUT_PATH": "data/TCGA_ATAC/TCGA_BRCA_ATAC_with_normals_raw.txt",
+    "ATAC_LOGCPM_QN_PATH": "data/TCGA_ATAC/TCGA_BRCA_ATAC_with_normals_logCPM_QN.txt",
+    "ATAC_CASE_LEVEL_PATH": "data/TCGA_ATAC/TCGA_BRCA_ATAC_case_level_logCPM_QN.csv"
+  }

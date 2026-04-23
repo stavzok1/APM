@@ -1,0 +1,3077 @@
+{
+  "atac_peaks_parquet": {
+    "nested_columns": {
+      "TAD_boundary_overlaps": {
+        "Golloshi_MDA231_bottom10": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "Golloshi_MDA231_control": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "Golloshi_MDA231_top10": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "Kim_BT549": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "Kim_HCC1954": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "Kim_HCC70": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "Kim_HMEC": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "Kim_T47D": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "Kim_TNBC_tissue1": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "Kim_TNBC_tissue2": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "Kim_TNBC_tissue3": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "Kim_ZR7530": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "Kim_normal_tissue": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "LeDily_BT474": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "LeDily_MCF10A": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "LeDily_SKBR3": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "Rao_HMEC": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "vandenBrand_HB1": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "vandenBrand_HB2": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "vandenBrand_PB1": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "vandenBrand_PB2": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "vandenBrand_PB3": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "vandenBrand_PB4": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        },
+        "vandenBrand_PB5": {
+          "boundaries": [],
+          "n_boundaries": "int",
+          "overlaps_boundary": "bool"
+        }
+      },
+      "TAD_domains": {
+        "Golloshi_MDA231_bottom10": {
+          "domains": {
+            "Golloshi_MDA231_bottom10.domain_129": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Golloshi_MDA231_control": {
+          "domains": {
+            "Golloshi_MDA231_control.domain_145": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Golloshi_MDA231_top10": {
+          "domains": {
+            "Golloshi_MDA231_top10.domain_138": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_BT549": {
+          "domains": {
+            "Kim_BT549.domain_196": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_HCC1954": {
+          "domains": {
+            "Kim_HCC1954.domain_164": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_HCC70": {
+          "domains": {
+            "Kim_HCC70.domain_168": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_HMEC": {
+          "domains": {
+            "Kim_HMEC.domain_162": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_T47D": {
+          "domains": {
+            "Kim_T47D.domain_172": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_TNBC_tissue1": {
+          "domains": {
+            "Kim_TNBC_tissue1.domain_185": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_TNBC_tissue2": {
+          "domains": {
+            "Kim_TNBC_tissue2.domain_181": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_TNBC_tissue3": {
+          "domains": {
+            "Kim_TNBC_tissue3.domain_154": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_ZR7530": {
+          "domains": {
+            "Kim_ZR7530.domain_31": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_normal_tissue": {
+          "domains": {
+            "Kim_normal_tissue.domain_150": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "LeDily_BT474": {
+          "domains": {
+            "LeDily_BT474.domain_102": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "LeDily_MCF10A": {
+          "domains": {
+            "LeDily_MCF10A.domain_101": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "LeDily_SKBR3": {
+          "domains": {
+            "LeDily_SKBR3.domain_107": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Rao_HMEC": {
+          "domains": {
+            "Rao_HMEC_domain_81": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": "NoneType",
+              "nearest": "NoneType",
+              "right": "NoneType"
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "vandenBrand_HB1": {
+          "domains": {
+            "vandenBrand_HB1.domain_208": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "vandenBrand_HB2": {
+          "domains": {
+            "vandenBrand_HB2.domain_205": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "vandenBrand_PB1": {
+          "domains": {
+            "vandenBrand_PB1.domain_188": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "vandenBrand_PB2": {
+          "domains": {
+            "vandenBrand_PB2.domain_242": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "vandenBrand_PB3": {
+          "domains": {
+            "vandenBrand_PB3.domain_207": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "vandenBrand_PB4": {
+          "domains": {
+            "vandenBrand_PB4.domain_167": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "vandenBrand_PB5": {
+          "domains": {
+            "vandenBrand_PB5.domain_196": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "NoneType",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "NoneType",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        }
+      },
+      "ccre_links": [],
+      "ccre_types": {},
+      "gene_links": {},
+      "genes_by_tier": {},
+      "lncrna_links": {
+        "BMP8B-AS1": {
+          "body_overlap": {
+            "overlap_bp": "int",
+            "overlap_frac_of_gene": "float",
+            "overlap_frac_of_peak": "float",
+            "overlap_interval": "NoneType",
+            "overlap_type": "NoneType",
+            "overlaps": "bool"
+          },
+          "dist_to_tss": "int",
+          "gene_id": "str",
+          "gene_type": "str",
+          "strand": "str",
+          "tier": "str",
+          "tss_position": "int"
+        }
+      },
+      "lncrnas_by_tier": {
+        "0\u2013100kb": [],
+        "100\u2013250kb": [],
+        "250\u2013500kb": [],
+        "500\u20131000kb": [
+          "str"
+        ]
+      }
+    },
+    "path": "/home/stavz/masters/gdc/APM/data/atac_peaks/atac_peaks_annotated.parquet"
+  },
+  "elem_focus_parquet": {
+    "nested_columns": {
+      "ABC_enhancers": {
+        "__missing_column__": true
+      },
+      "TAD_boundary_overlaps": {
+        "__missing_column__": true
+      },
+      "TAD_domains": {
+        "Golloshi_MDA231_bottom10": {
+          "domains": {
+            "Golloshi_MDA231_bottom10.domain_1517": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Golloshi_MDA231_control": {
+          "domains": {
+            "Golloshi_MDA231_control.domain_1658": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Golloshi_MDA231_top10": {
+          "domains": {
+            "Golloshi_MDA231_top10.domain_1538": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_BT549": {
+          "domains": {
+            "Kim_BT549.domain_2107": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_HCC1954": {
+          "domains": {
+            "Kim_HCC1954.domain_1913": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_HCC70": {
+          "domains": {
+            "Kim_HCC70.domain_1886": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_HMEC": {
+          "domains": {
+            "Kim_HMEC.domain_1794": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_T47D": {
+          "domains": {
+            "Kim_T47D.domain_1742": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_TNBC_tissue1": {
+          "domains": {
+            "Kim_TNBC_tissue1.domain_2069": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_TNBC_tissue2": {
+          "domains": {
+            "Kim_TNBC_tissue2.domain_2191": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_TNBC_tissue3": {
+          "domains": {
+            "Kim_TNBC_tissue3.domain_1927": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_ZR7530": {
+          "domains": {
+            "Kim_ZR7530.domain_1629": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Kim_normal_tissue": {
+          "domains": {
+            "Kim_normal_tissue.domain_1795": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "LeDily_BT474": {
+          "domains": {
+            "LeDily_BT474.domain_1089": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "LeDily_MCF10A": {
+          "domains": {
+            "LeDily_MCF10A.domain_1108": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "LeDily_SKBR3": {
+          "domains": {
+            "LeDily_SKBR3.domain_1150": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "Rao_HMEC": {
+          "domains": {},
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": "NoneType",
+              "nearest": "NoneType",
+              "right": "NoneType"
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "vandenBrand_HB1": {
+          "domains": {
+            "vandenBrand_HB1.domain_2502": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "vandenBrand_HB2": {
+          "domains": {
+            "vandenBrand_HB2.domain_2493": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "vandenBrand_PB1": {
+          "domains": {
+            "vandenBrand_PB1.domain_2420": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "vandenBrand_PB2": {
+          "domains": {
+            "vandenBrand_PB2.domain_2917": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "vandenBrand_PB3": {
+          "domains": {
+            "vandenBrand_PB3.domain_2411": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "vandenBrand_PB4": {
+          "domains": {
+            "vandenBrand_PB4.domain_2202": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        },
+        "vandenBrand_PB5": {
+          "domains": {
+            "vandenBrand_PB5.domain_2393": "str"
+          },
+          "feature": {
+            "chrom": "str",
+            "end": "int",
+            "id": "str",
+            "label": "str",
+            "start": "int",
+            "strand": "NoneType"
+          },
+          "primary": {
+            "boundaries": {
+              "left": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              },
+              "nearest": {
+                "dist_bp": "int",
+                "side": "str"
+              },
+              "right": {
+                "boundary_id": "str",
+                "dist_bp": "int",
+                "end": "int",
+                "overlap": "bool",
+                "pos": "int",
+                "start": "int",
+                "strength": "float"
+              }
+            },
+            "domain": {
+              "chrom": "str",
+              "end": "int",
+              "len": "int",
+              "start": "int"
+            },
+            "domain_id": "str",
+            "feature": {
+              "chrom": "str",
+              "end": "int",
+              "id": "str",
+              "label": "str",
+              "mid": "int",
+              "start": "int",
+              "strand": "NoneType"
+            },
+            "normalized": {
+              "frac_from_left": "float",
+              "frac_from_right": "float",
+              "frac_to_nearest_boundary": "float"
+            },
+            "rel": "str"
+          }
+        }
+      },
+      "atac_peak_links": [],
+      "atac_peaks": {
+        "__missing_column__": true
+      },
+      "chip_hits": {},
+      "gene_links": {},
+      "hichip": {
+        "__missing_column__": true
+      },
+      "screen_comp": {
+        "__missing_column__": true
+      },
+      "screen_exp": {
+        "__missing_column__": true
+      }
+    },
+    "path": "/home/stavz/masters/gdc/APM/data/regulatory_elements_matching/regulatory_element_focus_with_evidence.parquet"
+  }
+}

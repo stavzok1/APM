@@ -1,0 +1,112 @@
+// Within-panel gene-gene wiring: the logical skeleton H38-H50 acts on.
+// Render: fdp -Tsvg 03_within_panel_relations.dot -o 03_within_panel_relations.svg
+// (dot also works, but fdp / neato handle the cross-connections better)
+
+graph within_panel_relations {
+  layout=fdp;
+  overlap=false;
+  splines=true;
+  sep="+12";
+  fontname="Helvetica";
+  node [fontname="Helvetica", fontsize=11, style="filled", shape=ellipse];
+  edge [fontname="Helvetica", fontsize=9];
+
+  // Activating signaling
+  node [fillcolor="#c6d8ef"];
+  IFNG; IFNGR1; IFNGR2; JAK1; JAK2;
+  STAT1; IRF1; NLRC5; CIITA; STAT2; IRF9;
+  IFNAR1; IFNAR2; TBK1; IRF3;
+
+  // Antagonists / negative regulators
+  node [fillcolor="#ffd5d5"];
+  STAT3; IRF2; SOCS1; SOCS3; PTPN2; PTPN11; PIAS1; PIAS3;
+
+  // Coactivators
+  node [fillcolor="#f5f5a0"];
+  EP300; CREBBP;
+
+  // APM output
+  node [fillcolor="#ffe6b3"];
+  PSMB8; PSMB9; PSMB10; POMP;
+  TAP1; TAP2; TAPBP; CALR; PDIA3; CANX;
+  ERAP1; ERAP2;
+  HLA_A [label="HLA-A"]; HLA_B [label="HLA-B"]; HLA_C [label="HLA-C"];
+  B2M;
+  MICA; MICB; ULBP1; ULBP2; ULBP3;
+
+  // --- Canonical positive induction ---
+  IFNG   -- IFNGR1 [color="#2a8a2a"];
+  IFNG   -- IFNGR2 [color="#2a8a2a"];
+  IFNGR1 -- JAK1 [color="#2a8a2a"];
+  IFNGR2 -- JAK2 [color="#2a8a2a"];
+  JAK1   -- STAT1 [color="#2a8a2a"];
+  JAK2   -- STAT1 [color="#2a8a2a"];
+  STAT1  -- IRF1 [color="#2a8a2a"];
+  STAT1  -- NLRC5 [color="#2a8a2a"];
+  STAT1  -- CIITA [color="#2a8a2a"];
+  STAT1  -- STAT2 [color="#2a8a2a"];
+  STAT2  -- IRF9 [color="#2a8a2a"];
+  IFNAR1 -- JAK1 [color="#2a8a2a"];
+  IFNAR2 -- JAK2 [color="#2a8a2a"];
+  TBK1   -- IRF3 [color="#2a8a2a"];
+  IRF3   -- STAT1 [style=dashed, color="#2a8a2a", label="basal"];
+
+  // APM transactivation
+  IRF1 -- PSMB8; IRF1 -- PSMB9; IRF1 -- PSMB10; IRF1 -- POMP;
+  IRF1 -- TAP1;  IRF1 -- TAP2;
+  NLRC5 -- HLA_A; NLRC5 -- HLA_B; NLRC5 -- HLA_C; NLRC5 -- B2M;
+  CIITA -- HLA_A [style=dotted, label="MHC-II main"];
+  STAT1 -- ERAP1; STAT1 -- ERAP2;
+  STAT1 -- MICA [style=dashed]; STAT1 -- MICB [style=dashed];
+
+  // Coactivator rate-limiting
+  EP300  -- STAT1 [color="#b58900", label="rate-limit"];
+  CREBBP -- STAT1 [color="#b58900", label="rate-limit"];
+  EP300  -- IRF1  [color="#b58900"];
+  CREBBP -- IRF1  [color="#b58900"];
+
+  // Antagonist ratios
+  STAT1 -- STAT3 [style=dotted, color="red", label="ratio matters (H40)"];
+  IRF1  -- IRF2  [style=dotted, color="red", label="ratio matters (H41)"];
+
+  // Feedback / negative
+  STAT1 -- SOCS1 [color="#2a8a2a", label="induces"];
+  SOCS1 -- JAK1  [style=dotted, color="red", label="− (feedback H42)"];
+  SOCS3 -- JAK2  [style=dotted, color="red"];
+  PTPN2 -- JAK1  [style=dotted, color="red"];
+  PTPN2 -- STAT1 [style=dotted, color="red"];
+  PIAS1 -- STAT1 [style=dotted, color="red"];
+  PIAS3 -- STAT3 [style=dotted, color="red"];
+
+  // Bottleneck: visually mark the min-rule set
+  subgraph cluster_bottleneck {
+    label="bottleneck set (H38 min-rule)";
+    style="rounded,dashed";
+    color="#888888";
+    JAK1; JAK2; STAT1; IRF1; NLRC5;
+  }
+
+  // Paralog clusters (H39)
+  subgraph cluster_par_hla {
+    label="HLA-ABC paralogs (H39)";
+    style="rounded,dashed"; color="#888888";
+    HLA_A; HLA_B; HLA_C;
+  }
+  subgraph cluster_par_ulbp {
+    label="ULBP paralogs (H39)";
+    style="rounded,dashed"; color="#888888";
+    ULBP1; ULBP2; ULBP3;
+  }
+  subgraph cluster_par_mic {
+    label="MIC paralogs (H39)";
+    style="rounded,dashed"; color="#888888";
+    MICA; MICB;
+  }
+
+  // Peptide pipeline coherence (H47)
+  subgraph cluster_pipe {
+    label="peptide pipeline (H47)";
+    style="rounded,dashed"; color="#888888";
+    PSMB8; PSMB9; PSMB10; POMP; TAP1; TAP2; TAPBP; CALR; PDIA3; CANX; ERAP1; ERAP2;
+  }
+}

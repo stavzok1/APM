@@ -1,0 +1,4 @@
+sample_id,bam_path
+ENCFF112BEA,data/TCGA_ATAC/normal_bams/ENCFF112BEA.bam
+ENCFF344HVC,data/TCGA_ATAC/normal_bams/ENCFF344HVC.bam
+ENCFF504NFQ,data/TCGA_ATAC/normal_bams/ENCFF504NFQ.bam

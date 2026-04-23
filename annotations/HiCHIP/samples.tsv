@@ -1,0 +1,14 @@
+File ID	File Name	Data Category	Data Type	Project ID	Case ID	Sample ID	Tissue Type	Tumor Descriptor	Specimen Type	Preservation Method	source_column
+synthetic-HiCHIP-00000	TCGA_BRCA_PROCESSED.csv	Chromatin Interaction	HiChIP processed matrix	TCGA-BRCA	TCGA-A7-A0CH	TCGA-A7-A0CH	Tumor	Primary	Unknown	Unknown	TCGA-A7-A0CH
+synthetic-HiCHIP-00001	TCGA_BRCA_PROCESSED.csv	Chromatin Interaction	HiChIP processed matrix	TCGA-BRCA	TCGA-AR-A0TV	TCGA-AR-A0TV	Tumor	Primary	Unknown	Unknown	TCGA-AR-A0TV
+synthetic-HiCHIP-00002	TCGA_BRCA_PROCESSED.csv	Chromatin Interaction	HiChIP processed matrix	TCGA-BRCA	TCGA-AO-A0JG	TCGA-AO-A0JG	Tumor	Primary	Unknown	Unknown	TCGA-AO-A0JG
+synthetic-HiCHIP-00003	TCGA_BRCA_PROCESSED.csv	Chromatin Interaction	HiChIP processed matrix	TCGA-BRCA	TCGA-AO-A03L	TCGA-AO-A03L	Tumor	Primary	Unknown	Unknown	TCGA-AO-A03L
+synthetic-HiCHIP-00004	TCGA_BRCA_PROCESSED.csv	Chromatin Interaction	HiChIP processed matrix	TCGA-BRCA	TCGA-C8-A133	TCGA-C8-A133	Tumor	Primary	Unknown	Unknown	TCGA-C8-A133
+synthetic-HiCHIP-00005	TCGA_BRCA_PROCESSED.csv	Chromatin Interaction	HiChIP processed matrix	TCGA-BRCA	TCGA-BH-A0E0	TCGA-BH-A0E0	Tumor	Primary	Unknown	Unknown	TCGA-BH-A0E0
+synthetic-HiCHIP-00006	TCGA_BRCA_PROCESSED.csv	Chromatin Interaction	HiChIP processed matrix	TCGA-BRCA	TCGA-A2-A0EY	TCGA-A2-A0EY	Tumor	Primary	Unknown	Unknown	TCGA-A2-A0EY
+synthetic-HiCHIP-00007	TCGA_BRCA_PROCESSED.csv	Chromatin Interaction	HiChIP processed matrix	TCGA-BRCA	TCGA-BH-A0EE	TCGA-BH-A0EE	Tumor	Primary	Unknown	Unknown	TCGA-BH-A0EE
+synthetic-HiCHIP-00008	TCGA_BRCA_PROCESSED.csv	Chromatin Interaction	HiChIP processed matrix	TCGA-BRCA	TCGA-A2-A0YJ	TCGA-A2-A0YJ	Tumor	Primary	Unknown	Unknown	TCGA-A2-A0YJ
+synthetic-HiCHIP-00009	TCGA_BRCA_PROCESSED.csv	Chromatin Interaction	HiChIP processed matrix	TCGA-BRCA	TCGA-C8-A12M	TCGA-C8-A12M	Tumor	Primary	Unknown	Unknown	TCGA-C8-A12M
+synthetic-HiCHIP-00010	TCGA_BRCA_PROCESSED.csv	Chromatin Interaction	HiChIP processed matrix	TCGA-BRCA	TCGA-S3-AA0Z	TCGA-S3-AA0Z	Tumor	Primary	Unknown	Unknown	TCGA-S3-AA0Z
+synthetic-HiCHIP-00011	TCGA_BRCA_PROCESSED.csv	Chromatin Interaction	HiChIP processed matrix	TCGA-BRCA	TCGA-AO-A124	TCGA-AO-A124	Tumor	Primary	Unknown	Unknown	TCGA-AO-A124
+synthetic-HiCHIP-00012	TCGA_BRCA_PROCESSED.csv	Chromatin Interaction	HiChIP processed matrix	TCGA-BRCA	TCGA-A2-A0T5	TCGA-A2-A0T5	Tumor	Primary	Unknown	Unknown	TCGA-A2-A0T5

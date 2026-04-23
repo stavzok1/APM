@@ -1,0 +1,17 @@
+{
+    "SCRIPTS_DIR": "/home/stavz/masters/gdc/APM/scripts/SV_pipeline_scripts/SV_scripts",
+    "RAW_VCF_DIR": "/home/stavz/masters/gdc/APM/data/SV_TCGA/raw_somatic_sv_test",
+    "OUTPUT_ROOT": "/home/stavz/masters/gdc/APM/data/SV_TCGA/SV_pipeline_out_test",
+  
+    "GENE_FEATURES": "/home/stavz/masters/gdc/APM/data/primary_genes_all_features.csv",
+    "SAMPLES_TSV": "/home/stavz/masters/gdc/APM/data/SV_TCGA/samples.tsv",
+    "REG_ELEM_FILE": "/home/stavz/masters/gdc/APM/data/regulatory_elements_matching/regulatory_element_focus.csv",
+    "LNCRNA_FEATURES": "/home/stavz/masters/gdc/APM/data/primary_lncRNAs_all_features.csv",
+  
+    "REF_FASTA": "/home/stavz/.vep/Homo_sapiens.GRCh38.dna.primary_assembly.fa",
+    "MEME_FILE": "/home/stavz/masters/gdc/APM/data/SV_TCGA/TFs_meme/core_ifn_stat_ctcf_ap1_nlrc5.meme",
+  
+    "FLANK_SIZE": 150,
+    "THREADS": 8
+  }
+  

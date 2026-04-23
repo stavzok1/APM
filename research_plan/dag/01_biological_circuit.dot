@@ -1,0 +1,151 @@
+// Biological immune-visibility circuit.
+// Render: dot -Tsvg 01_biological_circuit.dot -o 01_biological_circuit.svg
+
+digraph biological_circuit {
+  rankdir=TB;
+  nodesep=0.45;
+  ranksep=0.55;
+  fontname="Helvetica";
+  node [fontname="Helvetica", fontsize=11, style=filled, color="#333333"];
+  edge [fontname="Helvetica", fontsize=9];
+
+  // ==== Clusters ====
+
+  subgraph cluster_sensing {
+    label="Innate + adaptive sensing";
+    style="rounded,filled"; color="#eeeeee"; fontsize=12;
+    node [shape=ellipse, fillcolor="#c6e7c1"];
+    dsDNA        [label="cytosolic dsDNA"];
+    cGAS         [label="cGAS"];
+    STING        [label="STING"];
+    TBK1         [label="TBK1"];
+    IRF3         [label="IRF3/IRF7"];
+    TypeI_IFN    [label="type-I IFN\n(IFN-α/β)"];
+    IFNAR        [label="IFNAR1/2"];
+    CD8          [label="CD8 T cell"];
+    IFNg         [label="IFN-γ"];
+    IFNGR        [label="IFNGR1/2"];
+  }
+
+  subgraph cluster_jakstat {
+    label="JAK-STAT signalling";
+    style="rounded,filled"; color="#eeeeee"; fontsize=12;
+    node [shape=ellipse, fillcolor="#c6d8ef"];
+    JAK          [label="JAK1/JAK2"];
+    STAT1        [label="STAT1"];
+    STAT2        [label="STAT2"];
+    IRF9         [label="IRF9"];
+    ISGF3        [label="ISGF3\n(STAT1+STAT2+IRF9)"];
+    IRF1         [label="IRF1"];
+    NLRC5        [label="NLRC5 (CITA)"];
+    CIITA        [label="CIITA"];
+    SXY          [label="SXY enhanceosome\nRFX5/RFXAP/RFXANK + NF-Y"];
+  }
+
+  subgraph cluster_apm {
+    label="Antigen-processing machinery";
+    style="rounded,filled"; color="#eeeeee"; fontsize=12;
+    node [shape=ellipse, fillcolor="#ffe6b3"];
+    IP           [label="immunoproteasome\nPSMB8/9/10 + POMP"];
+    TAP          [label="TAP1/TAP2\nTAPBP / TAPBPL"];
+    PLC          [label="PLC\nCALR / PDIA3 / CANX"];
+    ERAP         [label="ERAP1/ERAP2"];
+    MHC1         [label="MHC-I\nHLA-A/B/C + B2M"];
+    HLAE         [label="HLA-E\n(VL9 via ERAP)"];
+  }
+
+  subgraph cluster_nk {
+    label="NK cytotoxicity axis";
+    style="rounded,filled"; color="#eeeeee"; fontsize=12;
+    node [shape=ellipse, fillcolor="#f5c3c3"];
+    NKLig        [label="NK ligands\nMICA/B, ULBP1/2/3, PVR, NECTIN2"];
+    ADAM         [label="ADAM10/17\nshedding", shape=box, fillcolor="#ffd5d5"];
+    NKG2D        [label="NKG2D on NK / T"];
+    NKG2A        [label="NKG2A\n(inhibitory)"];
+    NK           [label="NK cell"];
+  }
+
+  subgraph cluster_counter {
+    label="Counter-regulation";
+    style="rounded,filled"; color="#eeeeee"; fontsize=12;
+    node [shape=box, fillcolor="#ffd5d5"];
+    SOCS         [label="SOCS1/SOCS3"];
+    PTPN         [label="PTPN2/PTPN11"];
+    PIAS         [label="PIAS1/3"];
+    PDL1         [label="CD274 (PD-L1)"];
+    PDL2         [label="PDCD1LG2 (PD-L2)"];
+    TGFB         [label="TGFβ, IL6/STAT3"];
+    PRC2         [label="PRC2\nEZH2/SUZ12/EED"];
+    DNMT         [label="DNMT1/3A/3B"];
+  }
+
+  subgraph cluster_output {
+    label="Output";
+    style="rounded,filled"; color="#eeeeee"; fontsize=12;
+    node [shape=ellipse, fillcolor="#c6e7c1"];
+    Vis          [label="immune visibility", fillcolor="#f5f5a0"];
+    CYT          [label="cytolytic activity\n√(GZMA·PRF1)"];
+    Out          [label="patient outcome", fillcolor="#f5f5a0"];
+  }
+
+  // ==== Edges ====
+
+  // Sensing arms
+  dsDNA  -> cGAS -> STING -> TBK1 -> IRF3 -> TypeI_IFN;
+  TypeI_IFN -> IFNAR;
+  CD8   -> IFNg -> IFNGR;
+
+  // JAK-STAT
+  IFNGR -> JAK;
+  IFNAR -> JAK;
+  JAK   -> STAT1;
+  JAK   -> STAT2;
+  STAT1 -> IRF1;
+  STAT1 -> NLRC5;
+  STAT1 -> CIITA;
+  STAT2 -> ISGF3;
+  IRF9  -> ISGF3;
+  STAT1 -> ISGF3;
+  NLRC5 -> SXY [style=dashed, label="recruit"];
+  CIITA -> SXY [style=dashed, label="recruit"];
+
+  // APM induction
+  IRF1  -> IP;
+  IRF1  -> TAP;
+  SXY   -> MHC1;
+  NLRC5 -> MHC1;
+  ISGF3 -> ERAP [style=dashed];
+  ERAP  -> HLAE [label="VL9 supply"];
+
+  IP    -> TAP -> PLC -> MHC1;
+
+  // NK arm
+  STAT1 -> NKLig [style=dashed];
+  NKLig -> NKG2D [label="activating"];
+  HLAE  -> NKG2A [label="inhibitory", style=dotted];
+  ADAM  -> NKLig [style=dotted, label="cleave"];
+
+  // Output
+  MHC1  -> Vis;
+  NKG2D -> Vis;
+  NKG2A -> Vis [style=dotted, label="−"];
+  Vis   -> CYT;
+  CD8   -> CYT;
+  NK    -> CYT;
+  CYT   -> Out;
+
+  // Counter-regulation (negative edges)
+  JAK   -> SOCS [label="induces"];
+  SOCS  -> JAK  [style=dotted, label="−"];
+  PTPN  -> JAK  [style=dotted, label="−"];
+  PIAS  -> STAT1 [style=dotted, label="−"];
+  PRC2  -> MHC1 [style=dotted, label="− H3K27me3"];
+  DNMT  -> MHC1 [style=dotted, label="− meth"];
+  TGFB  -> STAT1 [style=dotted, label="−"];
+  PDL1  -> CD8  [style=dotted, label="− checkpoint"];
+  PDL2  -> CD8  [style=dotted, label="− checkpoint"];
+
+  // Induced counter-regs
+  STAT1 -> PDL1 [label="co-induced"];
+  ISGF3 -> PDL1 [style=dashed];
+}

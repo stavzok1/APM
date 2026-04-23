@@ -1,0 +1,138 @@
+// Non-coding hypothesis space: methylation x miRNA x lncRNA -> APM / NK output.
+// Render: dot -Tsvg 04_noncoding_space.dot -o 04_noncoding_space.svg
+
+digraph noncoding_space {
+  rankdir=TB;
+  nodesep=0.4;
+  ranksep=0.6;
+  fontname="Helvetica";
+  node [fontname="Helvetica", fontsize=10, style="filled,rounded", shape=box];
+  edge [fontname="Helvetica", fontsize=9];
+
+  // Chromatin writers/erasers/readers (Tier 2)
+  subgraph cluster_chromatin {
+    label="Chromatin effectors (Tier 2)";
+    style="rounded,filled"; color="#e8e8e8"; fontsize=12;
+    node [fillcolor="#dcdcdc"];
+    DNMTs      [label="DNMT1 / DNMT3A / DNMT3B"];
+    TETs       [label="TET1 / TET2 / TET3"];
+    PRC2       [label="PRC2\nEZH2 / SUZ12 / EED"];
+    HDACs      [label="HDAC1/2/3"];
+    KAT2A      [label="KAT2A (GCN5)\nNLRC5 export via CRM1"];
+    KDM6A      [label="KDM6A"];
+  }
+
+  // Methylation hypotheses
+  subgraph cluster_meth {
+    label="Methylation hypotheses H19-H25";
+    style="rounded,filled"; color="#fff4d6"; fontsize=12;
+    node [fillcolor="#ffe6b3"];
+    betaProm  [label="β_prom(APM)\npromoter methylation"];
+    betaEnh   [label="β_enh(APM)\nenhancer methylation (cCRE)"];
+    COMB_HLA  [label="COMB_HLA\nlocus-β PC1  (H19)", fillcolor="#f5f5a0"];
+    H20       [label="H20 enh β controls inducibility\n prom β controls baseline"];
+    H21       [label="H21 PRC2-silenced subset"];
+    H22       [label="H22 β_prom(STAT1) cascade"];
+    H23       [label="H23 SV-relocated CpG islands"];
+    H24       [label="H24 HLA genotype x β mQTL"];
+    H25       [label="H25 CIITA β -> activated CD4"];
+  }
+
+  // miRNA hypotheses
+  subgraph cluster_mir {
+    label="miRNA hypotheses H26-H31";
+    style="rounded,filled"; color="#fff4d6"; fontsize=12;
+    node [fillcolor="#ffe6b3"];
+    miRTar     [label="miRTarBase\nevidence_score (from L0)"];
+    MIR_g      [label="MIR_g evidence-weighted pressure\n(L1)", fillcolor="#f5f5a0"];
+    H26        [label="H26 miR-148a/152 -> HLA-G"];
+    H27        [label="H27 miR-125a/b -> B2M/MHC-I"];
+    H28        [label="H28 miR-155 -> SOCS1 -> JAK-STAT"];
+    H29        [label="H29 data-driven miR master regulators"];
+    H30        [label="H30 miR-346 -> TAP1"];
+    H31        [label="H31 coordinated miR pressure phenotype"];
+  }
+
+  // lncRNA hypotheses
+  subgraph cluster_lnc {
+    label="lncRNA hypotheses H32-H37";
+    style="rounded,filled"; color="#fff4d6"; fontsize=12;
+    node [fillcolor="#ffe6b3"];
+    lncRNA_panel [label="lncRNA panel\nHCP5 / HCG18 / HLA-F-AS1 / MICB-DT / NEAT1 / MALAT1 / HOTAIR"];
+    H32        [label="H32 HCP5 ceRNA -> PD-L2"];
+    H33        [label="H33 HCG18 ceRNA -> PD-L1"];
+    H34        [label="H34 HLA lncRNAs as TAD boundary maintainers"];
+    H35        [label="H35 lncRNA-gene TAD colocalization"];
+    H36        [label="H36 lncRNA -> DNMT/PRC2 recruitment (mech for H19)"];
+    H37        [label="H37 lncRNA as locus-competence proxy"];
+  }
+
+  // Output
+  subgraph cluster_out {
+    label="Output";
+    style="rounded,filled"; color="#e8e8e8"; fontsize=12;
+    node [fillcolor="#c6e7c1"];
+    APM_out   [label="APM expression\n(66 + extended panel)"];
+    PDL1      [label="CD274 (PD-L1)"];
+    PDL2      [label="PDCD1LG2 (PD-L2)"];
+    HLAG      [label="HLA-G"];
+    MHC1_out  [label="HLA-A/B/C, B2M"];
+    Vis       [label="immune visibility", fillcolor="#f5f5a0"];
+  }
+
+  // Chromatin -> methylation / histone marks
+  DNMTs -> betaProm [label="writes"];
+  DNMTs -> betaEnh  [label="writes"];
+  TETs  -> betaProm [style=dotted, label="erases"];
+  PRC2  -> MHC1_out [style=dotted, label="H3K27me3"];
+  KDM6A -> MHC1_out [label="removes H3K27me3"];
+  HDACs -> APM_out  [style=dotted];
+  KAT2A -> MHC1_out [label="NLRC5 retention"];
+
+  // Methylation pathways
+  betaProm -> COMB_HLA;
+  betaEnh  -> COMB_HLA;
+  betaProm -> H20;
+  betaEnh  -> H20;
+  PRC2    -> H21;
+  betaProm -> H22;
+  betaProm -> H25;
+
+  // Methylation -> output
+  COMB_HLA -> APM_out;
+  H20      -> APM_out;
+  H21      -> APM_out;
+  H22      -> APM_out;
+  H23      -> APM_out;
+  H24      -> APM_out;
+  H25      -> MHC1_out [label="MHC-II"];
+
+  // miRNA pipeline
+  miRTar   -> MIR_g;
+  MIR_g    -> H26; MIR_g -> H27; MIR_g -> H28; MIR_g -> H29; MIR_g -> H30; MIR_g -> H31;
+  H26 -> HLAG;
+  H27 -> MHC1_out;
+  H28 -> APM_out [label="disinhibit"];
+  H29 -> APM_out;
+  H30 -> APM_out;
+  H31 -> Vis;
+
+  // lncRNA pipeline
+  lncRNA_panel -> H32 -> PDL2;
+  lncRNA_panel -> H33 -> PDL1;
+  lncRNA_panel -> H34 -> APM_out [label="topology"];
+  lncRNA_panel -> H35 -> APM_out;
+  lncRNA_panel -> H36 -> DNMTs [style=dashed];
+  lncRNA_panel -> H36 -> PRC2  [style=dashed];
+  lncRNA_panel -> H37 -> APM_out [style=dashed];
+
+  // ceRNA cross-link: lncRNA -> miRNA sink
+  lncRNA_panel -> MIR_g [style=dashed, label="sponging"];
+
+  // Output coalesces into visibility
+  APM_out   -> Vis;
+  MHC1_out  -> Vis;
+  PDL1      -> Vis [style=dotted, label="−"];
+  PDL2      -> Vis [style=dotted, label="−"];
+  HLAG      -> Vis [style=dotted, label="−"];
+}

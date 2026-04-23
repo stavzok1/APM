@@ -1,0 +1,626 @@
+{
+  "isoform_tsv": "/home/stavz/masters/gdc/APM/data/RNAexp_TCGA/tcga_rsem_isoform_tpm",
+  "genes_only": true,
+  "n_header_columns": 10536,
+  "n_brca_cohort_sample_columns": 1205,
+  "n_allowed_transcript_stems_panel_genes_only": 2303,
+  "chunksize": 5000,
+  "max_chunks": null,
+  "n_matrix_rows_read": 198619,
+  "n_matrix_rows_retained": 769,
+  "n_distinct_transcripts_retained": 769,
+  "n_genes_with_at_least_one_transcript": 93,
+  "n_transcripts_unmapped_gene_symbol": 0,
+  "n_mane_select_transcripts_total": 86,
+  "n_genes_with_at_least_one_mane_transcript": 86,
+  "tag_counts_on_distinct_transcripts": {
+    "(empty)": 302,
+    "mRNA_end_NF|cds_end_NF": 32,
+    "mRNA_start_NF|cds_start_NF": 28,
+    "basic|CCDS": 26,
+    "basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_principal_1|CCDS": 25,
+    "RNA_Seq_supported_partial": 24,
+    "basic": 19,
+    "basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_principal_3|CCDS": 18,
+    "mRNA_end_NF|cds_end_NF|alternative_5_UTR": 14,
+    "TAGENE": 13,
+    "basic|GENCODE_Primary|CCDS": 12,
+    "exp_conf": 11,
+    "basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_principal_2|CCDS": 11,
+    "basic|appris_alternative_2|CCDS": 9,
+    "NMD_likely_if_extended": 9,
+    "basic|GENCODE_Primary": 8,
+    "RNA_Seq_supported_only": 8,
+    "basic|exp_conf|CCDS": 7,
+    "mRNA_start_NF|cds_start_NF|exp_conf": 7,
+    "basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_principal_4|CCDS": 6,
+    "basic|GENCODE_Primary|appris_alternative_2|CCDS": 6,
+    "alternative_5_UTR|mRNA_end_NF|cds_end_NF": 5,
+    "basic|appris_principal_1|CCDS": 5,
+    "CAGE_supported_TSS|basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_principal_3|CCDS": 4,
+    "mRNA_end_NF": 4,
+    "basic|appris_alternative_2": 4,
+    "basic|exp_conf": 4,
+    "basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_alternative_1|CCDS": 4,
+    "mRNA_start_NF|mRNA_end_NF|cds_start_NF|cds_end_NF": 4,
+    "basic|appris_principal_3|CCDS": 3,
+    "RNA_Seq_supported_partial|basic": 3,
+    "alternative_5_UTR|basic|appris_alternative_1|CCDS": 3,
+    "basic|appris_principal_2|CCDS": 3,
+    "RNA_Seq_supported_partial|basic|exp_conf": 3,
+    "basic|appris_principal_4|CCDS": 3,
+    "alternative_5_UTR|basic|appris_principal_1|CCDS": 3,
+    "alternative_5_UTR|RNA_Seq_supported_partial|basic|appris_principal_1|CCDS": 2,
+    "alternative_5_UTR|basic|appris_principal_3|CCDS": 2,
+    "basic|appris_alternative_1|CCDS": 2,
+    "CCDS": 2,
+    "CAGE_supported_TSS|basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_principal_4|CCDS": 2,
+    "CAGE_supported_TSS|mRNA_end_NF|CCDS": 2,
+    "alternative_5_UTR|basic|appris_principal_1|exp_conf|CCDS": 2,
+    "mRNA_start_NF|cds_start_NF|NAGNAG_splice_site": 2,
+    "inferred_transcript_model|basic": 2,
+    "basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_alternative_2|CCDS": 2,
+    "basic|TAGENE": 2,
+    "alternative_5_UTR": 2,
+    "NAGNAG_splice_site|basic|CCDS": 2,
+    "alternative_5_UTR|inferred_transcript_model|basic|appris_principal_3|CCDS": 2,
+    "RNA_Seq_supported_only|basic|CCDS": 2,
+    "NAGNAG_splice_site": 2,
+    "basic|GENCODE_Primary|exp_conf": 2,
+    "RNA_Seq_supported_only|basic": 2,
+    "RNA_Seq_supported_only|exp_conf": 2,
+    "mRNA_end_NF|cds_end_NF|not_organism_supported|exp_conf": 2,
+    "mRNA_end_NF|alternative_5_UTR|appris_principal_2|CCDS": 1,
+    "CAGE_supported_TSS|basic|GENCODE_Primary|CCDS": 1,
+    "upstream_ATG|basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_principal_1|CCDS": 1,
+    "RNA_Seq_supported_only|basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_principal_2|CCDS": 1,
+    "mRNA_start_NF|mRNA_end_NF|cds_start_NF|cds_end_NF|not_organism_supported": 1,
+    "alternative_5_UTR|not_organism_supported|basic|appris_alternative_1|CCDS": 1,
+    "retained_intron_first|basic|appris_alternative_2|CCDS": 1,
+    "CAGE_supported_TSS|basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_principal_1|CCDS": 1,
+    "dotter_confirmed|basic|GENCODE_Primary": 1,
+    "basic|Ensembl_canonical|GENCODE_Primary|MANE_Select": 1,
+    "cds_end_NF|NAGNAG_splice_site|mRNA_end_NF": 1,
+    "basic|TAGENE|exp_conf": 1,
+    "not_organism_supported|basic|appris_principal_1|CCDS": 1,
+    "CAGE_supported_TSS|RNA_Seq_supported_partial|basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_principal_2|CCDS": 1,
+    "alternative_5_UTR|retained_intron_first|basic|appris_principal_1|CCDS": 1,
+    "alternative_5_UTR|dotter_confirmed|not_organism_supported|mRNA_end_NF|cds_end_NF": 1,
+    "not_organism_supported|basic|GENCODE_Primary": 1,
+    "alternative_5_UTR|basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_principal_3|CCDS": 1,
+    "alternative_5_UTR|RNA_Seq_supported_only": 1,
+    "NMD_exception|basic|exp_conf|CCDS": 1,
+    "TAGENE|exp_conf": 1,
+    "dotter_confirmed|basic|GENCODE_Primary|CCDS": 1,
+    "alternative_5_UTR|dotter_confirmed|not_organism_supported|basic|appris_principal_1|CCDS": 1,
+    "CAGE_supported_TSS|basic|exp_conf|CCDS": 1,
+    "inferred_transcript_model|non_canonical_TEC": 1,
+    "upstream_ATG|basic|exp_conf|CCDS": 1,
+    "not_organism_supported": 1,
+    "RNA_Seq_supported_only|basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_principal_1|CCDS": 1,
+    "NAGNAG_splice_site|basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_alternative_1|CCDS": 1,
+    "alternative_5_UTR|NAGNAG_splice_site|basic|appris_principal_3|CCDS": 1,
+    "alternative_5_UTR|upstream_uORF|basic|appris_principal_4|CCDS": 1,
+    "alternative_5_UTR|not_organism_supported|basic|appris_principal_2|exp_conf|CCDS": 1,
+    "basic|readthrough_transcript": 1,
+    "mRNA_end_NF|inferred_exon_combination|exp_conf": 1,
+    "mRNA_end_NF|cds_end_NF|dotter_confirmed": 1,
+    "mRNA_end_NF|inferred_transcript_model|CCDS": 1,
+    "alternative_5_UTR|basic|GENCODE_Primary|appris_principal_4|CCDS": 1,
+    "inferred_transcript_model": 1,
+    "basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_principal_2|exp_conf|CCDS": 1,
+    "not_best_in_genome_evidence|basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_principal_1|CCDS": 1,
+    "dotter_confirmed|not_organism_supported|basic": 1,
+    "alternative_3_UTR": 1,
+    "NAGNAG_splice_site|basic|appris_alternative_2|CCDS": 1,
+    "alternative_3_UTR|basic|appris_principal_1|CCDS": 1,
+    "NMD_likely_if_extended|not_organism_supported": 1,
+    "not_organism_supported|RNA_Seq_supported_partial|mRNA_end_NF": 1,
+    "basic|GENCODE_Primary|exp_conf|CCDS": 1,
+    "inferred_transcript_model|basic|GENCODE_Primary": 1,
+    "cds_end_NF|mRNA_end_NF|alternative_5_UTR": 1,
+    "RNA_Seq_supported_partial|basic|GENCODE_Primary|appris_alternative_2|CCDS": 1,
+    "non_canonical_other": 1,
+    "cds_end_NF|mRNA_end_NF": 1,
+    "mRNA_end_NF|inferred_transcript_model|exp_conf|CCDS": 1,
+    "RNA_Seq_supported_partial|basic|GENCODE_Primary|CCDS": 1,
+    "dotter_confirmed|not_organism_supported": 1,
+    "NAGNAG_splice_site|cds_end_NF|mRNA_end_NF|mRNA_start_NF|cds_start_NF": 1,
+    "CAGE_supported_TSS": 1,
+    "alternative_3_UTR|dotter_confirmed|CCDS": 1,
+    "CAGE_supported_TSS|basic|exp_conf": 1,
+    "alternative_5_UTR|basic|GENCODE_Primary": 1,
+    "mRNA_start_NF|cds_start_NF|RNA_Seq_supported_only": 1,
+    "alternative_3_UTR|CCDS": 1,
+    "CAGE_supported_TSS|basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|TAGENE": 1,
+    "mRNA_start_NF|mRNA_end_NF|cds_start_NF|cds_end_NF|NAGNAG_splice_site": 1,
+    "alternative_3_UTR|RNA_Seq_supported_partial": 1,
+    "mRNA_end_NF|cds_end_NF|alternative_5_UTR|NAGNAG_splice_site": 1,
+    "RNA_Seq_supported_partial|TAGENE": 1,
+    "RNA_Seq_supported_partial|basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_principal_2|CCDS": 1,
+    "alternative_5_UTR|basic|GENCODE_Primary|appris_principal_3|CCDS": 1,
+    "RNA_Seq_supported_partial|basic|GENCODE_Primary": 1,
+    "mRNA_end_NF|cds_end_NF|exp_conf": 1,
+    "NAGNAG_splice_site|basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_principal_3|CCDS": 1,
+    "3_standard_supported_extension|CAGE_supported_TSS|basic|Ensembl_canonical|GENCODE_Primary|MANE_Select|appris_principal_2|CCDS": 1,
+    "inferred_transcript_model|basic|CCDS": 1,
+    "dotter_confirmed": 1,
+    "alternative_5_UTR|basic|appris_principal_4|CCDS": 1,
+    "RNA_Seq_supported_partial|basic|appris_alternative_1": 1,
+    "RNA_Seq_supported_partial|basic|appris_alternative_2|CCDS": 1,
+    "not_organism_supported|basic|CCDS": 1
+  },
+  "genes_by_transcript_count_bucket": {
+    "1": 9,
+    "2-5": 31,
+    "6-15": 43,
+    ">15": 10
+  },
+  "per_gene": [
+    {
+      "gene": "IRF3",
+      "n_transcripts": 31,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "NLRC5",
+      "n_transcripts": 29,
+      "n_mane_select_transcripts": 0
+    },
+    {
+      "gene": "NFYC",
+      "n_transcripts": 25,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "RFX5",
+      "n_transcripts": 21,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "CANX",
+      "n_transcripts": 19,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "MALAT1",
+      "n_transcripts": 19,
+      "n_mane_select_transcripts": 0
+    },
+    {
+      "gene": "HCG18",
+      "n_transcripts": 18,
+      "n_mane_select_transcripts": 0
+    },
+    {
+      "gene": "PSME2",
+      "n_transcripts": 18,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "ADAM10",
+      "n_transcripts": 17,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "IRF7",
+      "n_transcripts": 16,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "CIITA",
+      "n_transcripts": 15,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "HLA-F",
+      "n_transcripts": 15,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "IL6ST",
+      "n_transcripts": 15,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "IRF9",
+      "n_transcripts": 15,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "PTPN2",
+      "n_transcripts": 15,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "RFXANK",
+      "n_transcripts": 15,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "SMAD3",
+      "n_transcripts": 15,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "B2M",
+      "n_transcripts": 14,
+      "n_mane_select_transcripts": 0
+    },
+    {
+      "gene": "STAT3",
+      "n_transcripts": 14,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "STING1",
+      "n_transcripts": 14,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "CREBBP",
+      "n_transcripts": 12,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "IRF1",
+      "n_transcripts": 12,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "STAT1",
+      "n_transcripts": 12,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "STAT2",
+      "n_transcripts": 12,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "EGFR",
+      "n_transcripts": 11,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "ERAP2",
+      "n_transcripts": 11,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "SRC",
+      "n_transcripts": 11,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "TNFAIP3",
+      "n_transcripts": 11,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "HLA-C",
+      "n_transcripts": 10,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "IFNAR2",
+      "n_transcripts": 10,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "NFKBIA",
+      "n_transcripts": 10,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "PSME1",
+      "n_transcripts": 10,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "ERAP1",
+      "n_transcripts": 9,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "IL6",
+      "n_transcripts": 9,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "IRF2",
+      "n_transcripts": 9,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "PIAS3",
+      "n_transcripts": 9,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "PSME4",
+      "n_transcripts": 9,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "TAPBP",
+      "n_transcripts": 9,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "HLA-A",
+      "n_transcripts": 8,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "IL6R",
+      "n_transcripts": 8,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "PDIA6",
+      "n_transcripts": 8,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "PIAS1",
+      "n_transcripts": 8,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "TAPBPL",
+      "n_transcripts": 8,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "TBK1",
+      "n_transcripts": 8,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "CALR",
+      "n_transcripts": 7,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "HLA-B",
+      "n_transcripts": 7,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "HLA-G",
+      "n_transcripts": 7,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "RAET1E",
+      "n_transcripts": 7,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "IFNGR2",
+      "n_transcripts": 6,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "JAK1",
+      "n_transcripts": 6,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "NECTIN2",
+      "n_transcripts": 6,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "PDIA3",
+      "n_transcripts": 6,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "PVR",
+      "n_transcripts": 6,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "CD274",
+      "n_transcripts": 5,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "HOTAIR",
+      "n_transcripts": 5,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "IFNGR1",
+      "n_transcripts": 5,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "NEAT1",
+      "n_transcripts": 5,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "NFYB",
+      "n_transcripts": 5,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "PSMB10",
+      "n_transcripts": 5,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "PSMB8",
+      "n_transcripts": 5,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "PSMB9",
+      "n_transcripts": 5,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "TAP2",
+      "n_transcripts": 5,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "ADAM17",
+      "n_transcripts": 4,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "HCP5",
+      "n_transcripts": 4,
+      "n_mane_select_transcripts": 0
+    },
+    {
+      "gene": "MICB",
+      "n_transcripts": 4,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "PTPN11",
+      "n_transcripts": 4,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "TGFB1",
+      "n_transcripts": 4,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "CCL5",
+      "n_transcripts": 3,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "CGAS",
+      "n_transcripts": 3,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "HLA-E",
+      "n_transcripts": 3,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "HLA-F-AS1",
+      "n_transcripts": 3,
+      "n_mane_select_transcripts": 0
+    },
+    {
+      "gene": "IFNAR1",
+      "n_transcripts": 3,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "JAK2",
+      "n_transcripts": 3,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "MICA",
+      "n_transcripts": 3,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "RAET1G",
+      "n_transcripts": 3,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "TAP1",
+      "n_transcripts": 3,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "CXCL11",
+      "n_transcripts": 2,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "NCR3LG1",
+      "n_transcripts": 2,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "NFYA",
+      "n_transcripts": 2,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "POMP",
+      "n_transcripts": 2,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "RAET1L",
+      "n_transcripts": 2,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "RFXAP",
+      "n_transcripts": 2,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "SOCS3",
+      "n_transcripts": 2,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "ULBP3",
+      "n_transcripts": 2,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "CXCL10",
+      "n_transcripts": 1,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "CXCL9",
+      "n_transcripts": 1,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "EP300",
+      "n_transcripts": 1,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "IFNG",
+      "n_transcripts": 1,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "LINC01149",
+      "n_transcripts": 1,
+      "n_mane_select_transcripts": 0
+    },
+    {
+      "gene": "PDCD1LG2",
+      "n_transcripts": 1,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "SOCS1",
+      "n_transcripts": 1,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "ULBP1",
+      "n_transcripts": 1,
+      "n_mane_select_transcripts": 1
+    },
+    {
+      "gene": "ULBP2",
+      "n_transcripts": 1,
+      "n_mane_select_transcripts": 1
+    }
+  ]
+}

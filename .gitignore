@@ -1,0 +1,77 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+
+# --- Project: large / reproducible elsewhere (rsync, cluster scratch, GDC) ---
+data/
+
+# --- Large annotation/reference blobs (keep manifests + small TSVs in git) ---
+annotations/**/*.gtf.gz
+annotations/**/*.fa
+annotations/**/*.fna
+annotations/**/*.fasta
+annotations/**/GRCh38-cCREs*.bed
+annotations/**/GRCh38-cCREs*.nochr.bed
+annotations/**/Alias_v5*.xls
+annotations/**/HM450*.tsv.gz
+annotations/**/probe_reference.tsv
+annotations/**/cCRE_fasta.fa
+
+# --- Run artifacts ---
+logs/
+backups/
+
+# --- Local / agent tooling (do not push machine-specific settings) ---
+.claude/
+
+# --- Regenerated analysis & QC outputs (re-run scripts to reproduce) ---
+analysis/**/output/
+analysis/sanity/output/
+
+# Timestamped exploratory run trees (keep the .py drivers next to them)
+analysis/**/processing_scratch_*/
+analysis/**/run_20*/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- OS / Office noise ---
+.DS_Store
+Thumbs.db
+*Zone.Identifier
+*~
+~$*
+*.tmp
+
+# --- Ad-hoc large drops at repo root (adjust if you need one tracked) ---
+/*.vcf
+/*.vcf.gz
+/fimo.gff
+/tcga_brca_hichip.csv
+/full_run_attempt.txt
+/cCRE_fasta.fa
+
+# --- Secrets (never commit) ---
+.env
+.env.*
+!.env.example
+
+# --- Packaging ---
+dist/
+build/
+*.egg-info/

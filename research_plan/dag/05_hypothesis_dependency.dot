@@ -1,0 +1,189 @@
+// Hypothesis dependency graph: every hypothesis H1-H58 clustered by family,
+// edges = shared required feature builder (03_architecture.md).
+// Render: sfdp -Tsvg 05_hypothesis_dependency.dot -o 05_hypothesis_dependency.svg
+
+graph hypothesis_dependency {
+  layout=sfdp;
+  overlap=prism;
+  splines=true;
+  sep="+6";
+  fontname="Helvetica";
+  node [fontname="Helvetica", fontsize=9, style="filled", shape=box];
+  edge [color="#bbbbbb"];
+
+  // ---- Feature builder nodes (shared infrastructure) ----
+  node [fillcolor="#c6d8ef", shape=box];
+  FB_CRML    [label="CRML_snv/sv"];
+  FB_R       [label="R_g"];
+  FB_BCD     [label="BCD_g"];
+  FB_MIR     [label="MIR_g"];
+  FB_PRD     [label="PRD_g"];
+  FB_JSI     [label="JSI"];
+  FB_DAV     [label="DAV"];
+  FB_COMB    [label="COMB_HLA"];
+  FB_ARCH    [label="RPPA ARCH"];
+  FB_BOTTLE  [label="BOTTLE min-rule"];
+  FB_COHER   [label="COHER"];
+  FB_IVI     [label="IVI"];
+  FB_Thor    [label="Thorsson + activated states"];
+  FB_Clin    [label="Clinical / Cox PH"];
+  FB_Prior   [label="Conservation prior\n(13 HiChIP calibrated)"];
+  FB_lnc     [label="lncRNA cis panel"];
+  FB_CGAS    [label="cGAS-STING intactness\n(extended panel)"];
+
+  // ---- Family A: H1-H3, H9, H16 ----
+  subgraph cluster_A {
+    label="Family A — CRML / element-resolved causal";
+    style="rounded,filled"; color="#ffe6b3"; fontsize=11;
+    node [fillcolor="#fff4d6"];
+    H1; H2; H3; H9; H16;
+  }
+
+  // ---- Family B: proteostatic H4-H6, H15 ----
+  subgraph cluster_B {
+    label="Family B — Proteostatic";
+    style="rounded,filled"; color="#ffd5d5"; fontsize=11;
+    node [fillcolor="#fff4d6"];
+    H4; H5; H6; H15;
+  }
+
+  subgraph cluster_C {
+    label="Family C — Redundancy";
+    style="rounded,filled"; color="#c6e7c1"; fontsize=11;
+    node [fillcolor="#fff4d6"];
+    H7; H8;
+  }
+
+  subgraph cluster_D {
+    label="Family D — Deconvolution x structural";
+    style="rounded,filled"; color="#c6d8ef"; fontsize=11;
+    node [fillcolor="#fff4d6"];
+    H12; H13; H14; H50;
+  }
+
+  subgraph cluster_E {
+    label="Family E — RPPA archetype";
+    style="rounded,filled"; color="#dcdcdc"; fontsize=11;
+    node [fillcolor="#fff4d6"];
+    H10; H11;
+  }
+
+  subgraph cluster_F {
+    label="Family F — Platform / prognosis";
+    style="rounded,filled"; color="#f5f5a0"; fontsize=11;
+    node [fillcolor="#fff4d6"];
+    H17; H18;
+  }
+
+  subgraph cluster_G {
+    label="Family G — Methylation";
+    style="rounded,filled"; color="#f5c3c3"; fontsize=11;
+    node [fillcolor="#fff4d6"];
+    H19; H20; H21; H22; H23; H24; H25;
+  }
+
+  subgraph cluster_H {
+    label="Family H — miRNA";
+    style="rounded,filled"; color="#ffe6b3"; fontsize=11;
+    node [fillcolor="#fff4d6"];
+    H26; H27; H28; H29; H30; H31;
+  }
+
+  subgraph cluster_I {
+    label="Family I — lncRNA";
+    style="rounded,filled"; color="#c6d8ef"; fontsize=11;
+    node [fillcolor="#fff4d6"];
+    H32; H33; H34; H35; H36; H37;
+  }
+
+  subgraph cluster_J {
+    label="Family J — Within-panel gene-gene";
+    style="rounded,filled"; color="#c6e7c1"; fontsize=11;
+    node [fillcolor="#fff4d6"];
+    H38; H39; H40; H41; H42; H43; H44; H45; H46; H47; H48; H49;
+  }
+
+  subgraph cluster_K {
+    label="Family K — Conservation-prior";
+    style="rounded,filled"; color="#dcdcdc"; fontsize=11;
+    node [fillcolor="#fff4d6"];
+    H51; H52; H53; H54; H55;
+  }
+
+  subgraph cluster_L {
+    label="Family L — Innate sensing";
+    style="rounded,filled"; color="#c6e7c1"; fontsize=11;
+    node [fillcolor="#fff4d6"];
+    H56; H57; H58;
+  }
+
+  // ---- Edges: hypothesis -- feature builder ----
+  H1 -- FB_CRML; H1 -- FB_Prior;
+  H2 -- FB_CRML;
+  H3 -- FB_CRML;
+  H9 -- FB_BCD; H9 -- FB_Prior;
+  H16 -- FB_CRML; H16 -- FB_Thor; H16 -- FB_Clin;
+
+  H4 -- FB_PRD; H4 -- FB_MIR;
+  H5 -- FB_JSI;
+  H6 -- FB_PRD; H6 -- FB_Clin;
+  H15 -- FB_DAV;
+
+  H7 -- FB_R; H7 -- FB_Prior;
+  H8 -- FB_R;
+
+  H12 -- FB_JSI; H12 -- FB_Thor;
+  H13 -- FB_DAV; H13 -- FB_Thor;
+  H14 -- FB_DAV; H14 -- FB_Clin;
+  H50 -- FB_DAV;
+
+  H10 -- FB_ARCH;
+  H11 -- FB_ARCH; H11 -- FB_Thor;
+
+  H17 -- FB_CRML; H17 -- FB_R; H17 -- FB_BCD;
+  H18 -- FB_IVI; H18 -- FB_Clin;
+
+  H19 -- FB_COMB;
+  H20 -- FB_COMB;
+  H22 -- FB_COMB;
+  H21 -- FB_COMB;
+  H23 -- FB_BCD;
+  H25 -- FB_Thor;
+
+  H26 -- FB_MIR;
+  H27 -- FB_MIR;
+  H28 -- FB_MIR; H28 -- FB_JSI;
+  H29 -- FB_MIR;
+  H30 -- FB_MIR;
+  H31 -- FB_MIR;
+
+  H32 -- FB_lnc; H32 -- FB_MIR;
+  H33 -- FB_lnc; H33 -- FB_MIR;
+  H34 -- FB_lnc; H34 -- FB_BCD; H34 -- FB_Prior;
+  H35 -- FB_lnc;
+  H36 -- FB_lnc; H36 -- FB_COMB;
+  H37 -- FB_lnc;
+
+  H38 -- FB_BOTTLE;
+  H39 -- FB_COHER;
+  H40 -- FB_JSI;
+  H41 -- FB_JSI;
+  H42 -- FB_JSI;
+  H43 -- FB_JSI;
+  H44 -- FB_COHER;
+  H45 -- FB_COHER;
+  H46 -- FB_CRML; H46 -- FB_Prior;
+  H47 -- FB_COHER;
+  H48 -- FB_CGAS;
+  H49 -- FB_DAV;
+
+  H51 -- FB_Prior;
+  H52 -- FB_Prior;
+  H53 -- FB_Prior;
+  H54 -- FB_R; H54 -- FB_Prior;
+  H55 -- FB_BCD; H55 -- FB_Prior;
+
+  H56 -- FB_CGAS; H56 -- FB_JSI;
+  H57 -- FB_CGAS;
+  H58 -- FB_CGAS; H58 -- FB_JSI;
+}

@@ -1,0 +1,170 @@
+// Analysis architecture: L0 pipeline -> L1 builders -> L2 scores -> L3 engine -> L4 reports.
+// Render: dot -Tsvg 02_pipeline_architecture.dot -o 02_pipeline_architecture.svg
+
+digraph pipeline_architecture {
+  rankdir=LR;
+  nodesep=0.35;
+  ranksep=0.8;
+  fontname="Helvetica";
+  node [fontname="Helvetica", fontsize=10, style="filled,rounded", shape=box];
+  edge [fontname="Helvetica", fontsize=9, color="#555555"];
+
+  // L0
+  subgraph cluster_L0 {
+    label="L0 — Pipeline outputs (pipeline/md/DATA_STRUCTURE_ATLAS.md)";
+    style="filled,rounded"; color="#e8e8e8"; fontsize=12;
+    node [fillcolor="#c6d8ef"];
+    L0_ElementFocus [label="Element Focus Table\n(cCREs, gene_links 24 biosamples, chip_hits, TAD_domains)"];
+    L0_ATAC        [label="ATAC Peak + case-level\n(~74 BRCA)"];
+    L0_SNV         [label="SNV\n(motif_hits Δ, cCRE_hits, gene_hits)"];
+    L0_SV          [label="SV\n(elem_hits.motif_hits, flank_motif_hits, chip_hits)"];
+    L0_CNV         [label="CNV\n(gene_hits, elem_hits, loh_flag)"];
+    L0_Meth        [label="Methylation\n(per-sample gene / cCRE / probe)"];
+    L0_RPPA        [label="RPPA\n(panel_scores, signaling_blocks,\nprotein_rna_discordance)"];
+    L0_RNA         [label="RNA log2(TPM+1)"];
+    L0_HiChIP      [label="13 per-tumor HiChIP\n(calibration anchor)", fillcolor="#f5f5a0"];
+    L0_miR         [label="miRTarBase\n(evidence-weighted)"];
+    L0_Clin        [label="Unified Clinical + Thorsson + PAM50"];
+  }
+
+  // L1
+  subgraph cluster_L1 {
+    label="L1 — Per-sample × per-gene feature builders";
+    style="filled,rounded"; color="#e8e8e8"; fontsize=12;
+    node [fillcolor="#ffe6b3"];
+    L1_expr    [label="build_expression_matrix"];
+    L1_cnv     [label="build_cnv_dosage"];
+    L1_bpro    [label="build_promoter_methylation"];
+    L1_benh    [label="build_enhancer_methylation"];
+    L1_atac    [label="build_enhancer_atac"];
+    L1_rppa    [label="build_rppa_panel"];
+    L1_prd     [label="build_protein_rna_discordance"];
+    L1_ifn     [label="build_ifn_signature"];
+    L1_thor    [label="build_thorsson_states"];
+    L1_clin    [label="build_clinical"];
+    L1_crml    [label="build_crml_snv / crml_sv", fillcolor="#f5f5a0"];
+    L1_R       [label="build_enhancer_redundancy", fillcolor="#f5f5a0"];
+    L1_BCD     [label="build_boundary_conservation_disruption", fillcolor="#f5f5a0"];
+    L1_MIR     [label="build_mirna_pressure", fillcolor="#f5f5a0"];
+    L1_lnc     [label="build_lncrna_cis_panel", fillcolor="#f5f5a0"];
+  }
+
+  // L1.5 conservation prior
+  subgraph cluster_L15 {
+    label="L1.5 — Conservation-prior calibration (04_conservation_prior.md)";
+    style="filled,rounded"; color="#fff4d6"; fontsize=12;
+    node [fillcolor="#f5f5a0"];
+    L15_calib   [label="calibrate prior\nagainst 13 HiChIP"];
+    L15_resid   [label="*_resid features\n(raw − prior)"];
+  }
+
+  // L2
+  subgraph cluster_L2 {
+    label="L2 — Composite scores";
+    style="filled,rounded"; color="#e8e8e8"; fontsize=12;
+    node [fillcolor="#c6e7c1"];
+    L2_APMint [label="APM_intrinsic\n(IFN-γ residualized)"];
+    L2_IVI    [label="IVI\nIntrinsic Visibility Index"];
+    L2_CHEM   [label="CHEMCHAIN_score"];
+    L2_COMB   [label="COMB_HLA PC1"];
+    L2_ARCH   [label="RPPA ARCH cluster"];
+    L2_BOTTLE [label="BOTTLE min-rule"];
+    L2_COHER  [label="pathway coherence"];
+    L2_JSI    [label="JSI\nJAK-STAT intactness"];
+    L2_DAV    [label="DAV dual-axis visibility\nMHCI± / NKL±"];
+  }
+
+  // L3
+  subgraph cluster_L3 {
+    label="L3 — Hypothesis engine";
+    style="filled,rounded"; color="#e8e8e8"; fontsize=12;
+    node [fillcolor="#dcdcdc"];
+    L3_reg    [label="fit_regression"];
+    L3_med    [label="fit_mediation"];
+    L3_serial [label="fit_serial_mediation"];
+    L3_surv   [label="fit_survival\n(Cox PH)"];
+  }
+
+  // L4
+  subgraph cluster_L4 {
+    label="L4 — Papers & thesis";
+    style="filled,rounded"; color="#e8e8e8"; fontsize=12;
+    node [fillcolor="#c6e7c1"];
+    L4_A1 [label="Aim 1 atlas paper"];
+    L4_A2 [label="Aim 2 scores paper"];
+    L4_A3 [label="Aim 3 platform paper"];
+  }
+
+  // L0 -> L1
+  L0_RNA  -> L1_expr;
+  L0_CNV  -> L1_cnv;
+  L0_Meth -> L1_bpro;
+  L0_Meth -> L1_benh;
+  L0_ATAC -> L1_atac;
+  L0_RPPA -> L1_rppa;
+  L0_RPPA -> L1_prd;
+  L0_RNA  -> L1_ifn;
+  L0_Clin -> L1_thor;
+  L0_Clin -> L1_clin;
+  L0_SNV  -> L1_crml;
+  L0_SV   -> L1_crml;
+  L0_SV   -> L1_BCD;
+  L0_ElementFocus -> L1_crml;
+  L0_ElementFocus -> L1_R;
+  L0_ElementFocus -> L1_BCD;
+  L0_ElementFocus -> L1_lnc;
+  L0_miR  -> L1_MIR;
+
+  // L0 -> L1.5
+  L0_HiChIP      -> L15_calib;
+  L0_ElementFocus-> L15_calib;
+  L15_calib      -> L15_resid;
+
+  // L1 -> L1.5 feedback
+  L1_R    -> L15_resid  [style=dashed];
+  L1_BCD  -> L15_resid  [style=dashed];
+  L1_atac -> L15_resid  [style=dashed];
+
+  // L1/L1.5 -> L2
+  L1_expr  -> L2_APMint;
+  L1_ifn   -> L2_APMint;
+  L1_crml  -> L2_IVI;
+  L1_R     -> L2_IVI;
+  L1_BCD   -> L2_IVI;
+  L1_MIR   -> L2_IVI;
+  L1_prd   -> L2_IVI;
+  L1_bpro  -> L2_COMB;
+  L1_benh  -> L2_COMB;
+  L1_rppa  -> L2_ARCH;
+  L1_expr  -> L2_BOTTLE;
+  L1_expr  -> L2_COHER;
+  L1_cnv   -> L2_JSI;
+  L0_SV    -> L2_JSI;
+  L0_SNV   -> L2_JSI;
+  L1_bpro  -> L2_JSI;
+  L1_expr  -> L2_DAV;
+  L1_rppa  -> L2_DAV;
+  L15_resid-> L2_IVI [style=dashed];
+
+  // L2 -> L3
+  L2_APMint -> L3_reg;
+  L2_IVI    -> L3_surv;
+  L2_IVI    -> L3_reg;
+  L2_CHEM   -> L3_serial;
+  L2_COMB   -> L3_reg;
+  L2_ARCH   -> L3_reg;
+  L2_BOTTLE -> L3_reg;
+  L2_COHER  -> L3_reg;
+  L2_JSI    -> L3_med [label="moderator"];
+  L2_DAV    -> L3_reg;
+  L1_thor   -> L3_med [label="exposure/mediator"];
+  L1_clin   -> L3_surv;
+
+  // L3 -> L4
+  L3_reg    -> L4_A1;
+  L3_med    -> L4_A1;
+  L3_reg    -> L4_A2;
+  L3_surv   -> L4_A2;
+  L3_serial -> L4_A2;
+  L3_reg    -> L4_A3;
+}
