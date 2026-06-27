@@ -251,12 +251,76 @@ miR-142 cluster). **13 target genes, 17 edges:**
   queue), not validated edges — protein anti-correlation ≠ binding, co-expression confound
   persists, and seed-family arms (e.g. miR-15/16) cannot be separated.
 
+## A7. VALIDATION & RIGOR — "why believe it"  (feeds the new slides 17–19, *before* the original ladder/limits)
+
+### A7.1 Positive controls — known biology recovered *unprompted* (non-circular)
+
+The priors — interaction weights, the high-evidence gate, the program-polarity prior,
+gene-role annotations — **never see TCGA patient expression**. So when textbook biology
+falls out of the patient data, it is genuine **internal validation**, not a fitted echo.
+
+- **Tumour-suppressor-miRNA roster** emerges as the architecture **anti-tumour leaders**:
+  **miR-30a, miR-24, miR-29b/c, let-7a**.
+- **OncomiR roster** emerges from the **gene-role** malignancy score:
+  **miR-21, miR-182, miR-10b, miR-93, miR-106b**.
+- **Three canonical axes re-emerge de novo / as unsupervised sub-modules**, never hand-fed:
+  **miR-29 → collagen/ECM**, **miR-17~92 → PTEN / replication** (our worked edge), and
+  **let-7 / miR-30 → mitotic**. Their *absence* would have made the decomposition suspect.
+- **High-evidence edges couple more strongly than sequence-only predictions** in **two**
+  independent cohorts (TCGA + Buffa) — the curation gate is doing real work.
+
+### A7.2 Negative controls — the signal is target-specific, not a backdrop
+
+- **Decoy / target-specificity control** (`cptac_target_specificity`): compare each driver
+  arm's coupling to its **cognate** protein vs **≥50 proteins it does NOT target** (decoys).
+  Cognate couplings (median **ρ = −0.33**) are **~16× more negative** than the decoy null
+  (**≈ −0.02**, centred at zero); **9/13 FDR drivers are target-specific.** The honest
+  exceptions are **broad proliferation oncomiRs (PTEN←miR-17-5p)** whose decoy nulls are
+  *themselves* somewhat negative — because they genuinely target many proliferation genes.
+- **Empirical permutation null** (Freedman–Lane rank-residual; one shared sample
+  permutation per draw, so seed-family dependence is preserved in the null) re-tests every
+  coupling at **every resolution** — significance never rests on the asymptotic p alone.
+- **Composition drop-out:** under the full immune/stromal/endothelial/CN stack, the **7
+  composition artifacts drop out** (VCL ×2, TPM4, the hematopoietic miR-142 cluster) while
+  the **17 hold** — confounded edges behave exactly as a negative control should.
+- **Variability gate:** flat arms (low SD *and* low IQR) are flagged so their null coupling
+  is not over-read.
+
+### A7.3 Inference rigor
+
+- **Dependence-aware FDR:** Benjamini–Yekutieli (valid under arbitrary dependence) **plus**
+  a seed-family Simes collapse — co-varying paralogues spend **one** slice of the error
+  budget, not several; discovery counts reported in **families**, not edges.
+- **Out-of-sample, not overfit:** the pressure construction's candidate ranking reproduces
+  on held-out patients — **5-fold CV, train→test rank-ρ = 1.0**.
+- **Constants are a prior, not a fit:** ±25% random and ±50% systematic jitter of the
+  evidence weights leaves the headline essentially unchanged (**CV ≈ 0.06**).
+
+### A7.4 Independent-cohort replication (Buffa 2011, 210 tumours, no TCGA overlap)
+
+- **Spine:** partial-ρ concordance **+0.32**; **67%** of TCGA FDR-negative edges keep a
+  negative sign in Buffa — an independent-patient leg the same-patient proteome cannot give.
+- **Orphans:** **108** triple-cohort-validated (TCGA mRNA · CPTAC protein · Buffa mRNA),
+  **85%** sign-preserved — far above the 50% chance rate.
+
+### A7.5 The validation ladder
+
+| Rung | Evidence | Strength |
+|---|---|---|
+| Reproduces known biology | textbook rosters + axes recovered unprompted | established |
+| Robustness & inference | permutation null + BY/seed-family FDR; 5-fold CV rank-ρ 1.0; constants CV 0.06 | statistical |
+| mRNA coupling | FDR-negative, confounder-adjusted partial-ρ | statistical |
+| State-resolved trajectory | brake-release / acquired-realized classes | descriptive / hypothesis |
+| Protein layer | independent CPTAC proteome residual; decoy-specific | statistical |
+| Independent cohort | Buffa +0.32, 67% sign-preserved | statistical / established |
+| Wet-lab queue | 17 composition-robust orphans + 76 uncurated nominations | hypothesis |
+
 ---
 ---
 
 # PART B — PER-SLIDE BUILD SPEC  (paste into the slides "Customize" box)
 
-> Build a ~45-minute, ~18-slide work-in-progress lab talk from the two sources. Be
+> Build a ~60-minute, ~21-slide work-in-progress lab talk from the two sources. Be
 > quantitative: when a number, formula, or gene appears in the sources, **put it on the
 > slide** — do not round to "several" or paraphrase it away. Use the companion file's
 > worked edge (**miR-17-5p → PTEN**) as a through-line. Produce exactly these slides in
@@ -278,8 +342,11 @@ miR-142 cluster). **13 target genes, 17 edges:**
 14. **★ SPLIT 12a — Protein realization (CPTAC).** Three tests (direct / mRNA-protein gap / **protein beyond mRNA**). Named FDR-significant survivors: **KRT8, DDAH1, BMP1, PEBP1, ARHGDIA, MINPP1, PTEN (the hub, −0.34 q=.008), HMGN2, ZYX**. Headlines: dozens FDR-sig, **predominantly mRNA-mediated**, target-specific (decoy control), batch-robust. **Do not call ZEB1/2 the driver — the EMT prognostic signal is LOX/ECM.**
 15. **★ SPLIT 12b — Healthy→NAT→tumour trajectory.** Three states (GTEx 346 → NAT 104 → tumour); two acquired axes (rank delta + log2fc); oncomiR surge miR-183/182/375/93/141 (+9..+13 log2). **Released brakes (189 edges/109 arms): miR-193a→ERBB2, miR-224→CXCR4, miR-22/708→MMP14/MMP2, miR-326/23b→NOTCH2.** Acquired-realized (640/129): **miR-744-3p→HLA-G + TGFB1** (novel immune axis).
 16. **★ SHARPEN 13 — Orphan discovery surface + the 17.** Show the funnel (20,663 → 15,512 → 539 → 182 → 93; triple-cohort 108/127). Then show **the 17 composition-robust edges explicitly** (the companion's 13-gene table) with anti-correlation values and gene annotations. Call out: **11/17 at q<0.05**; the metabolic lead **miR-15/16/195→PMM1**; **NCK2** as translational-only (direct ρ≈0, residual −0.31); general character = metabolism + signalling brakes, not the curated ECM crowd; miR-29→collagen as the de-novo anchor. Label all 17 **wet-lab nominations**.
-17. **Validation ladder & honest limits** — recovered (textbook edges unprompted) → mRNA coupling → state-resolved trajectory → protein layer → independent cohort → wet-lab queue; limits: bulk-tissue ceiling, metabolite-mediated regulation invisible to topology, seed-family non-identifiability, pressure construction non-unique.
-18. **Where the lab comes in** — 2–3 specific open questions (e.g. which of the 17 to CLIP/luciferase first; a matched-NAT-miRNA + proteome cohort to power acquired→protein; resolving seed-family attribution).
+17. **★ NEW — Positive controls: known biology recovered *unprompted*.** Priors never saw TCGA expression, so textbook recovery = internal validation. TS-miRNA roster (architecture leaders **miR-30a, miR-24, miR-29b/c, let-7a**); oncomiR roster (gene-role: **miR-21, miR-182, miR-10b, miR-93, miR-106b**); three axes re-emerge de novo (**miR-29→ECM, miR-17~92→PTEN, let-7/miR-30→mitotic**); high-evidence edges couple more than sequence-only in two cohorts.
+18. **★ NEW — Negative controls + inference rigor.** Decoy/target-specificity: cognate coupling median **ρ=−0.33** vs decoy null **≈−0.02** (**~16×**), **9/13 drivers target-specific** (broad proliferation oncomiRs the honest exception). **Freedman–Lane permutation null at every rung**; **Benjamini–Yekutieli + seed-family** FDR; **5-fold CV rank-ρ=1.0** (not overfit); constants **±25%/±50% jitter, CV≈0.06**; the 7 composition artifacts drop out while the 17 hold.
+19. **★ NEW — Independent replication (Buffa 2011, 210 tumours, no TCGA overlap).** Spine partial-ρ concordance **+0.32**; **67%** of TCGA neg-sig edges keep a negative sign; **108** triple-cohort-validated orphans (85% sign-preserved) — the independent-patient leg the same-patient proteome can't provide.
+20. **Validation ladder & honest limits** *(original — KEEP)* — recovered (textbook edges unprompted) → robustness/inference → mRNA coupling → state-resolved trajectory → protein layer → independent cohort → wet-lab queue; limits: bulk-tissue ceiling, metabolite-mediated regulation invisible to topology, seed-family non-identifiability, pressure construction non-unique.
+21. **Where the lab comes in** *(original — KEEP)* — 2–3 specific open questions (e.g. which of the 17 to CLIP/luciferase first; a matched-NAT-miRNA + proteome cohort to power acquired→protein; resolving seed-family attribution).
 
 > Style: define every symbol in plain words the first time. Flag preliminary results as
-> preliminary. End slide 18 by asking the lab the open questions.
+> preliminary. End slide 21 by asking the lab the open questions.
