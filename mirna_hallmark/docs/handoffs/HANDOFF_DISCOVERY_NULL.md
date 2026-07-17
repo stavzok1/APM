@@ -97,13 +97,22 @@ discovery_family_null.tsv, discovery_fall_diagnosis.tsv}`.
   miR-17/20/93, miR-25/92 are co-transcribed) are correlated, so "across families" isn't fully independent — BH
   stays valid only under PRDS (positive co-transcription supports it).
 
-## 6. THE DELIVERABLE — A1∩chimeric (convergent evidence, not per-edge FDR)
+## 6. THE DELIVERABLE — A1∩chimeric, now SITE-LEVEL (convergent evidence, not per-edge FDR)
 
 The `discovery_fall_diagnosis.tsv` "A1" class = deconv-robust candidates that pass a *standard* BH but fail the
-honest FDR. **69% of A1 (296/429) carry an independent physical duplex** (chimeric). These have triply-convergent
-support — bulk coupling + composition-robustness + orthogonal chimeric assay — which is a claim *against the null
-by concept*, since the honest per-edge FDR is unreachable. Flagship: **miR-18a→{STAM2, KIF3B, MAP3K1, NEDD4}**,
-all with Manakov duplexes; **NEDD4 confirmed by three chimeric sources** (Manakov + TarBase chimeric + qCLASH).
+honest FDR. **69% of A1 (296/429) carry an independent physical duplex** (edge-level chimeric). These have
+triply-convergent support — bulk coupling + composition-robustness + orthogonal chimeric assay — a claim *against
+the null by concept*, since the honest per-edge FDR is unreachable. Flagship: **miR-18a→{STAM2, KIF3B, MAP3K1,
+NEDD4}**, all with Manakov duplexes; **NEDD4 confirmed by three chimeric sources** (Manakov + TarBase chimeric +
+qCLASH).
+
+**⭐ SHARPENED TO SITE-LEVEL (MH-155, `discovery_site_evidence.py`).** The site ladder now runs on the discovery
+orphans: each candidate carries whether its *predicted 3'UTR site* physically coincides with a chimeric duplex,
+not just whether a duplex exists somewhere on the gene. **Site-level Manakov overlap tracks coupling at MWU
+p=1.9e−20** (vs edge-level 4.6e−8 — 12 orders sharper), and the coincidence rate climbs monotonically up the
+site-confidence ladder (7mer-A1 Manakov 9% → 8mer+conserved+3'-supp 27%) — a gradient a site-free arm cannot
+produce. **A1 sharpens 296 (edge-level) → 157 (predicted site coincides with a duplex)** — the gold set. Output:
+`output/learned/discoveries_sitelevel.tsv` (`site_manakov`, `site_clip_any`, `best_type`, `n_sites`).
 
 ## 7. OPEN WORK (suggested next steps, roughly ordered)
 
@@ -120,8 +129,13 @@ all with Manakov duplexes; **NEDD4 confirmed by three chimeric sources** (Manako
 4. **⭐ Subtype-stratified (PAM50) run (user-asked).** Pooled-cohort washout can hide subtype-specific coupling;
    `scan_all`/`scan_families` accept a gene list but need a subtype sample mask threaded through `assemble_gene`.
 5. **Family-lane evidence attach** — pool members' chimeric/ledger (currently arm-only).
-6. **Dose-response test** — coupling vs site-count / K_D quality across a family's targets (a gradient the
-   site-free null cannot produce). Extends the concept-level claim in §3.
+6. ~~Dose-response test — coupling vs site-count / K_D quality.~~ **DONE (MH-155):** `discovery_site_evidence.py`
+   — site-level chimeric overlap tracks coupling (p=1.9e−20) and climbs the site-confidence ladder monotonically.
+   Remaining: formalise the site-count → coupling dose-response as a single test and add K_D (scanMiR) as a
+   parallel axis (scanMiR already tracks coupling, ρ=−0.078; TargetScan magnitude does not).
+7. **Revive the rest of the `site_ladder`** — `utr_seed_scan` (site counts), `validate_ladder_experimental`
+   (the ladder is now runnable end-to-end; the L5 rung's POSTAR is optional, MH-149). It is the natural home for
+   the dose-response and the site-level convergent-evidence deliverable.
 
 ## 8. Data / infra notes for the next session
 
