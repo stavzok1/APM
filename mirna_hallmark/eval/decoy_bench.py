@@ -353,6 +353,15 @@ def _one(args):
     ra, fa = list(pairs.real_arm), list(pairs.fake_arm)
     Xr, Xf = pool_family(ra, Yv.index), pool_family(fa, Yv.index)
     o = {"gene": gene, "n_arm": len(ra), "n_fam": Xr.shape[1]}
+    # ⭐ Δdose per gene (fake − real, log2 units). REQUIRED by the caliper-OFF design: with DOSE_CALIPER=0
+    # every pair is kept, so the dose residual is removed POST HOC by regressing gap on Δdose (the b·Δ
+    # correction) — but that is impossible unless Δdose is emitted, and it was not. Without this column the
+    # reported gap is the RAW, dose-inflated one (MH-136b's exact error: the raw −0.0306 was inflated ~1.75×
+    # by Δdose=−2.36). ⚠ b MUST be re-derived on THIS decoy, never reused: MH-136b retracted a b measured
+    # over Δdose∈[−0.04,−0.58] and applied at −2.36, far outside its range.
+    _d = _C["dose"]
+    o["d_dose"] = float(np.nanmean(_d.reindex(fa).to_numpy(float))
+                        - np.nanmean(_d.reindex(ra).to_numpy(float)))
     for blk, C in blocks.items():
         o[f"real_{blk}"] = oof_budget(Yv, Xr, C)
         o[f"dec_{blk}"] = oof_budget(Yv, Xf, C)

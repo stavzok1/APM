@@ -11,7 +11,7 @@
 > **Sync-partner:** `docs/STATE_OF_PLAY.md` (the current-state verdicts this board plans against; if the two
 > disagree, STATE_OF_PLAY wins, and the registry wins over both).
 
-**Last updated: 2026-07-17** · planning against the registry through **MH-137**.
+**Last updated: 2026-07-17** · planning against the registry through **MH-139**.
 *Supersedes and replaces `WHATS_NEXT.md` and `LEARNED_MODEL_WHATS_NEXT.md` (both archived; both predated MH-133…137).*
 
 Status: ✅ done (anchor only) · 🔨 immediate/flagged · ⬜ open · 🔬 investigate · ⛔ blocked/dead · 🚫 deliberate skip.

@@ -9,7 +9,7 @@
 > or retracts something, update the matching block here **in the same pass**.
 > **Sync-partner:** `DISCOVERY_REGISTRY.md` (the record of record — this doc is its executive summary).
 
-**Last updated: 2026-07-17** · covering the registry through **MH-137**.
+**Last updated: 2026-07-17** · covering the registry through **MH-139**.
 
 ---
 
@@ -19,9 +19,10 @@
 doc — including the ones labelled "canonical" — may lag it. Where this doc and any other doc
 disagree, the registry wins, then this doc, then everything else.
 
-⚠ **The registry has run ahead of the docs.** MH-131…137 (the most consequential fortnight in the
-project) exist **only as registry rows**. There is no `MH13x_*.md` for them. Do not conclude from a
-doc's silence that nothing happened.
+⚠ **The registry runs ahead of the docs.** MH-131…139 (the most consequential fortnight in the
+project) exist **only as registry rows**. There is no `MH13x_*.md` for them, and that is now policy —
+the per-finding-doc pattern is **banned** (`../CLAUDE.md` §3). Do not conclude from a doc's silence
+that nothing happened.
 
 ---
 
@@ -31,7 +32,8 @@ The last two weeks were a **self-falsification campaign**, and it worked. Most o
 are dead. What survives is narrower, better-founded, and honestly bounded. The model is a good
 **coupling estimator** and is **not** an attribution engine. Edge existence rests on **one
 observational line** — both copy-number instruments are retracted. The curated edge set beats a
-properly-built fake by **≈0.012 ρ**, and that number has *shrunk* at every control improvement. The
+properly-built fake by **≈0.012–0.013 ρ** — a value two independent designs now agree on (MH-137/139),
+and which *shrank* at every control improvement before converging there. The
 single strongest result in the program is a **negative control that correctly reports zero**
 (MH-136). Two whole channels — state and protein — were measured and cancelled, for the same
 structural reason: information, not effort.
@@ -174,9 +176,14 @@ UNDERPOWERED, not refuted.*
 
 ## Axis 4 — Decoy validation (does curation beat a matched fake?)
 
-**MH-137 (2026-07-17) is the row of record. It supersedes every earlier magnitude.**
+**MH-137 is the row of record, ✅ CORROBORATED by MH-139 (both 2026-07-17).**
 
-**Core gap −0.0119 (p=3.4e-05); deconv −0.0090; retention 0.76; 1,322 genes.**
+**Core gap −0.0119 (p=3.4e-05); deconv −0.0090; retention 0.76; 1,322 genes** (dose-matched by a hard
+|Δdose|<1 caliper). **MH-139 re-measured it the other way** — caliper OFF, all 1,349 genes kept, dose
+residual removed post hoc by regressing gap on Δdose with **b re-derived on this decoy (+0.01122,
+95% CI [+0.0018,+0.0198])**: **gap at Δdose=0 = −0.0129 [−0.0205, −0.0052]**. **−0.0119 lies inside
+that CI** ⇒ the caliper's 14.4% universe restriction (which drops precisely the HIGH-DOSE regulators,
+1,164 vs 31 RPM median, p=2e-179) **cost nothing material.** Two designs, one answer: **≈−0.012 to −0.013.**
 
 ⚠ **The trajectory runs DOWN as controls improve** — this is the single most important thing to
 internalise on this axis:
