@@ -51,7 +51,33 @@ Highest value ÷ cost. ⚠ Two of the original four turned out to be claims that
    docstring in `learned/eval/__init__.py`; no `ood_cohort.py`. Inputs are on disk.
    ⚠ **Pre-register MH-114's compartment-orientation stratification** — both cohorts are bulk breast and share
    the CAF confound, so a clean replication proves nothing on its own. **(→ axiom 4; MH-104, MH-114)**
-6. ⬜ **Restore an exogenous existence validation** — see §A. Not cheap, but both `CN_INSTRUMENT.md` and MH-126
+6. ⬜ **CURATED-EDGE ADMISSIBILITY — can this HE edge repress IN BREAST AT ALL? (user-proposed 2026-07-17)**
+   An HE edge earns its place by a luciferase assay somewhere — not necessarily in **this tissue**. Two a-priori,
+   Y-blind, model-blind gates ask whether it *could* operate here:
+   * **SITE:** does the arm have a seed site in the target's 3'UTR? (TargetScan context++ ∪ scanMiR duplex ∪
+     Poisson-gated 6mer — `decoy_bench._site_maps`, already built.)
+   * **EXPRESSION:** is the arm expressed in breast — **tumour (TCGA) OR healthy (GTEx)**? (`_FLOOR = log2(11)`,
+     RPM≥10, `card.py`; GTEx breast is ingested via `gtex_mirna_matrix.py`. **Healthy matters**: an arm silent in
+     tumour but present in healthy breast is a *lost* regulator, not an inadmissible one.)
+   **An edge failing BOTH cannot repress here by any modelled mechanism** ⇒ it is curation TRANSFERRED from
+   another tissue/cell line, and it is sitting in the design diluting the real arm.
+   **⭐ HALF OF THIS IS ALREADY MEASURED, and it lands:** MH-136 — **187 genes whose curated edges are ALL
+   seedless give gap +0.0006, EXACTLY ZERO**, vs −0.0325 for 810 all-seeded genes. *No site → no repression →
+   no coupling → no gap.* MH-132 independently found the 21% positive-coupling genes are **~9/13 positive in
+   GTEx NORMAL BREAST too** ⇒ *"a **curation-transferability** problem, not a model defect"* — the same claim
+   from the other side. **The expression half has never been tested.**
+   **THE TEST (cheap — both artifacts exist):** tag every HE edge `admissible = has_site ∧ expressed_breast`;
+   re-run `decoy_bench` on the admissible subset. **PREDICTION (register before running): the gap GROWS** —
+   inadmissible edges are noise in the REAL arm, so removing them should sharpen the contrast beyond MH-137's
+   −0.0119 / MH-139's −0.0129.
+   ⚠ **Guardrails.** (a) This is **DIAGNOSTIC first, a filter second** — axiom 2a: flag, don't delete. A gate
+   that removes 30% of the universe needs its own null before it changes a headline. (b) It is **NOT** the
+   decoy's site-free rule (that defines the FAKE; this classifies the REAL). (c) Report on the gated set AND
+   the complement — if the complement is not ~0, the gate is not what we think. (d) `n_fam` shrinks under the
+   gate, and MH-147 showed the gap **scales with design width** — so re-check the width axis inside the gated
+   set, or the gain is just width. **(→ MH-136, MH-132, MH-147; `ARM_EXPRESSION_FLOOR.md`, `SILENT_ARM_REMOVAL.md`)`**
+
+7. ⬜ **Restore an exogenous existence validation** — see §A. Not cheap, but both `CN_INSTRUMENT.md` and MH-126
    name it **the single highest-value open item in the program**, and nothing else changes the program's
    standing as much.
 
