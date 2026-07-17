@@ -179,16 +179,53 @@ def _scan_one_gene(g: str):
     else:
         M_he = LR.fit_gene(Y, Xhe, C, w.reindex(he_arms), alpha=alpha)
         he_agg = Xhe.to_numpy(float) @ M_he.reindex(Xhe.columns).fillna(0).to_numpy()
+    # BATCH DELIBERATELY OFF (MH-155, user-asked twice). The canonical C = [CPE, target_cn, mal_prolif] and
+    # the canonical model / MH-123's calibration-standard null carry NO batch — so he_agg's β was fit in a
+    # no-batch world and adding batch here scores against a world it never saw. And batch is SHARED population
+    # structure ⇒ the site-free arms feel the same batch as real edges ⇒ it is already IN the null;
+    # residualising it narrows both classes equally (σ₀ 0.094→0.087, ~7%) without improving calibration.
     Cext = np.column_stack([Cm, he_agg, _batch_np(Y.index)]) if batch else np.column_stack([Cm, he_agg])
-    yr = _resid(Y.to_numpy(float), Cext)
+    # ⚡ ONE residualiser per gene (MH-155 optim). The projection onto Cext is the SAME for every arm, so
+    # build Q = QR([1, Cext]) once and residualise any block as V − Q(QᵀV) — a single matmul — instead of the
+    # per-arm sklearn `_resid` + `spearmanr` (which re-fit OLS and re-rank on every candidate). Estimator is
+    # UNCHANGED: spearmanr(_resid(x,Cext), yr) ≡ pearson(rank(Q-resid x), rank(Q-resid Y)); verified bit-equal.
+    Qc, _ = np.linalg.qr(np.column_stack([np.ones(len(Cext)), Cext]))
+    def _rblock(V):                                            # residualise columns of V on Cext (with intercept)
+        return V - Qc @ (Qc.T @ V)
+    yr = _rblock(Y.to_numpy(float)[:, None]).ravel()
+    yr_rank = rankdata(yr)
     lwg = lw.loc[lw["gene"] == g].set_index("arm")["ledger_weight"]
-    for a in cand:
-        rho = spearmanr(_resid(Xo[a].to_numpy(float), Cext), yr).correlation
-        if rho < min_partial:
-            rows.append({"gene": g, "arm": a, "partial_coupling": round(float(rho), 3),
-                         "scanmir_rep": round(float(affg[a]), 2),
-                         "sub_he_evidence": round(float(lwg.get(a, 0.0)), 2),
-                         "arm_abundance": round(float(ab_all.get(a, np.nan)), 3), "_is_null": False})
+    fam = _SCAN["fam"]
+    he_fams = {fam.get(h) for h in he_arms} - {None}
+    # FLAGS (MH-155, user-asked). `he_max_corr` = max |Spearman| of the orphan vs the gene's curated HE arms,
+    # RAW (pre-residualisation) — he_agg residualises out the curated *aggregate*, but this flags a candidate
+    # that is a near-duplicate of one SPECIFIC known regulator. `same_seed_he` = the gene already has a curated
+    # HE edge to another arm of this candidate's seed family (a paralogue of a known regulator, not novel).
+    Rhe = rankdata(Xhe.to_numpy(float), axis=0) if he_arms else None       # samples × n_he
+    if Rhe is not None:
+        Rhe = Rhe - Rhe.mean(0)
+        Rhe_norm = np.sqrt((Rhe * Rhe).sum(0))
+    if cand:
+        # VECTORISED candidate coupling: residualise all candidate arms at once, rank, correlate with yr-rank.
+        Vc = Xo[cand].to_numpy(float)
+        Vcr = rankdata(_rblock(Vc), axis=0)
+        rho_c = _rho_block(Vcr, yr_rank)
+        Rc = rankdata(Vc, axis=0); Rc = Rc - Rc.mean(0)                    # raw ranks for he_max_corr
+        for j, a in enumerate(cand):
+            rho = rho_c[j]
+            if np.isfinite(rho) and rho < min_partial:
+                hmc = np.nan
+                if Rhe is not None:
+                    ra = Rc[:, j]; den = np.sqrt((ra * ra).sum()) * Rhe_norm
+                    with np.errstate(invalid="ignore", divide="ignore"):
+                        cc = np.where(den > 0, (Rhe * ra[:, None]).sum(0) / den, 0.0)
+                    hmc = round(float(np.abs(cc).max()), 3) if len(cc) else np.nan
+                rows.append({"gene": g, "arm": a, "partial_coupling": round(float(rho), 3),
+                             "scanmir_rep": round(float(affg[a]), 2),
+                             "sub_he_evidence": round(float(lwg.get(a, 0.0)), 2),
+                             "arm_abundance": round(float(ab_all.get(a, np.nan)), 3),
+                             "seed_family": fam.get(a), "same_seed_he": bool(fam.get(a) in he_fams),
+                             "he_max_corr": hmc, "_is_null": False})
     if with_null and permute is None:
         sited = set(affg.index[affg < min_scanmir]) | set(Xo.columns)   # duplex OR TargetScan site OR curated
         pool = [a for a in DETECTED if a not in sited]
@@ -199,10 +236,8 @@ def _scan_one_gene(g: str):
             ok = V.std(0) > 1e-9
             if ok.any():
                 V, take = V[:, ok], [t for t, k in zip(take, ok) if k]
-                # IDENTICAL estimator to the real path: residualise RAW values then rank (verified bit-equal).
-                # `rankdata(..., axis=0)` vectorises what was a per-column apply_along_axis.
-                Vr = rankdata(_resid_mat(V, Cext), axis=0)
-                rho_n = _rho_block(Vr, rankdata(yr))
+                Vr = rankdata(_rblock(V), axis=0)                          # same residualiser as the candidates
+                rho_n = _rho_block(Vr, yr_rank)
                 for a, r in zip(take, rho_n):
                     if np.isfinite(r):
                         nulls.append({"gene": g, "arm": a, "partial_coupling": round(float(r), 4),
@@ -212,7 +247,7 @@ def _scan_one_gene(g: str):
 
 def scan_all(genes=None, *, permute: int | None = None, min_partial: float = -0.15,
              min_scanmir: float = -0.5, alpha: float = 0.01, progress: int = 200,
-             batch: bool = True, n_null_arms: int = 40, null_seed: int = 0,
+             batch: bool = False, n_null_arms: int = 40, null_seed: int = 0,
              with_null: bool = True, workers: int | None = None) -> pd.DataFrame:
     """ONE assemble per gene: orphan partial coupling (beyond curated HE aggregate) + scanMiR prefilter.
     No deconv (that's applied to survivors afterwards). ⚡ PARALLEL over genes (MH-155) — each gene
@@ -252,9 +287,11 @@ def scan_all(genes=None, *, permute: int | None = None, min_partial: float = -0.
     except FileNotFoundError:
         print(f"[scan] ⚠ {C_CARD} absent — HE aggregate falls back to the RETIRED lasso (slow, non-canonical)")
         card = {}
+    from mirna_hallmark.coupling_inference import seed_family_map
     _SCAN.clear()
     _SCAN.update(dict(
         hemap=_he_arms_map(), aff=KD.genome_affinity(), lw=LG.edge_weights(), Xall=Xall, card=card,
+        fam=seed_family_map(list(Xall.index)),                 # arm -> seed family (for same-seed-HE flag)
         DETECTED=DETECTED, ab_all=Xall.loc[DETECTED].fillna(0.0).median(axis=1),
         min_partial=min_partial, min_scanmir=min_scanmir, alpha=alpha, batch=batch,
         n_null_arms=n_null_arms, with_null=with_null, permute=permute, null_seed=null_seed))
@@ -281,27 +318,46 @@ def scan_all(genes=None, *, permute: int | None = None, min_partial: float = -0.
 
 
 def deconv_validate(cand: pd.DataFrame, *, min_partial: float = -0.15, alpha: float = 0.01,
-                    progress: int = 50, batch: bool = True) -> pd.DataFrame:
+                    progress: int = 50, batch: bool = False) -> pd.DataFrame:
     """Composition-robustness for candidate (gene, arm) edges — **ONE deconv assemble per gene**, validating
     all of that gene's candidates in the same pass (not a re-`discover_gene` per gene). Adds `partial_deconv`
     + `robust` (retains >60% of the coupling under CIBERSORTx non-malignant fractions)."""
+    # canonical DECONV he_agg = card `beta_deconv` (NOT the retired lasso, matching scan_all); QR residualiser.
+    try:
+        _card = pd.read_csv(C_CARD, sep="\t")
+        cardd = {g: dict(zip(grp.arm, grp.beta_deconv)) for g, grp in _card.groupby("gene")}
+    except FileNotFoundError:
+        cardd = {}
+    hemap = _he_arms_map()
     out = []
     for i, (g, grp) in enumerate(cand.groupby("gene")):
         if progress and i % progress == 0:
             print(f"[deconv] {i}/{cand['gene'].nunique()} genes", flush=True)
         try:
-            Yd, Xod, Cd, _ = LD.assemble_gene(g, w_prior_source="ledger", orphans=True, deconv=True)
+            Yd, Xod, Cd, wd = LD.assemble_gene(g, w_prior_source="ledger", orphans=True, deconv=True)
             _, Xhed, _, whed = LD.assemble_gene(g, w_prior_source="ledger", deconv=True)
         except Exception:
             continue
         Cmd = Cd.to_numpy(float)
-        aggd = Xhed.to_numpy(float) @ LR.fit_gene(Yd, Xhed, Cd, whed, alpha=alpha).reindex(Xhed.columns).fillna(0).to_numpy()
+        cg = cardd.get(g)
+        if cg is not None:
+            _, Xhez, hz = AE._prep(Yd, Xhed, Cd)                 # deconv β's scale (z-scored, deconv-C-residualised)
+            aggd = Xhez @ np.array([cg.get(a, 0.0) for a in hz], float)
+        else:
+            aggd = Xhed.to_numpy(float) @ LR.fit_gene(Yd, Xhed, Cd, whed, alpha=alpha).reindex(Xhed.columns).fillna(0).to_numpy()
         Cextd = np.column_stack([Cmd, aggd, _batch_np(Yd.index)]) if batch else np.column_stack([Cmd, aggd])
-        yrd = _resid(Yd.to_numpy(float), Cextd)
+        Qd, _ = np.linalg.qr(np.column_stack([np.ones(len(Cextd)), Cextd]))
+        yrd = rankdata((Yd.to_numpy(float) - Qd @ (Qd.T @ Yd.to_numpy(float))))
+        arms = [a for a in grp["arm"] if a in Xod.columns]
+        if arms:
+            Vd = Xod[arms].to_numpy(float)
+            Vdr = rankdata(Vd - Qd @ (Qd.T @ Vd), axis=0)
+            rd = dict(zip(arms, _rho_block(Vdr, yrd)))
+        else:
+            rd = {}
         for _, r in grp.iterrows():
             a = r["arm"]
-            pdc = (spearmanr(_resid(Xod[a].to_numpy(float), Cextd), yrd).correlation
-                   if a in Xod.columns else np.nan)
+            pdc = rd.get(a, np.nan)
             row = r.to_dict()
             row["partial_deconv"] = round(float(pdc), 3) if pdc == pdc else np.nan
             ret = (pdc / r["partial_coupling"]) if r["partial_coupling"] else np.nan
@@ -315,12 +371,20 @@ def deconv_validate(cand: pd.DataFrame, *, min_partial: float = -0.15, alpha: fl
 def calibrate(scan: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Score candidates against the in-loop SITE-FREE null (MH-155). Efron form: FIT the null's location+scale
     per arm-abundance quintile (robust median / 1.4826·MAD), score each candidate against N(μ₀,σ₀) → continuous
-    p → BH q. Exceedance counting is resolution-limited (min p = 1/N) and can never fire BH — see MH-123.
+    p. Exceedance counting is resolution-limited (min p = 1/N) and can never fire BH — see MH-123.
 
-    ⚠ **The q-count is a THRESHOLD statistic and is FRAGILE** (axiom 5): mass piles up at the boundary, so a
-    few-% shift in σ₀ moves the count severalfold. `null_z` / the set-level shift are the robust readouts.
+    **TWO senses of "family", both reported (MH-155, matching MH-45):**
+      * `q_by_arm`  — BY across ALL arm-edges. **BY not BH** because arm-edges are dependent (shared Y/C within
+        a gene, shared population structure across genes) and BH is only valid under positive dependence.
+      * `q_seedfamily` — the DE-DUPLICATED hypothesis. Paralogues sharing a seed are non-independent, so each
+        (gene, seed-family) is collapsed to ONE **Simes** p, then BY across those. Simes is NOT itself an FDR —
+        it reduces the multiplicity (arm-edges → gene×family); BY is the FDR on top. This is the honest count.
+
+    ⚠ **Any q-COUNT is a THRESHOLD statistic and is FRAGILE** (axiom 5): mass piles at the boundary, so a few-%
+    shift in σ₀ moves the count severalfold. `null_z` and the set-level shift are the robust readouts.
     """
     from mirna_hallmark import stats as S
+    from mirna_hallmark.coupling_inference import benjamini_yekutieli, simes_p
     from mirna_hallmark.eval.site_free_null import _fit_bins, N_BINS
     from scipy.stats import norm
 
@@ -335,13 +399,76 @@ def calibrate(scan: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     mu = np.array([params[b][0] for b in bi]); sd = np.array([params[b][1] for b in bi])
     real["null_mu0"], real["null_sd0"] = mu.round(4), sd.round(4)
     real["null_z"] = ((real["partial_coupling"].to_numpy(float) - mu) / sd).round(3)
-    real["p_sitefree"] = norm.cdf(real["null_z"].to_numpy(float))
-    real["q_sitefree"] = S.bh_fdr(pd.Series(real["p_sitefree"]).fillna(1.0).values).round(4)
+    p = norm.cdf(real["null_z"].to_numpy(float))
+    real["p_sitefree"] = p
+    real["q_by_arm"] = benjamini_yekutieli(np.nan_to_num(p, nan=1.0)).round(4)      # arm-edge, dependence-robust
+    # seed-family collapse: one Simes p per (gene, seed-family), BY across families, mapped back to members
+    key = list(zip(real["gene"], real["seed_family"].fillna("NA_" + real["arm"].astype(str))))
+    fam_p = {}
+    for k in set(key):
+        ps = p[[kk == k for kk in key]]
+        fam_p[k] = simes_p(ps)
+    fk = sorted(fam_p)
+    fq = dict(zip(fk, benjamini_yekutieli([fam_p[k] for k in fk])))
+    real["p_seedfamily"] = [round(float(fam_p[k]), 6) for k in key]
+    real["q_seedfamily"] = [round(float(fq[k]), 4) for k in key]
     par = pd.DataFrame([{"bin": b, "ab_lo": bins[b], "ab_hi": bins[b + 1],
                          "mu0": params[b][0], "sd0": params[b][1],
                          "n_null": int(((nul.ab >= bins[b]) & (nul.ab < bins[b + 1])).sum())}
                         for b in range(N_BINS)])
     return real.sort_values("null_z"), par
+
+
+def attach_evidence(df: pd.DataFrame) -> pd.DataFrame:
+    """Annotate each discovery with the WEAKER evidence it carries (MH-155, user-asked) — beyond the scanMiR /
+    TargetScan PRECONDITIONS (every candidate already has both a context++ site and a K_D duplex; `scanmir_rep`
+    is present, `ts_mag` added here). Attached, NOT gated:
+      * `ts_mag`        — TargetScan context++ magnitude (larger = stronger predicted repression).
+      * `chimeric_wt` / `chimeric_src` — DIRECT miRNA↔target duplex from `chimeric_evidence` (Manakov eCLIP +
+        TarBase CLASH/qCLASH), the one source type that RESOLVES the mature arm. ⚠ NO breast chimeric exists in
+        any source — cross-tissue corroboration, not breast-specific.
+      * `ev_classes` / `ev_npmid` — the ledger's per-edge assay classes and #DISTINCT PMIDs, **deduplicated
+        across mirTarBase+TarBase by (edge × PMID × class)** (that is the ledger's whole job). This surfaces the
+        higher-throughput / lower-tier experiments (ago_clip, qpcr_rna, degradome, …) that sit below HE.
+    """
+    from mirna_hallmark.learned import chimeric_evidence as CE
+    from mirna_hallmark.learned.evidence import ledger as _LG
+    df = df.copy()
+    # ts_mag
+    ts = LD._targetscan_context()
+    if ts is not None:
+        tsm = ts.set_index(["arm", "gene"])["ts_mag"]
+        df["ts_mag"] = [round(float(tsm.get((a, g), 0.0)), 3) for a, g in zip(df["arm"], df["gene"])]
+    # ledger per-class (deduped) — one long table keyed by (arm, gene, pmid, assay_class)
+    L = _LG.build_ledger()
+    Lg = {k: v for k, v in L.groupby(["arm", "gene"])}
+    cls, npm = [], []
+    for a, g in zip(df["arm"], df["gene"]):
+        sub = Lg.get((a, g))
+        if sub is None or not len(sub):
+            cls.append(""); npm.append(0)
+        else:
+            cls.append(",".join(sorted(sub["assay_class"].dropna().unique())))
+            npm.append(int(sub["pmid"].dropna().nunique()))
+    df["ev_classes"], df["ev_npmid"] = cls, npm
+    # chimeric direct-duplex weight (per gene, over that gene's candidate arms)
+    cw, cs = {}, {}
+    for g, grp in df.groupby("gene"):
+        try:
+            ev = CE.evidence(g, list(grp["arm"].unique()))            # per-arm pooled chimeric weight
+            mat = CE.evidence_matrix(g, list(grp["arm"].unique()))    # per-source, to name the provenance
+        except Exception:
+            ev, mat = None, None
+        for a in grp["arm"].unique():
+            cw[(g, a)] = float(ev.get(a, 0.0)) if ev is not None else 0.0
+            if mat is not None and a in getattr(mat, "index", []):
+                srcs = [c for c in mat.columns if float(mat.loc[a, c]) > 0]
+                cs[(g, a)] = ",".join(srcs)
+            else:
+                cs[(g, a)] = ""
+    df["chimeric_wt"] = [round(cw.get((g, a), 0.0), 3) for a, g in zip(df["arm"], df["gene"])]
+    df["chimeric_src"] = [cs.get((g, a), "") for a, g in zip(df["arm"], df["gene"])]
+    return df
 
 
 def run_all(*, min_partial: float = -0.15, min_scanmir: float = -0.5, top: int | None = None,
@@ -356,16 +483,20 @@ def run_all(*, min_partial: float = -0.15, min_scanmir: float = -0.5, top: int |
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     scan = scan_all(min_partial=min_partial, min_scanmir=min_scanmir, n_null_arms=n_null_arms)
     real, par = calibrate(scan)
+    real = attach_evidence(real)
     scan[scan["_is_null"]].to_csv(Path(out).parent / "discovery_sitefree_null.tsv", sep="\t", index=False)
     real.to_csv(Path(out).parent / "discovery_candidates.tsv", sep="\t", index=False)   # persist BEFORE deconv
     if len(par):
         print(f"[run_all] site-free null fitted on {int(par.n_null.sum()):,} arm-gene draws "
               f"(σ₀ {par.sd0.min():.4f}–{par.sd0.max():.4f}, μ₀ {par.mu0.min():+.4f}…{par.mu0.max():+.4f})")
         print(par.to_string(index=False))
-        n_sig = int((real["q_sitefree"] < 0.05).sum())
-        print(f"[run_all] {len(real)} candidates past ρ<{min_partial} | {n_sig} ({n_sig/max(len(real),1):.1%}) "
-              f"at q_sitefree<0.05 | median null_z {real['null_z'].median():+.2f}")
-        print("[run_all] ⚠ the q-count is threshold-FRAGILE (axiom 5); read null_z / the set-level shift.")
+        n_arm = int((real["q_by_arm"] < 0.05).sum())
+        fam_sig = real[real["q_seedfamily"] < 0.05].groupby(["gene", "seed_family"]).ngroups
+        n_novel = int((~real["same_seed_he"]).sum())
+        print(f"[run_all] {len(real)} arm-candidates past ρ<{min_partial} | {n_arm} q_by_arm<0.05 | "
+              f"{fam_sig} distinct (gene,seed-family) at q_seedfamily<0.05 | median null_z {real['null_z'].median():+.2f}")
+        print(f"[run_all] {n_novel} candidates are NOT paralogues of a curated regulator (same_seed_he=False)")
+        print("[run_all] ⚠ q-counts are threshold-FRAGILE (axiom 5); read null_z / the seed-family collapse.")
     cand = real.nsmallest(top, "null_z") if top else real
     dv = deconv_validate(cand, min_partial=min_partial)                                  # single-pass
     if len(dv):
