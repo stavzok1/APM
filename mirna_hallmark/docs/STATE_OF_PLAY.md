@@ -9,7 +9,7 @@
 > or retracts something, update the matching block here **in the same pass**.
 > **Sync-partner:** `DISCOVERY_REGISTRY.md` (the record of record — this doc is its executive summary).
 
-**Last updated: 2026-07-17** · covering the registry through **MH-143**.
+**Last updated: 2026-07-17** · covering the registry through **MH-144**.
 
 ---
 
@@ -19,7 +19,7 @@
 doc — including the ones labelled "canonical" — may lag it. Where this doc and any other doc
 disagree, the registry wins, then this doc, then everything else.
 
-⚠ **The registry runs ahead of the docs.** MH-131…143 (the most consequential fortnight in the
+⚠ **The registry runs ahead of the docs.** MH-131…144 (the most consequential fortnight in the
 project) exist **only as registry rows**. There is no `MH13x_*.md` for them, and that is now policy —
 the per-finding-doc pattern is **banned** (`../CLAUDE.md` §3). Do not conclude from a doc's silence
 that nothing happened.
@@ -232,10 +232,20 @@ control. Benchmark any aggregator against a fitted matched decoy.**
   arc's own both-fake-sets rule (q=0.006 FAKE1, q=0.20 FAKE2).
 - ⇒ Carry MH-130's "27% domain" as a **live hypothesis**, not an established partition.
 
-**The gene lens (`gene_atlas.tsv` STANDS; the gap columns need a re-run):**
-- **17.6% of genes are NOT MEASURABLE at all** (OOF R² ceiling of an unrestricted OLS ≤ 0); **51.7%
-  have a ceiling ≤ 2%**; 27.1% not measurable under composition C. The ceiling is **design capacity,
-  not biology** (spearman(ceiling, n_fam) = +0.564).
+**The gene lens — ✅ REPRODUCIBLE 2026-07-17 (MH-144), and one headline RETIRED:**
+- ⛔ **"17.6% NOT MEASURABLE" is FRAGILE — do not cite it.** It is a threshold count evaluated exactly
+  where the distribution **piles up**: 39.8% of genes sit within ±0.01 of zero ceiling. A faithful
+  re-implementation gives **25.5% on MH-130's own genes** while the per-gene ceilings agree at
+  **corr 0.9956** — a systematic shift of **−0.00136** (0.06% of the R² scale) reclassifies ~8% of the
+  universe. **The ROBUST statement: `ceiling ≤ 0.02` → ~52–53%**, which reproduces across implementations.
+  ⚠ Same failure mode as MH-138's per-gene median (see Axis 3) — **twice in one day**.
+- ✅ **What reproduces** (current 1,549-gene universe): ONE seed family **47.1%** · `A_COMPETENT`
+  **27.6%** · spearman(ceiling, n_fam) **+0.551** ⇒ the lens's STRUCTURE is sound.
+- ⚠ **MH-130's universe was stale + undocumented** — 1,421 genes, a strict subset of today's 1,549; the
+  150 it never saw are 96.9% single-family. It almost certainly built on the decoy-eligible set (cf.
+  MH-127's 1,436), which its doc never records.
+- The ceiling is **design capacity, not biology** — target detection fails only 7.9% of genes;
+  **regulator-design width is the binding constraint.**
 - **48.1% of genes have ONE seed family, where β ≡ uniform exactly** ⇒ *"does the learning add
   anything?"* is **UNDEFINED for half the universe — a non-question, not a null.**
 
