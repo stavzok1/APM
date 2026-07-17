@@ -6,7 +6,7 @@ Uses REAL data from disk; writes outputs to a temporary directory.
 Original code is NOT modified. Bugs are caught and reported.
 
 Usage:
-    cd /home/stavz/masters/gdc/APM
+    cd <repo root>                                        # paths are REPO_ROOT-relative
     .venv/bin/python3 -m tests.run_smoke_tests           # run all (use venv; system python3 may lack pandas)
     .venv/bin/python3 -m tests.run_smoke_tests genes     # run one section
     .venv/bin/python3 -m tests.run_smoke_tests --list    # list available tests
@@ -33,8 +33,8 @@ import numpy as np
 # ---------------------------------------------------------------------------
 # Configuration: real data paths
 # ---------------------------------------------------------------------------
-DATA = Path("/home/stavz/masters/gdc/APM/data")
-ANN  = Path("/home/stavz/masters/gdc/APM/annotations")
+DATA = REPO_ROOT / "data"                # was hardcoded /home/stavz/masters/gdc/APM (dead path on this host)
+ANN  = REPO_ROOT / "annotations"
 HGNC_ALIAS_TSV = ANN / "Alias_v5.22.xls"
 
 GENCODE_CSV       = DATA / "gencode.v49.annotation.gtf.csv"
@@ -1014,6 +1014,7 @@ def test_config(tmpdir: Path):
     assert set(TIER2_MEDIUM_GENES).issubset(set(CNV_GENES))
     assert not set(TIER4_READOUT_GENES) & set(PIPELINE_GENE_PANEL)
     assert "GZMA" in TIER4_READOUT_GENES
+    assert "GZMB" in TIER4_READOUT_GENES
     assert "GZMA" not in CNV_GENES
     assert "EZH2" in CNV_GENES
     print(f"    CNV_GENES: {len(CNV_GENES)} (deduped union)")
@@ -1163,6 +1164,16 @@ def test_registry_unittest_panel_aliases(tmpdir: Path):
         print(r.stderr)
     assert r.returncode == 0, "panel alias registry unit tests failed"
     print("    unittest tests.test_panel_alias_registry: OK")
+
+
+@smoke_test("analysis.dual_cohort_cli_contract")
+def test_analysis_dual_cohort_cli_contract(tmpdir: Path):
+    """Modules called from ``run_dual_cohort_stats`` must accept --cohort-id and --out-dir."""
+    from analysis.cohort.dual import DUAL_COHORT_STANDARD_MODULES, assert_dual_cohort_cli
+
+    for module in DUAL_COHORT_STANDARD_MODULES:
+        assert_dual_cohort_cli(module)
+    print(f"    dual-cohort CLI contract OK for {len(DUAL_COHORT_STANDARD_MODULES)} modules")
 
 
 @smoke_test("registry.module_sample_coverage_script")

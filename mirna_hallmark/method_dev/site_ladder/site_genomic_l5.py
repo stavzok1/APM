@@ -25,7 +25,14 @@ OUT = Path(__file__).parent
 _ANNOT = Path("data/gencode.v49.annotation.parquet")
 _MANAKOV = "data/external_cache/manakov_chimeric/*.tsv"
 _TARBASE = Path("data/miRNA/Homo_sapiens_TarBase-v9.tsv.gz")
-_POSTAR_AGO = Path("/tmp/claude-207054/-sci-labs-michall-stavzok-APM/e8a8c248-2ca1-467d-ae0d-4b23f52cc38e/scratchpad/postar_ago.bed")
+# POSTAR AGO peaks — the OPTIONAL, gene-agnostic (non-arm-resolving) secondary source. The arm-resolving
+# sources (Manakov chimeric, TarBase CLIP) are the ones that matter. Prefer a persisted data location; the
+# dead-session /tmp path is a legacy fallback (MH-149). If neither exists, POSTAR is skipped (module still runs).
+_POSTAR_CANDIDATES = [
+    Path("data/external_cache/postar_ago.bed"),
+    Path("/tmp/claude-207054/-sci-labs-michall-stavzok-APM/e8a8c248-2ca1-467d-ae0d-4b23f52cc38e/scratchpad/postar_ago.bed"),
+]
+_POSTAR_AGO = next((p for p in _POSTAR_CANDIDATES if p.exists()), _POSTAR_CANDIDATES[0])
 _TB_CLIP = {"HITS-CLIP", "PAR-CLIP", "CLASH", "qCLASH", "Chimeric fragments"}   # site-bearing CLIP methods
 _strip = lambda a: re.sub(r"\.\d+$", "", str(a))
 
@@ -94,7 +101,11 @@ def _tarbase_intervals(genes: set) -> dict:
 
 
 def _postar_index() -> dict:
-    """chrom -> (starts ndarray sorted, ends ndarray) for POSTAR AGO peaks (gene-agnostic occupancy)."""
+    """chrom -> (starts ndarray sorted, ends ndarray) for POSTAR AGO peaks (gene-agnostic occupancy).
+    OPTIONAL: returns {} if the bed is unavailable — the module runs on Manakov + TarBase alone."""
+    if not _POSTAR_AGO.exists():
+        print(f"[L5] POSTAR AGO bed absent ({_POSTAR_AGO}) — skipping the gene-agnostic occupancy source.")
+        return {}
     bed = pd.read_csv(_POSTAR_AGO, sep="\t", header=None, names=["chrom", "start", "end"])
     idx = {}
     for c, sub in bed.groupby("chrom"):
