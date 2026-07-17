@@ -92,13 +92,18 @@ GIBBS_ITER, GIBBS_BURN = 200, 80
 #   −0.02 at NO cost in pairs; a hard |Δdose|<1 caliper reaches −0.11 but drops 14% of pairs and degrades the
 #   LOADING match (Δs2 −0.008 -> −0.033), which is the axis that actually matters (b≈+0.30).
 AXIS_WEIGHT = {"s1": 1.0, "s2": 1.0, "dose": 10.0, "var": 0.5}
-# ⭐ DOSE CALIPER (log2 units). |Δdose| above this is FORBIDDEN and the pair is dropped.
+# ⭐ DOSE CALIPER — DEFAULT OFF (user-corrected). A 1.0 log2 caliper takes Δdose −0.90 → −0.09, but it does so
+# by DROPPING 14.4% of pairs — and they are precisely the HIGH-DOSE regulators (dropped: 1,164 RPM median vs
+# 31 RPM kept, p=2e-179), i.e. the edges delivering most of the repression. That RESTRICTS THE UNIVERSE to
+# where a matched control happens to exist, which is a worse distortion than the dose residual it fixes.
+# The residual is instead removed POST HOC by regressing the gap on Δdose (the b·Δ correction), which keeps
+# every pair. Set to 1.0 to reinstate the restricted-universe variant.
 # ⚠ I previously called the dose deficit "biology, not a bug" from a BROKEN supply table (it excluded all 702
 #   real-regulator arms GLOBALLY — but an arm regulating gene A is a fine decoy for gene B). Corrected supply
 #   vs demand per gene: 27.6 eligible arms >6 log2 against 1.33 needed — a 20× SURPLUS. The deficit is the
 #   MATCHER trading dose against loading, and a caliper fixes it: |Δ|<1.0 takes Δdose −3.05 → −0.105 for 14%
 #   of pairs. Set to 0 to disable.
-DOSE_CALIPER = 1.0
+DOSE_CALIPER = 0.0
 
 _C: dict = {}
 

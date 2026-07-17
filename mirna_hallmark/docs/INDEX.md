@@ -28,12 +28,11 @@
 
 | doc | currency | what it is |
 |-----|----------|------------|
-| [MODELING_FRAMEWORK.md](MODELING_FRAMEWORK.md) | active | Conceptual + implemented framework. "What are we modeling and why." |
+| [MODELING_FRAMEWORK.md](MODELING_FRAMEWORK.md) | active | **"What are we modeling and why" + ⭐ THE CANONICAL MODEL STATEMENT** (folded from SYNTHESIS §6b, 2026-07-17). ⚠ §9.3/§9.4's MH-38 "108 triple-validated orphans" is **RETRACTED** in place. |
 | [FORMULAS.md](FORMULAS.md) | active | Code-faithful exact formula for every quantity. The *how*. |
 | [METHODS.md](METHODS.md) | active | Methods narrative — data → pressure → gate → coupling. |
 | [DATA_SOURCES.md](DATA_SOURCES.md) | active | Every dataset read, and its preprocessing basis. |
-| [ANALYSES_CATALOG.md](ANALYSES_CATALOG.md) | living | One row per analysis component. Orient here before grepping. |
-| [MODULE_MAP.md](MODULE_MAP.md) | active | Which module does what. |
+| [ANALYSES_CATALOG.md](ANALYSES_CATALOG.md) | living | **What code exists + how to run it.** Opens with an orientation section (the code tree, the dotted-path run rule, the 35 top-level modules classified spine/baseline/pipeline), then one row per component. ✅ Absorbed `MODULE_MAP.md` 2026-07-17. |
 | [EDGE_QUESTION_TAXONOMY.md](EDGE_QUESTION_TAXONOMY.md) | active | What a single miRNA→target edge can be asked. Backs `apm-edge-question`. |
 | [GENE_QUESTION_TAXONOMY.md](GENE_QUESTION_TAXONOMY.md) | active | A gene's total incoming regulation. Backs `apm-gene-question`. |
 | [MIRNA_GENOMIC_CONTEXT_AXIS.md](MIRNA_GENOMIC_CONTEXT_AXIS.md) | active | Strand-aware host classification; the per-edge host-gene lens. |
@@ -49,13 +48,11 @@
 | doc | currency | role |
 |-----|----------|------|
 | [LEARNED_MODEL_DISCOVERY_SYNTHESIS.md](LEARNED_MODEL_DISCOVERY_SYNTHESIS.md) | active | **Capstone** — §6b = the converged model in one line. |
-| [LEARNED_MODEL_METHODS.md](LEARNED_MODEL_METHODS.md) | active | Formula-level spec. **Twin of** `_FORMAL` — always edit BOTH. |
+| [LEARNED_MODEL_METHODS.md](LEARNED_MODEL_METHODS.md) | active | Formula-level spec + **§18 estimator selection** (job → estimator → chosen-over). **Twin of** `_FORMAL` — always edit BOTH. ✅ Absorbed `ESTIMATOR_MAP` 2026-07-17. ⛔ §8 (CN causality) and 🔬 §5 (canonical attribution) now carry banners — read them. |
 | [LEARNED_MODEL_METHODS_FORMAL.md](LEARNED_MODEL_METHODS_FORMAL.md) | active | The LaTeX twin. |
-| [LEARNED_MODEL_RATIONALE.md](LEARNED_MODEL_RATIONALE.md) | active | The *why* behind every § of METHODS. |
+| [LEARNED_MODEL_RATIONALE.md](LEARNED_MODEL_RATIONALE.md) | active | The *why* behind every § of METHODS — incl. **§15/§15a identity-vs-magnitude** (⭐ why `share` is NOT identity), **§4a collinearity/identifiability**, and the **channel frame**. ✅ Absorbed the attribution trio + COLLINEARITY + CHANNEL_FUSION's live frame 2026-07-17. |
 | [LEARNED_MODEL_VALIDATION.md](LEARNED_MODEL_VALIDATION.md) | active | Validation dossier. ⚠ §1 still carries the MH-127 restatement, not MH-134/135/137. |
-| [LEARNED_MODEL_ESTIMATOR_MAP.md](LEARNED_MODEL_ESTIMATOR_MAP.md) | ⚠ **part-stale** | **TRAP** — billed canonical, but self-dates 2026-07-06 and its **main table is pre-convergence**. Only its banner UPDATEs + the pooled-HE policy are current. |
 | [LEARNED_REGULATORY_MATRIX_DESIGN.md](LEARNED_REGULATORY_MATRIX_DESIGN.md) | active | Design note on learning M. |
-| [COLLINEARITY_AND_IDENTIFIABILITY.md](COLLINEARITY_AND_IDENTIFIABILITY.md) | active | Why identity is hard. Hierarchical δ-pooling = parked. |
 
 ## 3. Findings — the record is the REGISTRY
 
@@ -92,12 +89,8 @@
 
 | doc | currency | what it is |
 |-----|----------|------------|
-| [LEARNED_MODEL_CHANNEL_FUSION_DESIGN.md](LEARNED_MODEL_CHANNEL_FUSION_DESIGN.md) | parked | The ~60-axis fusion map. ⚠ Its §7/§L/§J "discordance forces HMC" is **wrong** — corrected to Gibbs. |
 | [LEARNED_MODEL_STATE_CHANNEL_PLAN.md](LEARNED_MODEL_STATE_CHANNEL_PLAN.md) | ⛔ **CLOSED** | The state channel was **measured and cancelled** (τ≈0, info 0.6%). §10 = the post-mortem. **Do not rebuild.** Carries the settled panel decision. |
 | [CPTAC_PROTEIN_CHANNEL_PLAN.md](CPTAC_PROTEIN_CHANNEL_PLAN.md) | ⛔ **centrepiece dead** | `βᵗ` falsified at n=101. ⚠ §6 still carries VOID PAM50 numbers contradicting §1. |
-| [ATTRIBUTION_IDENTITY_VS_MAGNITUDE.md](ATTRIBUTION_IDENTITY_VS_MAGNITUDE.md) | active §0 | §0 = the identity-vs-magnitude frame. §1–§12 (softmax era) **RETIRED**. |
-| [ATTRIBUTION_PRIMITIVE.md](ATTRIBUTION_PRIMITIVE.md) | ⚠ part-stale | The `attribute()` primitive — **still unbuilt**. Its §5/§8 "live bugs" are themselves stale. |
-| [ATTRIBUTION_CONTEXT_AXIS.md](ATTRIBUTION_CONTEXT_AXIS.md) | parked | Bridge to a context axis. |
 | [ISOMIR_AWARE_MODELING.md](ISOMIR_AWARE_MODELING.md) | active | isomiR-corrected X_fam. Phase 2–4 built, **default-OFF** (coupling wash). |
 
 ## 6. Forward planning — ONE doc

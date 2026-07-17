@@ -4,9 +4,10 @@ subtitle: "Formula-level spec of every estimator"
 ---
 
 The formal math for each estimator in `mirna_hallmark/learned/`. This document is the **spec** —
-notation, objective, formula, and one line of "what it computes" — kept clean of prose. Companions:
+notation, objective, formula, and one line of "what it computes" — kept clean of prose. **Which
+estimator for which job, and why over the alternatives → §18 (in this doc).** Companions:
 `LEARNED_MODEL_RATIONALE.md` (the *why* behind every section here — section numbers mirror this
-doc), `LEARNED_MODEL_ESTIMATOR_MAP.md` (which estimator for which job), and
+doc), `LEARNED_MODEL_DISCOVERY_SYNTHESIS.md` §6b (the converged model in one line), and
 `LEARNED_MODEL_VALIDATION.md` (does it work). The precursor **pressure** model's math is separate,
 in `METHODS.md`.
 
@@ -130,6 +131,17 @@ w_{\text{fam}} = \max_{m \in \text{family}} w_m.$$
 
 # §5 — Canonical attribution: bagged family NNLS
 
+> 🔬 **UNRESOLVED — conflicts with §18 and SYNTHESIS §6b (flagged 2026-07-17; NOT adjudicated).**
+> §6b assigns **attribution to the dense learned-$\tau^2$ posterior** (the $\pi\equiv1$ readout, mean $\pm$ sd);
+> this section assigns it to **unpenalized bagged NNLS**; `attribution.shapley_identity` accepts **either**.
+> Settled: **bagged NNLS is not retired** — it is correct for the **cross-cohort gauge**, where Gibbs's
+> heavy-tailed posterior SDs break the errors-in-variables correction ($a=4.1$ vs a split-half truth of $1.0$):
+> ***bagged NNLS for the GAUGE, Gibbs for the MODEL***; on the model Gibbs reproduces better
+> ($\rho$ **0.822** vs **0.729**). ⚠ **Do not infer the attribution answer from either section until re-derived.**
+> The premise below (single-*lasso* coefficient instability) is pre-convergence framing — the lasso is a
+> baseline now; the collinearity instability is real regardless. See [`STATE_OF_PLAY.md`](STATE_OF_PLAY.md)
+> Axis 1/3 and §18.
+
 *Modules: `states._bagged_nnls`, `canonical_M`.*
 
 The stable readout of per-edge weight (single-lasso coefficients are unstable under collinearity,
@@ -203,6 +215,21 @@ Called **per gene** ($C$ carries per-gene $\text{target\_cn}$). Genome-wide: sec
 all edges.
 
 # §8 — Causality: CN-locus instrument
+
+> ⛔ **THERE IS NO LIVE "CAUSALITY" JOB — BOTH CN INSTRUMENTS ARE RETRACTED (banner added 2026-07-17).**
+> The machinery below still runs; **its causal interpretation is dead**, and the retraction is in the production
+> code (`learned/instrument.py:1128–1148`).
+> **(1) $\pi_{\text{causal}}$ is NOT an IV** (MH-124r/126): it is $\gamma_s\cdot b_{\text{fam}}$, a
+> **product-of-coefficients mediation** estimator whose $b$ is the **observational OLS slope** (the
+> instrument-orthogonal, endogenous variation) — so it re-derives the anti-correlation it was meant to validate.
+> A 2SLS ratio would be $\pi/\gamma$, not $\gamma\cdot b$. $\gamma_s$ is **site-blind** (HE $+0.19931$ vs decoy
+> $+0.19844$, $p=0.20$); the clean reduced form **clustered at the arm** gives $p=0.115$ (n.s.).
+> **(2) The within-arm two-way-FE replacement is also retracted** (MH-133): control class **71% real binders**;
+> against a genuinely site-free control $\tau=-0.0007$, $p=0.84$; fails the site-type efficacy ladder
+> ($p=0.26$). **Refutations at $n=216$k–$235$k pairs, not power failures.**
+> ⇒ **Edge existence rests on ONE observational line.** The $F>10 \wedge \text{T1-clean}$ rule remains a
+> **validity** rule (exclusion fails for ~73% of well-instrumented edges), never a reality test.
+> Current state: [`STATE_OF_PLAY.md`](STATE_OF_PLAY.md) Axis 2.
 
 *Modules: `instrument.edge_instrument`, `run_clean`.*
 
@@ -393,6 +420,63 @@ needed). **Bidirectional:**
 
 Validated: TSG-miRNAs mean $\Delta\beta +0.061$ vs oncomiRs $-0.070$ (miR-124 $+0.193$, 48 CGI probes;
 miR-21 $-0.176$). Promoter-probe-union betas cached at `output/learned/mirna_promoter_betas.parquet`.
+
+# §18 — Estimator selection: what estimator for what job
+
+*Modules: `spike_slab._gibbs_posterior`, `attribution_eb`, `attribution.shapley_identity`, `discovery.py`, `gauge.py`, `mvp.oof_gate`.*
+
+There is **one model** — a **dense learned-$\tau^2$ non-negative Bayesian posterior per gene** — read **two**
+ways:
+
+$$
+\begin{aligned}
+r &= X\beta + \varepsilon, & \varepsilon &\sim \mathcal{N}(0,\sigma^2) && r = -\operatorname{resid}(Y\mid C)\\
+\beta_m &= z_m\,\theta_m, & \theta_m &\sim \mathcal{N}^{+}(0,\nu^2) && \text{half-normal slab: } \beta \ge 0\ \text{("miRNAs repress")}\\
+& & z_m &\sim \text{Bernoulli}(\pi_m), & \nu^2,\sigma^2 &\sim \text{InvGamma} \quad (\nu^2 \text{ LEARNED, not guessed})
+\end{aligned}
+$$
+
+- $\pi \equiv 1$ (**dense**) $\to$ learned-$\tau^2$ ridge: **coupling + attribution + identifiability**.
+- **evidence-$\pi$** (**inclusion**) $\to$ spike-and-slab with a genuine PIP: **discovery**.
+
+The learned $\nu^2$ — not $L_2$ — is the edge over the lasso ($\texttt{nnridge\_cv} \approx \text{lasso}$). **The
+adaptive lasso (§3) is a BASELINE, not the model.** Canonical statement: `LEARNED_MODEL_DISCOVERY_SYNTHESIS.md`
+§6b; the *why* per estimator: `RATIONALE.md` §2a–§2g.
+
+**Inclusion policy (section-wide).** Every estimator below draws a gene's candidate regulators from
+$\text{POOLED-HE}$ (§0, `ledger.pooled_he_edges()`). Scope is the **Hallmark universe by design**;
+`he_only=False` $\to$ the full hallmark set.
+
+| # | Job / estimand | Estimator | Chosen over |
+|---|----------------|-----------|-------------|
+| 1 | **Coupling** | aggregate $X\,\mathbb{E}[\beta]$ of the **dense** ($\pi\equiv1$) posterior, on $C$-residualised $z$-scored family predictors (`_gibbs_posterior`) | **adaptive lasso** (§3): OOF mean $\rho$ $\mathbf{-0.168}$ vs $-0.152$, Wilcoxon $\mathbf{p=9\mathrm{e}{-16}}$ — at $n \gg p$ sparse selection over-shrinks the aggregate, dense learned-$\tau^2$ keeps the diffuse many-arm signal; **CV-tuned NN-ridge** ($\texttt{nnridge\_cv}\approx$ lasso $\Rightarrow$ the win is the *learned* $\nu^2$, not $L_2$); **inclusion mode** (selection discards the diffuse signal) |
+| 2 | **Attribution — magnitude** | posterior **mean $\pm$ sd** of the *same* dense fit (`attribution_eb`) | **bagged NNLS** (§5): equal *and* unified — agree $0.80$, reproducibility $0.97 > 0.98\cdot\text{NNLS}$, split-half $\rho$ $0.822$ vs $0.729$; the calibrated sd comes free (bagging only approximates it) |
+| 3 | **Attribution — identity / ownership** | **Shapley/LMG** decomposition of the fixed-weight aggregate's $R^2$ across families (§15; `attribution.shapley_identity`) | **budget share** (§5a — that is *force*, abundance-included: a different question); raw per-family $\rho$ (double-counts shared variance under collinearity). **Discipline:** identity $\perp$ coupling — it says *who*, not *whether* |
+| 4 | **Identifiability** | $\lvert z\rvert = \lvert \text{mean}/\text{sd}\rvert > 2$ off the same dense posterior | the **§9 conditioned-partial**: equal (precision $0.86$, recall $0.89$); $\lvert z\rvert>2$ **is** the full-conditional partial-Spearman, shrinkage-stabilised (Spearman $0.88$) $\Rightarrow$ no separate estimator needed. Cross-gene hierarchical pooling (§10) does not improve coupling |
+| 5 | **Discovery** | **PIP** from the **inclusion** mode (evidence-$\pi$ / learned base-rate) $+$ permutation-FDR $+$ scanMiR duplex gate $+$ deconv composition-robustness gate (`_gibbs_ss`, `priors.inclusion_prior`, §12) | the dense $\lvert z\rvert$ (over-conditions: discovery must nominate a *representative* of a collinear orphan group — model-averaging — which the full-conditional $\lvert z\rvert$ drops; the two are **complementary**, SYNTHESIS §4); NNLS / fixed support (structurally *cannot* select); the lasso (baseline) |
+| 6 | **Cross-cohort GAUGE** $\beta_{\text{src}} = a\,\beta_{\text{tgt}} + c + \delta$ | **bagged NNLS** $\beta/\text{sd}$ — **not** the Gibbs posterior (`gauge.py`, `_bagged_nnls_meansd`) | the dense Gibbs posterior — see the **carve-out** below |
+| 7 | **OOF prediction / the gate** | out-of-fold **partial-Spearman** of the aggregate vs held-out mRNA $\mid C$ (§6), 5-fold over participants (`mvp.oof_gate`) | any in-sample fit statistic (the estimand is held-out prediction). *Which comparator the gate is scored against is a validation question, not an estimator one* $\to$ `STATE_OF_PLAY.md` Axis 4 |
+| 8 | **Per-edge coupling readout** | **partial-Spearman** of arm vs gene $\mid C$ (§7) — estimator-free | any fitted $M$ (a single edge needs no model; direct partial-$\rho$ is assumption-light and robust) |
+
+**Engine: Gibbs, not HMC — measured, not aesthetic.** Every live channel is **Gaussian-conjugate**; the
+Student-t likelihood is a **scale mixture of normals** and stays conjugate (§3b); the protein discordance link
+is **additive** $\Rightarrow$ conjugate. HMC was warranted only for the A3 program-wise field, which the A4
+probe **gated out** (pooling is a wash, $\Delta\rho = -0.0006$). Only a future **non-conjugate** channel
+reopens this — binding $=$ Poisson/NB, methylation $=$ Beta.
+
+**⚠ The gauge carve-out (job 6) — fit it with bagged NNLS, keep Gibbs for the model.** Fed the dense Gibbs
+posterior's $\beta/\text{sd}$, the gauge returns $a = 4.1$ where the truth is $1.0$. **Gibbs is not the worse
+estimator** (split-half reproducibility $\rho = 0.822$ vs bagged NNLS's $0.729$) — the **errors-in-variables
+correction** is what breaks: it divides by $\operatorname{Var}(\hat\beta) - \operatorname{mean}(se^2)$, and for
+Gibbs $\operatorname{mean}(se^2)$ is dominated by a heavy tail of a few enormous posterior SDs
+($\sqrt{\operatorname{mean}(se^2)} = 0.055$ against a *typical* $se$ of $0.015$), collapsing the denominator
+(reliability $0.17$ vs NNLS's $0.72$). `gauge._MIN_RELIABILITY` **refuses** that gauge rather than silently
+returning $4.1$.
+
+**Where the prior acts.** The prior enters as **inclusion** ($\pi$, evidence-graded, §2) and as slab-**scale**
+channels ($\mu =$ scanMiR biochemical magnitude, $\tau =$ evidence depth); the slab **location stays at $0$**,
+so the prior sets *ordering*, the data sets *magnitude*. The **dense ($\pi\equiv1$) fit is prior-inert by
+design** — the prior's work is in inclusion/discovery, not in coupling.
 
 ---
 

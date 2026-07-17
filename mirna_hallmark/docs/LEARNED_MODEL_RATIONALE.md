@@ -23,13 +23,55 @@ together):
 - **Aggregate / selection / prediction** questions (does coupling exist? does the model beat abundance?
   does a new edge enter?) read the *bundle* `X·M` or an in/out decision. Collinearity inflates *coefficient*
   variance but **not** fitted-value variance — the aggregate is stable even when the individual weights are
-  not. → estimated with the **model** (adaptive lasso).
+  not.
 - **Coefficient-read / attribution** questions (how much does *this* arm contribute? how does its weight
   shift across states?) read the individual `M(m,g)` — precisely the object collinearity destabilizes
-  (single-fit bootstrap correlation ≈ 0.03). → estimated with **bagged NNLS on a fixed family support**.
+  (single-fit bootstrap correlation ≈ 0.03).
+
+> ⚠ **ESTIMATOR ASSIGNMENTS UPDATED 2026-07-17 — the distinction above is durable; the estimators it used to
+> name are not.** This block previously routed the aggregate to *"the **model** (adaptive lasso)"* and the
+> coefficient read to *"**bagged NNLS** on a fixed family support"*. Both are **pre-convergence**. Under §6b
+> the model is **ONE dense learned-τ² non-negative Bayesian posterior per gene, with two readouts of it**
+> (π≡1 dense → coupling/attribution/identifiability; evidence-π → discovery), and **the adaptive lasso is
+> RETIRED to a baseline** — it is beaten on OOF coupling genome-wide (−0.168 vs −0.152, wins 58%, Wilcoxon
+> p=9e-16), and since `nnridge_cv ≈ lasso`, the edge is the **learned τ²**, not L2. So **both** bullets are
+> now served by **the same posterior**; the robustness distinction survives as *why the two readouts are read
+> differently*, not as two different fits. **Bagged NNLS is not retired** — it remains correct for the
+> **cross-cohort gauge**, because Gibbs's heavy-tailed posterior SDs break the errors-in-variables correction
+> (it returns a=4.1 where the split-half truth is 1.0). *Rule of thumb: **bagged NNLS for the GAUGE, Gibbs for
+> the MODEL**;* on the model itself Gibbs is simply better (split-half reproducibility ρ=0.822 vs 0.729).
+> 🔬 **Open, not decided here:** §5 still names unpenalized bagged NNLS as *canonical attribution* and
+> `attribution.shapley_identity` still accepts `canonical_M` (bagged NNLS) **or** a Gibbs β draw, while §6b
+> assigns attribution to the dense posterior. **Which is canonical for attribution is unresolved — do not
+> infer it from this block.** Current state: [`STATE_OF_PLAY.md`](STATE_OF_PLAY.md) Axis 1/3.
 
 If you ever feel two sections are "doing the same thing twice," this is why they are not: they read
 different functionals of the same fit, with different robustness, so they need different machinery.
+
+---
+
+## The frame behind the frame — M is a latent, every data source is a CHANNEL
+
+*(Absorbed from `LEARNED_MODEL_CHANNEL_FUSION_DESIGN.md` §0 — the durable conceptual frame only. That
+doc's ~60-axis design map is parked and largely unbuilt; its engine claims are superseded — the engine
+verdict is **Gibbs**, see `STATE_OF_PLAY.md` Axis 1.)*
+
+The generative reading that organizes what counts as "adding information" to this model: **`M` is a
+latent regulatory parameter, and every data source is a noisy *channel* observing it through its own
+link.** The shipped model is one slice of that object — it fuses exactly **two** channels, a
+curated-evidence *prior* and the tumour-mRNA *likelihood*, and everything else (CN, CPTAC protein,
+chimeric/K_D) sits *outside* as validation. The frame says those could instead **feed** the posterior,
+with the model's several "jobs" staying **readouts** of one latent rather than separate estimators.
+The β latent is **per seed family** — same-seed members share it (§4) — so "which arm" is a
+dose-delivery readout, not a coordinate of the latent.
+
+**The honesty clause, which is the whole reason this is a map and not a mandate.** Re-estimating the
+*same* observational data with a Bayesian prior earns nothing (verified Δρ = −0.002, pre-convergence).
+**Fusion pays only where a channel is non-redundant / exogenous**, or where instrument-sharing adds
+identification. Where a channel is redundant, the fused model *reduces to the current one* — no gain,
+and it takes on link-misspecification risk for nothing. So every candidate channel is gated against the
+frequentist interim plus a shuffled null before it is built, and the burden of proof is on the channel
+to show it is carrying information the mRNA likelihood does not already have.
 
 ---
 
@@ -332,6 +374,64 @@ The individual arm is then a **nomination**, not a claim. Pooling in true RPM sp
 and not in log space matters because abundances add in linear, not log, units. The family prior is the
 **max** member weight (the family is at least as evidenced as its best-studied arm).
 
+### §4a Two kinds of collinearity — why they need different resolutions
+*(Absorbed from `COLLINEARITY_AND_IDENTIFIABILITY.md`.)*
+
+The starting fact is the one the whole design turns on: when predictors co-vary, the **aggregate** `X·M`
+is stable but the **individual member weight** is not. `ρ(X·M_lasso, X·M_baggedNNLS)` is within 0.03 and
+the aggregate bootstrap SD is ~0.01, while a single fit's *per-member* coefficient has bootstrap
+correlation **0.03** across resamples. So the gate / discovery / aggregate-coupling read the *stable*
+object and are fine; everything that asks **"who owns g"** — attribution, budget, identity, driver
+nomination — is a collinearity problem. There are **two biologically distinct kinds**, and conflating
+them is the trap.
+
+**Kind A — SEED-FAMILY collinearity (shared *targetome*).** Arms with the same seed (miR-200b/200c/429)
+have *identical predicted targets*, so they repress `g` **through the same sites**. This is the hard
+kind: confounded not just in abundance but in **targeting** — even with independent abundance you could
+not tell which arm's binding cut `g`, because it is the same binding site. So the **estimand changes**:
+we do not fight the collinearity, we make the family the unit (§4 collapse), apportion realized pressure
+to arms by linear-RPM share as an explicit *abundance nomination* rather than a resolved coefficient
+(§5a), and resolve drivers only by conditioned coupling (§9). A truly collinear member has ~no residual
+variance ⇒ it lands in `family-only` automatically, no threshold needed. **Honest floor:** when members
+are genuinely collinear, the abundance apportionment is the only split available, and it is flagged as a
+nomination, not a coefficient.
+
+**Kind B — GENOMIC-CLUSTER collinearity (shared *transcription*, distinct targetomes).** miRNAs
+co-transcribed from one locus (miR-183/96/182; miR-17~92) or co-regulated across loci (the two miR-200
+clusters) have **different seeds ⇒ different targetomes**, but **correlated abundance**. This is the
+*nuisance* kind — the abundance collinearity is real, the biology is arm-specific — and it is
+**fundamentally easier than A because they do not share targets**: typically only one cluster-mate has a
+seed match in `g`'s 3′UTR, so **sequence disambiguates what abundance cannot**. The co-transcribed
+non-targeter is riding along, not regulating `g`. Two sub-cases matter: **B1** (same polycistron — one
+transcript, one locus, one CN ⇒ only the target side and conditioned expression separate them) and
+**B2** (separate loci, co-expressed ⇒ each locus's copy number independently perturbs *its* cluster, so
+CN can act as the separator). Hence the resolution ladder, cheapest first: **sequence-first prune**
+(among abundance-collinear pairs `|ρ|≥0.7`, drop the one with ~zero biochemical potential on `g`), then
+**conditioned coupling** across cluster-mates, then **CN disambiguation for B2** — which is deliberately
+*not* a forced single owner: CN speaks only where its locus instrument is strong, and a same-polycistron
+pair is guarded back to `CN-blind`. Genome-wide, Kind B is a minority of the curated attribution set —
+only **60/1571 pooled-HE genes (4%)** carry a cross-seed collinear cluster — and the sequence-prune
+barely fires there (3 riders); it earns its keep in the **discovery/orphan** set, where site-less
+predicted edges appear.
+
+**One line:** Kind A you resolve by *collapsing* (the family **is** the answer); Kind B you resolve from
+the *target side* (sequence tells you which co-transcribed mate is real), with CN as the exogenous
+separator when the mates sit on different loci.
+
+**Why the "resolve to members" endpoint stays parked.** The single principled method covering both kinds
+is **hierarchical δ-pooling** — instead of collapse (which is the infinite-shrinkage limit), fit a
+family/cluster weight plus a **shrunk per-member δ with posterior width**, turning "unidentifiable" into
+a quantified credible interval. It is **parked**. NB do not confuse it with the *cross-gene* pooling that
+IS built (§10, `β(m,g) ~ N(μ_m, τ²)`), which was tested and did not help (Δρ −0.002; effects are
+gene-specific) — that is an **orthogonal pooling axis**, and its null does not predict that within-family
+δ-pooling would fail.
+
+**The identifiability ceiling is a LIMIT, not a fitting failure.** This is the honest reading of the
+model's own uncertainty: median posterior SD/|β| = **0.799**, and only **27.8% of 5,117 units** are
+identified at |z|>2 (`STATE_OF_PLAY.md` Axis 1). Same-seed arms share the binding site, so the design
+matrix simply lacks the variation to split them — no estimator, and no amount of fitting effort, creates
+information the data does not contain. Reporting a split anyway would be fabrication (§9).
+
 ## §5 Canonical attribution — why bagged NNLS instead of the lasso's coefficients
 
 The single-lasso coefficient `M(m,g)` is the **unstable functional** (bootstrap corr 0.03 under
@@ -499,19 +599,69 @@ Over a gene's active families there are two legitimate but *different* "who matt
 one as the other is a category error:
 
 - **MAGNITUDE (budget)** = `M_fam·X_fam` normalized — *realized force*, abundance-included. Rewards an arm
-  for being abundant.
+  for being abundant. This is *the budget*: who delivers the dose.
 - **IDENTITY** = **Shapley** credit for the fixed-weight aggregate's explained variance (LMG for the linear
-  model) — *who explains the target*, abundance-removed. Rewards on-target coupling.
+  model) — *who explains the target*, abundance-removed. Rewards on-target coupling, and is
+  **collinearity-fair** (`attribution.shapley_identity`).
 
 The `gap = identity − magnitude` is the interesting object: **+** = a quiet on-target owner (explains more
 than its budget — ESR1 miR-18: identity 0.54 / budget 0.20), **−** = a loud passenger (high budget, explains
 little — ESR1 miR-22: budget 0.26 / identity 0.01). The gap is *primarily* abundance-vs-coupling and
 *secondarily* collinearity (co-varying families split shared R²).
 
-**The discipline that keeps this from being abused:** identity is **⊥ coupling** (§6/§7). The share
-*distributes the coupling that already exists*; it is **never** evidence that a driver exists. You establish
-existence with §6/§7/§8, then use identity only to apportion credit among established drivers. This retires
-the precursor softmax-share notion of identity, which blurred the two.
+**The two measured reasons they diverge.** (i) **Coupling strength** — an abundant family whose pressure
+barely tracks `Y` is a *passenger*. ESR1 miR-22 is the **most abundant** family (abund 16.0) → budget 0.26,
+but its pressure barely tracks ESR1 (individual ρ −0.12) → identity 0.01. The converse is the **quiet
+owner**: ESR1 miR-18 is scarce (abund 3.0) yet its pressure tracks ESR1 strongly (individual ρ −0.43) → it
+owns 0.54 of the coupling on a 0.20 budget. Note the ESR1 families are **not** collinear (abundance
+|ρ| ≤ 0.29) — here the gap is *purely* abundance-vs-coupling. (ii) **Collinearity** — co-varying families
+split the shared credit; this is the smaller effect, and it appears where families genuinely co-vary (e.g.
+ZEB1's miR-200bc/429 vs miR-141/200a). The `indiv_rho` column exposes the mechanism directly: **identity
+tracks indiv_rho, budget tracks abundance.**
+
+**The identity↔magnitude rank-correlation is a budget-faithfulness diagnostic** — PTEN **+0.91** means
+budget ≈ ownership; ESR1 **+0.45** means budget over-credits loud-but-off-target arms.
+
+**Budget ≠ identity is NOT a weight-calibration failure.** Budget = `M·X̄` = mean *force* (depends on
+abundance); identity = Shapley R² = *variance explained* (depends on how the family's variation tracks `Y`).
+Abundance ≠ variance-explained, so **even a perfect `M`** keeps a loud-steady/loud-weak family high-budget
+and low-identity. `M` is already calibrated to coupling — the fit maximises the aggregate's fit — and the
+budget merely re-multiplies by `X̄`. The gap is the *signal* (loud passenger vs quiet owner), not an error,
+which is exactly why both are kept.
+
+### §15a ⭐ Why `share` (= β_f / Σβ) is NOT an identity estimator
+The single most important thing to get right in this section, and a **live mislabel** in the shipped table
+(`learned/readouts.py` labels `share` as *"ATTRIB / IDENTITY — the Bayesian Shapley"* in genome-wide
+`readouts_edges.tsv`; see `STATE_OF_PLAY.md` Axis 3). It is not identity — anyone reading
+`readouts_edges.share` as identity is reading **β**.
+
+The reason is a property of Shapley, not an implementation slip. **Shapley's whole power lives in the value
+function.** For an **ADDITIVE** value function, the Shapley value is trivially `β_f` — each player's marginal
+contribution is the same in every coalition, so the ordering-average has nothing to average over. It
+therefore **splits nothing under collinearity**, and normalising it just gives `β_f / Σβ`. That is `share`:
+a renormalised coefficient wearing a Shapley label.
+
+The doctrine's identity uses the **NON-ADDITIVE** value function `v(S) = R²(X_S · M_S, Y)`. Here a collinear
+pair's *joint* R² is far less than the sum of its members' marginal R²s — the coalition is worth less than
+its parts because the parts overlap. That sub-additivity is precisely what gives the ordering-average
+something to do: it genuinely **divides the overlap** instead of double-counting it. That is
+`attribution.shapley_identity` = **LMG on R²**, and it is why identity is collinearity-fair while `share` is
+not.
+
+**The discipline that keeps this from being abused:** identity is **⊥ coupling** (§6/§7). A high identity
+share is the **distribution of the coupling that already exists**; it is **never** evidence that a driver
+exists. **Identity says *who*, magnitude says *how much*, NEITHER says *whether*.** You establish existence
+with §6/§7/§8 — a driver call still needs FDR-significant coupling — and only then use identity to apportion
+credit among established drivers.
+
+**Why the precursor softmax identity was retired.** The precursor (abundance-removed, softmax-share)
+identity was shown to be **⊥ coupling** in the wrong way: it surfaced *silenced specialists*
+(miR-137→NCOA3, ρ = −0.02 NS) while the abundant arm was the one that actually coupled (miR-17, ρ = −0.25).
+That "identity" was a literature/structure hypothesis, not a driver. The learned Shapley identity is
+**coupling-based** — it can only credit families that contribute to the *real* coupling, so it cannot
+surface a non-coupling specialist. The structural "who is designed to repress this" question did not
+disappear; it moved to an explicit expression-free object (§16) rather than being smuggled through a
+softmax.
 
 ## §16 Structural identity — the expression-free "who is designed to repress this"
 

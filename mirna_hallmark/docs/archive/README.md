@@ -38,6 +38,27 @@ row MH-129.
 
 ---
 
+## Merged into a survivor (2026-07-17) — content moved, not lost
+
+Each of these had its **live** content folded into the doc that owns that question, then was archived.
+The pre-convergence / retired material was deliberately **left behind here** rather than carried forward.
+
+| doc | live content went to | what stayed behind |
+|-----|----------------------|--------------------|
+| `LEARNED_MODEL_ESTIMATOR_MAP.md` | **`LEARNED_MODEL_METHODS{,_FORMAL}.md` §18** (job → estimator → chosen-over) + the pooled-HE inclusion policy | The whole **pre-convergence** frame: lasso-as-primary, "Hierarchical Bayes = uncertainty layer", Bar-1/Bar-2 comparators, "spike-and-slab loses, lasso ships". ⛔ Also its **row 7 "CN-locus instrument = causality"** — there is no live causality job (MH-124r/126, MH-133). |
+| `ATTRIBUTION_IDENTITY_VS_MAGNITUDE.md` | **`LEARNED_MODEL_RATIONALE.md` §15 + §15a** — the identity-vs-magnitude frame, the loud-passenger/quiet-owner cases, and ⭐ **why `share` (β_f/Σβ) is NOT identity** | **§1–§12, the entire softmax era** — retired estimator. |
+| `ATTRIBUTION_PRIMITIVE.md` | *(nothing merged)* | The `attribute()` primitive was **never built**; its §5/§8 "live bugs" are themselves stale. |
+| `ATTRIBUTION_CONTEXT_AXIS.md` | *(nothing merged)* | Parked in its entirety. |
+| `COLLINEARITY_AND_IDENTIFIABILITY.md` | **`LEARNED_MODEL_RATIONALE.md` §4a** — Kind A vs Kind B collinearity, the resolution ladder, the identifiability ceiling as a **limit not a fitting failure** | Its §5 code map (belongs to `ANALYSES_CATALOG.md` under the one-home rule); hierarchical δ-pooling stays **parked**. |
+| `LEARNED_MODEL_CHANNEL_FUSION_DESIGN.md` | **`LEARNED_MODEL_RATIONALE.md`** — ~3 paragraphs: M as a latent parameter, every source a noisy **channel**, and the honesty clause (fusion pays **only** where a channel is non-redundant/exogenous) | The **~60-axis map** (largely unbuilt), the CN channel algebra, ⛔ and its **§7/§L/§J engine claims — "the discordance link forces HMC" is WRONG**; the verdict is Gibbs. |
+| `MODULE_MAP.md` | **`ANALYSES_CATALOG.md`** — the orientation section: code tree, the dotted-path run rule, the 35 top-level modules classified spine/baseline/pipeline | Its `learned/` build narrative (**pre-convergence**: "adaptive-lasso" estimator, Bar-3/Bar-5, "Bayes' value = uncertainty, not coupling") and the one-time wave-1/wave-2 migration mechanics. ⚠ Its folder counts were **stale**; the catalog carries freshly measured ones. |
+
+**Not archived, deliberately:** `LEARNED_MODEL_DISCOVERY_SYNTHESIS.md` stays active — only its §0/§6b was folded
+into `MODELING_FRAMEWORK.md`; its **discovery-lane architecture** (one fit → 4 jobs, candidacy TS∪K_D, the
+3-layer validation) is live and has no other home.
+
+---
+
 ## Consumed session artifacts & superseded design docs
 
 | doc | why archived |

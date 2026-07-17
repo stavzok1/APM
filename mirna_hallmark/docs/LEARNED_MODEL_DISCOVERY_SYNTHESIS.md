@@ -19,7 +19,7 @@ under the MH-127 decoy control the out-of-cohort validation that survives is CPT
 in-cohort "beats abundance" gate is a FITTING result, not a curation result**), and
 **FDR-controlled**. The discovery half nominates edges from two candidacy sources (TargetScan + scanMiR
 K_D), fuses them into a consensus, and validates each at three independent layers (mRNA, protein,
-literature) — yielding **268 triple-validated novel edges**.
+literature) — yielding **268 triple-validated novel edges**. ⚠ **QUALIFIED 2026-07-17 (MH-107/114): `dossier.tier3_protein` ran with NO composition block. ~27% of the 268 SIGN-FLIP under adjustment and mean |ρ| drops −60% (−0.190 → −0.075). The code is fixed but `output/learned/dossier.log` is still dated 2026-07-09 = PRE-FIX ⇒ the count is stale. Distinct from the retracted MH-38 '108 orphans' claim, but the same confound. Re-run before citing.**
 
 ---
 

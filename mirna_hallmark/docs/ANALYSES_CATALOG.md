@@ -9,6 +9,67 @@ independent of `analysis/` catalogs. CLI is always
 > [`docs/FORMULAS.md`](FORMULAS.md). Read it before interpreting any pressure or
 > share number.
 
+## Orientation — where the code lives (read this before scanning the table)
+
+*(Folded in from the former `MODULE_MAP.md`. Tree + module lists **re-verified 2026-07-17**;
+per-folder counts are as measured on disk today, not as originally reported.)*
+
+The subproject was de-sprawled in the **2026-07-04 reorg: top level went 160 → 36 `.py`**
+(35 modules + `__init__`). All finished one-off analyses/figures and their theme-base utilities
+moved into a themed `analyses/` + `eval/` tree; **the top level now holds only the data/infra
+spine, the frozen baseline heuristic, and `run_all`'s live pipeline steps.** So a bare component
+name in the table below (e.g. `outcome_advanced`) is generally **not** top-level — find it in the
+tree, and **run it by its new dotted path**:
+`.venv/bin/python3 -m mirna_hallmark.analyses.outcome.outcome_advanced`.
+
+```
+mirna_hallmark/
+  <35 top-level .py: SPINE + BASELINE + pipeline + run_all — see below>
+  analyses/                    # finished one-off analyses + their theme bases (OFF the build path)
+    dcis_ev/      (20)         # DCIS + EV arc: loaders, CAF/NF, mir29c, ev_mirna_* screens/deep/followup
+    misc/         (17)         # cross-theme one-offs (comovement, promiscuity, methylation, escape, …)
+    outcome/      (13)         # survival/prognostic: outcome_survival base + outcome_* + prognostic
+    cnv_locus/    (12)         # miRNA-locus CN/SV, CCLE, dosage attribution
+    pressure_dev/ (12)         # pressure heuristic sensitivity/comparison/validation/prognostic
+    spatial/      (10)         # spatial_common base + visium/xenium/mibi/deconv
+    cptac/         (8)         # CPTAC one-offs (orphan discovery/confound, acquired pressure, …)
+    evidence_dev/  (8)         # ENCORI/evidence-scoring sensitivity + comparison + fetch
+    edge_panels/   (7)         # edge pressure/corr panels + edge_prior_refinement + edge_breast_context
+    cross_state/   (4)         # cross_state_landscape/coupling/deep_dive/expression_panels bases
+    nmf/           (4)         # nmf_* + within_* signatures
+    builders/      (3)         # _build_depmap_dependency / _build_tf_census / _build_meth_chunked (cache)
+    figures/       (2)         # make_grant_figure / make_seed_grant_figures
+    mir301/        (2)         # mir301_family_depth / mir301_focus_genes
+    ops/           (2)         # rerun_* batch scripts
+    architecture/  (1)         # geneset_architecture
+  eval/           (15)         # reused OOD/validation: coupling_permutation, held_out_tuning,
+                               #   core_coupling_{deconv,composition}_retest, buffa/cptac_validation,
+                               #   targetscan_orphan_coupling, decoy_bench, …
+  learned/                     # THE LEARNED MODEL (canonical estimator) — modules + outputs are
+                               #   catalogued in LEARNED_MODEL_DISCOVERY_SYNTHESIS.md §7
+  method_dev/                  # organized subpackage (predates the reorg)
+```
+
+### The 35 modules that stayed top-level
+
+Rule: a module stays only if it is **shared infra the learned model / eval will reuse**, the
+**frozen baseline heuristic**, or a **live `run_all` pipeline step**. Nothing else.
+
+- **SPINE — data/infra, REUSE (21).** `config` `data_loaders` `stats` `hallmark_sets`
+  `mirna_arm_resolve` `healthy_anchor` `gtex_mirna_matrix` `arm_expression` `estimate_scores`
+  `brca_deconvolution` `mirna_locus_cnv` `gene_roles` `robustness_checks` `coupling_inference`
+  `build_edges` `evidence_scoring` `encori_edges` `seed_family_justification`
+  `family_normal_reference` `tcga_batch` `cptac_batch`.
+  *Evidence-refactor targets* (→ the PMID-deduped, method-centric ledger): `build_edges` (emit
+  ledger not counts), `evidence_scoring` (superseded by the learned fusion), `encori_edges`.
+- **BASELINE — frozen heuristic, do NOT extend (8).** `pressure_build` `pressure_engine`
+  `ago_gate` `hallmark_interaction` `mirna_state_class` `hybrid_pressure` `dual_spine_comparison`
+  `pressure_signature_curated_info`. The learned model must *nest and beat/match* these.
+- **PIPELINE — live `run_all` steps (5) + orchestrator.** `coupling_predictor_comparison`
+  `pam50_gene_resolution` `stratum_characterization` `subtype_contrasts`
+  `visibility_archetype_contrasts`; and **`run_all`** (the only true full-graph leaf; drives the
+  pipeline).
+
 ## Output lanes (do not mix)
 
 | Lane | Path | What belongs here |

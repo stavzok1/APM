@@ -338,7 +338,7 @@ A **blind** scan of orphan edges (miRTarBase-absent) vs CPTAC protein. The scan 
 ![](figures/F27_buffa.png)
 :::
 ::: {.column width="45%"}
-207 paired breast tumors, **no TCGA overlap**: partial-ρ **concordance +0.32**, **67% sign-concordance**; **108 orphans triple-validated** (TCGA·CPTAC·Buffa).
+207 paired breast tumors, **no TCGA overlap**: partial-ρ **concordance +0.32**, **67% sign-concordance**; ~~**108 orphans triple-validated**~~ ⛔ **RETRACTED — DO NOT PRESENT** (MH-114: the orphan screen had no composition block; 594→23 candidates, zero ECM survive; `buffa_validation` not re-run since 2026-06-26) (TCGA·CPTAC·Buffa).
 :::
 ::::
 

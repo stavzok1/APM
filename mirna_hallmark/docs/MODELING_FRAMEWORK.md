@@ -22,8 +22,59 @@ trail on the latest counts — defer to the two above.
 
 ---
 
+## ⭐ THE CANONICAL MODEL STATEMENT — what *the* model IS
+
+> **Scope note.** §§1–10 below describe the **pressure/coupling framework** — the resolutions,
+> the edge universe, the confounders, the trajectory, the validation ladder — which stands.
+> This block states **the estimator that is canonical for coupling, attribution,
+> identifiability, and discovery**. Where an older section reads as though the heuristic
+> pressure construction *is* the model, this block wins.
+> *(Folded in from `LEARNED_MODEL_DISCOVERY_SYNTHESIS.md` §6b — the canonical one-liner —
+> which remains the capstone account of the whole architecture.)*
+
+**One dense learned-τ² non-negative Bayesian posterior per gene, two readouts of it:** run
+**π ≡ 1 (dense)** for **coupling + attribution + identifiability** (prior-inert by design), and
+**evidence-π (inclusion)** for **discovery/selection**. Slab-scale carries μ·τ only. The
+**seed-rarity** channel is **off by default** (a global rarity gain promotes obscure/unexpressed
+seeds, not coupling specialists). Nothing else in the estimator space moved the needle:
+dense-vs-inclusion is the sole axis, slab shape and CV-vs-EB are second-order. **This is the model
+to cite as *the* learned model; the adaptive lasso is retired to a baseline.**
+
+Per gene `g`, on confounder-residualised, z-scored **seed-family** predictors:
+
+    r = X·β + ε ,  ε ~ N(0, σ²)                       # r = −resid(Y|C): repression → positive
+    β_m = z_m · θ_m                                    # coefficient = inclusion × magnitude
+    θ_m ~ N⁺(0, ν²)                                    # half-normal slab — β ≥ 0 ("miRNAs repress")
+    z_m ~ Bernoulli(π_m)                               # inclusion indicator
+    ν², σ² ~ InvGamma                                  # ν² (=τ²) LEARNED, not guessed
+
+One knob, `π`, switches the two modes:
+- **π ≡ 1 (DENSE)** → learned-τ² ridge. Every candidate in; ν² sets shrinkage. **The core-jobs fit.**
+- **evidence/uniform/learned-base-rate π (INCLUSION)** → spike-and-slab. Genuine selection (PIP).
+  **Discovery.**
+
+**Why it wins (genome-wide):** the dense learned-τ² ridge beats the shipped adaptive lasso on OOF
+coupling — mean ρ **−0.168 vs −0.152**, wins 58%, **Wilcoxon p = 9×10⁻¹⁶** — because at n≫p the
+lasso's sparse selection over-shrinks the aggregate, and dense learned-τ² keeps the diffuse
+many-arm signal. CV-ridge ≈ lasso, so **it is the *learned* τ², not L2 per se** — that, not
+shrinkage, is the edge over the lasso.
+
+**Two facts that constrain how you read any result from it:**
+- **Engine = Gibbs** (`learned/spike_slab.py`: `_gibbs_posterior`, `_gibbs_ss`), not HMC.
+- **The unit is the seed FAMILY.** Co-seed matures target identically, so the family→gene weight
+  is the identified estimand; **an arm-level result is a nomination, not the estimand** (§F honesty
+  rule — a member is nominable only where its abundance diverges from its family-mates).
+
+Where the detail lives: `LEARNED_MODEL_DISCOVERY_SYNTHESIS.md` (the whole architecture, four jobs
+from one posterior, the discovery pipeline, the decoy control §6d) · `LEARNED_MODEL_METHODS{,_FORMAL}.md`
+(formulas) · `LEARNED_MODEL_RATIONALE.md` (*why* per §) · `LEARNED_MODEL_VALIDATION.md` (numbers) ·
+`docs/STATE_OF_PLAY.md` Axis 1 (current verdict).
+
+---
+
 ## Contents
 
+- [⭐ The canonical model statement — what *the* model IS](#-the-canonical-model-statement--what-the-model-is)
 0. [The modeling problem and the stance](#0-the-modeling-problem-and-the-stance)
 1. [The hierarchy of resolution](#1-the-hierarchy-of-resolution)
 2. [The edge universe](#2-the-edge-universe)
@@ -930,7 +981,13 @@ Three convergent strengthenings make these more than a prediction list:
 - **Method self-validation:** the **miR-29→collagen/ECM axis emerges de novo**
   (miR-29a→COL11A1 ts_weight 0.80, clipExpNum 15; →COL6A2, →BMP1) — a textbook axis
   uncurated *at these specific targets*. It is the credibility anchor.
-- **Triple-cohort validation (MH-38):** of the **492 genuine orphans** (no miRTarBase row
+- ⛔ **Triple-cohort validation (MH-38) — RETRACTED (MH-114, 2026-07-12). DO NOT CITE THE 108.**
+  The screen that produced the 594 candidates had **no cell-composition block**; re-run adjusted, it
+  gives **594 → 23 candidates, with ZERO collagen and ZERO ECM** — the miR-29→ECM axis that *was*
+  this claim's headline (34 of the 108) does not survive. `output/buffa_validation/*` is still dated
+  **2026-06-26 and has not been re-run**, so the figures below are computed from the retracted input.
+  Corroborated independently by **MH-55**, 16 days earlier. Full retraction: registry **MH-38**.
+  *Superseded text, kept for provenance:* of the **492 genuine orphans** (no miRTarBase row
   at all), **127** were CPTAC-protein-significant, TCGA-replicated, *and* testable in the
   independent Buffa cohort; of those **108 (85%) keep a negative sign in Buffa** — far above
   the 50% chance rate — giving **108 triple-cohort-validated orphan edges** (TCGA mRNA ·
@@ -983,7 +1040,7 @@ Three convergent strengthenings make these more than a prediction list:
 | mRNA coupling | FDR-neg partial-ρ, confounder-adjusted | Basal 42/50 Hallmarks | `S` |
 | State-resolved | brake-release / acquired-realized trajectories | ERBB2/MMP/NOTCH2 R00 | `P`/`H` |
 | Protein layer | independent CPTAC proteome | PTEN←miR-17-5p protein-resid | `S` |
-| Independent cohort | Buffa replication | +0.32 concordance, 108 triple-validated | `S`/`R` |
+| Independent cohort | Buffa replication | +0.32 concordance; ~~108 triple-validated~~ | ⛔ **RETRACTED** (MH-114 — orphan screen composition-blind, 594→23, zero ECM; not re-run. The **+0.32 concordance** is unaffected. See registry MH-38.) |
 | Wet-lab queue | nominations for CLIP/luciferase | 17 composition-robust orphans, 76 uncurated | `H` |
 
 ---
