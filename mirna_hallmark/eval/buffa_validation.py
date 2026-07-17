@@ -46,7 +46,11 @@ from mirna_hallmark.hallmark_sets import HallmarkSets
 from mirna_hallmark.stats import bh_fdr
 from analysis.utils.common.loaders import partial_spearman
 
-GEO_DIR = Path(__file__).resolve().parent.parent / "data" / "external_cache" / "geo"
+# NB: use C.REPO_ROOT, never a __file__-relative hop. This module was written at the subproject top
+# level (where `parent.parent` == repo root) and later moved into `eval/`, which silently added a
+# directory level and pointed GEO_DIR at the non-existent `mirna_hallmark/data/`. The whole module had
+# been dead since that move. Every other path here already goes through `C.*`; this one now does too.
+GEO_DIR = C.REPO_ROOT / "data" / "external_cache" / "geo"
 BUFFA_MIRNA = GEO_DIR / "GSE22216_mirna_arm_matrix_paired.tsv.gz"
 BUFFA_MRNA = GEO_DIR / "GSE22219_mrna_gene_matrix.tsv.gz"
 TCGA_CORR = (C.TISSUE_REFERENCE_DIR / "edge_partial_corr_panels"

@@ -310,12 +310,23 @@ test (Buffa-trained, frozen, scored on TCGA), which removes overfitting as an ex
 **DFI +0.002, OS +0.006; panel-alone C 0.48–0.53 ≈ random.** MH-73/74 still assert the superseded
 framing and need annotating.
 
-**⛔ DEAD — "108 orphans triple-validated" (MH-38), but NOT retracted in writing.** Its input
-(`orphan_candidates.tsv`) collapsed **594 → 23** on 2026-07-12 under composition adjustment (MH-114).
-The new 23-row list contains **zero collagen, zero ECM** — the entire miR-29→ECM axis that *was* the
-headline (34/108 edges) is gone. `output/buffa_validation/*` is still from **2026-06-26 — never
-re-run**. MH-38 and MH-55 still carry **S/R** tags with no stale marker. Honest expectation on
-re-run: **single digits, possibly zero ECM edges.**
+**⛔ SETTLED BY MEASUREMENT 2026-07-17 — "108 orphans triple-validated" IS 3.** Re-ran
+`eval/buffa_validation` against the composition-adjusted screen (594 → 23 candidates since 2026-07-12,
+MH-114): **`triple_validated` 108 → 3; ECM/collagen among them 30 → 0** (all rows 64 → 0). The three
+survivors are all miRGeneDB **guide** arms — **miR-195-5p→PSMD7 · miR-181b-5p→IRS2 · miR-22-3p→STK39**
+— and only **1** is neg-sig in Buffa. **The miR-29→collagen/ECM headline is gone.** The pre-registered
+expectation ("single digits, possibly zero ECM") was correct.
+⚠ **The module had been DEAD, not merely stale.** `GEO_DIR` was a `__file__`-relative hop
+(`parent.parent/"data"`), correct when the module sat at the subproject top level — but it was moved
+into `eval/`, which added a directory level and pointed it at a non-existent `mirna_hallmark/data/`.
+Every input raised `FileNotFoundError`; the GEO cache was at the **repo root** all along. Fixed to
+`C.REPO_ROOT`. **That is why this lane was never re-run after MH-114: it could not run.** Ripple
+checked — every other `__file__`-relative path in the subproject is correct (`learned/readouts.py`,
+`learned/cptac_data.py`, `presentation/make_figures.py` use `parents[2]`; `config.py` correctly uses
+`parent.parent` at the top level).
+✅ **CONTROL — the HE-edge legs reproduce EXACTLY** (concordance **+0.319** · sign-concordance
+**0.593** · TCGA neg-sig same-sign **0.673** · neg-sig-in-Buffa **0.128**), so only the orphan lane
+moved. Pre-fix outputs preserved at `output/buffa_validation_PRE_MH114/`.
 
 **⚠ Buffa is NOT in the learned arc at all** — one docstring line in `learned/eval/__init__.py`
 (marked `STUB`); there is no `ood_cohort.py`. **β has never touched Buffa.** This is the most

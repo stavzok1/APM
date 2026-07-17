@@ -22,9 +22,12 @@ Status: ✅ done (anchor only) · 🔨 immediate/flagged · ⬜ open · 🔬 inv
 
 Highest value ÷ cost. The first four are correctness debt — a dead claim is currently live in the talk.
 
-1. 🔨 **Re-run `eval/buffa_validation` (~90 s).** It still reads the **pre-MH-114 orphan list (594 rows)**;
-   the fixed list is **23 rows with zero collagen**. `output/buffa_validation/*` is from **2026-06-26, never
-   re-run**. The "108 triple-validated orphans" headline (MH-38) is dead but still cited. **(→ MH-38, MH-114)**
+1. ✅ **DONE 2026-07-17 — `eval/buffa_validation` re-run: the "108 triple-validated orphans" ARE 3.**
+   `triple_validated` **108 → 3**; **ECM/collagen among them 30 → 0**. Survivors (all guide arms):
+   **miR-195-5p→PSMD7 · miR-181b-5p→IRS2 · miR-22-3p→STK39**; 1 neg-sig in Buffa. ⚠ **It required a code fix —
+   the module had been DEAD since the `eval/` reorg** (`GEO_DIR` was a `__file__`-relative hop pointing at a
+   non-existent `mirna_hallmark/data/`; the cache was at the repo root). **That is why it was never re-run.**
+   HE legs reproduce exactly (+0.319 / 0.593 / 0.673) = the control. `talk.qmd` updated. **(→ MH-38)**
 2. 🔨 **Annotate MH-38 / MH-55 / MH-73 / MH-74** — all four still carry **S/R** strength tags with **no stale
    marker**. MH-38/55: input collapsed 594→23. MH-73/74: superseded by MH-76's frozen-panel test. Per the
    one-home rule, the retraction banner goes in *their* rows. **(→ CLAUDE.md doc protocol §4)**
