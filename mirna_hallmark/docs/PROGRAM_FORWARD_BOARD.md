@@ -138,6 +138,18 @@ anti-correlation ladder; **data/edges/harmonization** → `DATA_SOURCES §0/§1/
     per-gene seed) — which inherits exactly this defect. **Reserve "discovery" language for the AGGREGATE lane.**
   **(→ MH-123, MH-154; `eval/site_free_null.py`, `output/site_free_null/`)**
 
+- ⬜ **DISCOVERY LANE — calibrated + expanded (MH-155), finding still DEFERRED.** `learned/discovery.py` now: fits
+  the site-free null IN-LOOP per gene (canonical Gibbs he_agg, batch off), reports `q_by_arm` (BY) + `q_seedfamily`
+  (Simes→BY, the de-duplicated hypothesis), attaches lower evidence (`chimeric_wt`, `ev_classes/ev_npmid` deduped
+  via the ledger, `ts_mag`), flags `same_seed_he` / `he_max_corr` / `no_he_gene`. **Two new lanes:** LANE 2
+  (`universe='hallmark'`) adds the ~2,792 Hallmark genes with no curated HE arm; LANE 1 (`scan_families`/`run_families`)
+  tests whole seed families uncurated for the gene as a dose aggregate. **Honest state:** per-edge ~nothing survives
+  BY (2 arm / 1 family on the HE universe) — the signal is the SET-LEVEL shift (median null_z −1.6) and the
+  concordance of INDEPENDENT evidence with coupling (chimeric-present edges couple stronger, MWU p=4.6e−8). ⬜ **NEXT:**
+  ① decide the set-level framing worth a registry finding; ② **⭐ SUBTYPE-STRATIFIED run (user-asked)** — PAM50-stratified
+  discovery, since coupling washed out in the pooled cohort can surface within a subtype; ③ family-lane evidence-attach
+  (pool members' chimeric/ledger). **(→ MH-155; `output/learned/{discoveries,discoveries_family}.tsv`)**
+
 - 🚫 **Do NOT merge `METHODS.md` into `FORMULAS.md`.** ~87 KB of spec for an estimator MH-115 **retired**;
   consolidating it buys tidiness on a baseline. Both keep a retired-estimator banner and stay. The value in
   METHODS is the two analyses above, and they are now mined.
