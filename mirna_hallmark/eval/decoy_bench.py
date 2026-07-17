@@ -196,7 +196,15 @@ def _site_maps() -> dict:
     if evf.exists():                                     # ⭐ ALL evidence, high-throughput included
         ev = pd.read_csv(evf, sep="\t")
         S |= set(map(tuple, ev[["arm", "gene"]].values))
-        print(f"  [sites] evidence exclusion (miRTarBase ALL ∪ TarBase v9): {len(ev):,} pairs")
+        # ⚠ PRINT WHAT IS ACTUALLY IN THE FILE, never a hard-coded list. The old label read
+        # "(miRTarBase ALL ∪ TarBase v9)" while the cache in fact carried FOUR sources — including
+        # Manakov_chimeric (448,330) and ENCORI_starBase (3,861). A reader auditing coverage from the log
+        # would have concluded the chimeric layer was missing and "fixed" a non-bug (it nearly happened,
+        # 2026-07-17). The cache has no builder and no code-version stamp, so the LOG is the only provenance
+        # a reader gets: it must be derived, not asserted. (CLAUDE.md axiom 6.)
+        src = (", ".join(f"{k} {v:,}" for k, v in ev["src"].value_counts().items())
+               if "src" in ev.columns else "⚠ no `src` column — provenance unknown")
+        print(f"  [sites] evidence exclusion: {len(ev):,} pairs  [{src}]")
     else:
         print("  ⚠⚠ NO evidence exclusion — decoys may be CLIP/CLASH-supported REAL edges (a 126× hole)")
     return S

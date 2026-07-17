@@ -9,7 +9,7 @@
 > or retracts something, update the matching block here **in the same pass**.
 > **Sync-partner:** `DISCOVERY_REGISTRY.md` (the record of record — this doc is its executive summary).
 
-**Last updated: 2026-07-17** · covering the registry through **MH-145**.
+**Last updated: 2026-07-17** · covering the registry through **MH-148**.
 
 ---
 
@@ -19,7 +19,7 @@
 doc — including the ones labelled "canonical" — may lag it. Where this doc and any other doc
 disagree, the registry wins, then this doc, then everything else.
 
-⚠ **The registry runs ahead of the docs.** MH-131…145 (the most consequential fortnight in the
+⚠ **The registry runs ahead of the docs.** MH-131…148 (the most consequential fortnight in the
 project) exist **only as registry rows**. There is no `MH13x_*.md` for them, and that is now policy —
 the per-finding-doc pattern is **banned** (`../CLAUDE.md` §3). Do not conclude from a doc's silence
 that nothing happened.
@@ -225,12 +225,17 @@ It also closes the **21% positive-coupling mystery** (MH-132): controlled for re
 A fitted matched fake also beats real unfitted abundance. **Rule: an abundance baseline is not a
 control. Benchmark any aggregator against a fitted matched decoy.**
 
-**Domain of validity — half-confirmed:**
-- **Width axis (`n_fam ≥ 3`): CONFIRMED** and sharpened — the gap concentrates at 3–4 families
-  (−0.0314, p=0.0006). ⚠ Not monotone under MH-137: it **peaks at 3–4 and falls at 5+**.
-- **Evidence axis (`w_max > median`): NEVER tested on a clean control.** Its only support fails the
-  arc's own both-fake-sets rule (q=0.006 FAKE1, q=0.20 FAKE2).
-- ⇒ Carry MH-130's "27% domain" as a **live hypothesis**, not an established partition.
+**Domain of validity — ⛔ THE "27% DOMAIN" IS RETIRED AS STATED (MH-147, 2026-07-17).** Re-tested on the
+canonical decoy (1,349 genes):
+- ✅ **Width axis (`n_fam ≥ 3`) HOLDS** — n=519, gap **−0.0264, p=4.2e-06**.
+- ⛔ **Evidence axis (`w_max > median`) ADDS NOTHING GIVEN WIDTH** — within `n_fam ≥ 3`, high (−0.0298)
+  vs low (−0.0130): **MWU p=0.293**. It separates alone only because it correlates with width.
+  **The rule reduces to `n_fam ≥ 3`.**
+- ⛔ **The complement is NOT zero** — MH-130's load-bearing "outside: +0.0002, p=0.72" becomes
+  **−0.0114, p=6.3e-03 (n=936)**. The model works outside its claimed domain, just weaker.
+- ⇒ **There is no partition. Competence is a GRADIENT in design width** — consistent with
+  `spearman(ceiling, n_fam)=+0.551`. **The defensible claim:** the gap SCALES WITH REGULATOR-DESIGN
+  WIDTH, is ~2.3× larger at `n_fam ≥ 3` than in the complement, and is **nowhere exactly zero**.
 
 **The gene lens — ✅ REPRODUCIBLE 2026-07-17 (MH-144), and one headline RETIRED:**
 - ⛔ **"17.6% NOT MEASURABLE" is FRAGILE — do not cite it.** It is a threshold count evaluated exactly
