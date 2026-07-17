@@ -2,8 +2,8 @@
 
 Forward-looking extensions, the discoveries each could yield, and the open
 questions / artifacts they would resolve. Ordered roughly by expected
-payoff-to-effort. Anchors: findings in [`BIOLOGICAL_SYNTHESIS.md`](BIOLOGICAL_SYNTHESIS.md)
-(MH-/D- ids), methods in [`METHODS.md`](METHODS.md).
+payoff-to-effort. Anchors: findings in [`BIOLOGICAL_SYNTHESIS.md`](../BIOLOGICAL_SYNTHESIS.md)
+(MH-/D- ids), methods in [`METHODS.md`](../METHODS.md).
 
 Legend: **[discovery]** = new biology it could surface; **[resolution]** = a
 current caveat/artifact it would settle; effort ≈ S/M/L.
@@ -13,7 +13,7 @@ current caveat/artifact it would settle; effort ≈ S/M/L.
 ## Tier 1 — highest payoff, builds directly on current results
 
 ### 1.-1 Aggregate "raw force" vs abundance-sum baseline, tumor↔GTEx Δρ (M) — **DESIGN**
-Full plan in [`method_dev/aggregate_pressure/AGGREGATE_FORCE_VS_ABUNDANCE_DESIGN.md`](../method_dev/aggregate_pressure/AGGREGATE_FORCE_VS_ABUNDANCE_DESIGN.md); results in `method_dev/aggregate_pressure/AGGREGATE_PRESSURE_FINDINGS.md`.
+Full plan in [`method_dev/aggregate_pressure/AGGREGATE_FORCE_VS_ABUNDANCE_DESIGN.md`](../../method_dev/aggregate_pressure/AGGREGATE_FORCE_VS_ABUNDANCE_DESIGN.md); results in `method_dev/aggregate_pressure/AGGREGATE_PRESSURE_FINDINGS.md`.
 Gene-rung test (aggregation lemma regime): does promiscuity-attenuated force
 `Σ a(m,s)·w_eff/D(m)` detect net repression better than `Σ a(m,s)`, and is the
 tumor→healthy Δρ stronger in the force form? Healthy = **GTEx breast (~300 paired,

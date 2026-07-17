@@ -57,16 +57,21 @@
 | [LEARNED_REGULATORY_MATRIX_DESIGN.md](LEARNED_REGULATORY_MATRIX_DESIGN.md) | active | Design note on learning M. |
 | [COLLINEARITY_AND_IDENTIFIABILITY.md](COLLINEARITY_AND_IDENTIFIABILITY.md) | active | Why identity is hard. Hierarchical δ-pooling = parked. |
 
-## 3. Findings — deep dives (the registry is the record; these are appendices)
+## 3. Findings — the record is the REGISTRY
+
+> ✅ **The six `MH12x_*.md` docs were archived 2026-07-17** — the per-finding-doc pattern is retired and now
+> **banned** (`../CLAUDE.md` §3). Every finding was verified to have a registry row first (MH-125/128/130 were
+> backfilled). Read [DISCOVERY_REGISTRY.md](DISCOVERY_REGISTRY.md); the docs below are deep-dive appendices in
+> [`archive/`](archive/README.md), kept for provenance.
 
 | doc | currency | what it holds |
 |-----|----------|---------------|
-| [MH124_ANTICOUPLING_VALIDITY.md](MH124_ANTICOUPLING_VALIDITY.md) | ⚠ **mixed** | §4b (the attribution estimand argument) **STANDS**. **§5/§5b are VOID — do not cite** (`pi_causal` not exogenous). |
-| [MH125_WHAT_SURVIVES.md](MH125_WHAT_SURVIVES.md) | ⚠ mixed | The adversarial re-audit. Its exogenous leg is retracted (MH-133). |
-| [MH126_ANEUPLOIDY_AND_GRADED_ATTRIBUTION.md](MH126_ANEUPLOIDY_AND_GRADED_ATTRIBUTION.md) | active | **Cite this for attribution rank.** Ploidy = a calibration fix, not a power fix. Carries the w-circularity gate. |
-| [MH127_DECOY_MODEL_GENE_BUDGET.md](MH127_DECOY_MODEL_GENE_BUDGET.md) | ⛔ **superseded** | Magnitudes superseded by **MH-137**. Its "in-cohort tie" verdict is **reversed**. |
-| [MH128_DECOY_RESOLUTION_AND_CN_GOLD.md](MH128_DECOY_RESOLUTION_AND_CN_GOLD.md) | ⛔ superseded | §3's CN leg retracted by MH-133. |
-| [MH130_GENE_LENS.md](MH130_GENE_LENS.md) | ⚠ **half** | The **atlas** half (ceilings, 17.6% unmeasurable, 48.1% one-family) **STANDS**. The **gap** half sits on a discredited decoy. |
+| [MH124_ANTICOUPLING_VALIDITY.md](archive/MH124_ANTICOUPLING_VALIDITY.md) | ⚠ **mixed** | §4b (the attribution estimand argument) **STANDS**. **§5/§5b are VOID — do not cite** (`pi_causal` not exogenous). |
+| [MH125_WHAT_SURVIVES.md](archive/MH125_WHAT_SURVIVES.md) | ⚠ mixed | The adversarial re-audit. Its exogenous leg is retracted (MH-133). |
+| [MH126_ANEUPLOIDY_AND_GRADED_ATTRIBUTION.md](archive/MH126_ANEUPLOIDY_AND_GRADED_ATTRIBUTION.md) | active | **Cite this for attribution rank.** Ploidy = a calibration fix, not a power fix. Carries the w-circularity gate. |
+| [MH127_DECOY_MODEL_GENE_BUDGET.md](archive/MH127_DECOY_MODEL_GENE_BUDGET.md) | ⛔ **superseded** | Magnitudes superseded by **MH-137**. Its "in-cohort tie" verdict is **reversed**. |
+| [MH128_DECOY_RESOLUTION_AND_CN_GOLD.md](archive/MH128_DECOY_RESOLUTION_AND_CN_GOLD.md) | ⛔ superseded | §3's CN leg retracted by MH-133. |
+| [MH130_GENE_LENS.md](archive/MH130_GENE_LENS.md) | ⚠ **half** | The **atlas** half (ceilings, 17.6% unmeasurable, 48.1% one-family) **STANDS**. The **gap** half sits on a discredited decoy. |
 | [CN_INSTRUMENT.md](CN_INSTRUMENT.md) | ⚠ mixed | The instrument's design + the 73% exclusion-failure verdict. ⛔ Both instruments now retracted (MH-133). |
 
 ## 4. Findings surface + detail reports

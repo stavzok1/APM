@@ -923,7 +923,7 @@ used for primary calls. Example: miR-151a-3p partial ρ **0.42** (full n=1,032) 
 **ρ distribution (boxplot).** Per-arm marginal vs partial ρ across all tested
 arms (`figures/mirna_cnv_expr_concordance_rho_boxplot.png`):
 
-![TCGA CN→expression concordance: marginal vs partial ρ](../output/mirna_locus_cnv/figures/mirna_cnv_expr_concordance_rho_boxplot.png)
+![TCGA CN→expression concordance: marginal vs partial ρ](../../output/mirna_locus_cnv/figures/mirna_cnv_expr_concordance_rho_boxplot.png)
 
 | Statistic | Marginal Spearman ρ | Partial ρ (CPE + HRD) |
 |-----------|--------------------:|----------------------:|

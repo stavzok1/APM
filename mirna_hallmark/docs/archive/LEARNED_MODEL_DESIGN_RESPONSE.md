@@ -2,7 +2,7 @@
 
 > **⚠ HISTORICAL — DESIGN-PHASE (2026-07-04), SUPERSEDED. Do NOT cite this as the current model.** The model has
 > since CONVERGED: **one dense learned-τ² Bayesian posterior, two readouts, adaptive lasso RETIRED** — see
-> **[`LEARNED_MODEL_DISCOVERY_SYNTHESIS.md §6b`](LEARNED_MODEL_DISCOVERY_SYNTHESIS.md)**. In particular this doc's
+> **[`LEARNED_MODEL_DISCOVERY_SYNTHESIS.md §6b`](../LEARNED_MODEL_DISCOVERY_SYNTHESIS.md)**. In particular this doc's
 > "lasso as one baseline among several", the Decision A–J log, and the 5-Bar framing predate that convergence;
 > where they say "the model is X" or "X has no payoff", read §6b instead. Kept for provenance/reasoning only.
 

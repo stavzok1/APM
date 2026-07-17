@@ -14,6 +14,32 @@
 
 Archived 2026-07-17. All files retain full git history (`git log --follow`).
 
+---
+
+## The `MH12x_*.md` series — the per-finding docs
+
+**The pattern is retired and now banned** (`../../CLAUDE.md` → documentation protocol §3). Six docs / 184 KB,
+abandoned at MH-130 while the science ran on to MH-137 — and precisely where the retractions rotted (MH-127
+still read as current while MH-137 had superseded its central number four times).
+**The registry row is the record of a finding.** Every finding below has one, verified before archiving.
+
+| doc | registry rows that now carry it | what the doc still holds |
+|-----|-------------------------------|--------------------------|
+| `MH124_ANTICOUPLING_VALIDITY.md` | MH-124 · 124b · **124r** | ⭐ §4b's **estimand argument** (the literature's claim is a *level* claim; β is a *covariance* functional — asking β to recover it is an estimand mismatch, not a model failure). **§5/§5b are VOID** — do not cite. |
+| `MH125_WHAT_SURVIVES.md` | **MH-125** *(backfilled 2026-07-17)* | The adversarial re-audit of 19 claims: 1 survives / 6 untouched / 7 retest / 5 die. |
+| `MH126_ANEUPLOIDY_AND_GRADED_ATTRIBUTION.md` | MH-126 · 126b · 126c | The attribution **rank** result (cite this, not §4b) + the **w-circularity gate**. Ploidy = calibration fix, not power fix. |
+| `MH127_DECOY_MODEL_GENE_BUDGET.md` | MH-127 · 127b · 127c | ⛔ Magnitudes **superseded by MH-137**; its "in-cohort tie" verdict is **reversed**. |
+| `MH128_DECOY_RESOLUTION_AND_CN_GOLD.md` | **MH-128** *(parent, backfilled)* · 128a · 128b · 128c | Its own phase-3 headline was refuted by its own three adversaries. |
+| `MH130_GENE_LENS.md` | **MH-130** *(parent, backfilled)* · 130a–e | The **atlas** half stands (17.6% unmeasurable · 48.1% one-family · the 27% domain). The **gap** half sits on a decoy since discredited. |
+
+⚠ **`MH-129` is an ID COLLISION** — the same id names two unrelated pieces of work (the variance-match gate +
+FAKE3 build; and the within-arm two-way-FE CN instrument). Both legs are independently retracted. See registry
+row MH-129.
+
+---
+
+## Consumed session artifacts & superseded design docs
+
 | doc | why archived |
 |-----|--------------|
 | `LEARNED_MODEL_DESIGN_RESPONSE.md` | Design-phase report (2026-07-04). **Self-declares HISTORICAL/SUPERSEDED** in its own banner. The model converged after it: one dense learned-τ² posterior, two readouts, lasso retired (`LEARNED_MODEL_DISCOVERY_SYNTHESIS.md §6b`). Its Decision A–J / Bars framing is pre-convergence. |

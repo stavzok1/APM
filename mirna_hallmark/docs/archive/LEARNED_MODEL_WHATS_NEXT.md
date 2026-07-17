@@ -238,7 +238,7 @@ now that the estimator is settled; and (optional) canonicalize the `shift_vs_wei
 
 > **⚠ PRE-CONVERGENCE (2026-07-05) — READ WITH THE §6b LENS.** This section is scored against the design-phase
 > `LEARNED_MODEL_DESIGN_RESPONSE.md` decision log and predates the model converging to **one Bayesian posterior,
-> lasso retired** ([`DISCOVERY_SYNTHESIS §6b`](LEARNED_MODEL_DISCOVERY_SYNTHESIS.md)). So "A Bayes-primary → PAYOFF
+> lasso retired** ([`DISCOVERY_SYNTHESIS §6b`](../LEARNED_MODEL_DISCOVERY_SYNTHESIS.md)). So "A Bayes-primary → PAYOFF
 > LOW / lasso stays primary" and "F full family pooling → subsumed" describe **re-estimating the same observational
 > data with a Bayesian prior** (verified −0.002 — no *new information*); they do **NOT** verdict against folding
 > **exogenous** channels (CN dose, protein) or the causal/exclusion machinery **into** the one posterior, which is a
