@@ -121,8 +121,20 @@ never *scale*: MH-45's BY count (**33.3%**) sits inside the **35.3%** rate for *
 **The calibration standard is `eval/site_free_null.py`** (rescued from `/tmp`, reproduces MH-123 exactly).
 It is **conservative** — the site-free class holds some real non-canonical targets.
 
+**⭐ THE DISCOVERY LANE, RESOLVED (MH-155/156).** Per-edge and per-family discovery in bulk are **EMPTY**
+under the honest FDR (empirical heavy-tailed null → Simes within family → BH across families; `q_family_emp<0.05
+= 0` everywhere). BY was demoted to a worst-case sensitivity bound — it corrected the wrong defect (dependence,
+not the heavy tail; it even kept 2 tail false-positives the empirical FDR caught). **The defensible claim is
+CONVERGENT-EVIDENCE, not per-edge:** coupling co-varies with independent biochemistry, abundance-controlled, on
+multiple axes — **site-level chimeric overlap partial ρ=−0.096 (p=2.7e−15), scanMiR K_D −0.091 (p=7e−14),
+site-confidence rung −0.050 (p=3.9e−5); site COUNT n.s.** (quality not quantity) — and the site–duplex
+coincidence climbs the site-confidence ladder monotonically (9%→27%). Deliverable = **A1∩site-level-chimeric,
+157 edges** (miR-18a/miR-17~92 cluster). Effects are SMALL by construction (bulk is weak per-edge); the strength
+is the convergence. **⚠ NOT a per-edge licence.** Home: `learned/discovery.py`, `method_dev/site_ladder/`.
+
 **OPEN:** restoring an exogenous existence validation is, by both docs' own assessment, **the single
-highest-value open item in the program.**
+highest-value open item in the program.** For the discovery lane specifically: correlation-matched/scrambled-seed
+family null · unify the two lanes by family size · subtype-stratified (PAM50) run.
 
 ---
 
