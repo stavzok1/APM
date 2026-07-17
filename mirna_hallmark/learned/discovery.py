@@ -132,6 +132,28 @@ def _rho_block(Vr: np.ndarray, yr: np.ndarray) -> np.ndarray:
 _SCAN: dict = {}
 
 
+def _prime_scan(*, min_partial, min_scanmir, alpha=0.01, batch, n_null_arms, with_null, permute, null_seed):
+    """Populate the module-global `_SCAN` (read-only shared state forked workers inherit) — used by BOTH the
+    arm lane (`scan_all`) and the family lane (`scan_families`). See `_scan_one_gene` for the DETECTED-pool /
+    card rationale."""
+    from mirna_hallmark.coupling_inference import seed_family_map
+    Xall = LD._load()["X"]
+    DETECTED = [a for a in Xall.index if np.isfinite(Xall.loc[a].to_numpy(float)).mean() > 0.5]
+    try:
+        _card = pd.read_csv(C_CARD, sep="\t")
+        card = {g: dict(zip(grp.arm, grp.beta)) for g, grp in _card.groupby("gene")}
+    except FileNotFoundError:
+        print(f"[scan] ⚠ {C_CARD} absent — HE aggregate falls back to the RETIRED lasso (slow, non-canonical)")
+        card = {}
+    _SCAN.clear()
+    _SCAN.update(dict(
+        hemap=_he_arms_map(), aff=KD.genome_affinity(), lw=LG.edge_weights(), Xall=Xall, card=card,
+        fam=seed_family_map(list(Xall.index)),
+        DETECTED=DETECTED, ab_all=Xall.loc[DETECTED].fillna(0.0).median(axis=1),
+        min_partial=min_partial, min_scanmir=min_scanmir, alpha=alpha, batch=batch,
+        n_null_arms=n_null_arms, with_null=with_null, permute=permute, null_seed=null_seed))
+
+
 def _scan_one_gene(g: str):
     """One gene's candidates + site-free null draws, for the worker pool. Returns (rows, nulls).
 
@@ -254,6 +276,128 @@ def _scan_one_gene(g: str):
     return rows, nulls
 
 
+def _fam_dose(Xblock: np.ndarray) -> np.ndarray:
+    """Family DOSE aggregate from member arms' log2(RPM+1): sum in LINEAR RPM, re-log. `within-family = DOSE`."""
+    return np.log2(np.clip(2.0 ** Xblock - 1.0, 0, None).sum(1) + 1.0)
+
+
+def _scan_one_gene_fam(g: str):
+    """LANE 1 (MH-155) — FAMILY-as-discovery. Unit = a seed family with ZERO curated arms for THIS gene,
+    tested as a family-DOSE aggregate (sum of member arms in linear RPM). This is the complement of the arm
+    lane: the arm lane's dominant survivors are paralogues of families curated ELSEWHERE for the gene; here the
+    WHOLE family is uncurated for the gene → a genuinely novel family regulator. Same Cext (C + curated he_agg
+    + batch-off), same QR residualiser; the null is site-free PSEUDO-families of MATCHED SIZE (a family of s
+    arms has different aggregate variance than a single arm, so the null must aggregate s site-free arms too).
+    Returns (rows, nulls) with `arm` = the family label."""
+    hemap, aff, Xall, DETECTED, ab_all = (_SCAN["hemap"], _SCAN["aff"], _SCAN["Xall"],
+                                          _SCAN["DETECTED"], _SCAN["ab_all"])
+    fam, min_scanmir, batch = _SCAN["fam"], _SCAN["min_scanmir"], _SCAN["batch"]
+    n_null_arms, with_null, min_partial = _SCAN["n_null_arms"], _SCAN["with_null"], _SCAN["min_partial"]
+    rows, nulls = [], []
+    try:
+        Y, Xo, C, w = LD.assemble_gene(g, w_prior_source="ledger", orphans=True)
+    except Exception:
+        return rows, nulls
+    he_arms = [a for a in hemap.get(g, set()) if a in Xo.columns]
+    affg = aff.loc[aff["gene"] == g].set_index("arm")["repression"]
+    orphans = [a for a in Xo.columns if a not in set(he_arms)]
+    cand_arms = [a for a in orphans if a in affg.index and affg[a] < min_scanmir]     # site+K_D arms
+    if not cand_arms:
+        return rows, nulls
+    he_fams = {fam.get(h) for h in he_arms} - {None}
+    # group candidate arms by seed family; keep families with NO curated HE arm for this gene (whole-family novel)
+    groups = {}
+    for a in cand_arms:
+        f = fam.get(a)
+        if f is not None and f not in he_fams:
+            groups.setdefault(f, []).append(a)
+    if not groups:
+        return rows, nulls
+    # Cext (same as arm lane): C + canonical curated he_agg (if any) + batch-off
+    Cm = C.to_numpy(float)
+    cardg = _SCAN["card"].get(g)
+    if he_arms and cardg is not None:
+        _, Xhe_z, hz = AE._prep(Y, Xo[he_arms], C)
+        he_agg = Xhe_z @ np.array([cardg.get(a, 0.0) for a in hz], float)
+        blocks = [Cm, he_agg[:, None]]
+    else:
+        blocks = [Cm]
+    if batch:
+        blocks.append(_batch_np(Y.index))
+    Cext = np.column_stack(blocks)
+    Qc, _ = np.linalg.qr(np.column_stack([np.ones(len(Cext)), Cext]))
+    yr = Y.to_numpy(float) - Qc @ (Qc.T @ Y.to_numpy(float)); yr_rank = rankdata(yr)
+    # candidate family doses
+    labels, sizes, aggs = [], [], []
+    for f, members in groups.items():
+        d = _fam_dose(Xo[members].to_numpy(float))
+        labels.append(f); sizes.append(len(members)); aggs.append(d)
+    A = np.column_stack(aggs)
+    Ar = rankdata(A - Qc @ (Qc.T @ A), axis=0)
+    rho_f = _rho_block(Ar, yr_rank)
+    ab_fam = _fam_dose  # for abundance we use the aggregate's own median
+    for j, f in enumerate(labels):
+        rho = rho_f[j]
+        if np.isfinite(rho) and rho < min_partial:
+            rows.append({"gene": g, "arm": f, "partial_coupling": round(float(rho), 3),
+                         "seed_family": f, "n_family_arms": sizes[j],
+                         "family_members": ",".join(groups[f]),
+                         "arm_abundance": round(float(np.median(aggs[j])), 3),
+                         "same_seed_he": False, "no_he_gene": len(he_arms) == 0, "_is_null": False})
+    if with_null:
+        # site-free PSEUDO-families of matched size: for each candidate size s, draw groups of s site-free arms
+        sited = set(affg.index[affg < min_scanmir]) | set(Xo.columns)
+        pool = [a for a in DETECTED if a not in sited]
+        if len(pool) >= 5:
+            rng = np.random.default_rng((_SCAN["null_seed"] + 1, abs(hash(g)) % (2**32)))
+            size_multiset = sizes if sizes else [1]
+            for k in range(n_null_arms):
+                s = size_multiset[k % len(size_multiset)]
+                take = [pool[j] for j in rng.choice(len(pool), size=min(s, len(pool)), replace=False)]
+                V = Xall.loc[take, Y.index].T.astype(float).fillna(0.0).to_numpy()
+                d = _fam_dose(V)
+                if np.std(d) < 1e-9:
+                    continue
+                dr = rankdata(d - Qc @ (Qc.T @ d))
+                rr = _rho_block(dr[:, None], yr_rank)[0]
+                if np.isfinite(rr):
+                    nulls.append({"gene": g, "arm": f"NULLFAM{k}", "partial_coupling": round(float(rr), 4),
+                                  "arm_abundance": round(float(np.median(d)), 3), "_is_null": True})
+    return rows, nulls
+
+
+def scan_families(genes=None, *, min_scanmir: float = -0.5, min_partial: float = -0.15, n_null_arms: int = 40,
+                  null_seed: int = 0, workers: int | None = None, universe: str = "he",
+                  progress: int = 200) -> pd.DataFrame:
+    """LANE 1 driver: family-as-discovery over the gene universe. Populates `_SCAN` like `scan_all`, then runs
+    `_scan_one_gene_fam` per gene. Feed the result to `calibrate` (it fits the site-free null by the aggregate's
+    abundance quintile) — each row is already one (gene, seed-family), so the Simes collapse is 1:1."""
+    if genes is None:
+        he_genes = set(LG.pooled_he_edges()["gene"].dropna().astype(str))
+        if universe == "hallmark":
+            from mirna_hallmark.hallmark_sets import hallmark_universe
+            he_genes = he_genes | ((set(hallmark_universe()) - he_genes) & set(LD._load()["Y"].index))
+        genes = sorted(he_genes)
+    _prime_scan(min_partial=min_partial, min_scanmir=min_scanmir, n_null_arms=n_null_arms, null_seed=null_seed,
+                batch=False, with_null=True, permute=None)
+    rows, nulls = [], []
+    if workers is None:
+        import os
+        workers = max(1, min(16, (os.cpu_count() or 4) - 2))
+    if workers > 1 and len(genes) > 1:
+        import multiprocessing as mp
+        with mp.Pool(workers) as pool:
+            for i, (r, n) in enumerate(pool.imap_unordered(_scan_one_gene_fam, genes, chunksize=4)):
+                if progress and i % progress == 0:
+                    print(f"[scanfam] {i}/{len(genes)} genes, {len(rows)} families, {len(nulls)} null", flush=True)
+                rows.extend(r); nulls.extend(n)
+    else:
+        for g in genes:
+            r, n = _scan_one_gene_fam(g); rows.extend(r); nulls.extend(n)
+    out = pd.DataFrame(rows + nulls)
+    return out if len(out) else pd.DataFrame(columns=["gene", "arm", "partial_coupling", "_is_null"])
+
+
 def scan_all(genes=None, *, permute: int | None = None, min_partial: float = -0.15,
              min_scanmir: float = -0.5, alpha: float = 0.01, progress: int = 200,
              batch: bool = False, n_null_arms: int = 40, null_seed: int = 0,
@@ -295,22 +439,8 @@ def scan_all(genes=None, *, permute: int | None = None, min_partial: float = -0.
     # variance, so their partial correlations collapse toward 0 and DEFLATE the null (robust sd 0.045 vs the
     # honest 0.083–0.13). Restrict to arms detected in >50% of samples — the SAME population the eval-module
     # null uses (`eval.site_free_null`) — then impute the residual gaps as the regression does.
-    DETECTED = [a for a in Xall.index if np.isfinite(Xall.loc[a].to_numpy(float)).mean() > 0.5]
-    # Canonical Gibbs β per (gene, arm) for the HE aggregate control — see _scan_one_gene. gene -> {arm: β}.
-    try:
-        _card = pd.read_csv(C_CARD, sep="\t")
-        card = {g: dict(zip(grp.arm, grp.beta)) for g, grp in _card.groupby("gene")}
-    except FileNotFoundError:
-        print(f"[scan] ⚠ {C_CARD} absent — HE aggregate falls back to the RETIRED lasso (slow, non-canonical)")
-        card = {}
-    from mirna_hallmark.coupling_inference import seed_family_map
-    _SCAN.clear()
-    _SCAN.update(dict(
-        hemap=_he_arms_map(), aff=KD.genome_affinity(), lw=LG.edge_weights(), Xall=Xall, card=card,
-        fam=seed_family_map(list(Xall.index)),                 # arm -> seed family (for same-seed-HE flag)
-        DETECTED=DETECTED, ab_all=Xall.loc[DETECTED].fillna(0.0).median(axis=1),
-        min_partial=min_partial, min_scanmir=min_scanmir, alpha=alpha, batch=batch,
-        n_null_arms=n_null_arms, with_null=with_null, permute=permute, null_seed=null_seed))
+    _prime_scan(min_partial=min_partial, min_scanmir=min_scanmir, alpha=alpha, batch=batch,
+                n_null_arms=n_null_arms, with_null=with_null, permute=permute, null_seed=null_seed)
     rows, nulls = [], []
     if workers is None:                       # leave 2 cores for the parent + OS (8-core box → 6 workers);
         import os                             # oversubscribing all cores starved the parent (~2× not 8×).
