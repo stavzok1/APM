@@ -117,7 +117,7 @@
 | [archive/](archive/README.md) | **Consumed / superseded.** Nothing here describes current state. 9 docs + a README explaining each. |
 | [derived/](derived/) | Generated renditions (PDF/DOCX) of the canonical docs. Don't edit — regenerate. |
 | [decisions/](decisions/) | Locked decision memos. ⭐ **Rescued from the gitignored `output/`** — they were untracked. |
-| [handoffs/](handoffs/) | Session handoffs. ⚠ `HANDOFF_PROTEIN_AND_COMPOSITION.md` is superseded on 3 counts — see STATE_OF_PLAY. |
+| [handoffs/](handoffs/) | Session handoffs. **`HANDOFF_DISCOVERY_NULL.md` (2026-07-17) is the current one** — discovery lane / site-free null / FDR (MH-154/155). ⚠ `HANDOFF_PROTEIN_AND_COMPOSITION.md` is superseded on 3 counts — see STATE_OF_PLAY. |
 
 ## 8. Reference & renditions
 
