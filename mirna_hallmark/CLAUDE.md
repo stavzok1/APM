@@ -39,19 +39,45 @@ analyses/builds that reaches a conclusion, verdict, or deliverable.
 **At the end of ANY arc you MUST, before treating it as done:**
 1. **ASK the user**: *"This concludes the &lt;arc&gt; — shall I document it, and confirm the scope?"* — unless they
    already told you to document. **Never silently finish an arc.** (This was added because arcs kept ending undocumented.)
-2. **Update EVERY applicable canonical home** (usually several, not one):
-   - `docs/ANALYSIS_RUN_LEDGER.md` — an `MH-##` row for any run/build that changed a finding or output.
-   - `docs/DISCOVERY_REGISTRY.md` — a claim row (with an S/A/P/R strength tag) for any new finding/verdict.
-   - Learned-arc docs when the learned model changed: `LEARNED_MODEL_DISCOVERY_SYNTHESIS.md` (narrative),
-     **`LEARNED_MODEL_METHODS.md` + `LEARNED_MODEL_METHODS_FORMAL.md` (TWIN docs — same spec, plain-text vs LaTeX;
-     ALWAYS edit BOTH)**, `LEARNED_MODEL_RATIONALE.md` (why), `LEARNED_MODEL_VALIDATION.md` (numbers),
-     `LEARNED_MODEL_ESTIMATOR_MAP.md`.
-   - `docs/DATA_SOURCES.md` — any new dataset/source (+ where in code it's used).
-   - Memory — durable cross-session facts.
-3. **Route by conclusion type:** a RESULT → VALIDATION + narrative; a METHOD → the two METHODS twins; a WHY →
-   RATIONALE. A *modeling* conclusion does **NOT** go in `BIOLOGICAL_SYNTHESIS.md` (biology-findings only).
-4. **Retract/annotate** any doc claim this arc superseded — never leave stale/contradicted text.
-5. Then verify: grep the trackers for the new terms; confirm each deliverable appears in its home(s).
+2. **⭐ THE ONE-HOME RULE — write each fact to EXACTLY ONE doc. Everything else LINKS.**
+   *(Rewritten 2026-07-17. The previous rule said "update EVERY applicable canonical home (usually several,
+   not one)" — a **fan-out rule with no consolidation rule**. It is the measured cause of this subproject's
+   doc rot: a finding lands in N docs, and when it is later refuted the retraction lands in 1 of N.
+   **This is not a prediction — it is the history.** MH-38's "108 triple-validated orphans" was retracted
+   inside MH-114's row and left live with an S/R tag in its own row and the ledger for 5 days, while the
+   talk still cited it. The same protein Fisher-information number exists in three docs at three values,
+   one of which is VOID. **Do not restate a number in a second doc. Link to its home.**)*
+
+   | the fact you produced | its ONE home |
+   |---|---|
+   | a finding / verdict / retraction | **`docs/DISCOVERY_REGISTRY.md`** — one `MH-##` row, S/A/P/R tag, `evidence (output)` filled |
+   | a run (when, status, runtime) | **`docs/ANALYSIS_RUN_LEDGER.md`** — one row |
+   | the CURRENT state of an axis | **`docs/STATE_OF_PLAY.md`** — the verdict only, ≤1 block, no derivation |
+   | a formula / estimator spec | **`FORMULAS.md`**, or the **`LEARNED_MODEL_METHODS{,_FORMAL}.md` TWINS** (same spec, plain vs LaTeX — **ALWAYS edit BOTH**) |
+   | *why* a design is the way it is | **`LEARNED_MODEL_RATIONALE.md`** |
+   | a dataset / source | **`docs/DATA_SOURCES.md`** |
+   | a component (inputs/outputs/CLI) | **`docs/ANALYSES_CATALOG.md`** |
+   | what to do next | **`docs/PROGRAM_FORWARD_BOARD.md`** |
+   | a biology finding | **`BIOLOGICAL_SYNTHESIS.md`** — biology only; a *modeling* conclusion does **NOT** go here |
+   | a durable cross-session fact | memory |
+
+3. **A NEW DOC IS THE EXCEPTION, NOT THE DEFAULT — and a per-finding `MH###_*.md` is now BANNED.**
+   That pattern produced six docs / 184 KB (MH-124…130), was abandoned at MH-130, and is precisely where the
+   retractions rotted: MH-127 still reads as current while MH-137 has superseded its central number four times.
+   **The registry row IS the record of a finding.** Write a new doc only for a *durable reference* that has a
+   home in the table above and no owner yet — and if you do, it MUST carry the header block below and be
+   registered in `docs/INDEX.md`. **If you cannot name the doc's non-overlapping purpose in one line, do not
+   create it.**
+
+4. **⭐ A RETRACTION GOES IN THE RETRACTED CLAIM'S OWN HOME — not in the retractor's.**
+   Recording "MH-38 is dead" inside MH-114's row is **not** a retraction; it is a footnote nobody reading MH-38
+   will ever see. **Edit the original row**: prepend `⛔ RETRACTED (MH-###, YYYY-MM-DD)` or
+   `⚠ SUPERSEDED BY MH-###`, downgrade its strength tag, and *then* cross-link. Same for the ledger row and for
+   `STATE_OF_PLAY.md`. **Grep for the claim's headline number across `docs/` and fix every hit, or you have not
+   retracted it.**
+
+5. **Then verify, don't assume:** grep the trackers for the new terms; confirm the deliverable appears in its
+   ONE home and that no *second* doc restates it; confirm every superseded claim carries its banner.
 
 **Creating a NEW doc — it MUST open with this header block** (defines the doc's contract):
 ```
@@ -94,12 +120,21 @@ These are completion gates, on the same footing as the documentation protocol:
    **2a. THE CONFOUNDER BLOCK IS NOT A "MORE IS BETTER" KNOB — KNOW WHICH `C` EACH READOUT USES, AND REPORT
    RETENTION INSTEAD OF SILENTLY CONDITIONING.** (Added 2026-07-12 after MH-107; **corrected same day — the first
    version wrongly said "always use the same C everywhere", which would IMPOSE an over-control.**)
-   - **The design is deliberate, not sloppy** (`LEARNED_MODEL_METHODS.md §1`, `DESIGN_RESPONSE` Decision B):
-     *"tumour attribution = fractions; **gate/coupling = core only unless deconv requested**"*, and
-     *"**Cancer-Epithelial is deliberately EXCLUDED from the `deconv` block** — conditioning on the compartment the
-     target is expressed in **over-controls the signal**"*. **A miRNA acting through a cell-STATE shift PRODUCES a
-     composition change — the composition is partly the MECHANISM, not a nuisance.** Same trap as MH-100
-     (proliferation) and MH-101 (host gene): a global control **over-controls the majority**.
+   - **The design is deliberate, not sloppy** (`LEARNED_MODEL_METHODS.md §1`; the `DESIGN_RESPONSE` Decision B
+     that this used to cite is now `docs/archive/`, historical):
+     *"tumour attribution = fractions; **gate/coupling = core only unless deconv requested**"*.
+     **A miRNA acting through a cell-STATE shift PRODUCES a composition change — the composition is partly the
+     MECHANISM, not a nuisance.** Same trap as MH-100 (proliferation) and MH-101 (host gene): a global control
+     **over-controls the majority**. ⇒ **the RULE below stands.**
+   - ⛔ **BUT ITS STATED RATIONALE IS FALSE — do not repeat it (MH-111/114, 2026-07-12).** `METHODS §1` justifies
+     the block by *"Cancer-Epithelial is deliberately EXCLUDED — conditioning on the compartment the target is
+     expressed in over-controls the signal"*. **That is void:** the 9 Wu-major fractions sum to **exactly
+     1.000000** and **R²(Cancer-Epithelial ~ the 8 "held-out") = 1.000000 in BOTH cohorts** (TCGA n=1059, CPTAC
+     n=133) ⇒ conditioning on the 8 **algebraically determines** tumour content. **The hold-out is a simplex
+     illusion.** The practice is nevertheless safe — but for a *different, measured* reason: purity contributes
+     only **0.9%** of the retention loss (CPE in core C already absorbs it) while the **stromal MIX contributes
+     33.1%**, and a block with tumour content removed reproduces the result. **Fixing `METHODS §1`'s rationale is
+     open correctness debt** (`STATE_OF_PLAY.md` → CPTAC axis).
    - **THE RULE: never silently condition a plausible-mechanism covariate away. Run BOTH blocks and report the
      RETENTION** (`retention = β_deconv/β_core`; `card.py` / `learned/readouts.py`:
      **cell_intrinsic ≥0.7 · partial · composition_explained <0.4**). **FLAG, don't delete** — the reader decides.
@@ -137,22 +172,25 @@ These are completion gates, on the same footing as the documentation protocol:
 
 ## Key docs (this folder only)
 
-| Doc | Purpose |
-|-----|---------|
-| `docs/INDEX.md` | **Doc map** — every doc grouped by role (canonical / living / reports / parked / historical) with status + link graph. Find any doc here. |
-| `README.md` | Quickstart + output map |
-| `docs/MODELING_FRAMEWORK.md` | Conceptual + implemented framework (resolution hierarchy, edge universe, pressure, architecture, coupling/confounding, protein, validation) — "how is this modeled and why" |
-| `docs/BIOLOGICAL_SYNTHESIS.md` | Biology-first findings surface (start here for "what did we learn") |
-| `docs/DCIS_EV_SYNTHESIS.md` | DCIS→invasive + EV arc synthesis (MH-48..56): two-compartment/two-phase model, stroma reframe, caveats, what-to-pursue |
-| `docs/PRIMARY_TUMOR_ROADMAP.md` | Phased roadmap to take the rigor/compartment lens to primary tumours + the core framework (composition-retest, spatial, orphan retrofit) |
-| `docs/MIRNA_CNV_DOSAGE_REPORT.md` | miRNA CNV dosage report |
-| `docs/WHATS_NEXT.md` | Forward-looking extensions and caveats |
-| `docs/REPORT.md` | Detailed results |
-| `docs/METHODS.md` | Formal methods: pressure, gate, enrichment, stats |
-| `docs/DATA_SOURCES.md` | Every dataset read (core spine, priors, validation, DCIS/EV corpus) + preprocessing provenance |
-| `docs/ANALYSES_CATALOG.md` | One row per analysis component (inputs/outputs/CLI) |
-| `docs/DISCOVERY_REGISTRY.md` | Claims + strength tags |
-| `docs/ANALYSIS_RUN_LEDGER.md` | Per-component last-run timestamp + status |
+**Read in this order. Do not skip 1 — it exists so you do not have to reconstruct the state from 48 docs.**
+
+| # | Doc | Purpose |
+|---|-----|---------|
+| **1** | **`docs/STATE_OF_PLAY.md`** | **⭐ WHERE WE ARE NOW.** Per axis (model · edge existence · attribution · decoy · CPTAC · progression · Buffa): what STANDS, what is DEAD, what is OPEN — with MH ids and dates. Carries the **doc-traps table**: which docs read as current but are not. |
+| **2** | `docs/DISCOVERY_REGISTRY.md` | **THE SOURCE OF TRUTH.** One `MH-##` row per finding + strength tag. **Where this and any other doc disagree, THIS WINS.** ⚠ It runs AHEAD of the docs — MH-131…137 exist only here. |
+| **3** | `docs/ANALYSIS_RUN_LEDGER.md` | One row per run: when, status, runtime. |
+| 4 | `docs/INDEX.md` | The doc map — role + currency per doc. Find anything here. |
+| 5 | `README.md` | Quickstart + output map |
+| 6 | `docs/MODELING_FRAMEWORK.md` | Conceptual + implemented framework — "how is this modeled and why" |
+| 7 | `docs/FORMULAS.md` · `docs/METHODS.md` | The exact formula for every quantity; the methods narrative |
+| 8 | `docs/BIOLOGICAL_SYNTHESIS.md` | Biology-first findings surface (biology only — **not** modeling conclusions) |
+| 9 | `docs/DATA_SOURCES.md` | Every dataset read + preprocessing provenance |
+| 10 | `docs/ANALYSES_CATALOG.md` | One row per analysis component (inputs/outputs/CLI) |
+| 11 | `docs/PROGRAM_FORWARD_BOARD.md` | What to do next |
+
+Reports (`REPORT.md`, `LANDSCAPE_REPORT.md`, `MIRNA_CNV_DOSAGE_REPORT.md`, `DCIS_EV_SYNTHESIS.md`) and the
+per-axis docs are in `docs/INDEX.md`. **Consumed / superseded docs live in `docs/archive/` — nothing there
+describes current state.**
 
 ## Environment
 
