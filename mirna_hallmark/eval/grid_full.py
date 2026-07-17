@@ -1,4 +1,8 @@
-"""MH-116 — THE FULL GRID: layer x cohort x unit x universe, with THREE aggregation arms.
+"""⚠ RETIRED-ESTIMATOR BASELINE (MH-145): the "learned" cells here are `regression.fit_gene` = the §6b-RETIRED
+adaptive LASSO, NOT the canonical dense Gibbs posterior. MH-116/117 measure the LASSO baseline; the Gibbs is
+scored by `eval/coupling_grid.py`. Kept as the documented baseline — do not read these as the current model.
+
+MH-116 — THE FULL GRID: layer x cohort x unit x universe, with THREE aggregation arms.
 
     .venv/bin/python3 -m mirna_hallmark.eval.grid_full
 

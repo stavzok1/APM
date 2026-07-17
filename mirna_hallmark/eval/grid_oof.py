@@ -1,4 +1,8 @@
-"""MH-117 — the NON-CIRCULAR TCGA cell: OUT-OF-FOLD (OOF) learned weights, all 1,041 patients.
+"""⚠ RETIRED-ESTIMATOR BASELINE (MH-145): the OOF "learned" weights here are `regression.fit_gene` = the
+§6b-RETIRED adaptive LASSO, NOT the canonical dense Gibbs posterior. Kept as the documented baseline; the Gibbs
+OOF is scored by `eval/coupling_grid.py`. Do not read these cells as the current model.
+
+MH-117 — the NON-CIRCULAR TCGA cell: OUT-OF-FOLD (OOF) learned weights, all 1,041 patients.
 
     .venv/bin/python3 -m mirna_hallmark.eval.grid_oof
 
