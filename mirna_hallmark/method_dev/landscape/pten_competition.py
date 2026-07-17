@@ -115,15 +115,15 @@ def build(gene: str = "PTEN") -> None:
     axSd = fig.add_subplot(gs[2, :])
     _sm = _seed_map()
     sd = sites.assign(seed=sites["miRNA"].map(lambda a: _sm.get(a, _sm.get(_strip(a)))))
-    uds = sd.dropna(subset=["seed"]).drop_duplicates(["utr_pos", "seed"])       # collapse same-seed families
+    uds = sd.dropna(subset=["seed"]).drop_duplicates(["utr_pos", "seed"])       # one row per (position, seed): family arms collapsed, but each position of a seed kept
     _W, _st = 150, 20
     _xs = np.arange(0, utr_len + 1, _st)
-    _dens = np.array([uds.loc[uds["utr_pos"].between(x - _W / 2, x + _W / 2), "seed"].nunique() for x in _xs])
+    _dens = np.array([int(uds["utr_pos"].between(x - _W / 2, x + _W / 2).sum()) for x in _xs])   # COUNT seed-site instances in window
     axSd.fill_between(_xs, _dens, color="#6a51a3", alpha=0.55, step="mid")
     axSd.set_xlim(-utr_len * 0.14, utr_len * 1.02); axSd.set_ylim(0, (_dens.max() + 1) if len(_dens) else 1)
-    axSd.set_xticks([]); axSd.set_ylabel(f"distinct seeds\nper {_W} nt", fontsize=8)
-    axSd.set_title(f"C₀ · distinct-seed density along the {gene} 3′UTR — same-seed families collapsed; sliding {_W} nt window "
-                   f"({uds['seed'].nunique()} distinct seeds over {len(sd)} sites; peaks = seed-diverse hotspots)", fontsize=10, loc="left")
+    axSd.set_xticks([]); axSd.set_ylabel(f"seed sites\nper {_W} nt", fontsize=8)
+    axSd.set_title(f"C₀ · seed-site density along the {gene} 3′UTR — family-collapsed **instances** (each seed counted at every position; same-seed arms once); "
+                   f"sliding {_W} nt window ({len(uds)} seed-site instances / {uds['seed'].nunique()} distinct seeds; peaks = binding-site hotspots)", fontsize=10, loc="left")
 
     # ---- C: 3'UTR competition map (ALL expressed + sited regulators) ------- #
     axC = fig.add_subplot(gs[3, :])

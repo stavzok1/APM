@@ -1,7 +1,7 @@
 """MIRACLE figures — seed-grant spider + family heatmap for the metabolic /
 signaling Hallmark octet.
 
-Same methodology as ``mirna_hallmark.make_seed_grant_figures`` (the panels used
+Same methodology as ``mirna_hallmark.analyses.figures.make_seed_grant_figures`` (the panels used
 in the seed grant), retargeted to 8 metabolic / signaling programs:
 
   1. HALLMARK_KRAS_SIGNALING_UP

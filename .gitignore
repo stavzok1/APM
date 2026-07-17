@@ -79,3 +79,13 @@ Thumbs.db
 dist/
 build/
 *.egg-info/
+
+# --- mirna_hallmark subproject ---
+# Credentials (NEVER commit)
+mirna_hallmark/cibersortx/token
+# Regenerated analysis outputs (5.4G; re-run the modules to reproduce)
+mirna_hallmark/output/
+# Quarto render intermediates (regenerated from talk.qmd)
+mirna_hallmark/presentation/talk_files/
+# Third-party software distributions
+mirna_hallmark/cibersortx/*.zip

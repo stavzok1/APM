@@ -1,0 +1,23 @@
+gene	regulating_oncomirs	hallmark_process	evidence_class	landmark
+PTEN	miR-21;miR-19a/b;miR-26a;miR-22	PI3K-AKT tumor suppressor	breast_functional	multiple (miR-21->PTEN canonical)
+PDCD4	miR-21	translation/apoptosis suppressor	breast_functional	Frankel 2008; Asangani 2008
+TPM1	miR-21	cytoskeleton/anchorage-independent growth	breast_functional	Zhu 2007 (MDA-MB-231)
+BCL2L11	miR-17~92;miR-221/222	intrinsic apoptosis (BIM)	pan_cancer_functional	Ventura/others
+CDKN1B	miR-221/222;miR-181	G1 arrest (p27); endocrine resistance	breast_functional	Miller 2008; le Sage 2007
+CDKN1A	miR-106b~25;miR-17~92	cell-cycle arrest (p21)	pan_cancer_functional	Ivanovska 2008
+FOXO3	miR-155;miR-96;miR-182	apoptosis/quiescence	breast_functional	Kong 2010
+FOXO1	miR-9;miR-27a;miR-96;miR-182	apoptosis/metabolism	pan_cancer_functional	Guttilla 2009
+TGFBR2	miR-21;miR-20a	TGF-beta growth suppression	pan_cancer_functional	functional (verify)
+HOXD10	miR-10b	metastasis (RHOC axis)	breast_functional	Ma 2007 (Nature)
+CDH1	miR-9	EMT/invasion (E-cadherin)	breast_functional	Ma 2010 (Nat Cell Biol)
+DICER1	miR-103/107	miRNA biogenesis/EMT	breast_functional	Martello 2010 (Cell)
+BRCA1	miR-182	homologous recombination; PARP sensitivity	breast_functional	Moskwa 2011 (Mol Cell)
+RECK	miR-21;miR-10b	MMP/invasion suppressor	pan_cancer_functional	Gabriely 2008
+TIMP3	miR-21;miR-181b;miR-221	metastasis/ECM	pan_cancer_functional	functional (verify)
+THBS1	miR-21;miR-194;miR-182	angiogenesis suppressor	pan_cancer_functional	functional (verify)
+SMAD4	miR-205;miR-21	TGF-beta signaling	pan_cancer_functional	functional (verify)
+LATS2	miR-372/373;miR-31	Hippo tumor suppressor	pan_cancer_functional	Voorhoeve 2006
+SPRY2	miR-21;miR-27a	RTK/RAS negative regulator	pan_cancer_functional	Sayed 2008
+BTG2	miR-21	antiproliferative	pan_cancer_functional	functional (verify)
+SERPINB5	miR-21	metastasis suppressor (maspin)	pan_cancer_functional	functional (verify)
+SOCS1	miR-155;miR-19	JAK/STAT negative regulator	pan_cancer_functional	Jiang 2010

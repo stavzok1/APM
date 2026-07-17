@@ -346,7 +346,7 @@ def _seed_map() -> dict:
 @lru_cache(maxsize=1)
 def _site_counts() -> dict:
     """(arm, gene) -> # predicted 3'UTR sites (TargetScan hsa rows per pair). For edge weighting."""
-    from mirna_hallmark.genome_wide_promiscuity import TARGETSCAN_CONTEXT
+    from mirna_hallmark.analyses.misc.genome_wide_promiscuity import TARGETSCAN_CONTEXT
     parts = []
     for ch in pd.read_csv(TARGETSCAN_CONTEXT, sep="\t", usecols=["Gene Symbol", "miRNA"], chunksize=2_000_000):
         ch = ch[ch["miRNA"].astype(str).str.startswith("hsa-")]
