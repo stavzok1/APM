@@ -114,17 +114,25 @@ Same-seed arms are near-collinear ⇒ the identified estimand is family→gene (
 
 ## §5 CANONICAL ATTRIBUTION — bagged family NNLS  (`states._bagged_nnls`, `canonical_M`)
 
-> 🔬 **UNRESOLVED — this section's "canonical" claim conflicts with §18 and with SYNTHESIS §6b (flagged
-> 2026-07-17; NOT adjudicated here, because the answer is not in the docs).** §6b assigns **attribution to the
-> dense learned-τ² posterior** (π≡1 readout, mean ± sd); this section assigns it to **unpenalized bagged NNLS**;
-> and `attribution.shapley_identity` still accepts **either** (`canonical_M` = bagged NNLS, *or* a Gibbs β draw).
-> What IS settled: **bagged NNLS is not retired** — it is correct for the **cross-cohort gauge**, where Gibbs's
-> heavy-tailed posterior SDs break the errors-in-variables correction (a=4.1 vs a split-half truth of 1.0), i.e.
-> ***bagged NNLS for the GAUGE, Gibbs for the MODEL***. And on the model itself Gibbs reproduces better
-> (split-half ρ **0.822** vs **0.729**). ⚠ **Do not infer the attribution answer from either section until it is
-> re-derived.** The premise below (single-*lasso* coefficients are unstable) is also pre-convergence framing —
-> the lasso is retired to a baseline; the collinearity instability it describes is real regardless.
-> See [`STATE_OF_PLAY.md`](STATE_OF_PLAY.md) Axis 1/3 and §18 of this doc.
+> ✅ **SETTLED 2026-07-17 (MH-138) — this section and §6b were never in conflict; ONE WORD was doing TWO JOBS.**
+> **MAGNITUDE** (who delivers how much) = the dense Gibbs posterior mean `beta` ⇒ **§6b is right**.
+> **IDENTITY** (who owns the gene) = `attribution.shapley_identity` (LMG on R²), which requires **fixed
+> weights** — and those come from `canonical_M`, i.e. **the bagged NNLS specified below** ⇒ **§5 is right, for
+> that job.** The code was already coherent: `attribution.identity_vs_magnitude:131` and
+> `bayes_shapley_identity:91` both call `ST.canonical_M`, the latter exactly as `RATIONALE §2e` prescribed —
+> **NNLS fixes the support and signs; the Gibbs draws supply the width.**
+> **⭐ WHY identity cannot use the Gibbs mean (§2e's mechanism, now MEASURED on `readouts_edges.tsv`, n=5,117):**
+> the half-normal slab `N⁺(0,ν²)` has a **strictly positive mean**, so an un-informed family **cannot be zeroed**
+> — it relaxes to the prior. **`beta == 0` in 0/5,117 (0.00%); 100% are > 0**, where NNLS returns exact zeros.
+> Feed that into a Shapley and you credit families the model cannot distinguish from noise. **Pooled, 73.0% of
+> all β-mass sits on unidentified edges (|z|≤2)** (per-gene median 55.5%; 42.7% of genes at 100%, of which 452
+> are single-family where β ≡ uniform anyway; `n_fam≥3` median 32.0%).
+> Also settled: **bagged NNLS is not retired** — it is correct for the **cross-cohort gauge** (Gibbs's
+> heavy-tailed posterior SDs break the errors-in-variables correction: a=4.1 vs a split-half truth of 1.0) ⇒
+> ***bagged NNLS for the GAUGE, Gibbs for the MODEL***; on the model itself Gibbs reproduces better
+> (split-half ρ **0.822** vs **0.729**).
+> ⚠ The premise below (single-*lasso* coefficients are unstable) is pre-convergence framing — the lasso is a
+> baseline now; the collinearity instability it describes is real regardless. See §18 and MH-138.
 
 The stable readout of per-edge weight (single-lasso coefficients are unstable under collinearity, corr 0.03).
 On C-residualised, z-scored family predictors:

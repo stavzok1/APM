@@ -40,10 +40,18 @@ together):
 > **cross-cohort gauge**, because Gibbs's heavy-tailed posterior SDs break the errors-in-variables correction
 > (it returns a=4.1 where the split-half truth is 1.0). *Rule of thumb: **bagged NNLS for the GAUGE, Gibbs for
 > the MODEL**;* on the model itself Gibbs is simply better (split-half reproducibility ρ=0.822 vs 0.729).
-> 🔬 **Open, not decided here:** §5 still names unpenalized bagged NNLS as *canonical attribution* and
-> `attribution.shapley_identity` still accepts `canonical_M` (bagged NNLS) **or** a Gibbs β draw, while §6b
-> assigns attribution to the dense posterior. **Which is canonical for attribution is unresolved — do not
-> infer it from this block.** Current state: [`STATE_OF_PLAY.md`](STATE_OF_PLAY.md) Axis 1/3.
+> ✅ **SETTLED 2026-07-17 (MH-138) — and the answer is "both, for different jobs".** The apparent §5-vs-§6b
+> conflict was **one word doing two jobs**: **MAGNITUDE** (who delivers how much) = the dense Gibbs posterior
+> mean; **IDENTITY** (who owns the gene) = `shapley_identity` (LMG on R²), which needs **fixed weights**, and
+> those come from `canonical_M` = **bagged NNLS**. That is not a leftover — it is **required**, and §2e said why:
+> the half-normal slab has a **strictly positive mean**, so an un-informed family **cannot be zeroed** (measured:
+> `beta == 0` in **0/5,117**; pooled **73.0%** of β-mass sits on unidentified |z|≤2 edges), whereas NNLS returns
+> exact zeros. Feed the Gibbs mean to a Shapley and you credit families the model cannot distinguish from noise.
+> The built form — `bayes_shapley_identity`: **NNLS fixes support+signs, Gibbs draws give the width** — *is*
+> §2e's prescribed "NNLS-style point estimate + EB posterior sd".
+> ⚠ **The live defect this exposes is elsewhere:** `readouts.share` (= β_f/Σβ) is labelled "IDENTITY" but is
+> neither (Shapley on an additive value function is trivially β_f) nor safe (its denominator is
+> majority-unidentified mass). **The genome-wide table has no true identity column.** See MH-138.
 
 If you ever feel two sections are "doing the same thing twice," this is why they are not: they read
 different functionals of the same fit, with different robustness, so they need different machinery.

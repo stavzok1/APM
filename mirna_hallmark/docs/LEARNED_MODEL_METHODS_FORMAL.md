@@ -131,16 +131,22 @@ w_{\text{fam}} = \max_{m \in \text{family}} w_m.$$
 
 # §5 — Canonical attribution: bagged family NNLS
 
-> 🔬 **UNRESOLVED — conflicts with §18 and SYNTHESIS §6b (flagged 2026-07-17; NOT adjudicated).**
-> §6b assigns **attribution to the dense learned-$\tau^2$ posterior** (the $\pi\equiv1$ readout, mean $\pm$ sd);
-> this section assigns it to **unpenalized bagged NNLS**; `attribution.shapley_identity` accepts **either**.
-> Settled: **bagged NNLS is not retired** — it is correct for the **cross-cohort gauge**, where Gibbs's
-> heavy-tailed posterior SDs break the errors-in-variables correction ($a=4.1$ vs a split-half truth of $1.0$):
-> ***bagged NNLS for the GAUGE, Gibbs for the MODEL***; on the model Gibbs reproduces better
-> ($\rho$ **0.822** vs **0.729**). ⚠ **Do not infer the attribution answer from either section until re-derived.**
-> The premise below (single-*lasso* coefficient instability) is pre-convergence framing — the lasso is a
-> baseline now; the collinearity instability is real regardless. See [`STATE_OF_PLAY.md`](STATE_OF_PLAY.md)
-> Axis 1/3 and §18.
+> ✅ **SETTLED 2026-07-17 (MH-138) — no conflict; one word, two jobs.**
+> **Magnitude** $=$ the dense Gibbs posterior mean $\beta$ ⇒ **§6b**. **Identity** $=$
+> `attribution.shapley_identity` $=$ LMG on $R^2$, which needs **fixed weights** $m$, supplied by
+> $\texttt{canonical\_M}$ = **the bagged NNLS below** ⇒ **§5, for that job**. Code already coherent
+> (`identity_vs_magnitude:131`, `bayes_shapley_identity:91` both call $\texttt{ST.canonical\_M}$) and matches
+> §2e's deployable form: **NNLS fixes support + signs; Gibbs draws give the width**.
+> **⭐ Why identity cannot take the Gibbs mean (§2e's mechanism, MEASURED, $n=5{,}117$):** the half-normal slab
+> $\mathcal{N}^{+}(0,\nu^{2})$ has mean $\nu\sqrt{2/\pi} > 0$, so an un-informed family **cannot be zeroed** —
+> it relaxes to the prior. $\beta = 0$ in $\mathbf{0/5{,}117}$; all $\beta>0$, where NNLS returns exact zeros.
+> **Pooled $\mathbf{73.0\%}$ of $\beta$-mass sits on unidentified edges** ($\lvert z\rvert \le 2$); per-gene
+> median $55.5\%$; $42.7\%$ of genes at $100\%$ (452 single-family, where $\beta \equiv$ uniform); $n_{\text{fam}}\ge3$
+> median $32.0\%$.
+> Also settled: **bagged NNLS is not retired** — correct for the **cross-cohort gauge** ($a=4.1$ vs split-half
+> truth $1.0$ under Gibbs's heavy-tailed SDs) ⇒ ***NNLS for the GAUGE, Gibbs for the MODEL***; on the model
+> Gibbs reproduces better ($\rho$ $0.822$ vs $0.729$). ⚠ The single-*lasso* premise below is pre-convergence
+> framing; the collinearity instability it describes is real regardless. See §18 and MH-138.
 
 *Modules: `states._bagged_nnls`, `canonical_M`.*
 

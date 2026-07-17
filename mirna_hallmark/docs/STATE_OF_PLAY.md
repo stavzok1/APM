@@ -144,11 +144,26 @@ not luck: `X_fam` is pure abundance and the dense Gibbs is called with `π = one
 ⚠ **But `pip_discovery` and `prior_pi` ARE w-contaminated by construction** — any "do canonical
 regulators score higher?" test on those columns is **circular**.
 
-⚠ **LIVE MISLABEL:** `learned/readouts.py:16-21,171` labels `share` (= β_f/Σβ) as
-*"ATTRIB / IDENTITY — the Bayesian Shapley"* in the genome-wide `readouts_edges.tsv`. **It is not
-identity.** For an additive value function Shapley is trivially β_f and **splits nothing under
-collinearity** (MH-122). The doctrine's identity is `attribution.shapley_identity` = LMG on R².
-Anyone reading `readouts_edges.share` as identity is reading β.
+⚠ **LIVE MISLABEL — and it is worse than a naming slip (MH-138, 2026-07-17).**
+`learned/readouts.py:16-21,171` labels `share` (= β_f/Σβ) as *"ATTRIB / IDENTITY — the Bayesian
+Shapley"* in the genome-wide `readouts_edges.tsv`. **It is neither identity nor safe:**
+1. For an **additive** value function Shapley is trivially β_f ⇒ it **splits nothing under
+   collinearity** (MH-122). The doctrine's identity is `attribution.shapley_identity` = **LMG on R²**,
+   a *non-additive* value function `v(S) = R²(X_S·M_S, Y)`.
+2. Its **denominator is majority-unidentified mass**: **pooled 73.0% of all β-mass sits on |z|≤2
+   edges** (per-gene median 55.5%; **42.7% of genes at 100%**, 452 of them single-family where
+   β ≡ uniform by construction; `n_fam≥3` median 32.0%).
+⇒ **The genome-wide table has NO true identity column.** True identity needs `shapley_identity`
+(per-gene, 400 perms). MH-119's `share_abs` / `share_reliable` mitigate but do not fix the label.
+
+**✅ SETTLED (MH-138): "§5 bagged NNLS vs §6b dense posterior" was never a conflict — one word, two
+jobs.** MAGNITUDE = the Gibbs posterior mean (`beta`) ⇒ §6b. IDENTITY = `shapley_identity`, which
+needs **fixed weights** from `canonical_M` = **bagged NNLS** ⇒ §5, for that job. And NNLS is
+*required* there, not vestigial: the half-normal slab has a **strictly positive mean**, so an
+un-informed family **cannot be zeroed** — measured, `beta == 0` in **0/5,117**, 100% positive —
+whereas NNLS returns exact zeros. The built `bayes_shapley_identity` already does the right thing:
+**NNLS fixes support+signs, Gibbs draws supply the width.** Rule of thumb elsewhere: ***bagged NNLS
+for the GAUGE, Gibbs for the MODEL.***
 
 **OPEN:** **scale the literature set** — this, not the estimator, gates attribution. n went 16→21→32;
 the rank test became decisive while argmax stayed at chance. Needs a versioned, auditable ground-truth
