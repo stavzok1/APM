@@ -92,21 +92,52 @@ def _gene_edges_coupling(gene: str, arms: list) -> dict:
     return out
 
 
-def build(*, limit: int | None = None, progress: int = 100) -> pd.DataFrame:
+_ARMS: dict = {}          # gene -> arms; module-level so forked workers inherit it (the `readouts.run` pattern)
+
+
+def _one_gene(g: str):
+    """One gene's coupling, for the worker pool. Returns (gene, {arm: {...}})."""
+    try:
+        return g, _gene_edges_coupling(g, _ARMS.get(g, []))
+    except Exception:
+        return g, {}
+
+
+def build(*, limit: int | None = None, progress: int = 100, workers: int = 8,
+          out: str | None = None) -> pd.DataFrame:
+    """⚡ PARALLEL over genes (2026-07-17). The loop was serial at ~1.03 s/gene × 1,344 genes ≈ 23 min, and
+    it is embarrassingly parallel — each gene's `_gene_edges_coupling` is independent (it re-assembles its
+    own design). Same worker-pool pattern as `readouts.run`.
+
+    ⚠ **`limit=` NO LONGER WRITES TO THE PRODUCTION PATH.** It used to: a `build(limit=40)` sizing run
+    silently overwrote `discovery_dossier.tsv` with 40 rows (it did, to me, 2026-07-17 — and `output/` is
+    gitignored, so there was no diff to catch it). A truncated run is a TEST; it must not clobber a
+    production artifact. `limit` now forces a `.limitN` suffix unless `out=` is given explicitly.
+    """
     c = pd.read_csv(COMBINED, sep="\t")
     if limit:
         c = c.head(limit)
+    dest = out or (OUT if not limit else OUT.replace(".tsv", f".limit{limit}.tsv"))
     # bring scanMiR + sub-HE from the source consensus tables
     ts = pd.read_csv("mirna_hallmark/output/learned/discovery_consensus_targetscan.tsv", sep="\t")
     ts["edge"] = list(zip(ts.gene, ts.arm))
     subd = ts.drop_duplicates("edge").set_index("edge")["sub_he_evidence"].to_dict()  # dict avoids .loc[tuple] ambiguity
     genes = sorted(c["gene"].unique())
+    _ARMS.clear()
+    _ARMS.update({g: list(c.loc[c.gene == g, "arm"]) for g in genes})
     cpl = {}
-    for i, g in enumerate(genes):
-        if progress and i % progress == 0:
-            print(f"[dossier] {i}/{len(genes)} genes", flush=True)
-        arms = list(c.loc[c.gene == g, "arm"])
-        cpl.update({(g, a): v for a, v in _gene_edges_coupling(g, arms).items()})
+    if workers and workers > 1:
+        import multiprocessing as mp
+        with mp.Pool(workers) as pool:
+            for i, (g, res) in enumerate(pool.imap_unordered(_one_gene, genes, chunksize=4)):
+                if progress and i % progress == 0:
+                    print(f"[dossier] {i}/{len(genes)} genes", flush=True)
+                cpl.update({(g, a): v for a, v in res.items()})
+    else:
+        for i, g in enumerate(genes):
+            if progress and i % progress == 0:
+                print(f"[dossier] {i}/{len(genes)} genes", flush=True)
+            cpl.update({(g, a): v for a, v in _gene_edges_coupling(g, _ARMS[g]).items()})
     # assemble the dossier rows
     rows = []
     for _, r in c.iterrows():
@@ -136,8 +167,8 @@ def build(*, limit: int | None = None, progress: int = 100) -> pd.DataFrame:
     d["couples_cell_intrinsic"] = d["couples"] & (d["composition_class"] != "composition_explained")
     d["dossier_pass"] = (d["couples_cell_intrinsic"] & (d["arm_expressed"] == True)
                          & (d["scanmir_rep"] < 0)).fillna(False)
-    d.to_csv(OUT, sep="\t", index=False)
-    print(f"\n=== DISCOVERY DOSSIER: {len(d)} edges → {OUT} ===")
+    d.to_csv(dest, sep="\t", index=False)
+    print(f"\n=== DISCOVERY DOSSIER: {len(d)} edges → {dest} ===")
     print(f"  realized coupling ρ<−0.1: {int(d['couples'].sum())} ({100*d['couples'].mean():.0f}%) | "
           f"arm expressed: {int((d['arm_expressed']==True).sum())} | "
           f"**dossier_pass (couples+expressed+duplex): {int(d['dossier_pass'].sum())} ({100*d['dossier_pass'].mean():.0f}%)**")
@@ -225,4 +256,8 @@ if __name__ == "__main__":
     if "--tier3" in sys.argv:
         tier3_protein()
     else:
-        build()
+        w = 8
+        for a in sys.argv[1:]:
+            if a.startswith("--workers"):
+                w = int(a.split("=")[1]) if "=" in a else 8
+        build(workers=w)
