@@ -9,7 +9,7 @@
 > or retracts something, update the matching block here **in the same pass**.
 > **Sync-partner:** `DISCOVERY_REGISTRY.md` (the record of record — this doc is its executive summary).
 
-**Last updated: 2026-07-17** · covering the registry through **MH-141**.
+**Last updated: 2026-07-17** · covering the registry through **MH-142**.
 
 ---
 
@@ -19,7 +19,7 @@
 doc — including the ones labelled "canonical" — may lag it. Where this doc and any other doc
 disagree, the registry wins, then this doc, then everything else.
 
-⚠ **The registry runs ahead of the docs.** MH-131…141 (the most consequential fortnight in the
+⚠ **The registry runs ahead of the docs.** MH-131…142 (the most consequential fortnight in the
 project) exist **only as registry rows**. There is no `MH13x_*.md` for them, and that is now policy —
 the per-finding-doc pattern is **banned** (`../CLAUDE.md` §3). Do not conclude from a doc's silence
 that nothing happened.
@@ -73,9 +73,14 @@ miRNA represses this gene".*
   identified** (|z|>2). Not a fitting failure — same-seed arms share the binding site.
 - **The n≈1000 ceiling:** every internal lever (CN channel, δ-pooling, isomiR refit, t-likelihood,
   cross-gene pooling) lands "immaterial at n≈1000".
-- ⚠ **LIVE BUG — E6 self-partialling:** `discovery`/`dossier` partial each edge on `C + he_agg`,
-  where `he_agg` is built *from the HE arms* ⇒ an arm is partialled on a covariate containing
-  itself. HE hit rate **0.9%** (with `he_agg`) vs **32.6%** (C-only). Unfixed.
+- ✅ **E6 "self-partialling bug (live)" — NOT LIVE; the tag is RETRACTED (MH-142, 2026-07-17).**
+  Verified: every call site scores **orphans**, which are disjoint from `he_agg` by construction —
+  **0 of dossier's 6,744 candidate pairs are HE edges** (vs 5,938 HE edges). Nothing is partialled on
+  a covariate containing itself in production. E6 **stands as a trap for CLASS-MATCHED comparisons**
+  (its evidence column: *"class-matched estimator comparison"*) — push HE arms through this estimator,
+  as MH-124's own experiment did, and you get a ~36× depressed HE rate **as an artifact of your design**.
+  ⛔ **Do not "fix" it by removing `he_agg`** — that term is what makes an orphan's coupling *partial on
+  what curation already captures*, i.e. the point of the lane. Guard: `eval/_e6_production_check.py`.
 - The **shipped readouts do not include the CN channel** (`readouts.py` calls `_gibbs_posterior`
   without `channels=`) — the production table is mRNA-likelihood + evidence-prior only.
 

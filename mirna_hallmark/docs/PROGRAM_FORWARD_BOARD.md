@@ -11,7 +11,7 @@
 > **Sync-partner:** `docs/STATE_OF_PLAY.md` (the current-state verdicts this board plans against; if the two
 > disagree, STATE_OF_PLAY wins, and the registry wins over both).
 
-**Last updated: 2026-07-17** · planning against the registry through **MH-140**.
+**Last updated: 2026-07-17** · planning against the registry through **MH-142**.
 *Supersedes and replaces `WHATS_NEXT.md` and `LEARNED_MODEL_WHATS_NEXT.md` (both archived; both predated MH-133…137).*
 
 Status: ✅ done (anchor only) · 🔨 immediate/flagged · ⬜ open · 🔬 investigate · ⛔ blocked/dead · 🚫 deliberate skip.
@@ -20,7 +20,8 @@ Status: ✅ done (anchor only) · 🔨 immediate/flagged · ⬜ open · 🔬 inv
 
 ## 🔨 DO THESE FIRST
 
-Highest value ÷ cost. The first four are correctness debt — a dead claim is currently live in the talk.
+Highest value ÷ cost. ⚠ Two of the original four turned out to be claims that did not survive checking
+(MH-38's 108 orphans were 3; E6's "live bug" was never live) — verify the claim before building the fix.
 
 1. ✅ **DONE 2026-07-17 — `eval/buffa_validation` re-run: the "108 triple-validated orphans" ARE 3.**
    `triple_validated` **108 → 3**; **ECM/collagen among them 30 → 0**. Survivors (all guide arms):
@@ -31,9 +32,13 @@ Highest value ÷ cost. The first four are correctness debt — a dead claim is c
 2. 🔨 **Annotate MH-38 / MH-55 / MH-73 / MH-74** — all four still carry **S/R** strength tags with **no stale
    marker**. MH-38/55: input collapsed 594→23. MH-73/74: superseded by MH-76's frozen-panel test. Per the
    one-home rule, the retraction banner goes in *their* rows. **(→ CLAUDE.md doc protocol §4)**
-3. 🔨 **LIVE BUG — E6 self-partialling** in `discovery` / `dossier`: each edge is partialled on `C + he_agg`,
-   where `he_agg` is built **from the HE arms** ⇒ an arm is partialled on a covariate containing itself.
-   HE hit rate **0.9%** with it vs **32.6%** C-only. Unfixed. **(→ STATE_OF_PLAY Axis 1)**
+3. ✅ **NOT A BUG — E6's `(live)` tag RETRACTED 2026-07-17 (MH-142).** Verified in code and data: every call
+   site scores **orphans**, disjoint from `he_agg` by construction — **0 of dossier's 6,744 candidate pairs are
+   HE edges** (vs 5,938 HE). Nothing self-partials in production. E6 **stands as a trap for CLASS-MATCHED
+   comparisons** (its evidence: *"class-matched estimator comparison"*) — MH-124's own experiment pushed HE arms
+   through this estimator and got a ~36× depressed HE rate **from its own design**. ⛔ **Do NOT remove `he_agg`**:
+   it is what makes an orphan's coupling *partial on what curation captures*. Guard: `eval/_e6_production_check.py`.
+   **(→ MH-142)**
 4. ✅ **DONE 2026-07-17 (MH-140) — `readouts.share` relabelled AND the table gained a TRUE identity column.**
    `identity` = `shapley_identity` (LMG on R², m = bagged NNLS); `share`→`beta_frac` (demoted to MAGNITUDE);
    + `identity_deconv`, `identity_eq_magnitude`. **WHO ≠ HOW-MUCH in ~25% of multi-family genes** (agree 75.2%,
