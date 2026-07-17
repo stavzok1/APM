@@ -9,7 +9,7 @@
 > or retracts something, update the matching block here **in the same pass**.
 > **Sync-partner:** `DISCOVERY_REGISTRY.md` (the record of record — this doc is its executive summary).
 
-**Last updated: 2026-07-17** · covering the registry through **MH-148**.
+**Last updated: 2026-07-17** · covering the registry through **MH-149**.
 
 ---
 
@@ -19,7 +19,7 @@
 doc — including the ones labelled "canonical" — may lag it. Where this doc and any other doc
 disagree, the registry wins, then this doc, then everything else.
 
-⚠ **The registry runs ahead of the docs.** MH-131…148 (the most consequential fortnight in the
+⚠ **The registry runs ahead of the docs.** MH-131…149 (the most consequential fortnight in the
 project) exist **only as registry rows**. There is no `MH13x_*.md` for them, and that is now policy —
 the per-finding-doc pattern is **banned** (`../CLAUDE.md` §3). Do not conclude from a doc's silence
 that nothing happened.

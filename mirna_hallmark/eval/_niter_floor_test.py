@@ -5,7 +5,9 @@ posterior SD is far more chain-length-sensitive than a mean -- and `identified` 
 DESIGN: the arbiter is the sampler's OWN seed-to-seed jitter at the reference config. If a shorter chain
 moves beta/beta_sd LESS than reference-vs-reference-different-seed does, the cut is free.
 """
-import sys, time, numpy as np, pandas as pd
+import sys, time
+from pathlib import Path
+import numpy as np, pandas as pd
 from mirna_hallmark.learned import readouts as R, spike_slab as SS
 
 genes = sys.argv[1].split(",")
@@ -34,5 +36,6 @@ for g in genes:
         rows.append(dict(gene=g, p=core["p"], cfg=f"{ni}/{bu}", n_iter=ni, secs=dt,
                          d_beta=np.abs(b-b_ref).max(), d_sd=np.abs(sd-sd_ref).max(),
                          flip=int((( np.abs(b/np.where(sd>1e-12,sd,np.nan))>2) != (np.abs(b_ref/np.where(sd_ref>1e-12,sd_ref,np.nan))>2)).sum())))
-pd.DataFrame(rows).to_csv("/tmp/claude-207054/-sci-labs-michall-stavzok-APM/95cdd8f8-0eb4-4f39-aee5-5f5cfea5d600/scratchpad/niter_sweep.tsv", sep="\t", index=False)
-print("  wrote niter_sweep.tsv", len(rows), "rows")
+OUT = Path(__file__).resolve().parents[2] / "mirna_hallmark/output/learned/niter_floor_test.tsv"
+pd.DataFrame(rows).to_csv(OUT, sep="\t", index=False)
+print(f"  wrote {OUT} ({len(rows)} rows)")
