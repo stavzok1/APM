@@ -263,14 +263,14 @@ MH-124 §4b (n=21). β is at chance (rank 0.518, p=0.66); `shapley_identity` 0.3
   (⚠ `readouts.py` does not pass `nu` — the shipped table is Gaussian, i.e. the 0.77× rung).
   **Triage:** inverse-variance **fusion weights are SAFE** (SE *ratios* cancel); **all OOF/permutation results
   are UNTOUCHED**.
-  ⚠ **UNRESOLVED SUB-CONFLICT — do NOT act on MH-94's width until re-derived.** This board previously said the
-  MH-94 Shapley width is *understated* (⇒ non-identifiability **stronger**); `CPTAC_PROTEIN_CHANNEL_PLAN.md`
-  says the opposite — **Shapley shares are RATIOS, so a common β inflation cancels entirely**, and re-derives
-  MH-94's width as **1.8× too WIDE**. The ratio argument and the re-derivation both favour the latter, and it is
-  corroborated by the arc's own case study (memory `attribution-identity-vs-magnitude` / CLAUDE.md axiom 1a: the
-  naive widening `0.41 × 1.73 → ±0.71` was **invalid — it broke the [0,1] bound and pointed the wrong way**;
-  re-deriving gave **0.243**, i.e. the reported 0.41 was too *wide*). **Treat "understated" as the retracted
-  reasoning.** RE-DERIVE before citing either.
+  ✅ **MH-94 WIDTH SUB-CONFLICT — DIRECTION SETTLED 2026-07-17 (MH-146); the flagship is NOT.** MEASURED
+  (`calibration.shapley_resampled_width`, 64 family-rows): the posterior width **UNDERSTATES by ~1.4×** on
+  families that carry identity (median 1.37 at identity>0.05) ⇒ **the board's DIRECTION was right; the CPTAC
+  plan's "1.8× too WIDE" is RETIRED.** ⛔ But the tool's own printed headline ("understates by 112.86×") is a
+  **zero-denominator artifact** — 48% of rows have `posterior_sd ≈ 0` (zero-identity families) where the ratio
+  explodes to 3881–7655×. ⬜ **Open:** gate that summary on `identity_mean > 0.05`, and re-run MH-94's
+  flagship (PTEN miR-141/200a 0.77±0.41 vs MH-102e's re-derived 0.243) at ITS OWN config — the configs here
+  are not comparable, and 0.41→0.243 points the OTHER way. **(→ MH-146)**
 - ⬜ **isomiR full-cohort cache rebuild pending** (MH-96) — flagged and never done.
 - ⬜ **Infra:** `git add` the untracked `learned/` tree (a provenance hole, flagged repeatedly) · fold
   ENCORI/POSTAR3/Manakov into the ledger (**union, not summed**) · `baselines/` re-export shims · vectorize the
