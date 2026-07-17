@@ -111,9 +111,14 @@ def _apa() -> dict:
             for _, r in a.iterrows()}
 
 
-def build(out_dir: Path = OUT) -> pd.DataFrame:
-    hs = HallmarkSets.load()
-    edges = load_mirtar_edges(sorted(hs.universe), resolve_arms=True)
+def build(out_dir: Path = OUT, edges: pd.DataFrame | None = None,
+          out_name: str = "utr_site_ladder.tsv.gz") -> pd.DataFrame:
+    """Scan each edge's 3'UTR for functional (7mer+) sites. `edges` defaults to the curated HE universe;
+    pass a custom [miRNA, gene] frame (e.g. discovery orphan candidates) to extend the ladder — write it to a
+    distinct `out_name` so the HE artifact is preserved (MH-155 discovery wire)."""
+    if edges is None:
+        hs = HallmarkSets.load()
+        edges = load_mirtar_edges(sorted(hs.universe), resolve_arms=True)
     utrs = _gene_3utr(set(edges["gene"]))
     arms = _arm_seq()
     fam = _arm_family()
@@ -134,7 +139,7 @@ def build(out_dir: Path = OUT) -> pd.DataFrame:
                          "apa_retained": not (sh and frac > _APA_DISTAL)})
     df = pd.DataFrame(rows)
     out_dir.mkdir(parents=True, exist_ok=True)
-    path = out_dir / "utr_site_ladder.tsv.gz"
+    path = out_dir / out_name
     df.to_csv(path, sep="\t", index=False)
 
     n_edges = df.groupby(["miRNA", "gene"]).ngroups

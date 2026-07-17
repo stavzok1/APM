@@ -125,8 +125,9 @@ def _postar_hit(idx, chrom, g0, g1) -> bool:
     return False
 
 
-def build() -> pd.DataFrame:
-    d = pd.read_csv(OUT / "utr_site_ladder.tsv.gz", sep="\t")
+def build(in_name: str = "utr_site_ladder.tsv.gz",
+          out_name: str = "utr_site_ladder_genomic.tsv.gz") -> pd.DataFrame:
+    d = pd.read_csv(OUT / in_name, sep="\t")
     genes = set(d["gene"])
     blocks = _utr_blocks(genes)
     man = _manakov_intervals(genes)
@@ -150,7 +151,7 @@ def build() -> pd.DataFrame:
     d["chrom"], d["g_start"], d["g_end"] = chrom, g0, g1
     d["site_manakov"], d["site_tarbase"], d["site_postar_ago"] = s_man, s_tb, s_post
     d["site_clip_any"] = d["site_manakov"] | d["site_tarbase"] | d["site_postar_ago"]
-    path = OUT / "utr_site_ladder_genomic.tsv.gz"
+    path = OUT / out_name
     d.to_csv(path, sep="\t", index=False)
 
     print(f"[L5] lifted {int(d['g_start'].notna().sum()):,}/{len(d):,} sites; site-level support — "
