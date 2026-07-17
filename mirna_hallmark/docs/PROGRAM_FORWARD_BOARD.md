@@ -154,6 +154,38 @@ anti-correlation ladder; **data/edges/harmonization** → `DATA_SOURCES §0/§1/
   consolidating it buys tidiness on a baseline. Both keep a retired-estimator banner and stay. The value in
   METHODS is the two analyses above, and they are now mined.
 
+### Y.2 — PRESSURE-ARC → LEARNED PORT MAP (2026-07-18, full audit of the 12 pressure modules + pressure_dev)
+
+The retired estimator is dead, but the arc's **auxiliary machinery and biological controls** are reusable and the
+learned model lacks them. **Do NOT archive these files — extract from them.** Verified by reading, not docstrings.
+
+**⬜ THREE NEW ANALYSES the learned model wants and has never done:**
+1. **⭐ SUBTYPE-STRATIFIED LEARNED LANE** — unifies the discovery §E ask (PAM50-stratified discovery) with the
+   pressure arc's subtype contrasts (`subtype_contrasts` / `visibility_archetype_contrasts` / `pam50_gene_resolution`).
+   `learned/subtype.py` does only the per-PAM50 **coupling test** — NOT "who is pressured, by which miRNAs, the
+   immune axis, cold-Basal/hot-Luminal archetypes" on learned β. Build once, serves both. **HIGHEST value.**
+2. **LEARNED-β PROGNOSTIC** — the outcome arc (`analyses/outcome/`, 6 modules) is pressure-based, and pressure
+   *magnitude* was measured non-prognostic (`outcome-prognostic-arc-verdict`). Untested: does **learned β** predict
+   outcome where the heuristic didn't? Source: `analyses/pressure_dev/pressure_prognostic_{signature,gene_centric,improve}`.
+3. **EDGE-SOURCE SENSITIVITY** — does learned coupling change with the edge *source* (ENCORI vs miRTarBase)?
+   Only ever asked of the pressure spine (`dual_spine_comparison`). The learned model fixes on pooled-HE/ledger.
+
+**⬜ REUSABLE MACHINERY / CONTROLS to extract into the learned model (the "covered" files are NOT redundant):**
+- **`mirna_state_class`**: `_mirna_trajectory` = per-miRNA **dosage/rank trajectory** GTEx→NAT→tumor (states.py has
+  coupling-per-state, NOT the dosage trajectory) + `_tau` **subtype-specificity** + struct-vs-abundance audit.
+- **`robustness_checks`**: `_proliferation_proxies` = **three** proxies differing in E2F/MYC dependence incl. the
+  **E2F/MYC-INDEPENDENT over-control** (the reviewer answer that miR-17~92 hubs *are* E2F/MYC targets) + Basal
+  scoping + partial-corr ladder. Control constructions `prolif_verdict` may not have.
+- **`pressure_attribution_validation`**: **biological control sets** — positive controls (canonical breast
+  regulators abundance-sum masks, MH-31/32) + `gene_corepression` + `per_target_arm_reranking`. A source of
+  control genes/sets for the learned decoy/validation lane.
+- **`healthy_anchor`**: GTEx↔TCGA **arm harmonization** + field-effect-aware healthy baseline (anchors GTEx, not NAT).
+- **`coupling_predictor_comparison`**: abundance-sum baseline + edge-conditioning-mechanism (partly covered by `decoy_bench`).
+
+**N/A — genuinely retired (the Gibbs has no such knobs; do not port):** `hybrid_pressure`, `pressure_engine`, and the
+`pressure_dev/` weighting sweeps (`hybrid_param_sensitivity`, `pressure_constant_sensitivity`, `pressure_evidence_sensitivity`,
+`pressure_sensitivity`, `pressure_layer_comparison`, `denominator_attribution_sweep`, `build_highconf_pressure`).
+
 ---
 
 ## Z. Absorbed from the parked design docs (archived 2026-07-17)
