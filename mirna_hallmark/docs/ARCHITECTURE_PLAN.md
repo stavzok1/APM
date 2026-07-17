@@ -37,29 +37,28 @@ hand-maintained — refreshed from its sources like a DB view refreshes from tab
 ## The map schema (one row per AXIS; every cell a link/tag, no prose)
 | axis | scientific question | model(s) | key analyses (→catalog/code) | current verdict (→ MH-##) | status | open (→board) |
 
-## Phase 0 — the axis taxonomy (the JOIN KEY, load-bearing) — DRAFT, confirm before Phase 1
-The closed list of axes. Every module, MH-row, and model tags to exactly ONE **primary** axis (it may touch
-others, but has one home-axis). A finding that fits none is a signal to consciously add an axis, not to sprawl.
+## Phase 0 — the axis taxonomy (the JOIN KEY) — ✅ FINALIZED 2026-07-18 (user)
+The closed list of **12 axes**. Every module, MH-row, and model tags to exactly ONE **primary** axis (it may
+touch others, but has one home-axis). A finding that fits none is a signal to consciously add an axis, not to
+sprawl. **Resolutions (user):** `coupling` MERGED into `edge-existence` (one question: do these edges exist and
+act); `cn-causal` and `discovery` are their OWN axes — both **extensible beyond edge-existence** (CN dose informs
+dosage/causal questions broadly; discovery is a full lane — site-free null, convergent evidence, subtype-
+stratified — not just edge-finding).
 
 | axis-tag | scientific question | primary home (STATE_OF_PLAY §) |
 |---|---|---|
 | `model` | what the learned estimator IS (dense Gibbs posterior, 2 readouts, gauge, site-free null) | Axis 1 |
-| `edge-existence` | do the curated/predicted edges exist (exogenous validation, CN instrument)? | Axis 2 |
-| `coupling` | do miRNAs anti-correlate with targets \| C (the core readout)? | Axis 2 |
+| `edge-existence` | do the curated/predicted edges exist AND act (coupling \| C, exogenous validation)? | Axis 2 |
+| `cn-causal` | CN-dose causal identification (instrument, exclusion) — **its own axis, extensible to dosage** | CN_INSTRUMENT |
 | `attribution` | WHO owns a gene's regulation — identity vs magnitude (Shapley)? | Axis 3 |
 | `decoy` | does curation beat an abundance/variance-matched fake (specificity)? | Axis 4 |
-| `discovery` | finding novel edges beyond curation (site-free null, the MH-155/156 lane) | Axis 2/E |
+| `discovery` | novel edges beyond curation — **its own lane** (site-free null, convergent evidence, MH-155/156) | Axis 2/E |
 | `protein` | does it hold at the protein layer (CPTAC)? | Axis 5 |
 | `progression` | GTEx→NAT→tumor trajectory / state | Axis 6 |
 | `subtype` | PAM50-stratified coupling / who-is-pressured | (new; §F) |
 | `outcome` | does it predict survival (prognostic)? | Axis 7 |
 | `external` | independent-cohort replication (Buffa / METABRIC / SCAN-B) | Axis 7 |
 | `dcis-ev` | DCIS / pre-malignant / extracellular-vesicle lane | §H |
-| `cn-causal` | causal identification via CN dose (instrument, exclusion) | Axis 2 / CN_INSTRUMENT |
-
-⚠ **Open taxonomy questions to resolve in Phase 0:** (a) is `coupling` distinct from `edge-existence` or a
-sub-facet? (b) is `cn-causal` its own axis or part of `edge-existence`? (c) `discovery` spans model+edge —
-confirm its home. Resolve these before tagging, since the tag is the join key.
 
 ## Phase 1 — the linkage layer (mechanical, mostly auto-extractable)
 Add the axis tag at the three sources:
