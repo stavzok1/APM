@@ -9,7 +9,7 @@
 > or retracts something, update the matching block here **in the same pass**.
 > **Sync-partner:** `DISCOVERY_REGISTRY.md` (the record of record — this doc is its executive summary).
 
-**Last updated: 2026-07-17** · covering the registry through **MH-140**.
+**Last updated: 2026-07-17** · covering the registry through **MH-141**.
 
 ---
 
@@ -19,7 +19,7 @@
 doc — including the ones labelled "canonical" — may lag it. Where this doc and any other doc
 disagree, the registry wins, then this doc, then everything else.
 
-⚠ **The registry runs ahead of the docs.** MH-131…140 (the most consequential fortnight in the
+⚠ **The registry runs ahead of the docs.** MH-131…141 (the most consequential fortnight in the
 project) exist **only as registry rows**. There is no `MH13x_*.md` for them, and that is now policy —
 the per-finding-doc pattern is **banned** (`../CLAUDE.md` §3). Do not conclude from a doc's silence
 that nothing happened.
@@ -158,7 +158,11 @@ exactly 0 in **0/5,117** — the half-normal slab cannot zero an un-informed fam
 ⭐ **Identity can also say UNDEFINED:** 213/1,549 genes (13.8%) have NaN identity, and in **100%** of them
 NNLS zeroed every family ⇒ no coupling to distribute. `beta` structurally cannot make that statement.
 **Control: purely additive** — `beta`/`beta_sd`/`z`/`pip_dense`/`pip_discovery` bit-identical (max|Δ|=0.0).
-⚡ `shapley_identity` optimized **8.2–9.7×**, output-identical ⇒ identity costs 6.5% of a 3.0-min run.
+⚡ Three independent wins, all controlled: `shapley_identity` **8.2–9.7×** (output-identical); **1 of 4 Gibbs
+chains per gene was DEAD** (the evidence-π chain ran on both C blocks; `dec["pip_disc"]` was never read) —
+gated, output-identical; and **N_ITER/BURN 2000/700 → 1000/350** (MH-141), licensed against the sampler's own
+reseed jitter and verified NOISE-not-BIAS. **Run 5.9 → 1.6 min (3.7×) while emitting MORE.** ⭐ `identity` is
+**bit-identical** under the chain cut — it rides the NNLS weights, not the Gibbs mean.
 
 **✅ SETTLED (MH-138): "§5 bagged NNLS vs §6b dense posterior" was never a conflict — one word, two
 jobs.** MAGNITUDE = the Gibbs posterior mean (`beta`) ⇒ §6b. IDENTITY = `shapley_identity`, which

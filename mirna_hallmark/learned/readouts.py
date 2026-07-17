@@ -74,7 +74,20 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT_EDGES = ROOT / "mirna_hallmark/output/learned/readouts_edges.tsv"
 OUT_GENES = ROOT / "mirna_hallmark/output/learned/readouts_genes.tsv"
 
-N_ITER, BURN = 2000, 700
+# ⚡ 2000/700 → 1000/350 (MH-141, 2026-07-17). LICENSED BY THE decoy_bench DESIGN: the arbiter is the
+# sampler's OWN seed-to-seed jitter at the reference config — if a shorter chain moves the readouts LESS
+# than reseeding does, the cut is free. MEASURED over 38 genes (p=2..64, incl. every hub):
+#   * beta and beta_sd deviations both INSIDE the reseed floor; 500/200 and 200/80 are NOT (1.4–2.1× it).
+#   * the deviation is NOISE, not BIAS — signed mean −9.7e-06 (beta, p=0.85) / +4.2e-05 (beta_sd, p=0.47),
+#     i.e. 0.007σ / 0.029σ of the floor ⇒ burn-in at 350 fully forgets the init. (This was the real risk: a
+#     short burn-in is SYSTEMATIC, and a max|Δ| comparison cannot tell a bias from noise.)
+#   * genome-wide: `identified` flips 42/5117 = 0.82%, BELOW the reseed floor (1.6–1.9%); beta corr 0.9994,
+#     beta_sd corr 0.9967; `identity` is BIT-IDENTICAL (corr 1.000000) — it is computed from the NNLS
+#     weights, not the Gibbs mean (MH-138), so it does not depend on chain length at all.
+# ⚠ My prediction was BACKWARDS: I expected beta to converge fast and beta_sd to be the constraint. At
+# 200/80 beta is 2.1× the floor while beta_sd is only 1.3× — burn-in governs where the chain SITS more than
+# how wide it is. Do not shorten further without re-running the floor test (`scratchpad/niter_sweep.py`).
+N_ITER, BURN = 1000, 350
 # Sampled-permutation count for the IDENTITY readout (`attribution.shapley_identity`). 400 is the value
 # `identity_vs_magnitude` has always used. Cost measured 2026-07-17: 0.16 s at 4 families → 1.43 s at 64
 # (mean 0.85 s/gene incl. the NNLS fit) ⇒ ~2.7 min genome-wide on 8 workers. Exact Shapley is 2^p and
