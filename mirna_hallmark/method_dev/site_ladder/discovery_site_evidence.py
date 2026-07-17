@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from mirna_hallmark import config as C
@@ -53,5 +54,52 @@ def build(discoveries: str | Path = _DISC) -> pd.DataFrame:
     return m
 
 
+def _partial_spearman(x, y, z):
+    """Spearman(x, y) after rank-residualising both on z — the abundance-controlled trend statistic."""
+    from scipy.stats import rankdata, spearmanr
+    xr, yr, zr = (rankdata(v) for v in (x, y, z))
+    rx = xr - np.polyval(np.polyfit(zr, xr, 1), zr)
+    ry = yr - np.polyval(np.polyfit(zr, yr, 1), zr)
+    return spearmanr(rx, ry)
+
+
+def dose_response(sitelevel: str | Path = _OUT) -> pd.DataFrame:
+    """FORMAL dose-response (MH-156): does coupling strength track site-level EVIDENCE, controlling for the
+    obvious confound (arm abundance — a stronger predicted site could merely mark a more abundant arm, axiom 4)?
+
+    The estimand is a WITHIN-CANDIDATE gradient (every candidate has a site) — a site-free arm has no rung, so
+    the dose-response IS the claim against the null. Reports partial Spearman(evidence, null_z | abundance) for
+    each evidence axis. Effects are SMALL by construction (bulk coupling is weak per-edge, MH-123); the claim is
+    the CONVERGENCE of independent axes, not any single per-edge test.
+    """
+    from scipy.stats import kruskal
+    m = pd.read_csv(sitelevel, sep="\t")
+    g = pd.read_csv(SFL.OUT / "utr_site_ladder_genomic_discovery.tsv.gz", sep="\t")
+    base = {"7mer-A1": 1, "7mer-m8": 2, "8mer": 3}
+    g["conf"] = g["type"].map(base).fillna(0) + g["conserved"].astype(int) + g["has_3p_supp"].astype(int)
+    best = (g.groupby(["miRNA", "gene"])
+              .agg(site_conf=("conf", "max"), site_manakov=("site_manakov", "max"), n_sites=("type", "size"))
+              .reset_index().rename(columns={"miRNA": "arm"}))
+    m = (m.drop(columns=["site_manakov", "n_sites"], errors="ignore")
+           .merge(best, on=["arm", "gene"], how="inner").dropna(subset=["null_z", "arm_abundance"]))
+    rows = []
+    for name, x in [("site_confidence", m["site_conf"]), ("scanmir_kd", -m["scanmir_rep"]),
+                    ("site_count", m["n_sites"]), ("site_level_chimeric", m["site_manakov"].astype(int))]:
+        rho, p = _partial_spearman(x, m["null_z"], m["arm_abundance"])
+        rows.append({"axis": name, "partial_rho_given_abundance": round(float(rho), 4), "p": float(p), "n": len(m)})
+    res = pd.DataFrame(rows)
+    tiers = sorted(m["site_conf"].unique())
+    kw = kruskal(*[m.loc[m.site_conf == t, "null_z"] for t in tiers if (m.site_conf == t).sum() > 5])
+    out = C.OUTPUT_ROOT / "learned" / "discovery_dose_response.tsv"
+    res.to_csv(out, sep="\t", index=False)
+    print(res.to_string(index=False))
+    print(f"Kruskal-Wallis (null_z across {len(tiers)} confidence tiers): p={kw.pvalue:.2e}")
+    print("Manakov-overlap climbs the ladder: " +
+          " ".join(f"conf{t}={m.loc[m.site_conf==t,'site_manakov'].mean():.0%}" for t in tiers))
+    print(f"→ wrote {out}")
+    return res
+
+
 if __name__ == "__main__":
-    build()
+    import sys
+    dose_response() if "--dose" in sys.argv else build()
