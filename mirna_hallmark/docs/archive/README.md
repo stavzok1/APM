@@ -72,3 +72,19 @@ into `MODELING_FRAMEWORK.md`; its **discovery-lane architecture** (one fit → 4
 | `HANDOFF_NORMAL_EXCLUDED_BATCH_RERUN.md` | ⚠ **The doc says "this task is mid-flight … the full rerun did not finish." That is stale.** The ledger records the rerun as **settled 2026-06-26** (MH-53), with refreshed counts throughout. Archived as done; kept because it documents the code changes. |
 | `MODELING_FRAMEWORK_SLIDES_COMPANION.md` | Per-slide build spec for the NotebookLM deck derived from `MODELING_FRAMEWORK_EXTERNAL.md`. Derived-of-a-derived; was orphaned (in-degree 0). |
 | `DUAL_SPINE_COMPARISON_PLAN.md` | miRTar M0 vs ENCORI M0′ plan. **Executed** — the outcome memo is now tracked at [`../decisions/DUAL_SPINE_CANONICAL_DECISION.md`](../decisions/DUAL_SPINE_CANONICAL_DECISION.md) (it had been stranded inside the gitignored `output/`). The plan's own header still says "Status: planned"; that is stale. |
+
+---
+
+## Parked design docs whose PREMISE died (archived 2026-07-17)
+
+Each was carried as "parked / revisit later". Checked before archiving: in every case the thing they
+plan for has since been retired, answered, or blocked on something that was never started. Their
+surviving threads are absorbed into `../PROGRAM_FORWARD_BOARD.md` §Z.
+
+| doc | why archived |
+|-----|--------------|
+| `PRESSURE_FUTURE_OPTIONS.md` | Deferred options A–E for the **pressure formula**. ⛔ **Dead by supersession:** MH-115 **RETIRED the pressure heuristic** — on CPTAC protein it is p=0.11, on CPTAC mRNA p=0.83, while the learned β gives −0.036 (p=5.3e-13). *"The evidence weighting adds nothing over raw abundance, ever."* Tuning a retired estimator is a category error. |
+| `LEARNED_REGULATORY_MATRIX_DESIGN.md` | The design note for **learning M**, self-declared *"design / parked. Not in any spine."* **The learned model is production** (`LEARNED_MODEL_DISCOVERY_SYNTHESIS.md` §6b). Historical. |
+| `PRESSURE_PROGNOSTIC_DESIGN.md` | The prognostic construct. **Blocked on "METABRIC-full (EGA-pending)" — a DAR that was never filed** (no accession, no submission date, no owner anywhere in the repo). And **MH-76 already answered the generalization question**: the frozen panel gives DFI +0.002 / OS +0.006, panel-alone C 0.48–0.53 ≈ random. The last live lead (coherence→OS) is on the board. |
+| `PRIMARY_TUMOR_ROADMAP.md` | Take the DCIS/EV rigor lens to primary tumours. **Overtaken by events** — its central ask (the composition retest) *happened*: MH-107/114 ran it, found ~57% of the protein validation is compartment arithmetic, and proved it with an orientation-stratified shuffled null. Its one live thread — the **definitive orphan retest at n=1,041** — is on the board §Z. |
+| `CRC_PORT_LITERATURE_SCAN.md` | Literature landscape for porting the machine to colorectal cancer (2026-06-28). ⛔ **Blocked on the obvious:** the breast machine's own existence claim rests on **ONE observational line** (both CN instruments retracted, MH-133). Porting an unvalidated machine to a second tissue multiplies the claim, not the evidence. |

@@ -83,6 +83,31 @@ Highest value ÷ cost. ⚠ Two of the original four turned out to be claims that
 
 ---
 
+## Z. Absorbed from the parked design docs (archived 2026-07-17)
+
+Five parked docs were archived; these are the only threads in them that were still alive.
+
+- ⬜ **The DEFINITIVE orphan retest** (from `PRIMARY_TUMOR_ROADMAP`, and MH-55's own stated next step):
+  *"re-run orphan coupling on the TCGA spine with composition metagenes"* — **n=1,041, not MH-55's n=40 DCIS**.
+  MH-55 screened orphans in within-patient DCIS and called it *screening*; the fixed CPTAC screen (594→23,
+  MH-114) and the re-run `buffa_validation` (108→3, MH-38) both now exist, so the powered version is the
+  natural close. **(→ MH-55, MH-38, MH-114)**
+- 🚫 **Pressure-formula options A–E** (`PRESSURE_FUTURE_OPTIONS`) — **DEAD BY SUPERSESSION, do not revive.**
+  They tune the evidence-weighted pressure heuristic, which **MH-115 RETIRED**: on CPTAC protein the heuristic
+  is p=0.11 and on CPTAC mRNA p=0.83, while abundance has the WRONG SIGN and the learned β gives −0.036
+  (p=5.3e-13). *"The evidence weighting adds nothing over raw abundance, ever."* **Tuning a retired estimator
+  is not an option, it is a category error.** **(→ MH-115)**
+- 🚫 **`LEARNED_REGULATORY_MATRIX_DESIGN`** — the design note for learning M, self-declared *"parked, not in
+  any spine"*. **The learned model is production** (§6b). Historical; archived.
+- ⛔ **The CRC port** (`CRC_PORT_LITERATURE_SCAN`, 2026-06-28) — a literature landscape for porting the machine
+  to colorectal cancer. **Blocked on the obvious: the breast machine's own existence claim rests on ONE
+  observational line** (§A). Porting an unvalidated machine to a second tissue multiplies the claim, not the
+  evidence. Revisit only after §A. **(→ §A)**
+- ⛔ **METABRIC-full / the prognostic design** (`PRESSURE_PROGNOSTIC_DESIGN`) — see §D. Blocked on a DAR that
+  **was never filed**, and MH-76's frozen-panel test already answered the generalization question (**no**).
+
+---
+
 ## A. Edge existence — the one open foundation
 
 **⛔ Both CN instruments are RETRACTED. Edge existence rests on ONE observational line** (curated edges

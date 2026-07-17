@@ -52,7 +52,6 @@
 | [LEARNED_MODEL_METHODS_FORMAL.md](LEARNED_MODEL_METHODS_FORMAL.md) | active | The LaTeX twin. |
 | [LEARNED_MODEL_RATIONALE.md](LEARNED_MODEL_RATIONALE.md) | active | The *why* behind every § of METHODS — incl. **§15/§15a identity-vs-magnitude** (⭐ why `share` is NOT identity), **§4a collinearity/identifiability**, and the **channel frame**. ✅ Absorbed the attribution trio + COLLINEARITY + CHANNEL_FUSION's live frame 2026-07-17. |
 | [LEARNED_MODEL_VALIDATION.md](LEARNED_MODEL_VALIDATION.md) | active | Validation dossier. ⚠ §1 still carries the MH-127 restatement, not MH-134/135/137. |
-| [LEARNED_REGULATORY_MATRIX_DESIGN.md](LEARNED_REGULATORY_MATRIX_DESIGN.md) | active | Design note on learning M. |
 
 ## 3. Findings — the record is the REGISTRY
 
@@ -95,10 +94,12 @@
 
 ## 6. Forward planning — ONE doc
 
+> ✅ **2026-07-17: the five parked design docs were archived** — each planned for something since retired,
+> answered, or blocked on an unstarted step. Their live threads are absorbed into the board's **§Z**.
+
 | doc | currency |
 |-----|----------|
 | **[PROGRAM_FORWARD_BOARD.md](PROGRAM_FORWARD_BOARD.md)** | **active, current through MH-137.** The single forward doc. Opens with a **🔨 DO THESE FIRST** block. ✅ **Consolidated 2026-07-17**: absorbed `WHATS_NEXT.md` + `LEARNED_MODEL_WHATS_NEXT.md` (86 KB across three docs → 32 KB in one); both are now in [`archive/`](archive/README.md). |
-| [PRESSURE_FUTURE_OPTIONS.md](PRESSURE_FUTURE_OPTIONS.md) · [PRESSURE_PROGNOSTIC_DESIGN.md](PRESSURE_PROGNOSTIC_DESIGN.md) · [PRIMARY_TUMOR_ROADMAP.md](PRIMARY_TUMOR_ROADMAP.md) | parked — pending fold-in to the board. ⚠ PROGNOSTIC_DESIGN is blocked on "METABRIC-full (EGA-pending)" — **no DAR was ever filed**. |
 
 ## 7. Subfolders
 
@@ -114,7 +115,6 @@
 | doc | what |
 |-----|------|
 | [MODELING_FRAMEWORK_EXTERNAL.md](derived/MODELING_FRAMEWORK_EXTERNAL.md) | derived — external/paper version, NotebookLM source. |
-| [CRC_PORT_LITERATURE_SCAN.md](CRC_PORT_LITERATURE_SCAN.md) | reference — CRC-port literature scan. |
 
 ---
 
