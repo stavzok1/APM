@@ -83,6 +83,48 @@ Highest value ÷ cost. ⚠ Two of the original four turned out to be claims that
 
 ---
 
+## Y. Mined from the PRESSURE arc — analyses the LEARNED model can do and never has (2026-07-17)
+
+`METHODS.md` specs the pressure arc. The estimator is retired (MH-115) — but **two of its analyses were never
+ported to the learned model, and both target live gaps.** Found by asking what METHODS does that §6b doesn't,
+rather than by merging the docs. (Its other content is not unique: **coupling** → `FORMULAS §7`, the
+anti-correlation ladder; **data/edges/harmonization** → `DATA_SOURCES §0/§1/§2`.)
+
+- ⬜ **⭐ DOES RISC AVAILABILITY MODIFY β? — the learned model has NEVER used the AGO/RISC capacity gate.**
+  **VERIFIED:** `learned/` contains only `ago_loading.py` (*which arm* is loaded, from Manakov chimeric —
+  already measured **coupling-INERT**). There is **no `ago_gate`, no per-sample RISC-capacity term anywhere in
+  the learned tree.** METHODS §4's gate is a different object: a **per-sample, miRNA-independent AVAILABILITY**
+  term (`ago_load(s)` from AGO1–4 + a required TNRC6/GW182 effector, both-required, z-scored per gene) — the
+  finite shared pool every miRNA competes for.
+  **AND THE PRESSURE ARC NEVER TESTED IT EITHER.** It applies the gate as a **multiplier** and reports every
+  result "gated AND ungated", calling it *"a documented sensitivity layer, **not a causal model**"*. The old
+  `WHATS_NEXT §2.3` posed the real test — *fit `expression ~ pressure × AGO_capacity` and test the INTERACTION*
+  — and it was never run. **The learned model makes it sharp for the first time:** β is the *de-confounded*
+  coupling, so `r ~ (X·β) × ago_load(s)` asks whether RISC availability modifies the **real** slope, not the
+  heuristic's. **A positive interaction upgrades AGO from "motivated" to "demonstrated"; a null retires the
+  gate.** Either is worth having — the gate currently sits in the spine on biological rationale alone.
+  ⚠ Pre-register: `ago_load(s)` is built from RNA of AGO1–4/TNRC6, so it correlates with global transcription
+  and with proliferation — the interaction needs `mal_prolif` and composition in C, and a **shuffled-`ago_load`
+  null** (axiom 4: state what the artifact would do to the test). **(→ METHODS §4; `ago_gate.py`)**
+
+- ⬜ **⭐ THE PRESSURE ARC ALREADY BUILT THE NULL THE LEARNED MODEL LACKS.** `eval/coupling_permutation.py` is an
+  **empirical Freedman–Lane permutation null at EVERY resolution** (edge · gene · target-set · program ·
+  universe), with **both** senses of "family" handled: Benjamini–Yekutieli for arbitrary dependence, *and*
+  seed-family-aware permutation. Meanwhile **MH-123 measured the learned model's theoretical t-null as 3–4×
+  TOO NARROW** — site-free pairs that *cannot* repress pass "FDR q<0.05" at **25–35%**, and under an honest
+  empirical null the HE per-edge survival goes **31.3% → 0.0%**. **The machinery to fix that exists in the
+  retired arc and in MH-123's own Efron null, and the shipped readouts use NEITHER.**
+  ⚠ Note the two nulls fix **different** defects: BY corrects **dependence** among tests; MH-123's problem is
+  **SCALE** (σ₀ 0.031 theoretical vs 0.083–0.132 measured). **BY would not have caught MH-123** — only an
+  empirical/permutation null re-scales. So the port is the **permutation** leg, not the BY leg.
+  **(→ MH-123; `eval/coupling_permutation.py`, `coupling_inference.py`)**
+
+- 🚫 **Do NOT merge `METHODS.md` into `FORMULAS.md`.** ~87 KB of spec for an estimator MH-115 **retired**;
+  consolidating it buys tidiness on a baseline. Both keep a retired-estimator banner and stay. The value in
+  METHODS is the two analyses above, and they are now mined.
+
+---
+
 ## Z. Absorbed from the parked design docs (archived 2026-07-17)
 
 Five parked docs were archived; these are the only threads in them that were still alive.

@@ -1,5 +1,24 @@
 # Methods — `mirna_hallmark`
 
+> ⚠ **THE ESTIMATOR THIS DOC SPECS IS RETIRED — read this before citing any number here (MH-115, 2026-07-13).**
+> The evidence-weighted **pressure heuristic** (`compute_gene_pressure`, the `edge_w × expr_mult` construction
+> below) was benchmarked against the learned β on the SAME design matrix, varying only the weight:
+> on CPTAC protein — abundance −0.006 (p=0.20) · **heuristic −0.008 (p=0.11)** · **learned β −0.036 (p=5.3e-13)**;
+> on CPTAC mRNA the heuristic is **p=0.83 (exactly zero)** and abundance has the **WRONG SIGN** (+0.014, p=1.9e-03);
+> and even **in-sample on TCGA, raw abundance (−0.056) BEATS the heuristic (−0.046)** ⇒ **the evidence weighting
+> adds nothing over raw abundance, ever.** Per-edge: β is entirely **additional** to abundance (β|abundance
+> −0.140, p=1.5e-13) while abundance is **redundant** given β (abundance|β −0.012, p=0.52).
+> ⇒ **This doc is the record of a BASELINE, not of the model.** The model is ONE dense learned-τ² non-negative
+> Bayesian posterior per gene, two readouts — `MODELING_FRAMEWORK.md` → *THE CANONICAL MODEL STATEMENT*, spec in
+> `LEARNED_MODEL_METHODS.md`. **Do not build on the construction below.**
+> ✅ **Still valid and still cited:** the DESIGN decisions here are estimator-independent — the Hallmark universe,
+> the edge universe, arm-name harmonization (→ `DATA_SOURCES`), the confounder ladder (→ `FORMULAS §7`), and
+> **two analyses the learned model has never done**, now on the board **§Y**: the **AGO/RISC capacity gate as an
+> INTERACTION** on β (§4 — never tested, by either arc), and the **Freedman–Lane permutation null** (§6a —
+> which the learned model still lacks; MH-123 measured its t-null as 3–4× too narrow).
+
+
+
 Formal description of the subproject's computations. Cohort and join
 conventions follow the parent repo (`analysis/COHORT_AND_JOIN_CONVENTIONS.md`):
 TCGA-BRCA primary tumors, 12-char participant key, multi-vial collapse by mean
