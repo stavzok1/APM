@@ -11,7 +11,7 @@
 > **Sync-partner:** `docs/STATE_OF_PLAY.md` (the current-state verdicts this board plans against; if the two
 > disagree, STATE_OF_PLAY wins, and the registry wins over both).
 
-**Last updated: 2026-07-17** · planning against the registry through **MH-139**.
+**Last updated: 2026-07-17** · planning against the registry through **MH-140**.
 *Supersedes and replaces `WHATS_NEXT.md` and `LEARNED_MODEL_WHATS_NEXT.md` (both archived; both predated MH-133…137).*
 
 Status: ✅ done (anchor only) · 🔨 immediate/flagged · ⬜ open · 🔬 investigate · ⛔ blocked/dead · 🚫 deliberate skip.
@@ -34,19 +34,12 @@ Highest value ÷ cost. The first four are correctness debt — a dead claim is c
 3. 🔨 **LIVE BUG — E6 self-partialling** in `discovery` / `dossier`: each edge is partialled on `C + he_agg`,
    where `he_agg` is built **from the HE arms** ⇒ an arm is partialled on a covariate containing itself.
    HE hit rate **0.9%** with it vs **32.6%** C-only. Unfixed. **(→ STATE_OF_PLAY Axis 1)**
-4. 🔨 **RELABEL / GATE `readouts.share` — the genome-wide table has NO true identity column (MH-138).**
-   `learned/readouts.py:16-21,171` labels `share` (= β_f/Σβ) *"ATTRIB / IDENTITY — the Bayesian Shapley"*.
-   **It is neither identity nor safe.** (a) For an additive value function Shapley is trivially β_f ⇒ it splits
-   nothing under collinearity (MH-122); the doctrine's identity is `attribution.shapley_identity` = LMG on R².
-   (b) Its **denominator is majority-unidentified mass**: pooled **73.0%** of β-mass sits on |z|≤2 edges
-   (per-gene median 55.5%; **42.7% of genes at 100%**, 452 single-family; `n_fam≥3` median 32.0%) — because the
-   half-normal slab has a strictly positive mean, so an un-informed family **cannot be zeroed** (`beta == 0` in
-   **0/5,117**), where NNLS returns exact zeros. MH-119's `share_abs`/`share_reliable` mitigate but don't fix
-   the label. **Options:** rename to `beta_frac` (honest), gate it behind `identified`, or emit a real
-   `shapley_identity` column (per-gene, 400 perms — cost it first). **(→ MH-138, MH-122)**
-   ✅ *Related and now CLOSED — the "§5 bagged NNLS vs §6b dense posterior" conflict is SETTLED (MH-138): one
-   word, two jobs. MAGNITUDE = the Gibbs mean; IDENTITY = `shapley_identity` fed `canonical_M` (NNLS), which is
-   **required**, not vestigial. `bayes_shapley_identity` already implements the right form. Do not re-open.*
+4. ✅ **DONE 2026-07-17 (MH-140) — `readouts.share` relabelled AND the table gained a TRUE identity column.**
+   `identity` = `shapley_identity` (LMG on R², m = bagged NNLS); `share`→`beta_frac` (demoted to MAGNITUDE);
+   + `identity_deconv`, `identity_eq_magnitude`. **WHO ≠ HOW-MUCH in ~25% of multi-family genes** (agree 75.2%,
+   n=819; was 99.35% when "identity" was argmax β). `m_nnls`=0 in 31.7% of families vs `beta`=0 in 0/5,117.
+   213 genes (13.8%) now honestly report identity = UNDEFINED. Change is purely additive (5 columns
+   bit-identical); `shapley_identity` optimized 8.2–9.7× output-identical. **(→ MH-140, MH-138)**
 5. ⬜ **`β(TCGA) → Buffa mRNA`** — the learned model's **only untested boundary is the cohort boundary**
    (MH-104: **~80% loss at the cohort boundary, ~0% at the layer boundary**), and Buffa (n=207, miRNA+mRNA) is
    the only independent-patient cohort in the repo that can test it. **β has never touched Buffa** — one `STUB`

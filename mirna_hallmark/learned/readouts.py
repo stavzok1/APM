@@ -13,11 +13,24 @@ Read four ways (all per SEED FAMILY — the latent is family-level, §8; arms ar
 
   COUPLING            `beta` (posterior mean), `beta_sd`
   ATTRIB / MAGNITUDE  `beta` — the force  (the WHO-HOW-MUCH)
-  ATTRIB / IDENTITY   `share` ± `share_sd` — the Bayesian Shapley (MH-94). For the linear aggregate
-                      ρ = Σ_f β_f·X_f on z-scored X, the Shapley value of f is EXACTLY β_f, so the per-draw
-                      share is `β_f / Σβ` → posterior mean ± sd. Abundance-removed ⇒ IDENTITY, not magnitude.
+  ATTRIB / IDENTITY   `identity` — Shapley/LMG credit for **R²(Xz·m, yr)**, m = **bagged NNLS** (MH-138).
+                      The DOCTRINE's identity: the value function v(S) = R²(X_S·m_S, y) is **NON-additive** —
+                      a collinear pair's joint R² is far LESS than the sum of its marginals — so the
+                      ordering-average genuinely **SPLITS the overlap**. Normalised to a share of explained
+                      variance. ⚠ **SCOPE:** identity says WHO, magnitude says HOW MUCH, **neither says
+                      WHETHER**. Per MH-126 the model **RANKS** the canonical family above chance
+                      (0.370, p=0.018) but does **NOT NAME** it (argmax at chance at every k) — read the
+                      ranking, not the argmax.
+  ATTRIB / MAGNITUDE  `beta_frac` ± `beta_frac_sd` — β_f/Σβ, the gene-budget FRACTION.
+                      ⚠ **RENAMED from `share` 2026-07-17 (MH-138), and DEMOTED from "identity".** It was
+                      labelled "the Bayesian Shapley" but for the **ADDITIVE** aggregate ρ = Σ_f β_f·X_f the
+                      Shapley value of f is **TRIVIALLY β_f** ⇒ normalising **splits NOTHING** under
+                      collinearity (MH-122) — the one thing a Shapley exists to do. It is a β-fraction; the
+                      name now says so. ⚠ Its denominator is majority-unidentified mass (**73.0% pooled**),
+                      because the half-normal slab has a strictly positive mean and so **cannot zero** an
+                      un-informed family (`beta == 0` in **0/5,117**). Read it via `beta_frac_reliable`.
   IDENTIFIABILITY     `z = beta/beta_sd` (|z|>2 = identified; MH-83: precision 0.86 / recall 0.89 vs the
-                      conditioned-partial ground truth) and `share_sd` (WIDE share = genuine non-identifiability
+                      conditioned-partial ground truth) and `beta_frac_sd` (WIDE = genuine non-identifiability
                       — MH-94's PTEN miR-141/200a 0.77±0.41 that a point Shapley hid)
   DISCOVERY           `pip_discovery` — inclusion posterior under the evidence-π prior
 
@@ -57,28 +70,39 @@ OUT_EDGES = ROOT / "mirna_hallmark/output/learned/readouts_edges.tsv"
 OUT_GENES = ROOT / "mirna_hallmark/output/learned/readouts_genes.tsv"
 
 N_ITER, BURN = 2000, 700
+# Sampled-permutation count for the IDENTITY readout (`attribution.shapley_identity`). 400 is the value
+# `identity_vs_magnitude` has always used. Cost measured 2026-07-17: 0.16 s at 4 families → 1.43 s at 64
+# (mean 0.85 s/gene incl. the NNLS fit) ⇒ ~2.7 min genome-wide on 8 workers. Exact Shapley is 2^p and
+# infeasible at p=64; the sampled estimator is the reason this column can exist at all.
+IDENTITY_PERM = 400
 
 _AUX: dict = {}
 
 
 def add_reliability(d: pd.DataFrame) -> pd.DataFrame:
-    """MH-119 — GATE THE RATIO READOUTS. `share` and `retention` are both X/Y with a Y that can vanish; a
+    """MH-119 — GATE THE RATIO READOUTS. `beta_frac` and `retention` are both X/Y with a Y that can vanish; a
     vanishing denominator makes the QUESTION ill-posed, not just the estimate noisy.
 
-    **`share` (Bayesian Shapley, β_f/Σβ).** MEASURED mechanism: it explodes ONLY when a gene's βs CANCEL —
-    repressive (β>0) and anti-repressive (β<0) units summing to ≈0 while Σ|β| stays large. Of the rows with
-    |share|>2, **100%** sit in a gene with ≥1 negative β (only 8% of genes have any), their |Σβ|/Σ|β| is
+    **`beta_frac` (β_f/Σβ; called `share` and mislabelled "the Bayesian Shapley" until MH-138).** MEASURED
+    mechanism: it explodes ONLY when a gene's βs CANCEL — repressive (β>0) and anti-repressive (β<0) units
+    summing to ≈0 while Σ|β| stays large. Of the rows with
+    |beta_frac|>2, **100%** sit in a gene with ≥1 negative β (only 8% of genes have any), their |Σβ|/Σ|β| is
     **0.172** vs **1.000** for normal rows, and their |Σβ| is 10x smaller. CDH11's βs cancel to −0.0018, so a
     β of +0.072 reads as "999% of the total" — arithmetically right, semantically meaningless. **The model
-    already knew: `share_sd` is 316 on those rows vs ~0.04 normally.** It was simply never read.
+    already knew: `beta_frac_sd` (then `share_sd`) is 316 on those rows vs ~0.04 normally.** It was never read.
 
     **`retention` (β_deconv/β_core).** Same family, different mechanism: a SMALL |β_core| (not cancellation).
     Gate on the core β actually being identified.
 
+    ⚠ **MH-124 CORRECTED THE CAUSE, and MH-138 the LABEL.** The negative βs behind the explosion were a
+    SAMPLER BUG (`_rtnorm_pos` inverse-CDF saturating for mu/s < −7.0345 ⇒ deterministic NEGATIVE draws,
+    impossible under a half-normal slab), not "anti-repressive biology" as first recorded. The gates below
+    are correct regardless — but the `identity` column, not `beta_frac`, is now the identity readout.
+
     Emits (FLAG, don't delete — the raw values are kept):
       `net_pressure`     |Σβ|/Σ|β| ∈ [0,1] — the gene's SIGN COHERENCE. 1 = all units push the same way.
-      `share_abs`        |β_f|/Σ|β_f| ∈ [0,1] — a BOUNDED companion to `share`, always well-defined.
-      `share_reliable`   the signed share is meaningful (net_pressure ≥ 0.5 AND share_sd ≤ 1).
+      `beta_frac_abs`      |β_f|/Σ|β_f| ∈ [0,1] — a BOUNDED companion to `beta_frac`, always well-defined.
+      `beta_frac_reliable` the signed fraction is meaningful (net_pressure ≥ 0.5 AND beta_frac_sd ≤ 1).
       `retention_reliable`  the core β is identified (|z|>2), so the ratio has a real denominator.
     """
     g = d.groupby("gene")["beta"]
@@ -86,8 +110,8 @@ def add_reliability(d: pd.DataFrame) -> pd.DataFrame:
     sa = g.transform(lambda s: s.abs().sum())
     with np.errstate(divide="ignore", invalid="ignore"):
         d["net_pressure"] = (sb.abs() / sa.replace(0, np.nan)).clip(0, 1)
-        d["share_abs"] = (d["beta"].abs() / sa.replace(0, np.nan)).clip(0, 1)
-    d["share_reliable"] = (d["net_pressure"] >= 0.5) & (d["share_sd"].abs() <= 1.0)
+        d["beta_frac_abs"] = (d["beta"].abs() / sa.replace(0, np.nan)).clip(0, 1)
+    d["beta_frac_reliable"] = (d["net_pressure"] >= 0.5) & (d["beta_frac_sd"].abs() <= 1.0)
     if "retention" in d.columns:
         d["retention_reliable"] = d.get("identified", pd.Series(False, index=d.index)).astype(bool)
     return d
@@ -153,8 +177,18 @@ def _posteriors(gene, deconv, n_iter, burn, seed, level="family"):
                                               return_samples=True)                  # π≡1 DENSE
     pi = np.clip(AE._evidence_pi(gene, cols), 0.0, 1.0)
     _, _, pip_disc = SS._gibbs_posterior(Xz, yr, pi, n_iter=n_iter, burn=burn, seed=seed)   # evidence-π
+    # ⭐ FIXED WEIGHTS for the IDENTITY readout (MH-138). Identity = Shapley/LMG on R² of a FIXED-weight
+    # aggregate, and the weights MUST be able to reach zero. The Gibbs mean CANNOT: the half-normal slab
+    # N⁺(0,ν²) has a strictly positive mean, so an un-informed family relaxes TO THE PRIOR rather than to 0
+    # (MEASURED: `beta == 0` in 0/5,117 edges, 100% positive; pooled 73.0% of β-mass sits on |z|≤2 edges).
+    # Feed that to a Shapley and you credit families the model cannot distinguish from noise. Bagged NNLS
+    # returns exact zeros — this is RATIONALE §2e's "NNLS-style point estimate + EB posterior sd", and the
+    # form `attribution.bayes_shapley_identity` already uses. Fit on the SAME prepped design as the Gibbs
+    # (`AE._prep` "matches `_bagged_nnls`"; for TCGA tumour x_floor("01") == the 0.1 floor _prep applies), so
+    # m and Xz are aligned by construction — no cross-module design mismatch.
+    m_nnls, _ = AE._bagged_nnls_meansd(Xz, yr, seed=seed)
     return dict(cols=cols, n=n, p=p, b=b, sd=sd, pip_d=pip_d, draws=draws, pip_disc=pip_disc,
-                pi=pi, members=members, fam=fam)
+                pi=pi, members=members, fam=fam, Xz=Xz, yr=yr, m_nnls=m_nnls)
 
 
 def gene_readouts(gene: str, *, n_iter: int = N_ITER, burn: int = BURN, seed: int = 0,
@@ -168,13 +202,32 @@ def gene_readouts(gene: str, *, n_iter: int = N_ITER, burn: int = BURN, seed: in
 
     cols, b, sd, draws = core["cols"], core["b"], core["sd"], core["draws"]
 
-    # ---- ATTRIBUTION / IDENTITY: Bayesian Shapley (MH-94). Linear aggregate ⇒ Shapley(f) = β_f exactly. ----
-    def _shapley(dr):
+    # ---- ATTRIBUTION / MAGNITUDE, as a FRACTION of the gene's budget. ----
+    # ⚠ RENAMED `share` → `beta_frac` (MH-138). This was labelled "ATTRIB / IDENTITY — the Bayesian Shapley"
+    # and it is NOT identity: for the ADDITIVE value function Σβ_f the Shapley value of f is TRIVIALLY β_f, so
+    # normalising splits NOTHING under collinearity — the exact thing a Shapley exists to do (MH-122). It is a
+    # β-fraction; the name now says so. It is kept because the FRACTION is a real magnitude readout, but read
+    # it with `beta_frac_reliable` — its denominator is majority-unidentified mass (73.0% pooled).
+    def _frac(dr):
         tot = dr.sum(1, keepdims=True)
         with np.errstate(divide="ignore", invalid="ignore"):
-            sh = np.where(np.abs(tot) > 1e-9, dr / tot, np.nan)                     # per-draw share β_f/Σβ
+            sh = np.where(np.abs(tot) > 1e-9, dr / tot, np.nan)                     # per-draw β_f/Σβ
         return np.nanmean(sh, 0), np.nanstd(sh, 0)
-    share, share_sd = _shapley(draws)
+    beta_frac, beta_frac_sd = _frac(draws)
+
+    # ---- ⭐ ATTRIBUTION / IDENTITY — the DOCTRINE's identity, for the first time in this table (MH-138). ----
+    # Shapley/LMG credit for R²(Xz·m, yr) under the NON-additive value function v(S) = R²(X_S·m_S, y) — a
+    # collinear pair's joint R² is far LESS than the sum of its marginals, so the ordering-average genuinely
+    # DIVIDES the overlap. Weights `m` = bagged NNLS (MH-138: the Gibbs mean cannot zero an un-informed
+    # family, so it would credit noise). Normalised to a share of the explained variance.
+    # ⚠ SCOPE: identity says WHO, magnitude says HOW MUCH, NEITHER says WHETHER. A high identity share is the
+    # DISTRIBUTION of coupling that exists — never evidence a driver exists. And per MH-126, the model RANKS
+    # the canonical family above chance but does NOT NAME it (argmax at chance at every k) — so read the
+    # ranking, not the argmax.
+    from mirna_hallmark.learned import attribution as AT
+    phi = AT.shapley_identity(core["Xz"], core["m_nnls"], core["yr"], n_perm=IDENTITY_PERM, seed=seed)
+    tot_phi = phi.sum()
+    identity = phi / tot_phi if tot_phi > 1e-12 else np.full_like(phi, np.nan)
 
     with np.errstate(divide="ignore", invalid="ignore"):
         z = np.where(sd > 1e-12, b / sd, 0.0)
@@ -183,7 +236,9 @@ def gene_readouts(gene: str, *, n_iter: int = N_ITER, burn: int = BURN, seed: in
         "gene": gene, "family": cols, "n": core["n"], "p_fam": core["p"],
         "beta": b, "beta_sd": sd,                        # COUPLING (core C — the design's canonical)
         "z": z, "identified": np.abs(z) > 2.0,           # IDENTIFIABILITY (MH-83: prec .86 / rec .89)
-        "share": share, "share_sd": share_sd,            # ATTRIBUTION/identity — Bayesian Shapley w/ width
+        "identity": identity,                            # ⭐ ATTRIBUTION/IDENTITY — Shapley/LMG on R² (MH-138)
+        "m_nnls": core["m_nnls"],                        #    the fixed weights identity is computed from
+        "beta_frac": beta_frac, "beta_frac_sd": beta_frac_sd,   # ATTRIBUTION/MAGNITUDE as a fraction (NOT identity)
         "pip_dense": core["pip_d"],
         "pip_discovery": core["pip_disc"],               # DISCOVERY (evidence-π)
         "prior_pi": core["pi"],
@@ -210,11 +265,20 @@ def gene_readouts(gene: str, *, n_iter: int = N_ITER, burn: int = BURN, seed: in
     if dec is not None:
         m = pd.Series(dec["b"], index=dec["cols"])
         sdd = pd.Series(dec["sd"], index=dec["cols"])
-        shd, _ = _shapley(dec["draws"])
+        shd, _ = _frac(dec["draws"])
+        # The CELL-INTRINSIC identity — the same Shapley/LMG on R², computed on the deconv design. The
+        # docstring promises "+deconv → the CELL-INTRINSIC attribution"; before MH-138 that promise was met
+        # only by `share_deconv` (= β_f/Σβ), which is not identity for the same additive-value-function
+        # reason. Doubles the identity cost (~2.7 → ~5.4 min genome-wide, 8 workers) — cheap for a readout
+        # the table has never had.
+        phid = AT.shapley_identity(dec["Xz"], dec["m_nnls"], dec["yr"], n_perm=IDENTITY_PERM, seed=seed)
+        tphid = phid.sum()
+        idd = phid / tphid if tphid > 1e-12 else np.full_like(phid, np.nan)
         _key = "arm" if level == "arm" else "family"
         d["beta_deconv"] = d[_key].map(m)
         d["beta_sd_deconv"] = d[_key].map(sdd)
-        d["share_deconv"] = d[_key].map(pd.Series(shd, index=dec["cols"]))      # cell-intrinsic IDENTITY
+        d["identity_deconv"] = d[_key].map(pd.Series(idd, index=dec["cols"]))   # ⭐ cell-intrinsic IDENTITY
+        d["beta_frac_deconv"] = d[_key].map(pd.Series(shd, index=dec["cols"]))  # cell-intrinsic β-FRACTION
         with np.errstate(divide="ignore", invalid="ignore"):
             d["retention"] = np.where(d.beta.abs() > 1e-9, d.beta_deconv / d.beta, np.nan)
         d["composition_class"] = pd.cut(d.retention, [-np.inf, 0.4, 0.7, np.inf],
@@ -258,7 +322,14 @@ def run(genes: Optional[Sequence[str]] = None, *, workers: int = 8, limit: Optio
 
     def agg(d: pd.DataFrame) -> pd.Series:
         top_mag = d.loc[d.beta.idxmax()] if len(d) else None
-        top_id = d.loc[d.share.idxmax()] if d.share.notna().any() else None
+        # ⭐ `top_family_identity` is now the argmax of the REAL identity (Shapley/LMG on R²), not of
+        # `share` (MH-138). Before this it was `d.share.idxmax()`, and since share = β_f/Σβ with Σβ a
+        # per-gene CONSTANT, argmax(share) ≡ argmax(β) — so the "identity" column was argmax β wearing an
+        # identity label, and MEASURED IDENTICAL to `top_family_magnitude` in 99.35% of 1,549 genes (the
+        # 0.65% that differed did so only because share is E[β_f/Σβ] per draw, not E[β_f]/E[Σβ] — Jensen,
+        # not information). It duplicated magnitude AND argmax β is the one readout MH-124/126 measured
+        # AT CHANCE for naming the canonical family. ⚠ These two columns will now genuinely DIFFER.
+        top_id = d.loc[d.identity.idxmax()] if d.identity.notna().any() else None
         return pd.Series({
             "n_fam": len(d), "n_arms": int(d.n_arms.sum()) if "n_arms" in d else len(d),
             "total_pressure": float(d.beta.sum()),                       # gene AGGREGATE (Σ_f β_f)
@@ -267,9 +338,11 @@ def run(genes: Optional[Sequence[str]] = None, *, workers: int = 8, limit: Optio
             "top_family_magnitude": None if top_mag is None else top_mag[_u],
             "top_beta": float(d.beta.max()),
             "top_family_identity": None if top_id is None else top_id[_u],
-            "top_share": float(d.share.max()) if d.share.notna().any() else np.nan,
-            "top_share_sd": float(top_id.share_sd) if top_id is not None else np.nan,
-            "max_share_sd": float(d.share_sd.max()) if d.share_sd.notna().any() else np.nan,  # widest = least identifiable
+            "top_identity": float(d.identity.max()) if d.identity.notna().any() else np.nan,
+            "identity_eq_magnitude": (None if (top_id is None or top_mag is None)
+                                      else bool(top_id[_u] == top_mag[_u])),   # do WHO and HOW-MUCH agree?
+            "top_beta_frac": float(d.beta_frac.max()) if d.beta_frac.notna().any() else np.nan,
+            "max_beta_frac_sd": float(d.beta_frac_sd.max()) if d.beta_frac_sd.notna().any() else np.nan,
             "n_discovered": int((d.pip_discovery > 0.5).sum()),          # DISCOVERY
             "n_dense_included": int((d.pip_dense > 0.5).sum()),
             "concentration": float(d.beta.max() / d.beta.sum()) if d.beta.sum() > 0 else np.nan,
@@ -302,8 +375,9 @@ def main() -> None:
     print(f"  {len(G)} genes × {len(E)} (gene,family) rows | {int(E.n_arms.sum())} arm-slots | {(time.time()-t0)/60:.1f} min")
     print(f"\n  COUPLING       : median |beta| {E.beta.abs().median():.4f} | beta>0 {100*(E.beta>0).mean():.1f}%")
     print(f"  IDENTIFIABILITY: |z|>2 in {int(E.identified.sum())}/{len(E)} families ({100*E.identified.mean():.1f}%)")
-    print(f"                   median share_sd {E.share_sd.median():.3f} (wide = genuine non-identifiability)")
-    print(f"  ATTRIB/IDENTITY: median top-share per gene {G.top_share.median():.3f} ± {G.top_share_sd.median():.3f}")
+    print(f"                   median beta_frac_sd {E.beta_frac_sd.median():.3f} (wide = genuine non-identifiability)")
+    print(f"  ATTRIB/IDENTITY: median top_identity per gene {G.top_identity.median():.3f}"
+          f"  | WHO == HOW-MUCH in {G.identity_eq_magnitude.mean():.1%} of genes")
     print(f"  DISCOVERY      : PIP>0.5 in {int((E.pip_discovery>0.5).sum())}/{len(E)} ({100*(E.pip_discovery>0.5).mean():.1f}%)")
     print(f"\n  GENE AGGREGATE : median total_pressure {G.total_pressure.median():.3f} | "
           f"median concentration {G.concentration.median():.3f}")

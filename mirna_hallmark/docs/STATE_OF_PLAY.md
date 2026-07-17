@@ -9,7 +9,7 @@
 > or retracts something, update the matching block here **in the same pass**.
 > **Sync-partner:** `DISCOVERY_REGISTRY.md` (the record of record — this doc is its executive summary).
 
-**Last updated: 2026-07-17** · covering the registry through **MH-139**.
+**Last updated: 2026-07-17** · covering the registry through **MH-140**.
 
 ---
 
@@ -19,7 +19,7 @@
 doc — including the ones labelled "canonical" — may lag it. Where this doc and any other doc
 disagree, the registry wins, then this doc, then everything else.
 
-⚠ **The registry runs ahead of the docs.** MH-131…139 (the most consequential fortnight in the
+⚠ **The registry runs ahead of the docs.** MH-131…140 (the most consequential fortnight in the
 project) exist **only as registry rows**. There is no `MH13x_*.md` for them, and that is now policy —
 the per-finding-doc pattern is **banned** (`../CLAUDE.md` §3). Do not conclude from a doc's silence
 that nothing happened.
@@ -146,17 +146,19 @@ not luck: `X_fam` is pure abundance and the dense Gibbs is called with `π = one
 ⚠ **But `pip_discovery` and `prior_pi` ARE w-contaminated by construction** — any "do canonical
 regulators score higher?" test on those columns is **circular**.
 
-⚠ **LIVE MISLABEL — and it is worse than a naming slip (MH-138, 2026-07-17).**
-`learned/readouts.py:16-21,171` labels `share` (= β_f/Σβ) as *"ATTRIB / IDENTITY — the Bayesian
-Shapley"* in the genome-wide `readouts_edges.tsv`. **It is neither identity nor safe:**
-1. For an **additive** value function Shapley is trivially β_f ⇒ it **splits nothing under
-   collinearity** (MH-122). The doctrine's identity is `attribution.shapley_identity` = **LMG on R²**,
-   a *non-additive* value function `v(S) = R²(X_S·M_S, Y)`.
-2. Its **denominator is majority-unidentified mass**: **pooled 73.0% of all β-mass sits on |z|≤2
-   edges** (per-gene median 55.5%; **42.7% of genes at 100%**, 452 of them single-family where
-   β ≡ uniform by construction; `n_fam≥3` median 32.0%).
-⇒ **The genome-wide table has NO true identity column.** True identity needs `shapley_identity`
-(per-gene, 400 perms). MH-119's `share_abs` / `share_reliable` mitigate but do not fix the label.
+✅ **FIXED 2026-07-17 (MH-140) — the table now has a TRUE identity column, and it disagrees with
+magnitude in 1 of every 4 multi-family genes.** `readouts.py` emits **`identity`** = `shapley_identity`
+(Shapley/LMG on **R²(Xz·m, yr)** — a NON-additive value function, so collinear overlap is genuinely split),
+with **m = bagged NNLS**. The old `share` (= β_f/Σβ) is renamed **`beta_frac`** and demoted to MAGNITUDE:
+for the ADDITIVE aggregate Shapley(f) ≡ β_f, so it split nothing (MH-122), and `top_family_identity` was
+`argmax β` in disguise — **identical to `top_family_magnitude` in 99.35% of genes**.
+**Now: WHO ≠ HOW-MUCH.** Agreement **85.3%** genome-wide, **75.2% among the 819 multi-family genes**.
+**The mechanism, at genome scale:** `m_nnls` is exactly 0 in **1,623/5,117** families (31.7%); `beta` is
+exactly 0 in **0/5,117** — the half-normal slab cannot zero an un-informed family, NNLS can.
+⭐ **Identity can also say UNDEFINED:** 213/1,549 genes (13.8%) have NaN identity, and in **100%** of them
+NNLS zeroed every family ⇒ no coupling to distribute. `beta` structurally cannot make that statement.
+**Control: purely additive** — `beta`/`beta_sd`/`z`/`pip_dense`/`pip_discovery` bit-identical (max|Δ|=0.0).
+⚡ `shapley_identity` optimized **8.2–9.7×**, output-identical ⇒ identity costs 6.5% of a 3.0-min run.
 
 **✅ SETTLED (MH-138): "§5 bagged NNLS vs §6b dense posterior" was never a conflict — one word, two
 jobs.** MAGNITUDE = the Gibbs posterior mean (`beta`) ⇒ §6b. IDENTITY = `shapley_identity`, which
