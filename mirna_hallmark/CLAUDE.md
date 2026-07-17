@@ -170,6 +170,53 @@ These are completion gates, on the same footing as the documentation protocol:
      doesn't know about 3'UTR sites; repression doesn't know about cell type. Find that asymmetry.
      (memory `null-design-and-shared-confounds`)
 
+5. **⭐ NEVER HEADLINE A RATIO OR A THRESHOLD COUNT WITHOUT LOOKING AT WHERE THE MASS SITS.**
+   *(Added 2026-07-17 after this fired **FOUR times in one day**, each time producing a confident number that a
+   trivial perturbation moved. It is now the single most common way a non-finding enters this registry.)*
+   - **The tell:** the quantity underneath is *fine* — it is the **summary statistic** that is unstable.
+     MH-144 is the cleanest case: two implementations whose per-gene ceilings agree at **corr 0.9956** report
+     **17.6% vs 25.5%** "not measurable", because `ceiling ≤ 0` is a threshold and **39.8% of genes sit within
+     ±0.01 of it**. A shift of **0.06% of the scale** reclassified 8% of the universe.
+   - **The four instances.** ① **MH-138** — a per-gene median on a **BIMODAL** distribution (21% near 0, 43% at
+     exactly 1.0) moved **55.5% → 70.9%** under a change licensed as *noise*; the 50th percentile lives in the
+     empty valley between the modes. ② **MH-144** — the threshold count above. ③ **MH-119** — `share = β_f/Σβ`
+     read **999%** because a gene's βs cancelled to Σβ ≈ 0. ④ **MH-146** — a ratio of two SDs whose
+     **denominator is 0 for 48% of rows**; the tool's printed headline was **112.86×**, the honest gated value
+     **~1.4×**.
+   - **THE RULE.** Before a ratio or a threshold count enters a doc: **(a)** plot/quantify where the mass sits
+     relative to the boundary or the denominator; **(b)** if there is a pile-up, **gate the denominator**
+     (`identity > 0.05`, `|z| > 2`, `net_pressure ≥ 0.5` — the `readouts.add_reliability` pattern) and report
+     the **gated** statistic; **(c)** if a threshold is unavoidable, **sweep it** and report a value from a
+     region where the two arms agree (MH-144: `≤ 0.02` reproduces at ~52% where `≤ 0` does not); **(d)** state
+     the robust alternative next to the fragile one, or drop the fragile one.
+   - **A statistic evaluated where its denominator vanishes is not a finding; it is a coin-flip with decimals.**
+     ⇒ registry rows MH-138, MH-144, MH-146; the gates in `learned/readouts.py::add_reliability`.
+
+6. **⭐ BEFORE FIXING A DISCREPANCY, VERIFY THE TWO THINGS ARE THE SAME OBJECT — MOST "BUGS" HERE ARE NAMING COLLISIONS.**
+   *(Added 2026-07-17 after this fired **THREE times in one day**. In all three a "fix" would have changed
+   CORRECT code, and in two of them the fix would have silently destroyed a load-bearing design feature.)*
+   - **The tell:** two artifacts disagree, someone labels it a bug, and the label propagates faster than the
+     evidence. **Read the evidence column, not the title.**
+   - **The three instances.** ① **MH-138** — "§5 (bagged NNLS) vs §6b (dense posterior)" looked like a
+     contradiction about *canonical attribution*. It was **ONE WORD DOING TWO JOBS**: MAGNITUDE (the Gibbs
+     mean) vs IDENTITY (Shapley fed NNLS weights). Both docs were right. ② **MH-142** — E6's *"SELF-PARTIALLING
+     BUG **(live)**"*: production scores **orphans**, disjoint from `he_agg` by construction (**0 of 6,744**
+     dossier pairs are HE edges). Its own evidence column said *"class-matched estimator comparison"* — the
+     effect was an artifact of **MH-124's own experiment**. Removing `he_agg` would have converted the
+     discovery lane from *"couples BEYOND curation"* to *"couples at all"*. ③ **MH-145** — the deferred
+     *"`coupling_grid` field bug"*: `grid_full`/`grid_oof` call `LR.fit_gene` = **the adaptive lasso §6b
+     RETIRED**, while `coupling_grid` reads the Gibbs. **Two estimators, one label.** Nothing to reconcile;
+     MH-116/117 needed re-**labelling**, not re-running.
+   - **THE RULE.** Given "A and B disagree, it's a bug": **(a)** name the ESTIMAND each answers — different
+     estimands are not a bug (axiom 5's cousin: *ask what question the number answers*); **(b)** name the
+     ESTIMATOR each runs — grep the call, do not trust the docstring or the arm's label; **(c)** name the
+     UNIVERSE/UNIT each scores — MH-142 died on `0 of 6,744`, a one-line check; **(d)** read the claim's
+     **evidence column**, which records what was actually measured, over its **status tag**, which records what
+     someone believed. **A `(live)` tag is not evidence.** *(Same failure as MH-38's "108 triple-validated
+     orphans", which propagated for a session on its `S/R` tag while its input had collapsed 594→23.)*
+   - **If the check is cheap, run it before writing the fix.** All three collapsed to a single grep or a
+     one-line set intersection. ⇒ registry rows MH-138, MH-142, MH-145; guard `eval/_e6_production_check.py`.
+
 ## Key docs (this folder only)
 
 **Read in this order. Do not skip 1 — it exists so you do not have to reconstruct the state from 48 docs.**
