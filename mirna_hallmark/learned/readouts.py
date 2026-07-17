@@ -5,9 +5,14 @@ M, per gene**, read four ways. Those readouts were scattered across method-compa
 (`attribution_eb.{full,identifiability_full,selection_full}` compare estimators; they are NOT the readouts) and
 per-gene helpers. This module emits them ONCE, together, on ONE confounder block.
 
-Per gene, TWO Gibbs runs on the SAME design (`spike_slab._gibbs_posterior`, the one sampler):
-  * **π≡1 DENSE**  → coupling · attribution (magnitude + identity) · identifiability
-  * **evidence-π**  → discovery
+Per gene, THREE Gibbs runs (`spike_slab._gibbs_posterior`, the one sampler) — 2 on the core-C design, 1 on
+the deconv design:
+  * **π≡1 DENSE**  → coupling · attribution (magnitude + identity) · identifiability   [core AND deconv]
+  * **evidence-π**  → discovery                                                        [core ONLY]
+⚡ Discovery is defined on the CANONICAL core-C design, so the evidence-π chain runs for core only
+(`discovery=False` on the deconv call). It used to run for BOTH and `dec["pip_disc"]` was never read — 1 of
+4 chains per gene, ~25% of the module's runtime, computed and discarded. Gating it is OUTPUT-IDENTICAL
+(verified: max|Δ| = 0.0 across all 23 numeric columns, 5,117 rows) and took the run 3.0 → 2.3 min.
 
 Read four ways (all per SEED FAMILY — the latent is family-level, §8; arms are mapped back at the end):
 
@@ -136,7 +141,7 @@ def _ago(arms) -> pd.Series:
     return _AUX["ago"]
 
 
-def _posteriors(gene, deconv, n_iter, burn, seed, level="family"):
+def _posteriors(gene, deconv, n_iter, burn, seed, level="family", *, discovery: bool = True):
     """One design (given a C block) → the dense posterior (+draws) and the evidence-π discovery posterior.
 
     `level="arm"` runs the SAME estimator with the §8 SEED-FAMILY COLLAPSE REMOVED — the design is the raw
@@ -175,8 +180,16 @@ def _posteriors(gene, deconv, n_iter, burn, seed, level="family"):
     n, p = Xz.shape
     b, sd, pip_d, draws = SS._gibbs_posterior(Xz, yr, np.ones(p), n_iter=n_iter, burn=burn, seed=seed,
                                               return_samples=True)                  # π≡1 DENSE
-    pi = np.clip(AE._evidence_pi(gene, cols), 0.0, 1.0)
-    _, _, pip_disc = SS._gibbs_posterior(Xz, yr, pi, n_iter=n_iter, burn=burn, seed=seed)   # evidence-π
+    # ⚡ The evidence-π chain is the DISCOVERY readout, and discovery is defined on the CANONICAL (core-C)
+    # design only — `gene_readouts` reads `core["pip_disc"]` and never `dec["pip_disc"]`. It used to run
+    # unconditionally for BOTH blocks, so every gene paid for a full n_iter chain whose result was discarded:
+    # 1 of the 4 Gibbs runs per gene = ~25% of the module's entire runtime, thrown away. (cProfile 2026-07-17:
+    # `_gibbs_posterior` is 87% of `gene_readouts`.) Gated on `discovery=`; the deconv block passes False.
+    if discovery:
+        pi = np.clip(AE._evidence_pi(gene, cols), 0.0, 1.0)
+        _, _, pip_disc = SS._gibbs_posterior(Xz, yr, pi, n_iter=n_iter, burn=burn, seed=seed)   # evidence-π
+    else:
+        pi = pip_disc = None
     # ⭐ FIXED WEIGHTS for the IDENTITY readout (MH-138). Identity = Shapley/LMG on R² of a FIXED-weight
     # aggregate, and the weights MUST be able to reach zero. The Gibbs mean CANNOT: the half-normal slab
     # N⁺(0,ν²) has a strictly positive mean, so an un-informed family relaxes TO THE PRIOR rather than to 0
@@ -198,7 +211,9 @@ def gene_readouts(gene: str, *, n_iter: int = N_ITER, burn: int = BURN, seed: in
     core = _posteriors(gene, False, n_iter, burn, seed, level)   # CANONICAL coupling/identifiability (design)
     if core is None:
         return None
-    dec = _posteriors(gene, True, n_iter, burn, seed, level)     # CELL-INTRINSIC attribution (composition removed)
+    # `discovery=False`: the DISCOVERY readout is defined on the canonical core-C design only, and
+    # `dec["pip_disc"]` was never read — running it here cost a full Gibbs chain per gene for nothing.
+    dec = _posteriors(gene, True, n_iter, burn, seed, level, discovery=False)  # CELL-INTRINSIC attribution
 
     cols, b, sd, draws = core["cols"], core["b"], core["sd"], core["draws"]
 
