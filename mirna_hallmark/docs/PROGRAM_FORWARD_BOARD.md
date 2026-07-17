@@ -269,7 +269,7 @@ MH-124 §4b (n=21). β is at chance (rank 0.518, p=0.66); `shapley_identity` 0.3
   plan's "1.8× too WIDE" is RETIRED.** ⛔ But the tool's own printed headline ("understates by 112.86×") is a
   **zero-denominator artifact** — 48% of rows have `posterior_sd ≈ 0` (zero-identity families) where the ratio
   explodes to 3881–7655×. ⬜ **Open:** gate that summary on `identity_mean > 0.05`, and re-run MH-94's
-  flagship (PTEN miR-141/200a 0.77±0.41 vs MH-102e's re-derived 0.243) at ITS OWN config — the configs here
+  flagship (PTEN miR-141/200a 0.77±0.41 ⛔ **[RETRACTED — MH-150, 2026-07-17: re-run at MH-94's OWN config gives **0.003 ± 0.012, PIP 0.042**. The SHARE collapsed 250×, not just its width; the exemplar is void. PTEN's identity is now miR-17~92 (0.501) + miR-21/590 (0.223) — the canonical regulators. Prime suspect: the `_rtnorm_pos` sampler bug, which MH-94 predates. DO NOT CITE.]** vs MH-102e's re-derived 0.243) at ITS OWN config — the configs here
   are not comparable, and 0.41→0.243 points the OTHER way. **(→ MH-146)**
 - ⬜ **isomiR full-cohort cache rebuild pending** (MH-96) — flagged and never done.
 - ⬜ **Infra:** `git add` the untracked `learned/` tree (a provenance hole, flagged repeatedly) · fold
