@@ -412,6 +412,8 @@ def calibrate(scan: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     fq = dict(zip(fk, benjamini_yekutieli([fam_p[k] for k in fk])))
     real["p_seedfamily"] = [round(float(fam_p[k]), 6) for k in key]
     real["q_seedfamily"] = [round(float(fq[k]), 4) for k in key]
+    if "same_seed_he" in real.columns:
+        real["same_seed_he"] = real["same_seed_he"].astype(bool)   # object→bool so ~ counts, not bitwise-negates
     par = pd.DataFrame([{"bin": b, "ab_lo": bins[b], "ab_hi": bins[b + 1],
                          "mu0": params[b][0], "sd0": params[b][1],
                          "n_null": int(((nul.ab >= bins[b]) & (nul.ab < bins[b + 1])).sum())}
