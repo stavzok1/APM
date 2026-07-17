@@ -92,8 +92,10 @@ anti-correlation ladder; **data/edges/harmonization** → `DATA_SOURCES §0/§1/
 
 - ⬜ **⭐ DOES RISC AVAILABILITY MODIFY β? — the learned model has NEVER used the AGO/RISC capacity gate.**
   **VERIFIED:** `learned/` contains only `ago_loading.py` (*which arm* is loaded, from Manakov chimeric —
-  already measured **coupling-INERT**). There is **no `ago_gate`, no per-sample RISC-capacity term anywhere in
-  the learned tree.** METHODS §4's gate is a different object: a **per-sample, miRNA-independent AVAILABILITY**
+  already measured **coupling-INERT**). **`ago_gate.py` DOES exist and ~25 pressure-arc modules import it** —
+  it is absent specifically from `learned/`: **no per-sample RISC-capacity term anywhere in the learned tree.**
+  *(Corrected 2026-07-17 — this item previously said "no `ago_gate` … anywhere", which is false repo-wide; the
+  claim is true only of the learned lane.)* METHODS §4's gate is a different object: a **per-sample, miRNA-independent AVAILABILITY**
   term (`ago_load(s)` from AGO1–4 + a required TNRC6/GW182 effector, both-required, z-scored per gene) — the
   finite shared pool every miRNA competes for.
   **AND THE PRESSURE ARC NEVER TESTED IT EITHER.** It applies the gate as a **multiplier** and reports every
@@ -107,17 +109,34 @@ anti-correlation ladder; **data/edges/harmonization** → `DATA_SOURCES §0/§1/
   and with proliferation — the interaction needs `mal_prolif` and composition in C, and a **shuffled-`ago_load`
   null** (axiom 4: state what the artifact would do to the test). **(→ METHODS §4; `ago_gate.py`)**
 
-- ⬜ **⭐ THE PRESSURE ARC ALREADY BUILT THE NULL THE LEARNED MODEL LACKS.** `eval/coupling_permutation.py` is an
-  **empirical Freedman–Lane permutation null at EVERY resolution** (edge · gene · target-set · program ·
-  universe), with **both** senses of "family" handled: Benjamini–Yekutieli for arbitrary dependence, *and*
-  seed-family-aware permutation. Meanwhile **MH-123 measured the learned model's theoretical t-null as 3–4×
-  TOO NARROW** — site-free pairs that *cannot* repress pass "FDR q<0.05" at **25–35%**, and under an honest
-  empirical null the HE per-edge survival goes **31.3% → 0.0%**. **The machinery to fix that exists in the
-  retired arc and in MH-123's own Efron null, and the shipped readouts use NEITHER.**
-  ⚠ Note the two nulls fix **different** defects: BY corrects **dependence** among tests; MH-123's problem is
-  **SCALE** (σ₀ 0.031 theoretical vs 0.083–0.132 measured). **BY would not have caught MH-123** — only an
-  empirical/permutation null re-scales. So the port is the **permutation** leg, not the BY leg.
-  **(→ MH-123; `eval/coupling_permutation.py`, `coupling_inference.py`)**
+- ✅ **RESOLVED BY MEASUREMENT (MH-154) — AND THE ANSWER IS THE OPPOSITE OF WHAT THIS ITEM SAID.**
+  This item used to read *"the pressure arc already built the null the learned model lacks … so the port is
+  the **permutation** leg, not the BY leg."* **Both halves are wrong. Measured, 2026-07-17:**
+  - **The permutation null IS the theoretical null.** Backing the scale out of `coupling_permutation`'s own
+    `p_z` column (MH-45, **2000** Freedman–Lane draws): **σ₀ = 0.0309, μ₀ = +0.0001** (fit R²=0.9997) vs the
+    theoretical **0.0311, 0** — agreement to **three significant figures**. **Porting it would have bought
+    nothing.** Structural reason, and it generalises: **a permutation destroys the very structure that
+    inflates the real null.** Freedman–Lane residualises on C ⇒ removes the *modelled* confound only; MH-123
+    showed composition adjustment does **not** close the gap ⇒ the culprit is **UNMODELLED**, and no
+    permutation can preserve an unmodelled confound. A real-data impossible-edge class can.
+  - **BY did not protect MH-45 either.** Its dependence-robust count is **1,013/3,040 = 33.3%** (BY, ρ<0) —
+    **inside** the **35.3%** rate at which *impossible* edges clear the same gate under the same C
+    (CPE+HRD+batch = MH-123's core C). BY corrects **dependence among tests**; it cannot rescue a **mis-scaled**
+    null. ⇒ **Do not read a BY q here as protection.** *(Both senses of "family" remain correctly implemented —
+    the defect is the null they sit on, not the correction.)*
+  - **The learned model's permutation port already existed and was never run:** `learned/coupling.py`
+    (family-aware FL + `q_bh`/`q_by`/Simes `q_family`, per-gene C adaptation) is **imported by nothing**, with
+    **no output, no ledger row, no registry row**. Given the above it is **not worth wiring** — keep it as a
+    baseline, do not promote it.
+  - ⇒ **THE CALIBRATION STANDARD IS THE SITE-FREE NULL, and it is now a module:** `eval/site_free_null.py`
+    (rescued 2026-07-17 from a dead session's `/tmp` scratchpad — an MH-149 casualty in waiting; reproduces
+    MH-123 to the digit). Efron form (**fit** location+scale per arm-abundance quintile, score N(μ₀,σ₀));
+    exceedance counting is resolution-limited and can never fire BH. ⚠ It is **conservative** (the site-free
+    class holds some real non-canonical targets) — the truth lies between it and the theoretical null.
+  - ⬜ **REMAINING WORK:** wire `site_free_null` into `discovery`/`dossier` as the gate. `discovery.scan_all`
+    currently uses a bare ρ<−0.15 threshold with a **single** permuted draw (`permute=101`, raw-Y shuffle,
+    per-gene seed) — which inherits exactly this defect. **Reserve "discovery" language for the AGGREGATE lane.**
+  **(→ MH-123, MH-154; `eval/site_free_null.py`, `output/site_free_null/`)**
 
 - 🚫 **Do NOT merge `METHODS.md` into `FORMULAS.md`.** ~87 KB of spec for an estimator MH-115 **retired**;
   consolidating it buys tidiness on a baseline. Both keep a retired-estimator banner and stay. The value in

@@ -114,6 +114,12 @@ pairs pass "FDR q<0.05" at **25–35%**; under an honest empirical null **0.0%**
 survive per-edge (was a nominal 31.3%). **This does not say the edges are fake** — a typical HE edge
 is ρ≈−0.15 against σ₀≈0.09. It says the signal is a **set-level distributional shift, not per-edge
 significance** (MH-123/124). Any FDR count in any doc predating this rests on the uncalibrated null.
+**⛔ And a permutation null does NOT rescue it (MH-154):** `coupling_permutation`'s 2000 Freedman–Lane
+draws were measured to reproduce the **theoretical** null (σ₀=0.0309 vs 0.0311, R²=0.9997) — **permuting
+destroys the very structure that inflates the real null.** Nor does **BY**, which corrects *dependence*,
+never *scale*: MH-45's BY count (**33.3%**) sits inside the **35.3%** rate for *impossible* edges.
+**The calibration standard is `eval/site_free_null.py`** (rescued from `/tmp`, reproduces MH-123 exactly).
+It is **conservative** — the site-free class holds some real non-canonical targets.
 
 **OPEN:** restoring an exogenous existence validation is, by both docs' own assessment, **the single
 highest-value open item in the program.**

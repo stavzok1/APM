@@ -697,6 +697,16 @@ A **variability gate** (`sd_x < 0.5 AND IQR_x < 0.75` on log2RPM) marks flat arm
 
 **Two senses of "family", both handled** (`coupling_inference` / `coupling_permutation`):
 
+> **⛔ MH-154 — THIS SECTION'S MACHINERY IS CORRECT AND ITS PROTECTION IS NOT.** Both family corrections are
+> properly implemented; the defect is the **null they sit on**. The permutation null was **measured to BE the
+> theoretical null** (σ₀=0.0309 vs 0.0311, μ₀=+0.0001, R²=0.9997) — because **a permutation destroys the
+> unmodelled population structure that inflates the real null**, and MH-123 showed composition adjustment does
+> not remove it. **BY corrects DEPENDENCE, never SCALE**, so it cannot compensate: the edge rung's BY count
+> (1,013/3,040 = **33.3%**) sits inside the **35.3%** rate at which *impossible* edges clear the same gate.
+> ⇒ **do not read `q_by` on a per-edge coupling as protection.** Per-edge calibration standard:
+> **`eval/site_free_null.py`** (Efron site-free null). Set-level enrichment and aggregate prediction are
+> unaffected — they never depended on the per-edge null.
+
 - *Statistical testing family* — the BH scope above. Made dependence-robust with
   **Benjamini–Yekutieli** (`q_by`), since correlated tests violate BH's independence.
 - *miRNA seed family* — paralogues sharing a seed are non-independent (justified
