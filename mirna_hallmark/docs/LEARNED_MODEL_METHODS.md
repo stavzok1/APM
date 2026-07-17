@@ -30,7 +30,9 @@ Core (always): `C = [CPE, target_cn, mal_prolif]`.
   (removes the composition-driven part, leaving per-malignant-cell proliferation).
 Optional add-ons (joined as extra C columns):
 - `deconv` → the 8 non-malignant CIBERSORTx fractions `[CAFs,T,Myeloid,B,Endothelial,PVL,NormalEpi,Plasmablasts]`
-  (Cancer-Epithelial excluded — conditioning on the target's own compartment over-controls).
+  (Cancer-Epithelial excluded — **redundant**, not a safeguard: the 9 fractions sum to 1.000000 so the 8 already
+  determine it (R²=1.000000), and purity enters via core `CPE`. ⛔ the old "over-controls the target's own
+  compartment" reason is VOID — see the banner at the end of this §1.)
 - `mycaf` (`_mycaf`) = `resid( mean z(ACTA2,TAGLN,POSTN,FAP,COL11A1,THBS2,MYH11,CNN1) | CAF_fraction )` — myCAF-vs-iCAF axis.
 - `mal_emt` (`_mal_emt`) = `resid( mean z(VIM,FN1,CDH2,SNAI2,ZEB1,ZEB2,TWIST1,SPARC) | non-malignant fractions )` — within-cancer EMT state.
 - HRD off; naive batch off (post-fit conditioning only, never in-fit).
@@ -48,7 +50,25 @@ partial-Spearman ρ significance computation** (`oof_gate`), conditioning the *t
 **Within-cancer vs non-malignant:** `mal_prolif` residualises the proliferation metagene on the **Cancer-
 Epithelial** fraction → per-malignant-cell proliferation; the `deconv` block adds the **non-malignant**
 fractions (CAFs/immune/…) to strip stromal/immune composition. **Cancer-Epithelial is deliberately excluded
-from the `deconv` block** — conditioning on the compartment the target is expressed in over-controls the signal.
+from the `deconv` block.**
+
+> ⛔ **THE STATED RATIONALE FOR THAT EXCLUSION WAS VOID — CORRECTED 2026-07-17 (MH-111/114). THE RULE STANDS; THE
+> REASON DOES NOT.** The old reason — *"conditioning on the compartment the target is expressed in over-controls
+> the signal"* — is **provably false**: the 9 Wu-major fractions **sum to exactly 1.000000**, and
+> **R²(Cancer-Epithelial ~ the 8 "held-out") = 1.000000 in BOTH cohorts** (TCGA n=1059, CPTAC n=133) ⇒
+> conditioning on the 8 **algebraically determines** tumour content. **You are already conditioning on it.**
+> The hold-out is a **simplex illusion**, not an over-control safeguard — it never withheld anything.
+>
+> ⭐ **THE CORRECT, MEASURED REASON TO KEEP THE RULE (MH-114):** the exclusion is right because the 8 non-malignant
+> fractions are **where the confound actually lives**, and dropping the 9th costs nothing. Measured decomposition of
+> the retention loss: **purity contributes only 0.9%** (CPE in the **core** block already absorbs it) while the
+> **stromal MIX contributes 33.1%**. A block with tumour content **removed** (the 8 renormalised within the
+> non-malignant compartment) **reproduces the result** (ZEB1 −0.199 vs −0.172), while the tumour-content axis
+> **alone** does not (ZEB1 −0.446). Permuting the composition columns at equal df leaves ρ untouched (z=+14.3) ⇒
+> **not a df artifact.** ⇒ **the driver is the stromal MIX, NOT an over-control on purity** — so the block is a
+> stromal/immune-composition control, and excluding Cancer-Epithelial is a **redundancy/parameterisation choice**
+> (its information enters via CPE and via the simplex), **not** a guard against over-controlling.
+> *(Open correctness debt: STATE_OF_PLAY, CPTAC axis, "follow-up E".)*
 
 ## §2 The prior w  (`evidence/ledger.py`, `evidence/methods.py`)
 Evidence enters as MAGNITUDE, non-circularly:

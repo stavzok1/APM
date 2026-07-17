@@ -23,7 +23,8 @@
 > 🔁 **INDEPENDENT CONFIRMATION of this plan's §1 headline (state session, MH-102d).** Measured on a *calibrated*
 > cross-cohort gauge (`learned/gauge.py`; split-half control a=1.125 ✓): **CPTAC-mRNA→TCGA carries 0.6%** of the mRNA
 > likelihood's precision on β (GTEx 2.4%, NAT 0.4%) — i.e. the *easiest possible* cross-cohort transfer (same modality,
-> same disease state) already caps out at ~1%, converging with this plan's 1.7% Fisher-information figure by a different
+> same disease state) already caps out at ~1%, converging with this plan's Fisher-information figure (⛔ **the 1.7%
+> once cited here is VOID — PAM50-contaminated C; §1's re-measured value is ≈4–6%, ceiling ≤7.6%**) by a different
 > route. **The state channel was cancelled on this evidence** (registry MH-102d). It corroborates: an exogenous source's
 > value is a **new latent** (`βᵗ`), never a coupling gain on the same β.
 >
@@ -250,7 +251,7 @@ variance τ²**. Everything stays **Gaussian-conjugate ⇒ Gibbs. The engine doe
 |---|---|---|
 | `a_g` (protein~mRNA slope) | **0.397** (median, 9,196 genes) | the link coefficient |
 | σ²_mRNA / σ²_protein | **0.79** (0.643 / 0.819) | |
-| **information ratio protein→β** | **≈4–6%** (⚠ **CORRECTED, MH-108**: the earlier ****≈4–6%** (⚠ **CORRECTED, MH-108**: the earlier **1.2%** used the ATTENUATED observational `a_g`=0.397; the CAUSAL CN-instrumented `a_IV`=0.893 gives ≈6%, and the direct Bar-5 retention² check gives ≈4%. **Verdict UNCHANGED — the pre-registered ceiling was ≤7.6% at a_g=1.0.**)** used the ATTENUATED observational `a_g`=0.397; the CAUSAL CN-instrumented `a_IV`=0.893 gives ≈6%, and the direct Bar-5 retention² check gives ≈4%. **Verdict UNCHANGED — the pre-registered ceiling was ≤7.6% at a_g=1.0.**) = 0.397²·(101/1041)·0.79; **≤7.6% even at a_g=1.0** | **protein cannot move β. Robust to every plausible a_g.** Converges with the state session's independently-derived **0.6%** for CPTAC-mRNA→TCGA. |
+| **information ratio protein→β** | **≈4–6%** (⚠ **CORRECTED, MH-108**: the earlier **1.2%** used the ATTENUATED observational `a_g`=0.397; the CAUSAL CN-instrumented `a_IV`=0.893 gives ≈6%, and the direct Bar-5 retention² check gives ≈4%. **Verdict UNCHANGED — the pre-registered ceiling was ≤7.6% at a_g=1.0.**) — the formula shown is the superseded `a_g`=0.397 derivation: = 0.397²·(101/1041)·0.79; **≤7.6% even at a_g=1.0** | **protein cannot move β. Robust to every plausible a_g.** Converges with the state session's independently-derived **0.6%** for CPTAC-mRNA→TCGA. |
 | βᵗ out-of-fold vs 30× shuffled null | **2/9 z>2 = PTEN (2.7), PEBP1 (2.5)**; median OOF +0.202 | βᵗ **real, survives composition, low-power** |
 | βᵗ under composition (the load-bearing re-check) | strong hits **HOLD**; weak ones **die** (ZEB1 0.084→−0.023, PDCD4 0.193→−0.017) | composition removes false-positive discordance, not the real signal |
 | **protein OOF > mRNA OOF in CPTAC** | 0.348 (8/9 z>2) vs 0.206 (3/9) | **predicted by the model** (protein sees a·β+βᵗ) |
@@ -479,8 +480,20 @@ A paired design kills inter-patient protein variance, so it is orthogonal to eve
 
 ## 6. Ceilings — what this will NOT deliver
 
-- **It will not improve coupling.** 1.7% (≤8.8% at any `a_g`). Anyone claiming protein "breaks past the mRNA
-  floor" is wrong.
+> **⛔ THE "1.7% / ≤8.8%" NUMBERS IN THIS SECTION WERE VOID AND CONTRADICTED §1 ON THE SAME PAGE (fixed 2026-07-17).**
+> They were computed with **PAM50 in the confounder block** — exactly what `lineage_verdict` **prohibits** (§6b.1:
+> PAM50 is computed *from* the mRNA; **27/50** of its classifier genes are our targets; it costs **−36% of |β|**).
+> §1 and §7.8 had already **re-measured** them (measured-only gate: re-measured, **not rescaled**) under
+> `build_C("cptac")`, but **this section was never updated** — so the doc has been carrying two different
+> information ratios in two places since 2026-07-12. Corrected below to §1's values. ⭐ **THE VERDICT IS UNCHANGED
+> EITHER WAY — at 1.7% or at 4–6%, protein CANNOT move β**; the correction makes the ceiling *tighter*, not looser
+> (≤7.6% vs the void ≤8.8%). Void wording retained verbatim at the end of this section for provenance.
+
+- **It will not improve coupling.** **≈4–6%** of the mRNA channel's information about β (⚠ **CORRECTED, MH-108**:
+  the earlier **1.2%** used the ATTENUATED observational `a_g`=0.397; the CAUSAL CN-instrumented `a_IV`=0.893 gives
+  **≈6%**, and the direct Bar-5 retention² check gives **≈4%**), with a **pre-registered ceiling of ≤7.6% at
+  `a_g`=1.0**. Anyone claiming protein "breaks past the mRNA floor" is wrong. *(⛔ VOID wording, retained for
+  provenance: "**It will not improve coupling.** 1.7% (≤8.8% at any `a_g`)." — PAM50-contaminated C, see banner.)*
 - **It will not give per-gene βᵗ for most genes.** Only 2/9 of a *hit-enriched* panel cleared the null at n=101.
 - **It will not resolve within-family identity at protein.** βᵗ is family-level; members come from inherited δ.
 
@@ -514,7 +527,11 @@ A paired design kills inter-patient protein variance, so it is orthogonal to eve
 7. "25 families absent from CPTAC" — **wrong**; the `.N` bug. Real answer: 7 arms.
 8. **`a_g` = 0.437 / 0.390-under-rich-C, information ratio 1.7%, σ² ratio 0.91** — **VOID**: the "rich C" contained
    **PAM50**, which `lineage_verdict` prohibits. **Re-measured (not rescaled) under `build_C("cptac")`: a_g 0.397,
-   σ² ratio 0.79, ratio **≈4–6%** (⚠ **CORRECTED, MH-108**: the earlier **1.2%** used the ATTENUATED observational `a_g`=0.397; the CAUSAL CN-instrumented `a_IV`=0.893 gives ≈6%, and the direct Bar-5 retention² check gives ≈4%. **Verdict UNCHANGED — the pre-registered ceiling was ≤7.6% at a_g=1.0.**), ≤7.6% at a_g=1.0.** Verdict unchanged and *strengthened*.
+   σ² ratio 0.79, ratio **≈4–6%**, ≤7.6% at a_g=1.0.** (⚠ **CORRECTED, MH-108**: the earlier **1.2%** used the
+   ATTENUATED observational `a_g`=0.397; the CAUSAL CN-instrumented `a_IV`=0.893 gives ≈6%, and the direct Bar-5
+   retention² check gives ≈4%. **Verdict UNCHANGED — the pre-registered ceiling was ≤7.6% at a_g=1.0.**)
+   Verdict unchanged and *strengthened*. ⚠ The **1.7% / ≤8.8%** figures in **§6** were part of this same VOID set
+   and went uncorrected until 2026-07-17 — see the banner there.
 9. **PREDICTION FAILED (logged per the measured-only gate).** I predicted real composition would broadly weaken βᵗ
    (median OOF 0.193 → ~0.12–0.15). **It did not** — median went *up* (0.202), the two strong hits held (PTEN
    z=2.7, PEBP1 z=2.5), and only the *weak* ones collapsed (ZEB1, PDCD4 → ~0). My intuition about
