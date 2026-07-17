@@ -401,7 +401,7 @@ for. Any future cross-cohort channel should be run through `calibrate()` → `in
 > subset** (the scale-dependent sd-floor bug). **SBC is RETIRED as the wrong tool, not "promoted".** And the
 > inflation does **not** propagate to Shapley shares — they are **RATIOS**, so a common β inflation cancels
 > entirely (MH-94's width is **1.8× too WIDE**). ⭐ MH-92's `nu=7` **substantially fixes** the calibration
-> (0.77 → 0.89). Current statement: [`STATE_OF_PLAY.md`](STATE_OF_PLAY.md) Axis 1.
+> (0.77 → 0.89). Current statement: [`STATE_OF_PLAY.md`](../STATE_OF_PLAY.md) Axis 1.
 
 **(a) CALIBRATION — ⛔ *superseded, see banner above* — the model's posterior widths are ~40% too narrow.** Measured against independent half-cohorts, the
 reported uncertainties **understate the true sampling variability**: bagged NNLS by **28%** (se 0.0055 vs true sampling

@@ -192,6 +192,132 @@ min-statistic permutation null** (family-wise error).
 Discovery is the one component with a real (permutation) null today; the rest need the p→BH/BY/Simes layer.
 `gate_fdr` is the first, reusing `mirna_hallmark.stats.bh_fdr` + `coupling_inference.{benjamini_yekutieli,family_simes_fdr}`.
 
+## §6 The CPTAC / PROTEIN layer — what validated, after the channel died
+
+> ⛔ **THE PROTEIN CHANNEL'S CENTREPIECE IS FALSIFIED. `βᵗ` — a per-family translational-repression latent — is
+> NOT SUPPORTED at n=101 (MH-103/MH-104).** The prior evidence for it was a **mediator LEAK**: every earlier βᵗ
+> result built `protein_resid = P − a·M` with **`a` fit on ALL samples**, then OOF-ed `X → protein_resid` — the
+> mediator was fit using the test folds. **Fit `a` inside the fold and the signal disappears.** Four independent
+> leak-free framings agree, including the maximally-powered **AGGREGATE** one (TCGA-fixed weights, **1 df**, zero
+> parameters fitted in CPTAC): **q<0.10 in 1/17 genes — only BCL2**; **PTEN, the doc's headline throughout,
+> does NOT survive (z=0.53; d=−0.006, p=0.82).** ⇒ **NOT a leak, NOT an estimator choice, NOT a p>n artifact —
+> the TRUE EFFECT SIZE meeting the cohort size.** Our own biology already said so: MH-34 found a translational
+> residual in **11/1132 genes ≈ 1%**, which on a 17-gene panel predicts ~0.2 hits. **There was never a βᵗ field
+> to fit.**
+>
+> ⚠ **What this does NOT overturn:** MH-34/35's marginal **association** results. The translational component is
+> **real, weak, and widespread-in-direction** (13/17 repression-directed, binomial p≈0.025) but **not resolvable
+> per gene at n=101**. **The falsification is of the MODELING OBJECT, not of the biology.**
+>
+> **The five results below are what SURVIVES that falsification — none of them depends on `βᵗ`.** Do not read
+> any of them as reviving a protein channel; §6.5 is the measured reason one can never exist.
+
+### 6.1 `locus_cn_cptac` — BUILT + VALIDATED, but fidelity ≠ power
+An independent **second** CN-instrument cohort. **Median r = 0.997 vs ASCAT truth**; the coordinate hole is
+patched (**482/482 loci**, via `mirna_mature_loci.csv` → `pre_gene_id`); matrix **CPTAC 122×414**, median CN 1.99.
+(The gene-level→locus proxy itself hits **r=0.998** vs ASCAT with **no gene deserts** — median 28 kb, zero >1 Mb.)
+
+⚠ **But high fidelity buys little power — the binding constraint is n, not measurement.** First stage (locus CN →
+arm dose), F:
+
+| cohort | median F | arms F>10 | families resolvable (≥2 distinct loci at F>10) |
+|---|---|---|---|
+| **TCGA** (n=961) | 3.16 | **234 (32%)** | **31** |
+| **CPTAC** (n=101) | 1.10 | **59/685 (8.6%)** | **5** |
+| both | — | 49 arms | **5** — let-7 · miR-15/16 · miR-17~92 · miR-181 · miR-25/92 |
+
+First-stage γ replicates across cohorts at Spearman **0.349**. ⇒ the full CN-fused δ comparison is feasible but
+**low-powered**; the abundance-based test (§6.2) is the well-powered one and is what we report. ✅ MH-104
+
+### 6.2 V1 — δ-TRANSPORTABILITY VERIFIED (the cross-cohort assumption the program rests on)
+Member **dose-share** (which member carries the family's dose = δ's primary input), TCGA n=1041 vs CPTAC n=101, on
+the **58 multi-member families expressed in both** (canonical floor RPM≥10):
+- **Same dominant member: 84.5%** vs **43.7% chance** ⇒ **1.93× enrichment**
+- **median member-share correlation 0.991**; median total-variation distance **0.145**
+- (all 260 families incl. noise-dominated: 73.5% / TV 0.230 — the degradation is entirely in undetectable arms)
+
+⇒ **δ's abundance component transports.** ⚠ **SCOPE — read this before citing it:** this validates the
+**abundance input** to `delta_pooling` **only**, *not* its full mRNA-width + CN + chimeric fusion.
+✅ `output/learned/v1_dose_delivery_transport.tsv` (MH-104)
+
+### 6.3 ⭐ BAR-5 PASSES (581 genes) — and it locates the programme's real limit
+`β` fit on **TCGA mRNA only** (never sees CPTAC, never sees protein), scored on 581 genes. The essential control
+is rung (i) — fit on TCGA half-A, score on TCGA half-B — the same-cohort out-of-sample **CEILING**, which is what
+distinguishes "β doesn't transport" from "my aggregate is broken":
+
+| rung | median ρ | % repression-directed | binomial p | **retention vs ceiling** |
+|---|---|---|---|---|
+| **(i) TCGA held-out mRNA** — same cohort, same layer (the CEILING) | **−0.117** | **88.8%** | **2e-88** | **1.000** |
+| (ii-a) CPTAC mRNA — STAR | −0.017 | 54.6% | 1.5e-2 | 0.148 |
+| **(ii-b) CPTAC mRNA — LinkedOmics** (the default) | **−0.023** | 56.1% | **1.8e-3** | **0.193** |
+| **(iii) CPTAC protein** — cross-cohort **+** cross-layer | **−0.023** | **57.7%** | **1.3e-4** | **0.201** |
+
+1. **The aggregate is NOT broken** (88.8% negative in TCGA held-out, p=2e-88) ⇒ the flat cross-cohort result is REAL.
+2. **BAR-5 PASSES**: the learned M carries to an **independent cohort AND an independent layer** (p=1.3e-4) — the
+   honest, FDR-controlled version of MH-83's hand-picked 7-gene "7/7".
+3. ⭐ **THE COHORT JUMP COSTS ~80%; THE mRNA→PROTEIN JUMP COSTS ~0%.** Crossing cohorts: 0.117 → 0.023. Crossing
+   mRNA→protein: 0.193 → 0.201 (protein ≈ mRNA). **This independently re-derives the βᵗ falsification from a
+   different direction** (protein adds nothing beyond the transcript) **and locates the real barrier of the whole
+   cross-cohort programme.** Corroborates the state session's 0.6% (MH-102d). ✅ MH-104
+
+⚠ **The ~80% is a MEDIAN hiding a MIXTURE (MH-106).** Observed sd(ρ_protein) **0.136** vs **0.100** under a pure
+null at n=101 ⇒ **1.36× excess dispersion**; corr(ceiling, ρ_CPTAC_protein) = **+0.176 (p=1.8e-5)** ⇒ a real
+SUBSET transfers. **Corrected claim: β transports for the genes where β is WELL-DETERMINED** (many regulators ·
+strong in-cohort coupling) — retention **0.22–0.39** — and not at all for the poorly-determined majority.
+⛔ **RETRACTED (MH-109):** the `a_g`-stratified reading of that mixture ("the miRNA effect reaches protein only
+where protein tracks mRNA") **does not hold** — an artifact of coarse binning + an unstable ratio-of-medians
+retention statistic. The continuous test says nothing (a_OLS +0.010 p=0.88 · a_IV +0.032 p=0.65), and instrument
+strength F — a pure nuisance — predicts equally well. **UNSUPPORTED, not disproven:** you cannot detect a
+modulation of a signal that is itself at the noise floor.
+
+### 6.4 `a_g` — VALIDATED as the mRNA→protein propagation slope (MH-105)
+One coefficient per gene ⇒ well-powered (median **0.432**; median 0.397 over 9,196 genes; IQR 0.23–0.62).
+⭐ **Falsification test PASSED — complex subunits are BUFFERED:** obligate-complex subunits (RPL/RPS/PSM/SNRP,
+**n=139**) have median `a_g` **0.117** vs **0.437** for all other genes (**n=9,057**), **Mann-Whitney p=1.4e-29**
+— protein-complex buffering, recovered genome-wide, exactly as predicted.
+
+⚠ **REFINED (MH-106, official CORUM 5.3): buffering is a LARGE-OBLIGATE-COMPLEX phenomenon, NOT generic complex
+membership.** CORUM subunits (n=3,519) median `a_g` **0.410** vs non-CORUM (n=5,677) **0.443** — real but **tiny**
+(p=4.5e-4). The evidence is the **dose-response with complex size**: largest-complex **2–3 members → 0.407** vs
+**≥31 members → 0.261**; **Spearman(complex size, a_g) = −0.079, p=2.6e-6.** The RPL/RPS/PSM/SNRP proxy above
+over-states the *general* claim precisely because it **IS** the large-complex set.
+
+⛔ **RETRACTED: "the unbiased `a` is up to 38% off the marginal one."** That came from a **9-gene hand-picked
+panel**. Genome-wide the miRNA-confound correction is **IMMATERIAL** (paired median bias **−0.001**;
+adjusted<marginal in **52.4%** = a coin-flip, 597 genes). ⚠ The *mechanism* is real — the miRNA is a genuine
+confounder of the mRNA→protein slope (a common cause of M and P) and it does bite on strongly-coupled genes
+(ZEB1 0.551→0.340 = −38%, BCL2 −25%, VIM −19%) — **but those are unrepresentative, not a global bias.**
+
+⚠ **NAME COLLISION — two different `a`s, do not conflate:** `a_g` (here) is the **per-gene mRNA→protein
+propagation slope**, and its per-gene variation *is* the biology. `gauge.Gauge.a` is **ONE GLOBAL** cross-cohort
+scale **NUISANCE** (composition/platform/C), explicitly never claimed. See METHODS §18a.
+
+### 6.5 ⭐ THE FISHER-INFORMATION BOUND — why protein can NEVER be a coupling lever
+Pre-registered, and it is the structural reason §6.3's layer jump is free while the cohort jump is not:
+
+| quantity | measured (under `build_C("cptac")`) |
+|---|---|
+| `a_g` (protein~mRNA slope) | **0.397** (median, 9,196 genes) |
+| σ²_mRNA / σ²_protein | **0.79** (0.643 / 0.819) |
+| **information ratio protein→β** | **≈4–6%** — **≤7.6% even at a_g = 1.0** (the pre-registered ceiling) |
+
+⇒ **protein carries only ~4–6% of the mRNA channel's information about β, and ≤7.6% at ANY `a_g`. It cannot move
+β. Robust to every plausible `a_g`.** ⭐ **Converges with the state channel's independently-derived 0.6%** for
+CPTAC-mRNA→TCGA (MH-102d) — two sessions, two routes, same structural conclusion: **the value of an exogenous
+source is a NEW LATENT, never a coupling gain on the same β.** (And the new latent βᵗ is itself falsified — see
+the banner. Both doors are closed.)
+
+⛔ **Do NOT cite the "1.7% / ≤8.8%" figures — they are VOID.** They were computed with **PAM50 in the confounder
+block**, which `lineage_verdict` **prohibits**: PAM50 is computed *from* the mRNA, **27/50** of its classifier
+genes are our targets, and it costs **−36% of |β|**. The values above were **re-measured, not rescaled**
+(measured-only gate). ⭐ **The verdict is unchanged either way — at 1.7% or at 4–6%, protein cannot move β** — and
+the correction makes the ceiling **tighter** (≤7.6% vs the void ≤8.8%). *(⚠ The **1.2%** once quoted for the ratio
+used the ATTENUATED observational `a_g`=0.397; the CAUSAL CN-instrumented `a_IV`=0.893 gives ≈6%, and the direct
+Bar-5 retention² check gives ≈4% — MH-108.)*
+
+**The honest headline this axis delivers:** *the protein layer CONFIRMS the mRNA-mediated model and BOUNDS the
+translational residual below the per-gene resolution of a 101-patient cohort.* A real, publishable, negative result.
+
 ## Reproduce index
 ```
 mvp.oof_gate(gene, w_prior_source="ledger", family=True)     # coupling gate (beats abundance / curated)

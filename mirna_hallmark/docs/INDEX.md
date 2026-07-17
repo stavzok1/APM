@@ -68,7 +68,6 @@
 | [MH127_DECOY_MODEL_GENE_BUDGET.md](archive/MH127_DECOY_MODEL_GENE_BUDGET.md) | ⛔ **superseded** | Magnitudes superseded by **MH-137**. Its "in-cohort tie" verdict is **reversed**. |
 | [MH128_DECOY_RESOLUTION_AND_CN_GOLD.md](archive/MH128_DECOY_RESOLUTION_AND_CN_GOLD.md) | ⛔ superseded | §3's CN leg retracted by MH-133. |
 | [MH130_GENE_LENS.md](archive/MH130_GENE_LENS.md) | ⚠ **half** | The **atlas** half (ceilings, 17.6% unmeasurable, 48.1% one-family) **STANDS**. The **gap** half sits on a discredited decoy. |
-| [CN_INSTRUMENT.md](CN_INSTRUMENT.md) | ⚠ mixed | The instrument's design + the 73% exclusion-failure verdict. ⛔ Both instruments now retracted (MH-133). |
 
 ## 4. Findings surface + detail reports
 
@@ -86,10 +85,13 @@
 
 ## 5. Channels & axes
 
+> ⛔ **2026-07-17: the three dead-channel docs were ARCHIVED** — `CN_INSTRUMENT` (both instruments retracted),
+> `STATE_CHANNEL_PLAN` (measured and cancelled, τ≈0), `CPTAC_PROTEIN_CHANNEL_PLAN` (`βᵗ` falsified at n=101).
+> **Their measured survivors were extracted first**: METHODS §1a/§8a/§18a and VALIDATION §6.1–§6.5.
+> See [`archive/README.md`](archive/README.md) for each survivor's new address.
+
 | doc | currency | what it is |
 |-----|----------|------------|
-| [LEARNED_MODEL_STATE_CHANNEL_PLAN.md](LEARNED_MODEL_STATE_CHANNEL_PLAN.md) | ⛔ **CLOSED** | The state channel was **measured and cancelled** (τ≈0, info 0.6%). §10 = the post-mortem. **Do not rebuild.** Carries the settled panel decision. |
-| [CPTAC_PROTEIN_CHANNEL_PLAN.md](CPTAC_PROTEIN_CHANNEL_PLAN.md) | ⛔ **centrepiece dead** | `βᵗ` falsified at n=101. ⚠ §6 still carries VOID PAM50 numbers contradicting §1. |
 | [ISOMIR_AWARE_MODELING.md](ISOMIR_AWARE_MODELING.md) | active | isomiR-corrected X_fam. Phase 2–4 built, **default-OFF** (coupling wash). |
 
 ## 6. Forward planning — ONE doc

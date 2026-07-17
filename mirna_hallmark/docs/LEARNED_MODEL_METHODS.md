@@ -70,6 +70,53 @@ from the `deconv` block.**
 > (its information enters via CPE and via the simplex), **not** a guard against over-controlling.
 > *(Open correctness debt: STATE_OF_PLAY, CPTAC axis, "follow-up E".)*
 
+### §1a CROSS-COHORT C — the panel decision and the matched-C policy  (`learned/confounders.py`, `build_C`)
+
+> **Provenance: these two decisions were settled by the Phase-0 probes of the STATE channel, which was itself
+> MEASURED AND CANCELLED (MH-102d: τ≈0, info 0.6–0.7%; `learned/channel_state.py` was never built).** They are
+> specced here because they are **properties of `C`, not of that channel**: they bind every cohort `build_C`
+> serves (TCGA · NAT · GTEx · CPTAC) and they hold regardless of what reads the block. **Nothing here implies a
+> state channel is buildable.** *(The probes' own summary: `learned/confounders.py` and `learned/gauge.py` are
+> the durable output — they are what killed the axis.)*
+
+**(1) The PANEL decision — SETTLED, zero new CIBERSORTx runs. TCGA stays Wu-major; GTEx and NAT use Wu-9 too.**
+The deciding test (β_H fit on the 327 paired GTEx donors, 147 genes, n=1444 coefficients) — Spearman ρ of the
+resulting β vectors under four confounder blocks, vs `wu300` (both-nonzero edges in parentheses):
+
+| vs `wu300` | ρ | what it perturbs |
+|---|---|---|
+| `wu150` — same atlas, 150-cell signature | **0.986 (0.971)** | reference cell-subsample (technical replicate) |
+| `hbca` — a **completely different atlas** | **0.941 (0.851)** | the reference itself |
+| **no C at all** | **0.812 (0.579)** | composition control entirely |
+
+Mean |β| **halves** once any composition control is added (`none` 0.0205 → `wu300` 0.0099). ⇒ **WHICH composition
+control you use moves β ~10× LESS than WHETHER you control composition at all.** The panel choice is immaterial;
+having a `C` is everything. (β is likewise ρ=0.99 invariant across reference *resamples*.)
+
+**And the model's tumour C cannot move to HBCA even in principle:** `data._malignant_prolif` is **defined** as the
+proliferation metagene residualised on the **Cancer-Epithelial** fraction (§1) — and **HBCA, a *normal* breast
+atlas, has no malignant class**. A swap would delete the covariate `mal_prolif` is built from. (Third reason:
+`_DECONV_COLS` feeds C for every module ⇒ a swap invalidates every persisted output.)
+
+**(2) The MATCHED-C policy — C blocks CANNOT be identical across states, whatever panel is chosen.**
+`CPE`, `target_cn` and `mal_prolif` are **all TUMOUR-ONLY** — they do not exist in healthy tissue. This, not the
+panel, is the genuine cross-state confounder problem:
+- **Shared core (all states):** the 8 non-malignant Wu-9 fractions (`_DECONV_COLS`) + a proliferation metagene
+  (+ the adipose metagene, **default-OFF**: 69.6% already explained by the 8 Wu fractions and r=−0.71 with
+  `Normal Epithelial` ⇒ an inverse-epithelial axis ⇒ genuine over-control risk).
+- **Tumour-only extras** (`CPE`, `target_cn`, `mal_prolif`): **kept** in the tumour fit — dropping validated
+  confounders to buy symmetry is the wrong trade.
+- **⚠ PURITY stays cohort-native and is NOT harmonised** — TCGA `CPE`, CPTAC `ESTIMATE`, **NAT/GTEx none**.
+  Justified: purity is nearly redundant given composition (β ρ=0.984 with vs without CPE), and CPE is *not* the
+  malignant fraction (r=0.554; means 0.732 vs 0.235 — not substitutes).
+- **⛔ NAT/GTEx must have NO purity term, and this is a trap, not a preference.** The clinical table is
+  **PARTICIPANT-keyed**, so a naive join silently hands **107/113 NAT samples their own patient's TUMOUR CPE** —
+  a covariate describing a **different specimen**. **`build_C` returns `None` to block it.**
+
+Measured consequence of the asymmetry (P0c): refitting β_T under the reduced, healthy-matchable C gives
+**ρ=0.900 (0.837 both-nonzero)**, mean|β| 0.0072→0.0070 — **real but second-order**, the same magnitude as an
+atlas swap (0.94) or a refsample swap (0.92).
+
 ## §2 The prior w  (`evidence/ledger.py`, `evidence/methods.py`)
 Evidence enters as MAGNITUDE, non-circularly:
 - Per (edge, assay class) count **distinct PMIDs**; fused edge weight
@@ -235,6 +282,49 @@ also target g (set S = {m} ∪ co-targeters), condition each on the others+C:
 no co-targeter survives`. `strong_causal = concordant AND (cluster_clean OR arm_unique)`; `strong_causal_fdr`
 adds `q_reduced_by<0.05`.
 
+## §8a CN-CHANNEL ADMISSION — `F>10 ∧ T1-clean`, and the soft F-weight  (`instrument.exclusion`, `run_exclusion`)
+
+> **This rule SURVIVES §8's retraction, and it is the only part that does.** §8 died because `pi_causal` was
+> never exogenous (a reality test that could not fail). **The admission gate was never a reality test** — it is a
+> **VALIDITY** rule that asks the opposite question: *given* an instrument, is its exclusion restriction credible?
+> That question is well-posed whether or not the channel it gated is alive, and its answer is what tells you how
+> small the CN channel's honest support always was. It is specced here so it is not lost with §8.
+> **Do NOT read it as licence to call any admitted edge causal** — admission bounds validity from above; it
+> supplies no exogenous evidence. Finding home: registry **MH-89** (screen) / **MH-90** (production gate).
+
+**T1 — the mediator-conditioning screen.** Does CN→target survive conditioning on the arm's own abundance
+`X_fam`? If it survives, a direct/pleiotropic **non-arm** path carries the effect ⇒ the exclusion restriction is
+violated. Per edge, with `π_raw` the reduced-form CN→Y coefficient and `π_cond` the same conditioned on `X_fam`:
+
+    pleiotropy_frac = π_cond / π_raw          # ~0 ⇒ the effect goes THROUGH the arm (clean)
+    T1-clean        = pleiotropy_frac < 0.4   # ~1 ⇒ CN reaches Y without the arm (pleiotropic)
+    ADMIT           = (F > 10) AND T1-clean
+
+**Measured (MH-89; 403 testable well-instrumented edges, F>10, n≥200): only 108 (27%) are exclusion-clean;
+median `pleiotropy_frac` = 0.75; ~54% pleiotropic (frac>0.7).** ⇒ **`F>10` alone overstates the causal-usable
+set ~4×**, and validity is **locus-specific**, not a property of the instrument as a whole.
+
+**Two caveats that both matter (MH-89's own):**
+- **27%-clean is a LOWER BOUND.** T1 is **CONSERVATIVE**: conditioning on the mediator `X_fam` **opens a collider
+  path** for any shared program `U` not fully captured by `C`, biasing the screen *toward* "pleiotropic".
+- **The collider-FREE test is over-ID (Hansen-J)** — already implemented in `family_multi_iv` — and is primary
+  wherever a family has ≥2 independent-CN segments. It is **complementary**, not a replacement: over-ID catches
+  *heterogeneous* pleiotropy, T1 catches *homogeneous* co-amplification-hotspot pleiotropy. The screen ran T1
+  only, so an over-ID pass would refine the count.
+- The robust readout is the **absolute residual `δ_s` + SE**, not the ratio `frac` (which inherits the Wald
+  small-`π_raw` instability).
+
+**The soft F-weight (ADOPTED default, `_ADMIT_SOFT_C = 10`).** The hard `F>10` cliff over-credits the borderline
+band. Since `se_a² = γ²/F`, the null-corrected weight is
+
+    beta_weight = (γ² − c·se_a²)₊ / s²_π  =  (γ² / s²_π) · (1 − c/F)₊ ,     c = 10
+
+**Same admitted set as `F>10`, re-weighted.** Swept c∈{5,10,20} against a full-universe **shuffled-CN null**
+(which collapses strong segments 17,053→141, ~0.8% false-strong-rate): c=10 is a **strictly cleaner gate than the
+hard cliff** — near-identical real ranking (ρ=0.995 with `beta_weight`) but **4.4× less null leakage**
+(14,827→3,383 weight; **SNR 43→124**), by down-weighting the ~11% of real weight in the borderline F∈[10,20] band.
+c=5 too permissive (SNR 22); c=20 drops 40% of real signal.
+
 ## §9 DRIVER RESOLUTION inside a family  (`families.resolution_report`)
 For a model-selected multi-member family, each member's anti-corr is measured *net of its family-mates* (+C):
 `part(arm) = spearman( resid(x_arm | {mates}∪C), resid(Y | {mates}∪C) )`. A member **survives** if
@@ -391,6 +481,37 @@ correction** is what breaks: it divides by `Var(β̂) − mean(se²)`, and for G
 heavy tail of a few enormous posterior SDs (`sqrt(mean(se²)) = 0.055` against a *typical* `se` of **0.015**),
 collapsing the denominator (reliability **0.17** vs NNLS's **0.72**). `gauge._MIN_RELIABILITY` **refuses** that
 gauge rather than silently returning 4.1.
+
+### §18a THE β GAUGE CONVENTION — DECIDED: raw-`r` for the MODEL, z-Y for the GAUGE ONLY
+
+> **Provenance: measured by the STATE channel's split-half control — the channel is CANCELLED (MH-102d), the
+> convention is not.** It binds the model's β and every cross-cohort gauge, so it is specced here rather than
+> lost with the plan doc. It is a **convention**, not a channel.
+
+Two conventions for the gauge job-6 regression `β_source = a·β_target + c + δ`:
+- **raw-`r`** — β on the model's native scale (`r = −resid(Y|C)`, un-z-scored Y). **The MODEL's convention.**
+- **z-Y** (`gauge.beta_table(zscore_y=True)`) — Y z-scored per gene before fitting. **GAUGE-ONLY.**
+
+**The rankings are not in question — the reproducibility is.** Within-gene family rankings are **exactly
+invariant** (ρ=**1.0000**): z-scoring Y rescales all of a gene's β by ONE constant. Cross-gene is near-invariant
+(ρ=0.992). So the decision rests on **split-half reproducibility of the discovery ranking**:
+
+| | global ρ(A,B) | top-25 | top-50 | **top-100** |
+|---|---|---|---|---|
+| **raw-`r`** (the model, current) | 0.728 | **12**/25 | 25/50 | **63**/100 |
+| z-Y | 0.728 | 11/25 | 25/50 | **55**/100 |
+
+raw-`r` wins because z-Y divides β by `sd(resid Y)` — a **7.2× spread across genes** — which is smallest exactly
+where the residual is most noise-dominated.
+
+- ⚠ **Honest caveat:** raw-`r`'s top-50 **is** tilted toward high-variance genes (median sd(residY) **0.369** vs
+  0.243 overall). z-Y removes the tilt but costs stability ⇒ z-Y is an alternative **view**, not a replacement.
+- ⚠ **The cross-cohort GAUGE must still use z-Y.** There the Y-scales differ *systematically* (median sd(resid Y):
+  **TCGA 0.237 vs GTEx 0.612** — normal tissue is ~2.5× more variable) and the whole factor must land in `a`.
+  Fitting the gauge on raw-`r` silently absorbs the cohort's Y-scale into `a` (measured: `a_raw/a_zY = 2.25 ≈ the
+  sd ratio 2.58`).
+- ⚠ **Discovery-lane reality check:** top-100 edge reproducibility across half-cohorts is only **~63%** under
+  EITHER convention.
 
 **Where the prior acts.** The prior enters as **inclusion** (π, evidence-graded, §2) and as slab-**scale**
 channels (μ = scanMiR biochemical magnitude, τ = evidence depth); the slab **location stays at 0**, so the
