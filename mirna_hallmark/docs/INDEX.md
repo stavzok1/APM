@@ -54,7 +54,6 @@
 | [LEARNED_MODEL_RATIONALE.md](LEARNED_MODEL_RATIONALE.md) | active | The *why* behind every § of METHODS. |
 | [LEARNED_MODEL_VALIDATION.md](LEARNED_MODEL_VALIDATION.md) | active | Validation dossier. ⚠ §1 still carries the MH-127 restatement, not MH-134/135/137. |
 | [LEARNED_MODEL_ESTIMATOR_MAP.md](LEARNED_MODEL_ESTIMATOR_MAP.md) | ⚠ **part-stale** | **TRAP** — billed canonical, but self-dates 2026-07-06 and its **main table is pre-convergence**. Only its banner UPDATEs + the pooled-HE policy are current. |
-| [LEARNED_MODEL_WHATS_NEXT.md](LEARNED_MODEL_WHATS_NEXT.md) | ⚠ stale | Cluster-local TODO. Predates MH-133…137. |
 | [LEARNED_REGULATORY_MATRIX_DESIGN.md](LEARNED_REGULATORY_MATRIX_DESIGN.md) | active | Design note on learning M. |
 | [COLLINEARITY_AND_IDENTIFIABILITY.md](COLLINEARITY_AND_IDENTIFIABILITY.md) | active | Why identity is hard. Hierarchical δ-pooling = parked. |
 
@@ -70,14 +69,18 @@
 | [MH130_GENE_LENS.md](MH130_GENE_LENS.md) | ⚠ **half** | The **atlas** half (ceilings, 17.6% unmeasurable, 48.1% one-family) **STANDS**. The **gap** half sits on a discredited decoy. |
 | [CN_INSTRUMENT.md](CN_INSTRUMENT.md) | ⚠ mixed | The instrument's design + the 73% exclusion-failure verdict. ⛔ Both instruments now retracted (MH-133). |
 
-## 4. Result reports
+## 4. Findings surface + detail reports
+
+[BIOLOGICAL_SYNTHESIS.md](BIOLOGICAL_SYNTHESIS.md) is the **surface** — read it for "what did we learn"
+(biology only; modeling conclusions live elsewhere). The three detail reports were demoted to
+[`reports/`](reports/) on 2026-07-17: they hold real results but overlap the surface.
 
 | doc | currency | what it is |
 |-----|----------|------------|
-| [BIOLOGICAL_SYNTHESIS.md](BIOLOGICAL_SYNTHESIS.md) | active | Biology-first surface. "What did we learn." |
-| [REPORT.md](REPORT.md) | active | Detailed TCGA-BRCA results. |
-| [LANDSCAPE_REPORT.md](LANDSCAPE_REPORT.md) | ⚠ | Cross-state landscape. **Its per-edge FDR counts rest on the uncalibrated null** (MH-123/124). |
-| [MIRNA_CNV_DOSAGE_REPORT.md](MIRNA_CNV_DOSAGE_REPORT.md) | active | miRNA CNV dosage. |
+| [BIOLOGICAL_SYNTHESIS.md](BIOLOGICAL_SYNTHESIS.md) | active | **Biology-first surface.** Start here for findings. |
+| [reports/REPORT.md](reports/REPORT.md) | detail | Detailed TCGA-BRCA results. |
+| [reports/LANDSCAPE_REPORT.md](reports/LANDSCAPE_REPORT.md) | ⚠ detail | Cross-state landscape. **Its per-edge FDR counts rest on the uncalibrated null** (MH-123/124) — banner pending. |
+| [reports/MIRNA_CNV_DOSAGE_REPORT.md](reports/MIRNA_CNV_DOSAGE_REPORT.md) | detail | miRNA CNV dosage. |
 | [DCIS_EV_SYNTHESIS.md](DCIS_EV_SYNTHESIS.md) | active | DCIS/EV arc (MH-48..56). ⭐ Its MH-55 result **independently corroborates MH-114** 16 days early. |
 
 ## 5. Channels & axes
@@ -92,15 +95,12 @@
 | [ATTRIBUTION_CONTEXT_AXIS.md](ATTRIBUTION_CONTEXT_AXIS.md) | parked | Bridge to a context axis. |
 | [ISOMIR_AWARE_MODELING.md](ISOMIR_AWARE_MODELING.md) | active | isomiR-corrected X_fam. Phase 2–4 built, **default-OFF** (coupling wash). |
 
-## 6. Forward planning
-
-> ⚠ **Three competing forward docs, all predating MH-133…137. Consolidation pending.**
+## 6. Forward planning — ONE doc
 
 | doc | currency |
 |-----|----------|
-| [PROGRAM_FORWARD_BOARD.md](PROGRAM_FORWARD_BOARD.md) | ⚠ stale (2026-07-12) — the consolidated board; still the best of the three. |
-| [WHATS_NEXT.md](WHATS_NEXT.md) | ⚠ stale — subproject-wide, pressure-arc era. |
-| [PRESSURE_FUTURE_OPTIONS.md](PRESSURE_FUTURE_OPTIONS.md) · [PRESSURE_PROGNOSTIC_DESIGN.md](PRESSURE_PROGNOSTIC_DESIGN.md) · [PRIMARY_TUMOR_ROADMAP.md](PRIMARY_TUMOR_ROADMAP.md) | parked. ⚠ PROGNOSTIC_DESIGN is blocked on "METABRIC-full (EGA-pending)" — **no DAR was ever filed**. |
+| **[PROGRAM_FORWARD_BOARD.md](PROGRAM_FORWARD_BOARD.md)** | **active, current through MH-137.** The single forward doc. Opens with a **🔨 DO THESE FIRST** block. ✅ **Consolidated 2026-07-17**: absorbed `WHATS_NEXT.md` + `LEARNED_MODEL_WHATS_NEXT.md` (86 KB across three docs → 32 KB in one); both are now in [`archive/`](archive/README.md). |
+| [PRESSURE_FUTURE_OPTIONS.md](PRESSURE_FUTURE_OPTIONS.md) · [PRESSURE_PROGNOSTIC_DESIGN.md](PRESSURE_PROGNOSTIC_DESIGN.md) · [PRIMARY_TUMOR_ROADMAP.md](PRIMARY_TUMOR_ROADMAP.md) | parked — pending fold-in to the board. ⚠ PROGNOSTIC_DESIGN is blocked on "METABRIC-full (EGA-pending)" — **no DAR was ever filed**. |
 
 ## 7. Subfolders
 
@@ -115,7 +115,7 @@
 
 | doc | what |
 |-----|------|
-| [MODELING_FRAMEWORK_EXTERNAL.md](MODELING_FRAMEWORK_EXTERNAL.md) | derived — external/paper version, NotebookLM source. |
+| [MODELING_FRAMEWORK_EXTERNAL.md](derived/MODELING_FRAMEWORK_EXTERNAL.md) | derived — external/paper version, NotebookLM source. |
 | [CRC_PORT_LITERATURE_SCAN.md](CRC_PORT_LITERATURE_SCAN.md) | reference — CRC-port literature scan. |
 
 ---

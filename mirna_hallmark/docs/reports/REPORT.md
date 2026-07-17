@@ -6,8 +6,8 @@ See `output/run_manifest.json` and `output/logs/downstream_refresh_20260617.log`
 Cohort: TCGA-BRCA primary tumors; participant-level (12-char) keys; multi-vial
 collapse by mean (expression) / median (CNV). All inferential tests are FDR-corrected
 (Benjamini-Hochberg) and, where marked, confounder-adjusted by **partial Spearman**
-on CPE (purity) + Thornsson HRD. Methods: [`METHODS.md`](METHODS.md). Tracked
-claims: [`DISCOVERY_REGISTRY.md`](DISCOVERY_REGISTRY.md).
+on CPE (purity) + Thornsson HRD. Methods: [`METHODS.md`](../METHODS.md). Tracked
+claims: [`DISCOVERY_REGISTRY.md`](../DISCOVERY_REGISTRY.md).
 
 Scope of evidence: 50 Hallmark sets, ~4,384-gene universe; 913,778
 `(miRNA, gene, hallmark_set)` edges (14,147 high-evidence); per-gene pressure

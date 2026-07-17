@@ -1,5 +1,18 @@
 # Cross-state miRNA pressure landscape
 
+> ⚠ **READ FIRST — the per-edge FDR class counts below rest on an UNCALIBRATED NULL (MH-123/124, added 2026-07-17).**
+> The theoretical t-null used throughout this report is **3–4× too narrow**: site-free pairs — which *cannot*
+> repress — have an observed SD of **0.083–0.132** against the theoretical **0.031**, and **25.0–35.3% of those
+> impossible pairs pass "FDR q<0.05"**. Under an honest empirical null, the fraction of curated HE edges surviving
+> per-edge drops from a nominal **31.3% to 0.0%**.
+> **This does NOT mean the edges are fake or that this report is void.** A typical HE edge is ρ≈−0.15 against
+> σ₀≈0.09 (z≈−1.4) — the signal is a **set-level distributional shift, not per-edge significance**. So:
+> **the class STRUCTURE and the top-movers are readable; the per-edge FDR COUNTS are not.** Do not re-quote the
+> `R00`/`00R`/neg-sig counts as significance claims.
+> ⚠ Also: this report is **abundance-level**. It is **not** the state *channel* — that was measured and
+> **CANCELLED** (τ≈0, info 0.6%; `learned/channel_state.py` was never built). Current state:
+> [`../STATE_OF_PLAY.md`](../STATE_OF_PLAY.md) Axis 6.
+
 **Scope.** GTEx-healthy breast → TCGA-NAT → TCGA-tumor, 721 miRNA arms / 5,108 miRNA→gene edges over
 the MSigDB Hallmark gene universe (1,410 target genes; `mature.fa` MIMAT mapping → 2,221 expressible
 `hsa-` arms in the expression matrix). Built by `mirna_state_class` (Stage 1), `mirna_comovement`

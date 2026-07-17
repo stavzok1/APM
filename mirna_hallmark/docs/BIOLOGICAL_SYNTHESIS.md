@@ -2,14 +2,14 @@
 
 The distilled, biology-first surface of what this subproject has established so
 far, and how each claim stands against the literature. This is the high-level
-companion to the granular [`REPORT.md`](REPORT.md) and the claim-by-claim
+companion to the granular [`REPORT.md`](reports/REPORT.md) and the claim-by-claim
 [`DISCOVERY_REGISTRY.md`](DISCOVERY_REGISTRY.md); forward-looking work is in
-[`WHATS_NEXT.md`](WHATS_NEXT.md).
+[`WHATS_NEXT.md`](PROGRAM_FORWARD_BOARD.md).
 
 > **Refresh status (2026-06-26 — Normal-like-excluded + batch + TNRC6 gate).** The cohort is now
 > PAM50-Normal-like-excluded (**n=1065**; cross-state tumour 1060) with sequencing-batch covariates;
 > the cross-state landscape, coupling, CPTAC and Buffa numbers are settled in
-> [`LANDSCAPE_REPORT.md`](LANDSCAPE_REPORT.md) and **DISCOVERY_REGISTRY MH-53**. The per-PAM50 program
+> [`LANDSCAPE_REPORT.md`](reports/LANDSCAPE_REPORT.md) and **DISCOVERY_REGISTRY MH-53**. The per-PAM50 program
 > coupling below (Basal 42/50 etc.) is the **M0 proliferation-adjusted `pressure_sensitivity`** metric
 > (MH-30, within-subtype-z'd + CPE/HRD/proliferation/target-CN **+ TCGA sequencing-batch**-adjusted on
 the M0 spine — via `robustness_checks._partial_batch`, same batch covariate as the rest of the spine), **re-run

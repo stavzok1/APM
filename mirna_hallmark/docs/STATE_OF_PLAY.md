@@ -57,8 +57,16 @@ estimator**. **What it is NOT:** an attribution engine. *It must not be sold as 
 miRNA represses this gene".*
 
 **OPEN / known limits:**
-- **Posterior widths are ~40% too narrow** (bagged NNLS understates 28%, Gibbs 39%). Every PIP,
-  Shapley width, δ-pooling confidence and channel `s²` inherits this. Simulation-based calibration promoted.
+- **Posterior widths are ~25% too narrow** — bagged NNLS **1.37×**, Gibbs **1.29×**, Student-t ν=7
+  **1.13×** (`CPTAC_PROTEIN_CHANNEL_PLAN.md` §"CORRECTED 2026-07-12").
+  ⚠ **`LEARNED_MODEL_STATE_CHANNEL_PLAN.md` §11(a) still says "~40% (NNLS 28%, Gibbs 39%)" and "SBC
+  promoted" — SUPERSEDED.** The earlier figure was measured on a biased gene subset (the
+  scale-dependent sd-floor bug); **SBC is RETIRED as the wrong tool.**
+  ⭐ **MH-92's `nu=7` substantially FIXES the calibration (0.77 → 0.89)** — so Student-t is
+  "robustify-not-lever" *for coupling*, but it **is** the calibration fix. Turn it on for any power calc.
+  ⚠ **Two things do NOT inherit the inflation:** **Shapley shares are RATIOS, so a common β inflation
+  cancels entirely** (re-derived: MH-94's width is **1.8× too WIDE**, not too narrow) — and note
+  `readouts.py` does not pass `nu`, so the shipped table is Gaussian.
 - **Identifiability ceiling:** median posterior SD/|β| = **0.799**; only **27.8% of 5,117 units
   identified** (|z|>2). Not a fitting failure — same-seed arms share the binding site.
 - **The n≈1000 ceiling:** every internal lever (CN channel, δ-pooling, isomiR refit, t-likelihood,

@@ -394,7 +394,16 @@ for. Any future cross-cohort channel should be run through `calibrate()` → `in
 
 ## 11. TWO MODEL-WIDE SPIN-OFFS (from the split-half control, 2026-07-12)
 
-**(a) CALIBRATION — the model's posterior widths are ~40% too narrow.** Measured against independent half-cohorts, the
+> ⛔ **SUPERSEDED (2026-07-17) — the numbers in (a) below are stale. Do not cite them.**
+> `CPTAC_PROTEIN_CHANNEL_PLAN.md` **CORRECTED this on 2026-07-12**, the same day this was written, and the
+> correction never propagated here. **The measured value is ~25% too narrow** — bagged NNLS **1.37×**, Gibbs
+> **1.29×**, Student-t ν=7 **1.13×**. The "~40% / 28% / 39%" figures below were measured on a **biased gene
+> subset** (the scale-dependent sd-floor bug). **SBC is RETIRED as the wrong tool, not "promoted".** And the
+> inflation does **not** propagate to Shapley shares — they are **RATIOS**, so a common β inflation cancels
+> entirely (MH-94's width is **1.8× too WIDE**). ⭐ MH-92's `nu=7` **substantially fixes** the calibration
+> (0.77 → 0.89). Current statement: [`STATE_OF_PLAY.md`](STATE_OF_PLAY.md) Axis 1.
+
+**(a) CALIBRATION — ⛔ *superseded, see banner above* — the model's posterior widths are ~40% too narrow.** Measured against independent half-cohorts, the
 reported uncertainties **understate the true sampling variability**: bagged NNLS by **28%** (se 0.0055 vs true sampling
 sd 0.0079), the dense Gibbs posterior by **39%** (0.0145 vs 0.0237). And the se distribution is **heavy-tailed**
 (`sqrt(mean(se²))=0.055` vs a typical 0.015), so a minority of edges are *under*-confident while the typical edge is
