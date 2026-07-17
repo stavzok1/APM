@@ -188,8 +188,17 @@ def _classes(n_fake: int = N_FAKE, seed: int = 0):
     curated = set(zip(e.miRNA, e.gene))
     HE = e[e.high_evidence][["miRNA", "gene"]].drop_duplicates()
 
+    # THE SITE SCREEN — union of BOTH scanMiR tables. MH-155: MH-123's `empnull.py` screened with
+    # `KD.affinity()` ALONE, which is **HE-RESTRICTED** (912k rows / 1,432 genes) rather than the
+    # genome-wide scan (`KD.genome_affinity()`, 10.4M rows / 18,852 genes). Consequence: pairs with a
+    # genuine duplex that the HE-restricted table never scanned were admitted to the "site-free" class —
+    # **6.0% of the 60k pool (10.0% of the pairs the genome-wide scan can judge)**. Contamination by real
+    # repressive pairs WIDENS the null, so the defect ran in the CONSERVATIVE direction; screening on the
+    # union removes it. (Measured effect: see MH-155 / `output/site_free_null/manifest.json`.)
     aff = KD.affinity()
+    gaff = KD.genome_affinity()
     site = set(zip(aff[aff.repression < SCANMIR_SITE].arm, aff[aff.repression < SCANMIR_SITE].gene))
+    site |= set(zip(gaff[gaff.repression < SCANMIR_SITE].arm, gaff[gaff.repression < SCANMIR_SITE].gene))
 
     dos = pd.read_csv(C.OUTPUT_ROOT / "learned" / "discovery_dossier.tsv", sep="\t").rename(columns={"arm": "miRNA"})
     ORPH = dos[["miRNA", "gene"]].drop_duplicates()
