@@ -152,14 +152,18 @@ def _scan_one_gene(g: str):
         Y = pd.Series(np.random.default_rng(abs(hash(("perm", g))) % (2**32)).permutation(Y.to_numpy()), index=Y.index)
     he_arms = [a for a in hemap.get(g, set()) if a in Xo.columns]
     orphans = [a for a in Xo.columns if a not in set(he_arms)]
-    if not orphans or len(he_arms) < 1:
+    # LANE 2 (MH-155): a gene with NO curated HE arm (`he_arms == []`) is admissible — it is the "truly novel
+    # gene" case (item 1). There is no curated aggregate to control for, so he_agg is omitted and Cext = C only.
+    # same_seed_he is trivially False (the gene has no curated edge to any arm) and he_max_corr is NaN.
+    no_he = len(he_arms) == 0
+    if not orphans:
         return rows, nulls
     affg = aff.loc[aff["gene"] == g].set_index("arm")["repression"]
     cand = [a for a in orphans if a in affg.index and affg[a] < min_scanmir]   # scanMiR prefilter (cheap)
     if not cand and not with_null:
         return rows, nulls
     Cm = C.to_numpy(float)
-    Xhe = Xo[he_arms]
+    Xhe = Xo[he_arms] if he_arms else None
     # CURATED-HE AGGREGATE = the CANONICAL model's predicted curated repression (MH-155, user-caught).
     # he_agg is a single "curated pressure" covariate added to Cext so the orphan's coupling is residual on
     # what curation already explains. It must be the CANONICAL Gibbs estimate, NOT `LR.fit_gene` — that is the
@@ -172,7 +176,9 @@ def _scan_one_gene(g: str):
     #   so there is no leakage into the orphan estimate. Fallback to the lasso only if a gene is absent from the
     #   card (0% in practice).
     cardg = _SCAN["card"].get(g)
-    if cardg is not None:
+    if no_he:
+        he_agg = None                                                   # no curated aggregate to control for
+    elif cardg is not None:
         _, Xhe_z, hz_cols = AE._prep(Y, Xhe, C)                          # z-scored, C-residualised (β's scale)
         beta_he = np.array([cardg.get(a, 0.0) for a in hz_cols], float)
         he_agg = Xhe_z @ beta_he                                         # canonical predicted curated repression
@@ -184,7 +190,10 @@ def _scan_one_gene(g: str):
     # no-batch world and adding batch here scores against a world it never saw. And batch is SHARED population
     # structure ⇒ the site-free arms feel the same batch as real edges ⇒ it is already IN the null;
     # residualising it narrows both classes equally (σ₀ 0.094→0.087, ~7%) without improving calibration.
-    Cext = np.column_stack([Cm, he_agg, _batch_np(Y.index)]) if batch else np.column_stack([Cm, he_agg])
+    blocks = [Cm] + ([] if he_agg is None else [he_agg[:, None] if he_agg.ndim == 1 else he_agg])
+    if batch:
+        blocks.append(_batch_np(Y.index))
+    Cext = np.column_stack(blocks)
     # ⚡ ONE residualiser per gene (MH-155 optim). The projection onto Cext is the SAME for every arm, so
     # build Q = QR([1, Cext]) once and residualise any block as V − Q(QᵀV) — a single matmul — instead of the
     # per-arm sklearn `_resid` + `spearmanr` (which re-fit OLS and re-rank on every candidate). Estimator is
@@ -225,7 +234,7 @@ def _scan_one_gene(g: str):
                              "sub_he_evidence": round(float(lwg.get(a, 0.0)), 2),
                              "arm_abundance": round(float(ab_all.get(a, np.nan)), 3),
                              "seed_family": fam.get(a), "same_seed_he": bool(fam.get(a) in he_fams),
-                             "he_max_corr": hmc, "_is_null": False})
+                             "he_max_corr": hmc, "no_he_gene": no_he, "_is_null": False})
     if with_null and permute is None:
         sited = set(affg.index[affg < min_scanmir]) | set(Xo.columns)   # duplex OR TargetScan site OR curated
         pool = [a for a in DETECTED if a not in sited]
@@ -248,7 +257,7 @@ def _scan_one_gene(g: str):
 def scan_all(genes=None, *, permute: int | None = None, min_partial: float = -0.15,
              min_scanmir: float = -0.5, alpha: float = 0.01, progress: int = 200,
              batch: bool = False, n_null_arms: int = 40, null_seed: int = 0,
-             with_null: bool = True, workers: int | None = None) -> pd.DataFrame:
+             with_null: bool = True, workers: int | None = None, universe: str = "he") -> pd.DataFrame:
     """ONE assemble per gene: orphan partial coupling (beyond curated HE aggregate) + scanMiR prefilter.
     No deconv (that's applied to survivors afterwards). ⚡ PARALLEL over genes (MH-155) — each gene
     re-assembles its own design, so the loop is embarrassingly parallel (~2.2 s/gene × 1,571 ≈ 58 min serial).
@@ -270,7 +279,14 @@ def scan_all(genes=None, *, permute: int | None = None, min_partial: float = -0.
 
     Returns candidate rows; site-free null rows are carried alongside under `_is_null=True`.
     """
-    genes = genes or sorted(set(LG.pooled_he_edges()["gene"].dropna().astype(str)))  # POOLED-HE gene universe (migration)
+    if genes is None:
+        he_genes = set(LG.pooled_he_edges()["gene"].dropna().astype(str))            # curated-HE gene universe
+        if universe == "hallmark":
+            # LANE 2 (MH-155): add expressed Hallmark genes with NO curated HE arm (the "truly novel gene" set).
+            from mirna_hallmark.hallmark_sets import hallmark_universe
+            yidx = set(LD._load()["Y"].index)
+            he_genes = he_genes | ((set(hallmark_universe()) - he_genes) & yidx)
+        genes = sorted(he_genes)
     Xall = LD._load()["X"]
     # The site-free null POOL must mirror the candidate arms' detection profile. assemble_gene(orphans=True)
     # admits only curated/TargetScan-site arms — a DETECTED set — and merely fills their occasional gaps
@@ -333,19 +349,27 @@ def deconv_validate(cand: pd.DataFrame, *, min_partial: float = -0.15, alpha: fl
     for i, (g, grp) in enumerate(cand.groupby("gene")):
         if progress and i % progress == 0:
             print(f"[deconv] {i}/{cand['gene'].nunique()} genes", flush=True)
+        no_he = bool(grp["no_he_gene"].iloc[0]) if "no_he_gene" in grp.columns else False
         try:
             Yd, Xod, Cd, wd = LD.assemble_gene(g, w_prior_source="ledger", orphans=True, deconv=True)
-            _, Xhed, _, whed = LD.assemble_gene(g, w_prior_source="ledger", deconv=True)
         except Exception:
             continue
         Cmd = Cd.to_numpy(float)
-        cg = cardd.get(g)
-        if cg is not None:
-            _, Xhez, hz = AE._prep(Yd, Xhed, Cd)                 # deconv β's scale (z-scored, deconv-C-residualised)
-            aggd = Xhez @ np.array([cg.get(a, 0.0) for a in hz], float)
+        if no_he:
+            aggd = None                                          # LANE 2: no curated aggregate to control for
         else:
-            aggd = Xhed.to_numpy(float) @ LR.fit_gene(Yd, Xhed, Cd, whed, alpha=alpha).reindex(Xhed.columns).fillna(0).to_numpy()
-        Cextd = np.column_stack([Cmd, aggd, _batch_np(Yd.index)]) if batch else np.column_stack([Cmd, aggd])
+            try:
+                _, Xhed, _, whed = LD.assemble_gene(g, w_prior_source="ledger", deconv=True)
+            except Exception:
+                continue
+            cg = cardd.get(g)
+            if cg is not None:
+                _, Xhez, hz = AE._prep(Yd, Xhed, Cd)             # deconv β's scale (z-scored, deconv-C-residualised)
+                aggd = Xhez @ np.array([cg.get(a, 0.0) for a in hz], float)
+            else:
+                aggd = Xhed.to_numpy(float) @ LR.fit_gene(Yd, Xhed, Cd, whed, alpha=alpha).reindex(Xhed.columns).fillna(0).to_numpy()
+        _blk = [Cmd] + ([] if aggd is None else [aggd[:, None]]) + ([_batch_np(Yd.index)] if batch else [])
+        Cextd = np.column_stack(_blk)
         Qd, _ = np.linalg.qr(np.column_stack([np.ones(len(Cextd)), Cextd]))
         yrd = rankdata((Yd.to_numpy(float) - Qd @ (Qd.T @ Yd.to_numpy(float))))
         arms = [a for a in grp["arm"] if a in Xod.columns]
@@ -474,7 +498,8 @@ def attach_evidence(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def run_all(*, min_partial: float = -0.15, min_scanmir: float = -0.5, top: int | None = None,
-            n_null_arms: int = 40, out="mirna_hallmark/output/learned/discoveries.tsv") -> pd.DataFrame:
+            n_null_arms: int = 40, universe: str = "he",
+            out="mirna_hallmark/output/learned/discoveries.tsv") -> pd.DataFrame:
     """Genome-wide discovery, calibrated against the in-loop site-free null (MH-155).
 
     ⚠ **RESERVE "DISCOVERY" LANGUAGE FOR THE AGGREGATE LANE** (MH-123). Per-edge miRNA→target discovery in
@@ -483,7 +508,7 @@ def run_all(*, min_partial: float = -0.15, min_scanmir: float = -0.5, top: int |
     """
     from pathlib import Path
     Path(out).parent.mkdir(parents=True, exist_ok=True)
-    scan = scan_all(min_partial=min_partial, min_scanmir=min_scanmir, n_null_arms=n_null_arms)
+    scan = scan_all(min_partial=min_partial, min_scanmir=min_scanmir, n_null_arms=n_null_arms, universe=universe)
     real, par = calibrate(scan)
     real = attach_evidence(real)
     scan[scan["_is_null"]].to_csv(Path(out).parent / "discovery_sitefree_null.tsv", sep="\t", index=False)

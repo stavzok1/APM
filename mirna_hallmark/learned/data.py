@@ -381,7 +381,9 @@ def assemble_gene(
     ed = ed.loc[:, ["miRNA", "evidence_score"]].drop_duplicates("miRNA")
     _nm = _arm_name_map(Xall)                                           # `.N`/case/suffixless-guide edge->X resolution
     regs = [m for m in ed["miRNA"] if (_nm.get(m) or _nm.get(str(m).lower()))]
-    if not regs:
+    if not regs and not orphans:
+        # with orphans=True an empty curated set is legitimate (MH-155 no-curated-gene discovery lane) —
+        # the orphan block below populates regs; the raise is deferred to after it.
         raise ValueError(f"no regulators of {gene} present in the arm matrix (he_only={he_only})")
 
     fallback = np.log1p(ed.set_index("miRNA")["evidence_score"].reindex(regs).astype(float))
@@ -437,6 +439,9 @@ def assemble_gene(
                     ow = np.log1p(to.set_index("arm")["ts_mag"]).clip(lower=1e-3)
                     regs = regs + list(ow.index)               # orphans: no curated evidence, context++ prior
                     w_prior = pd.concat([w_prior, ow])
+
+    if not regs:                                                # deferred raise: no curated AND no orphan candidate
+        raise ValueError(f"no regulators of {gene} (curated or orphan) present in the arm matrix")
 
     conf = [c for c in confounder_columns() if c in clin.columns]
     parts = clin.index.intersection(Yall.columns).intersection(Xall.columns)
