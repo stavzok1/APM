@@ -556,6 +556,25 @@ def calibrate(scan: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     p = norm.cdf(real["null_z"].to_numpy(float))
     real["p_sitefree"] = p
     real["q_by_arm"] = benjamini_yekutieli(np.nan_to_num(p, nan=1.0)).round(4)      # arm-edge, dependence-robust
+    # ⭐ EMPIRICAL FDR (MH-155, user-asked option 4) — the HONEST primary q. The site-free null is HEAVY-TAILED
+    # (measured: 2.7× the Gaussian tail at z=−3, 8.4× at z=−4), so BH/BY on a fitted-GAUSSIAN p under-counts
+    # tail false-positives. Instead score each candidate's null_z against the EMPIRICAL null-draw distribution:
+    # FP-rate(z) = fraction of site-free draws with null_z ≤ z; FDR(z) = N·FP-rate(z) / #{cand ≤ z}; step-up
+    # monotonised. This makes NO tail-shape assumption. (Resolution floor = 1/n_draw; fine here, ~124k draws.)
+    znull = ((nul["rho"].to_numpy(float) - np.array([params[np.clip(np.digitize(a, bins) - 1, 0, N_BINS - 1)][0]
+             for a in nul["ab"]])) / np.array([params[np.clip(np.digitize(a, bins) - 1, 0, N_BINS - 1)][1]
+             for a in nul["ab"]]))
+    zc = real["null_z"].to_numpy(float)
+    N = len(zc)
+    order = np.argsort(zc)                                                          # most-negative first
+    znull_sorted = np.sort(znull)
+    fdr = np.empty(N)
+    for rank, idx in enumerate(order, start=1):
+        fp = np.searchsorted(znull_sorted, zc[idx], side="right") / max(len(znull), 1)
+        fdr[idx] = N * fp / rank
+    q_emp = np.minimum.accumulate(fdr[order][::-1])[::-1]                           # step-up monotone
+    real["q_empirical"] = np.nan
+    real.iloc[order, real.columns.get_loc("q_empirical")] = q_emp.round(4)
     # seed-family collapse: one Simes p per (gene, seed-family), BY across families, mapped back to members
     key = list(zip(real["gene"], real["seed_family"].fillna("NA_" + real["arm"].astype(str))))
     fam_p = {}
@@ -648,10 +667,11 @@ def run_all(*, min_partial: float = -0.15, min_scanmir: float = -0.5, top: int |
               f"(σ₀ {par.sd0.min():.4f}–{par.sd0.max():.4f}, μ₀ {par.mu0.min():+.4f}…{par.mu0.max():+.4f})")
         print(par.to_string(index=False))
         n_arm = int((real["q_by_arm"] < 0.05).sum())
+        n_emp = int((real["q_empirical"] < 0.05).sum())
         fam_sig = real[real["q_seedfamily"] < 0.05].groupby(["gene", "seed_family"]).ngroups
-        n_novel = int((~real["same_seed_he"]).sum())
-        print(f"[run_all] {len(real)} arm-candidates past ρ<{min_partial} | {n_arm} q_by_arm<0.05 | "
-              f"{fam_sig} distinct (gene,seed-family) at q_seedfamily<0.05 | median null_z {real['null_z'].median():+.2f}")
+        print(f"[run_all] {len(real)} arm-candidates past ρ<{min_partial} | q_empirical<0.05 {n_emp} "
+              f"(HEAVY-TAIL-aware, PRIMARY) | q_by_arm<0.05 {n_arm} | {fam_sig} (gene,seed-family) at "
+              f"q_seedfamily<0.05 | median null_z {real['null_z'].median():+.2f}")
         print(f"[run_all] {n_novel} candidates are NOT paralogues of a curated regulator (same_seed_he=False)")
         print("[run_all] ⚠ q-counts are threshold-FRAGILE (axiom 5); read null_z / the seed-family collapse.")
     cand = real.nsmallest(top, "null_z") if top else real
@@ -663,6 +683,26 @@ def run_all(*, min_partial: float = -0.15, min_scanmir: float = -0.5, top: int |
               f"| {int((rob['sub_he_evidence']==0).sum())} fully novel | wrote {out}")
         print(rob.sort_values('partial_deconv').head(15).to_string(index=False))
     return dv
+
+
+def run_families(*, min_partial: float = -0.15, n_null_arms: int = 40, universe: str = "he",
+                 out="mirna_hallmark/output/learned/discoveries_family.tsv") -> pd.DataFrame:
+    """LANE 1 genome-wide: family-as-discovery, calibrated against the size-matched site-free family null.
+    (Evidence attach per family — pooling members' chimeric/ledger — is a follow-up; the members are listed.)"""
+    from pathlib import Path
+    Path(out).parent.mkdir(parents=True, exist_ok=True)
+    scan = scan_families(min_partial=min_partial, n_null_arms=n_null_arms, universe=universe)
+    real, par = calibrate(scan)
+    scan[scan["_is_null"]].to_csv(Path(out).parent / "discovery_family_null.tsv", sep="\t", index=False)
+    if len(par):
+        n_arm = int((real["q_by_arm"] < 0.05).sum())
+        print(f"[run_families] site-free family null on {int(par.n_null.sum()):,} pseudo-families "
+              f"(σ₀ {par.sd0.min():.4f}–{par.sd0.max():.4f})")
+        print(f"[run_families] {len(real)} whole-family-novel candidates | {n_arm} at q_by_arm<0.05 "
+              f"(=q_seedfamily, 1:1) | median null_z {real['null_z'].median():+.2f}")
+    real.sort_values("null_z").to_csv(out, sep="\t", index=False)
+    print(f"[run_families] wrote {out}")
+    return real
 
 
 def run(genes=None, *, min_partial: float = -0.12) -> pd.DataFrame:
