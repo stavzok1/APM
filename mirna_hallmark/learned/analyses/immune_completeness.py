@@ -32,7 +32,7 @@ The three-part test (mirrors `prolif_verdict.py`)
 Any fix must be **cross-cohort computable** (the state and protein channels both need a matched C), so the
 candidate is a lymphocyte marker METAGENE — LM22/Thorsson exist for TCGA only and can never be covariates.
 
-CLI: `python -m mirna_hallmark.learned.immune_completeness [--n-genes 200]`
+CLI: `python -m mirna_hallmark.learned.analyses.immune_completeness [--n-genes 200]`
 """
 from __future__ import annotations
 

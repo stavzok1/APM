@@ -9,7 +9,7 @@ baseline? Same genes / folds / C / slab for all three, so the ONLY difference is
 Per gene: 5-fold OOF ρ for each; then one-sided partial-t p(ρ<0), df≈n−8, BY-FDR across genes (same recipe as
 spike_slab.gate_fdr). Reports mean ρ and FDR-significant fraction per method.
 
-CLI: .venv/bin/python3 -m mirna_hallmark.learned.genome_seq_fdr --limit 120 --gain 1.2
+CLI: .venv/bin/python3 -m mirna_hallmark.learned.analyses.genome_seq_fdr --limit 120 --gain 1.2
 """
 from __future__ import annotations
 

@@ -11,7 +11,7 @@ Three levels of summary:
   3. NETWORK — shape, density, hub families (co-target ≥2 genes = where a program view adds over per-gene),
      concentration (share of total program weight held by the top hubs), most-regulated genes.
 
-CLI: `python -m mirna_hallmark.learned.program_network EMT` (or a Hallmark name / gene list).
+CLI: `python -m mirna_hallmark.learned.analyses.program_network EMT` (or a Hallmark name / gene list).
 """
 from __future__ import annotations
 

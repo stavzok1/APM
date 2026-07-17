@@ -32,7 +32,7 @@ WHAT IS COMPUTED HERE (all decoy-independent, all a priori):
 low ceiling has too few/too collinear regulators to resolve, not necessarily no regulation. Target detection
 is NOT the binding constraint (the detection floor fails only 7.9% of genes) — **regulator-design width is**.
 
-CLI:  .venv/bin/python3 -m mirna_hallmark.learned.gene_atlas [--workers 8] [--limit N]
+CLI:  .venv/bin/python3 -m mirna_hallmark.learned.analyses.gene_atlas [--workers 8] [--limit N]
 Out:  output/learned/gene_atlas.tsv           (the atlas — decoy-independent)
       output/learned/gene_competence_map.tsv  (atlas ⋈ decoy_bench gaps)
 """

@@ -16,7 +16,7 @@ Gauge: M fit on z-scored abundance per state (shared gauge, Design §C). Abundan
 median-aligned (GTEx miRNA is TPM vs TCGA RPM) → the trio levels are comparable *relative* abundances; the
 GTEx→NAT leg is cross-platform (flagged), NAT→tumour is within-TCGA.
 
-CLI: `python -m mirna_hallmark.learned.parallel_view PTEN ESR1 ZEB1`
+CLI: `python -m mirna_hallmark.learned.analyses.parallel_view PTEN ESR1 ZEB1`
 """
 from __future__ import annotations
 

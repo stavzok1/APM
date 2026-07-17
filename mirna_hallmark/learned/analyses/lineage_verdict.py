@@ -41,7 +41,7 @@ The test (identical, non-circular OOF 2×2 — reused from `prolif_verdict`)
 are flagged `circular=True`: for them **no** lineage covariate is valid — ER status *is* ESR1's own state —
 so their verdict is definitionally over-control and must not be read as biology.
 
-CLI: `python -m mirna_hallmark.learned.lineage_verdict [GENE ...]`
+CLI: `python -m mirna_hallmark.learned.analyses.lineage_verdict [GENE ...]`
 """
 from __future__ import annotations
 

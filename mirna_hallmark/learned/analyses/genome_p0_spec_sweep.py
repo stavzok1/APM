@@ -9,7 +9,7 @@ Expect: rho_ss improves monotonically with p0 (→ dense) and is FLAT across spe
 
 Per config: 5-fold OOF ρ per gene; mean ρ + BY-FDR-significant fraction across genes (spike_slab.gate_fdr recipe).
 
-CLI: .venv/bin/python3 -m mirna_hallmark.learned.genome_p0_spec_sweep --limit 80
+CLI: .venv/bin/python3 -m mirna_hallmark.learned.analyses.genome_p0_spec_sweep --limit 80
 """
 from __future__ import annotations
 

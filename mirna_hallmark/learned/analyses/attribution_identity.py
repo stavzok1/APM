@@ -16,7 +16,7 @@ X/Y, never coupling). Validated: recovers textbook specialists abundance-removed
 CCND1, miR-200→ZEB1) while the loud generalists (miR-21, miR-17, miR-182) rank low. See
 LEARNED_MODEL_DISCOVERY_SYNTHESIS §6a; [[ago-loading-arm-axis]].
 
-CLI: .venv/bin/python3 -m mirna_hallmark.learned.attribution_identity PTEN CCND1 ZEB1
+CLI: .venv/bin/python3 -m mirna_hallmark.learned.analyses.attribution_identity PTEN CCND1 ZEB1
 """
 from __future__ import annotations
 

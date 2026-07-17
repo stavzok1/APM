@@ -7,7 +7,7 @@ Two questions:
   2. mirna_target_enrichment — for a hub miRNA (family), are its robust-discovery target genes concentrated in
      a particular program? (turns the program-network hubs into an enrichment-tested claim)
 
-CLI: `python -m mirna_hallmark.learned.enrichment`
+CLI: `python -m mirna_hallmark.learned.analyses.enrichment`
 """
 from __future__ import annotations
 

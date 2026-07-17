@@ -16,8 +16,8 @@ Regularisation strength is CV-selected per gene per estimator (inner CV on the t
 into the OOF coupling), so the comparison is fair on λ. Each gene also gets a COLLINEARITY score (mean
 |Spearman| among its residualised family predictors) to test the interaction: Δρ(ridge−lasso) vs collinearity.
 
-CLI:  .venv/bin/python3 -m mirna_hallmark.learned.shrinkage_compare            # hub panel
-      .venv/bin/python3 -m mirna_hallmark.learned.shrinkage_compare --full     # genome-wide (background)
+CLI:  .venv/bin/python3 -m mirna_hallmark.learned.analyses.shrinkage_compare            # hub panel
+      .venv/bin/python3 -m mirna_hallmark.learned.analyses.shrinkage_compare --full     # genome-wide (background)
 """
 from __future__ import annotations
 

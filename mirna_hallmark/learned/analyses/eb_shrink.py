@@ -18,7 +18,7 @@ how much the prior's *direction* is used at all (c≈0 ⇒ prior magnitude patte
 Conjugate Gibbs (all Gaussian/InvGamma) → fast. The diagnostic is (learned τ², learned c, OOF coupling)
 vs the fixed-α adaptive lasso: does *learning* the anchor strength beat *guessing* α?
 
-CLI: `.venv/bin/python3 -m mirna_hallmark.learned.eb_shrink`
+CLI: `.venv/bin/python3 -m mirna_hallmark.learned.analyses.eb_shrink`
 """
 from __future__ import annotations
 

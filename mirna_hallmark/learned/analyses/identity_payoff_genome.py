@@ -10,7 +10,7 @@ Metrics: top-PIP family flip rate (evidence vs identity); mean |ΔPIP| over ALL 
 crosses 0.5 (gained/lost); and whether the gainers are higher-percentile (mechanism). Restricted to multi-family
 soups (≥3 families) where identification is non-trivial.
 
-CLI: .venv/bin/python3 -m mirna_hallmark.learned.identity_payoff_genome --limit 80 --gain 2.0
+CLI: .venv/bin/python3 -m mirna_hallmark.learned.analyses.identity_payoff_genome --limit 80 --gain 2.0
 """
 from __future__ import annotations
 
