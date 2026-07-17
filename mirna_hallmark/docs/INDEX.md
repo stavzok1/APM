@@ -117,6 +117,7 @@
 | [archive/](archive/README.md) | **Consumed / superseded.** Nothing here describes current state. 9 docs + a README explaining each. |
 | [derived/](derived/) | Generated renditions (PDF/DOCX) of the canonical docs. Don't edit — regenerate. |
 | [decisions/](decisions/) | Locked decision memos. ⭐ **Rescued from the gitignored `output/`** — they were untracked. |
+| [ARCHITECTURE_PLAN.md](ARCHITECTURE_PLAN.md) | **The plan for the canonical axes×models×analyses×results map** (2026-07-18). A materialized VIEW over the one-home docs; generated, non-redundant. Draft axis taxonomy inside. |
 | [handoffs/](handoffs/) | Session handoffs. **`HANDOFF_DISCOVERY_NULL.md` (2026-07-17) is the current one** — discovery lane / site-free null / FDR (MH-154/155). ⚠ `HANDOFF_PROTEIN_AND_COMPOSITION.md` is superseded on 3 counts — see STATE_OF_PLAY. |
 
 ## 8. Reference & renditions
