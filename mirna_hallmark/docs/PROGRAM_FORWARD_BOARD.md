@@ -274,13 +274,17 @@ MH-124 §4b (n=21). β is at chance (rank 0.518, p=0.66); `shapley_identity` 0.3
 - ✅ **CLOSED (MH-151/152) — the isomiR cache needs NOTHING.** Coverage of the model cohort is **99.9%**
   (1,078/1,079 participants; ZERO missing). The manifest's 18 extra Primary Tumor files are **duplicate
   vials**, not missing people — a rebuild and a download both gain nothing.
-- ⬜ **NEW, and newly cheap (MH-152): does miR-17~92's IDENTITY survive its own seed heterogeneity?**
-  `miR-106a-5p` shifts seed **64.5%** at 27,522 RPM in 884 samples, and its family
-  (`miR-17-5p/20-5p/93-5p/106-5p/519-3p`) carries **0.501 of PTEN's identity** (MH-150). The collapse
-  assumes members share a seed. 51/314 well-measured arms (16%) shift >20%. MH-96 predicted
-  *"attribution-yes / coupling-no"* but there was **no identity column to test it on until MH-140**.
-  Re-run `identity` under `isomir=True` on the shifted arms. **An ATTRIBUTION test, not a coupling
-  re-litigation** — the refit stays default-OFF for coupling (it is a wash). **(→ MH-152, MH-150, MH-140)**
+- ✅ **ANSWERED (MH-153) — YES, it survives, and the risk is elsewhere.** miR-17~92's dose is **corr 0.95**
+  under `isomir=True` and **PTEN's identity argmax is UNCHANGED** (miR-18-5p; identity corr 0.92). **Donor
+  families are BUFFERED BY POOLING** — losing ⅔ of one member's reads is absorbed by the rest.
+- ⬜ **THE REAL EXPOSURE, newly surfaced (MH-153) — audit RECEIVERS and the ORPHAN MASS, not donors:**
+  (a) small families have no pool to dilute a donation — `miR-543` gains **+351%** from jumped reads;
+  (b) the `orphan` bucket **DELETES 4.1% of total RPM** (654.3M → 627.4M) — reads whose shifted seed
+  matches no family are dropped from EVERY family. **`X_fam` does not conserve mass and nothing flags it.**
+- 🔨 **BEFORE any OOF isomiR run (MH-153): fit the shrinkage target on TRAIN ONLY.** `seed_composition`
+  Dirichlet-shrinks low-read cells toward the **cohort** family-distribution — a cross-sample X-leak (no
+  Y-leak). Confined to low-read cells and the path is default-OFF, so nothing shipped is affected.
+  **(→ MH-153, MH-152)**
 - ⬜ **Infra:** `git add` the untracked `learned/` tree (a provenance hole, flagged repeatedly) · fold
   ENCORI/POSTAR3/Manakov into the ledger (**union, not summed**) · `baselines/` re-export shims · vectorize the
   per-sample segment×locus overlap in `mirna_locus_cnv` (interval join per chromosome — the main slow step in
