@@ -271,10 +271,16 @@ MH-124 §4b (n=21). β is at chance (rank 0.518, p=0.66); `shapley_identity` 0.3
   explodes to 3881–7655×. ⬜ **Open:** gate that summary on `identity_mean > 0.05`, and re-run MH-94's
   flagship (PTEN miR-141/200a 0.77±0.41 ⛔ **[RETRACTED — MH-150, 2026-07-17: re-run at MH-94's OWN config gives **0.003 ± 0.012, PIP 0.042**. The SHARE collapsed 250×, not just its width; the exemplar is void. PTEN's identity is now miR-17~92 (0.501) + miR-21/590 (0.223) — the canonical regulators. Prime suspect: the `_rtnorm_pos` sampler bug, which MH-94 predates. DO NOT CITE.]** vs MH-102e's re-derived 0.243) at ITS OWN config — the configs here
   are not comparable, and 0.41→0.243 points the OTHER way. **(→ MH-146)**
-- ✅ **CLOSED (MH-151) — the isomiR cache rebuild is a NO-OP.** The cache used 1,078 files; 1,078 are on
-  disk; `_iso_files()` returns 1,078 ⇒ a rebuild re-reads the same files. The real gap is **18 undownloaded
-  GDC files (1.6%)** — a DOWNLOAD gap, not compute — feeding a **default-OFF** lane (the isomiR refit is a
-  coupling wash). If ever wanted: `gdc-client` against the manifest, not a rebuild. **(→ MH-151)**
+- ✅ **CLOSED (MH-151/152) — the isomiR cache needs NOTHING.** Coverage of the model cohort is **99.9%**
+  (1,078/1,079 participants; ZERO missing). The manifest's 18 extra Primary Tumor files are **duplicate
+  vials**, not missing people — a rebuild and a download both gain nothing.
+- ⬜ **NEW, and newly cheap (MH-152): does miR-17~92's IDENTITY survive its own seed heterogeneity?**
+  `miR-106a-5p` shifts seed **64.5%** at 27,522 RPM in 884 samples, and its family
+  (`miR-17-5p/20-5p/93-5p/106-5p/519-3p`) carries **0.501 of PTEN's identity** (MH-150). The collapse
+  assumes members share a seed. 51/314 well-measured arms (16%) shift >20%. MH-96 predicted
+  *"attribution-yes / coupling-no"* but there was **no identity column to test it on until MH-140**.
+  Re-run `identity` under `isomir=True` on the shifted arms. **An ATTRIBUTION test, not a coupling
+  re-litigation** — the refit stays default-OFF for coupling (it is a wash). **(→ MH-152, MH-150, MH-140)**
 - ⬜ **Infra:** `git add` the untracked `learned/` tree (a provenance hole, flagged repeatedly) · fold
   ENCORI/POSTAR3/Manakov into the ledger (**union, not summed**) · `baselines/` re-export shims · vectorize the
   per-sample segment×locus overlap in `mirna_locus_cnv` (interval join per chromosome — the main slow step in
