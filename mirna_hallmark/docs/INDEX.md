@@ -85,10 +85,17 @@
 
 ## 5. Channels & axes
 
-> ⛔ **2026-07-17: the three dead-channel docs were ARCHIVED** — `CN_INSTRUMENT` (both instruments retracted),
-> `STATE_CHANNEL_PLAN` (measured and cancelled, τ≈0), `CPTAC_PROTEIN_CHANNEL_PLAN` (`βᵗ` falsified at n=101).
-> **Their measured survivors were extracted first**: METHODS §1a/§8a/§18a and VALIDATION §6.1–§6.5.
-> See [`archive/README.md`](archive/README.md) for each survivor's new address.
+> ⛔ **2026-07-17: two dead-channel docs were ARCHIVED** — `STATE_CHANNEL_PLAN` (measured and cancelled, τ≈0)
+> and `CPTAC_PROTEIN_CHANNEL_PLAN` (`βᵗ` falsified at n=101). **Their measured survivors were extracted first**:
+> METHODS §1a/§18a and VALIDATION §6.1–§6.5. See [`archive/README.md`](archive/README.md) for each address.
+> ⚠ **`CN_INSTRUMENT.md` STAYS ACTIVE.** Its instruments are retracted, but its **design** — the exclusion
+> restriction, multi-IV + Hansen-J over-ID, the CN/expression asymmetry — is what a **revival** builds on, and
+> that revival is the programme's highest-value open item (board §A). *A dead result is archivable; a live
+> design is not.*
+
+| doc | currency | what it is |
+|-----|----------|------------|
+| [CN_INSTRUMENT.md](CN_INSTRUMENT.md) | ⚠ **design LIVE, instruments DEAD** | The CN-locus instrument's design + identifiability argument. ⛔ Both instruments retracted (MH-124r/126, MH-133) — **do not cite it as causal evidence**. ✅ **Kept for the REVIVAL**: §2 exclusion restriction · §5 multi-IV + Hansen-J over-ID · §6 the CN/expression asymmetry · §7 the corrected architecture · §9 built-vs-gaps. The estimator spec (F>10 ∧ T1-clean, soft F-weight) moved to `LEARNED_MODEL_METHODS §8a`. |
 
 | doc | currency | what it is |
 |-----|----------|------------|
