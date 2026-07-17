@@ -1,175 +1,137 @@
 # Docs index — `mirna_hallmark`
 
-Map of every document under `mirna_hallmark/docs/` (and the notable markdown that
-lives outside it). This is the human-facing entry point; [AGENTS.md](../AGENTS.md)
-is the agent-onboarding entry point. Links are relative markdown so they render on
-GitHub **and** resolve in Obsidian (vault set to relative-link mode).
+> **Goal:** find the right doc fast, and know whether to trust it.
+> **What belongs here:** one row per doc — role, currency, one line on what it is. **NOT** verdicts
+> (→ [`STATE_OF_PLAY.md`](STATE_OF_PLAY.md)), **NOT** findings (→ [`DISCOVERY_REGISTRY.md`](DISCOVERY_REGISTRY.md)).
+> **Update trigger:** a doc is added, archived, or changes role.
+> **Sync-partner:** [`STATE_OF_PLAY.md`](STATE_OF_PLAY.md) (its "Doc traps" table must agree with the ⚠ rows here).
 
-**Status vocabulary** used below:
-
-| status | meaning |
-|--------|---------|
-| `active` | current canonical reference or living result doc — trust it |
-| `living` | continuously updated (ledger / registry / what's-next) |
-| `parked` | design/plan intentionally not built yet — do **not** auto-run |
-| `derived` | generated rendition of a canonical doc (paper / slides / PDF) |
-| `historical` | one-shot session or handoff, work now **consumed** — read for provenance, not current state |
-| `reference` | external literature / data catalog |
-
-`refs` = how many other markdown files in the subproject link to it (in-degree).
-Orphans (`refs 0`) are flagged.
+**Index rebuilt 2026-07-17** (registry current through **MH-137**).
 
 ---
 
-## 1. Canonical references — read these first
+## 🚩 Start here
 
-The load-bearing spine. Every number, formula, and component traces back here.
+| # | doc | why |
+|---|-----|-----|
+| **1** | **[STATE_OF_PLAY.md](STATE_OF_PLAY.md)** | **The one doc that answers "where are we".** Per axis: what stands, what's dead, what's open — with MH ids and dates. Read this before anything else. |
+| **2** | [DISCOVERY_REGISTRY.md](DISCOVERY_REGISTRY.md) | **The source of truth.** Append-only, current, one row per finding with a strength tag. Where this and any other doc disagree, **this wins**. |
+| **3** | [ANALYSIS_RUN_LEDGER.md](ANALYSIS_RUN_LEDGER.md) | One row per run: when, status, runtime, what changed. |
 
-| doc | status | refs | what it is |
-|-----|--------|-----:|------------|
-| [MODELING_FRAMEWORK.md](MODELING_FRAMEWORK.md) | active | 7 | Conceptual **and** implemented framework — the connective layer between concepts, formulas, and code. Start here for "what are we modeling and why". |
-| [FORMULAS.md](FORMULAS.md) | active | 8 | Code-faithful exact formula for every quantity (pressure / share / specificity / coupling / family / validation-priority). The *how*. |
-| [METHODS.md](METHODS.md) | active | 8 | Methods narrative — data → pressure → gate → coupling. |
-| [DATA_SOURCES.md](DATA_SOURCES.md) | active | 4 | Every dataset the subproject reads, what it is, and its preprocessing basis. |
-| [MIRNA_GENOMIC_CONTEXT_AXIS.md](MIRNA_GENOMIC_CONTEXT_AXIS.md) | active | 4 | miRNA locus genomic-context axis (MH-101): strand-aware host classification (47% coding-host), arm→locus GENCODE canonicalization, the `.N` universe-redefinition, host-target relatedness, + the open downstream unification of MH-99/MH-100 under a per-edge host-gene lens. |
-| [ANALYSES_CATALOG.md](ANALYSES_CATALOG.md) | living | 5 | One row per analysis component (module, purpose, inputs, outputs). Orient here before grepping. |
-| [MODULE_MAP.md](MODULE_MAP.md) | active | 1 | Post-reorg navigation (top-level 160 → 36 `.py`). Which module does what. |
-| [EDGE_QUESTION_TAXONOMY.md](EDGE_QUESTION_TAXONOMY.md) | active | 7 | What a single miRNA→target edge can be asked. Backs the `apm-edge-question` skill. |
-| [GENE_QUESTION_TAXONOMY.md](GENE_QUESTION_TAXONOMY.md) | active | 9 | A gene's total incoming miRNA regulation. Backs the `apm-gene-question` skill. |
+> ⚠ **The registry runs AHEAD of the docs.** MH-131…137 — the most consequential fortnight in the
+> project (both CN instruments retracted; the decoy control rebuilt; the first real positive control)
+> — exist **only as registry rows**. There is no `MH13x_*.md`. A doc's silence is not evidence.
 
-## 2. Living operational docs
+---
 
-Updated continuously — the current state of the project lives here.
+## 1. Canonical references — the load-bearing spine
 
-| doc | status | refs | what it is |
-|-----|--------|-----:|------------|
-| [DISCOVERY_REGISTRY.md](DISCOVERY_REGISTRY.md) | living | 12 | Every finding (MH-*) with evidence tier + source table. The record of what's established. |
-| [ANALYSIS_RUN_LEDGER.md](ANALYSIS_RUN_LEDGER.md) | living | 5 | One row per run: when, status, runtime, catalog alignment. Maintained via `apm-analysis-ledger`. |
-| [WHATS_NEXT.md](WHATS_NEXT.md) | living | 5 | Prioritized forward TODO. |
-| [PROGRAM_FORWARD_BOARD.md](PROGRAM_FORWARD_BOARD.md) | living | 1 | **Consolidated** open-work board across the WHOLE subproject (fusion/Bayes · CN · progression · discovery · validation · infra) — one place to see everything; points into WHATS_NEXT / LEARNED_MODEL_WHATS_NEXT / CHANNEL_FUSION for depth. |
-| [ISOMIR_AWARE_MODELING.md](ISOMIR_AWARE_MODELING.md) | active | 1 | Design: per-sample seed-resolved family predictors (isomiR-corrected X_fam) + propagation to CN/coupling; Phase 0 built (MH-96 per-sample QC), 1-4 planned. |
-| [handoffs/HANDOFF_PROTEIN_AND_COMPOSITION.md](handoffs/HANDOFF_PROTEIN_AND_COMPOSITION.md) | **active** | 1 | **⭐ START HERE for the protein axis + composition machinery (session 2026-07-12, MH-103…113).** Verified state, the 5 approved follow-ups, live outputs — and **8 SELF-RETRACTIONS listed up front so they are not re-derived** (βᵗ was a LEAK; 'discordance forces HMC' false; 'protein 3× more compartment-exposed' a unit+cohort artifact; 'deconv=True everywhere' would IMPOSE an over-control; …). Key yield: `learned/readouts.py` (the FOUR readouts genome-wide + the composition RETENTION tag, validated at p=9e-12) and the **confounder-ARCHITECTURE principle** (proliferation/host localise to an ARM = LOCUS properties; composition localises to the FAMILY = an EXPRESSION property ⇒ the unit predicts which tool can fix it). |
-| [CPTAC_PROTEIN_CHANNEL_PLAN.md](CPTAC_PROTEIN_CHANNEL_PLAN.md) | living | 1 | **⛔ CENTREPIECE FALSIFIED (MH-103, see its §0a) — `βᵗ` is NOT supported at n=101 and the prior evidence was a LEAK; four leak-free framings agree, incl. the max-power aggregate (BH q<0.10 in 1/17 genes; PTEN dead). Coherent with MH-34: the translational residual is ~1% of genes, below a 101-patient cohort's resolution. SURVIVING: `locus_cn_cptac` (BUILT, r=0.997) · δ-transportability · Bar-5 (validates β) · the unbiased `a`.** Also established (and unaffected): protein carries only **≈4–6%** (⚠ **CORRECTED, MH-108**: the earlier ****≈4–6%** (⚠ **CORRECTED, MH-108**: the earlier **1.2%** used the ATTENUATED observational `a_g`=0.397; the CAUSAL CN-instrumented `a_IV`=0.893 gives ≈6%, and the direct Bar-5 retention² check gives ≈4%. **Verdict UNCHANGED — the pre-registered ceiling was ≤7.6% at a_g=1.0.**)** used the ATTENUATED observational `a_g`=0.397; the CAUSAL CN-instrumented `a_IV`=0.893 gives ≈6%, and the direct Bar-5 retention² check gives ≈4%. **Verdict UNCHANGED — the pre-registered ceiling was ≤7.6% at a_g=1.0.**) of the mRNA channel's Fisher information about β (≤7.6% at any `a_g`) ⇒ never a coupling lever either; the miRNA CONFOUNDS the mRNA→protein slope (marginal `a` biased up to 38%); **ENGINE VERDICT: Gibbs, no HMC** — corrects CHANNEL_FUSION §7/§L/§J's "discordance forces HMC". |
+| doc | currency | what it is |
+|-----|----------|------------|
+| [MODELING_FRAMEWORK.md](MODELING_FRAMEWORK.md) | active | Conceptual + implemented framework. "What are we modeling and why." |
+| [FORMULAS.md](FORMULAS.md) | active | Code-faithful exact formula for every quantity. The *how*. |
+| [METHODS.md](METHODS.md) | active | Methods narrative — data → pressure → gate → coupling. |
+| [DATA_SOURCES.md](DATA_SOURCES.md) | active | Every dataset read, and its preprocessing basis. |
+| [ANALYSES_CATALOG.md](ANALYSES_CATALOG.md) | living | One row per analysis component. Orient here before grepping. |
+| [MODULE_MAP.md](MODULE_MAP.md) | active | Which module does what. |
+| [EDGE_QUESTION_TAXONOMY.md](EDGE_QUESTION_TAXONOMY.md) | active | What a single miRNA→target edge can be asked. Backs `apm-edge-question`. |
+| [GENE_QUESTION_TAXONOMY.md](GENE_QUESTION_TAXONOMY.md) | active | A gene's total incoming regulation. Backs `apm-gene-question`. |
+| [MIRNA_GENOMIC_CONTEXT_AXIS.md](MIRNA_GENOMIC_CONTEXT_AXIS.md) | active | Strand-aware host classification; the per-edge host-gene lens. |
 
-## 3. Result reports — established findings
+## 2. The learned model
 
-| doc | status | refs | what it is |
-|-----|--------|-----:|------------|
-| [REPORT.md](REPORT.md) | active | 10 | Detailed results report (TCGA-BRCA), pressure spine refreshed 2026-06-17. |
-| [BIOLOGICAL_SYNTHESIS.md](BIOLOGICAL_SYNTHESIS.md) | active | 9 | Biology-first distilled surface of what's established. |
-| [LANDSCAPE_REPORT.md](LANDSCAPE_REPORT.md) | active | 5 | Cross-state pressure landscape: GTEx-healthy → TCGA-NAT → tumor. |
-| [MIRNA_CNV_DOSAGE_REPORT.md](MIRNA_CNV_DOSAGE_REPORT.md) | active | 6 | miRNA CNV dosage (universe copy-number → expression concordance). |
-| [MH124_ANTICOUPLING_VALIDITY.md](MH124_ANTICOUPLING_VALIDITY.md) | active | 2 | **MH-124: are anti-couplings meaningful?** Edge EXISTENCE (decoy-controlled + CN-instrumented) vs WEIGHT IMPORTANCE (attribution at chance) vs the S+L refutation. ⚠ **§5's "exogenous CN instrument" existence leg is DOWNGRADED by MH-126** — read that first. |
-| [MH126_ANEUPLOIDY_AND_GRADED_ATTRIBUTION.md](MH126_ANEUPLOIDY_AND_GRADED_ATTRIBUTION.md) | active | 1 | **MH-126: aneuploidy in the CN instrument · what the learned model is FOR · the GRADED attribution question.** Ploidy is a **calibration** fix (impossible-edge negative reduced form 86.4% → 50.0%), **not** a power fix; **⛔ `pi_causal` is NOT exogenous**; β is de-confounded + transferable but **cannot name** the canonical family (rank = chance, abundance beats it) though it does carry a weak, family-FE-borderline **evidence gradient**. Carries the **w-circularity gate** (β is bit-identical under shuffled w). |
-| [MH127_DECOY_MODEL_GENE_BUDGET.md](MH127_DECOY_MODEL_GENE_BUDGET.md) | active | 1 | **MH-127: the DECOY MODEL — is the learning doing anything beyond FITTING?** Learn β on a MATCHED FAKE (abundance-matched, site-free, non-family, non-cluster, non-collinear) regulator set and compare the gene budget. **In-cohort: NO** — the fitted decoy reaches **79–91%** of the real model's OOF field (real-vs-fake **p=0.21/0.58, n.s.**) and **beats real unfitted abundance** ⇒ **MH-115's headline is RESTATED (a FITTING claim, not curation)**. **What survives: OUT-OF-COHORT TRANSFER** (frozen β predict CPTAC mRNA, the decoy's do not; paired p=0.030/0.027) and a **fit-free high-evidence-weight tertile** (q=0.006, FAKE1 only). The stratified rescue (regulator count · Shapley class) **FAILS**. ⚠ **Its stratified numbers and its CPTAC-protein null are AMENDED/CORRECTED by [MH130_GENE_LENS.md](MH130_GENE_LENS.md).** |
-| [MH130_GENE_LENS.md](MH130_GENE_LENS.md) | active | 1 | **MH-130/131/132: THE GENE LENS — the per-gene competence map.** Answers, per gene and **a priori**: can this gene's miRNA regulation be **measured at all** (**17.6% cannot**; 48.1% have ONE seed family, where β ≡ uniform exactly)? does the **curated edge set** beat a matched fake there? does it **transfer**? **The 78.9% real-vs-fake "tie" is NOISE-FLOOR DILUTION** (at the floor the decoy *beats* the real model). **THE MODEL'S HONEST DOMAIN OF VALIDITY — fit-free, 27% of the universe: `n_fam ≥ 3` AND `w_max > median`** (gap −0.0376/−0.0282 in both fake sets; **complement +0.0002, p=0.72**). Also: the **SNR strata RETRACTED** (double-log bug), the **CPTAC-protein discrepancy SETTLED** (it was MH-127's decoy trim) — **but a site-free fitted fake reaches 99% of the protein transfer**, so that cell is *not* curation evidence. Artifacts: `output/learned/gene_atlas.tsv`, `output/learned/gene_competence_map.tsv`. |
+> **The converged statement in one line:** ONE dense learned-τ² non-negative Bayesian posterior per
+> gene, TWO readouts (π≡1 dense → coupling/attribution; evidence-π → discovery). **Lasso RETIRED.**
+> Canonical: [`LEARNED_MODEL_DISCOVERY_SYNTHESIS.md`](LEARNED_MODEL_DISCOVERY_SYNTHESIS.md) §6b.
+> Anything describing lasso-as-primary, "Bayes = uncertainty layer only", or Decision A–J / Bars is
+> **pre-convergence (≤2026-07-05) and superseded.**
 
-## 4. Framework renditions (derived from §1)
+| doc | currency | role |
+|-----|----------|------|
+| [LEARNED_MODEL_DISCOVERY_SYNTHESIS.md](LEARNED_MODEL_DISCOVERY_SYNTHESIS.md) | active | **Capstone** — §6b = the converged model in one line. |
+| [LEARNED_MODEL_METHODS.md](LEARNED_MODEL_METHODS.md) | active | Formula-level spec. **Twin of** `_FORMAL` — always edit BOTH. |
+| [LEARNED_MODEL_METHODS_FORMAL.md](LEARNED_MODEL_METHODS_FORMAL.md) | active | The LaTeX twin. |
+| [LEARNED_MODEL_RATIONALE.md](LEARNED_MODEL_RATIONALE.md) | active | The *why* behind every § of METHODS. |
+| [LEARNED_MODEL_VALIDATION.md](LEARNED_MODEL_VALIDATION.md) | active | Validation dossier. ⚠ §1 still carries the MH-127 restatement, not MH-134/135/137. |
+| [LEARNED_MODEL_ESTIMATOR_MAP.md](LEARNED_MODEL_ESTIMATOR_MAP.md) | ⚠ **part-stale** | **TRAP** — billed canonical, but self-dates 2026-07-06 and its **main table is pre-convergence**. Only its banner UPDATEs + the pooled-HE policy are current. |
+| [LEARNED_MODEL_WHATS_NEXT.md](LEARNED_MODEL_WHATS_NEXT.md) | ⚠ stale | Cluster-local TODO. Predates MH-133…137. |
+| [LEARNED_REGULATORY_MATRIX_DESIGN.md](LEARNED_REGULATORY_MATRIX_DESIGN.md) | active | Design note on learning M. |
+| [COLLINEARITY_AND_IDENTIFIABILITY.md](COLLINEARITY_AND_IDENTIFIABILITY.md) | active | Why identity is hard. Hierarchical δ-pooling = parked. |
 
-Generated presentations of [MODELING_FRAMEWORK.md](MODELING_FRAMEWORK.md) — keep in
-sync with the canonical, don't edit independently.
+## 3. Findings — deep dives (the registry is the record; these are appendices)
 
-| doc | status | refs | what it is |
-|-----|--------|-----:|------------|
-| [MODELING_FRAMEWORK_EXTERNAL.md](MODELING_FRAMEWORK_EXTERNAL.md) | derived | 2 | External / paper version (also `.pdf`, `.docx`) — abstract-led, NotebookLM source. |
-| [MODELING_FRAMEWORK_SLIDES_COMPANION.md](MODELING_FRAMEWORK_SLIDES_COMPANION.md) | derived | **0** | Per-slide build spec + worked numbers for the NotebookLM deck from _EXTERNAL. Orphan — reachable only from here. |
+| doc | currency | what it holds |
+|-----|----------|---------------|
+| [MH124_ANTICOUPLING_VALIDITY.md](MH124_ANTICOUPLING_VALIDITY.md) | ⚠ **mixed** | §4b (the attribution estimand argument) **STANDS**. **§5/§5b are VOID — do not cite** (`pi_causal` not exogenous). |
+| [MH125_WHAT_SURVIVES.md](MH125_WHAT_SURVIVES.md) | ⚠ mixed | The adversarial re-audit. Its exogenous leg is retracted (MH-133). |
+| [MH126_ANEUPLOIDY_AND_GRADED_ATTRIBUTION.md](MH126_ANEUPLOIDY_AND_GRADED_ATTRIBUTION.md) | active | **Cite this for attribution rank.** Ploidy = a calibration fix, not a power fix. Carries the w-circularity gate. |
+| [MH127_DECOY_MODEL_GENE_BUDGET.md](MH127_DECOY_MODEL_GENE_BUDGET.md) | ⛔ **superseded** | Magnitudes superseded by **MH-137**. Its "in-cohort tie" verdict is **reversed**. |
+| [MH128_DECOY_RESOLUTION_AND_CN_GOLD.md](MH128_DECOY_RESOLUTION_AND_CN_GOLD.md) | ⛔ superseded | §3's CN leg retracted by MH-133. |
+| [MH130_GENE_LENS.md](MH130_GENE_LENS.md) | ⚠ **half** | The **atlas** half (ceilings, 17.6% unmeasurable, 48.1% one-family) **STANDS**. The **gap** half sits on a discredited decoy. |
+| [CN_INSTRUMENT.md](CN_INSTRUMENT.md) | ⚠ mixed | The instrument's design + the 73% exclusion-failure verdict. ⛔ Both instruments now retracted (MH-133). |
 
-## 5. Parked design docs — not built, do not auto-run
+## 4. Result reports
 
-Intentional forward designs. Each self-declares parked status.
+| doc | currency | what it is |
+|-----|----------|------------|
+| [BIOLOGICAL_SYNTHESIS.md](BIOLOGICAL_SYNTHESIS.md) | active | Biology-first surface. "What did we learn." |
+| [REPORT.md](REPORT.md) | active | Detailed TCGA-BRCA results. |
+| [LANDSCAPE_REPORT.md](LANDSCAPE_REPORT.md) | ⚠ | Cross-state landscape. **Its per-edge FDR counts rest on the uncalibrated null** (MH-123/124). |
+| [MIRNA_CNV_DOSAGE_REPORT.md](MIRNA_CNV_DOSAGE_REPORT.md) | active | miRNA CNV dosage. |
+| [DCIS_EV_SYNTHESIS.md](DCIS_EV_SYNTHESIS.md) | active | DCIS/EV arc (MH-48..56). ⭐ Its MH-55 result **independently corroborates MH-114** 16 days early. |
 
-| doc | status | refs | what it is |
-|-----|--------|-----:|------------|
-| [ATTRIBUTION_IDENTITY_VS_MAGNITUDE.md](ATTRIBUTION_IDENTITY_VS_MAGNITUDE.md) | parked | 2 | Identity (who) vs magnitude (force) attribution frame + implementation TODOs. |
-| [ATTRIBUTION_CONTEXT_AXIS.md](ATTRIBUTION_CONTEXT_AXIS.md) | parked | 1 | Bridge from edge-discovery/coupling to a context axis. |
-| [PRESSURE_FUTURE_OPTIONS.md](PRESSURE_FUTURE_OPTIONS.md) | parked | 2 | Deferred pressure-formula options A–E (evidence-scoring companion). |
-| [PRESSURE_PROGNOSTIC_DESIGN.md](PRESSURE_PROGNOSTIC_DESIGN.md) | parked | 1 | Parsimonious functional miRNA-pressure prognostic design (needs METABRIC-full, EGA-gated). |
-| [PRIMARY_TUMOR_ROADMAP.md](PRIMARY_TUMOR_ROADMAP.md) | parked | 1 | Applying the DCIS/EV rigor lens to the primary-tumor arc. |
-| [DUAL_SPINE_COMPARISON_PLAN.md](DUAL_SPINE_COMPARISON_PLAN.md) | parked→executed | **0** | miRTar M0 vs ENCORI M0′ plan. **Executed** — outcome is `output/dual_spine_comparison/CANONICAL_DECISION.md`. Orphan; supersede or link. |
+## 5. Channels & axes
 
-## 6. Learned-model cluster (BUILT — production, 2026-07-06)
+| doc | currency | what it is |
+|-----|----------|------------|
+| [LEARNED_MODEL_CHANNEL_FUSION_DESIGN.md](LEARNED_MODEL_CHANNEL_FUSION_DESIGN.md) | parked | The ~60-axis fusion map. ⚠ Its §7/§L/§J "discordance forces HMC" is **wrong** — corrected to Gibbs. |
+| [LEARNED_MODEL_STATE_CHANNEL_PLAN.md](LEARNED_MODEL_STATE_CHANNEL_PLAN.md) | ⛔ **CLOSED** | The state channel was **measured and cancelled** (τ≈0, info 0.6%). §10 = the post-mortem. **Do not rebuild.** Carries the settled panel decision. |
+| [CPTAC_PROTEIN_CHANNEL_PLAN.md](CPTAC_PROTEIN_CHANNEL_PLAN.md) | ⛔ **centrepiece dead** | `βᵗ` falsified at n=101. ⚠ §6 still carries VOID PAM50 numbers contradicting §1. |
+| [ATTRIBUTION_IDENTITY_VS_MAGNITUDE.md](ATTRIBUTION_IDENTITY_VS_MAGNITUDE.md) | active §0 | §0 = the identity-vs-magnitude frame. §1–§12 (softmax era) **RETIRED**. |
+| [ATTRIBUTION_PRIMITIVE.md](ATTRIBUTION_PRIMITIVE.md) | ⚠ part-stale | The `attribute()` primitive — **still unbuilt**. Its §5/§8 "live bugs" are themselves stale. |
+| [ATTRIBUTION_CONTEXT_AXIS.md](ATTRIBUTION_CONTEXT_AXIS.md) | parked | Bridge to a context axis. |
+| [ISOMIR_AWARE_MODELING.md](ISOMIR_AWARE_MODELING.md) | active | isomiR-corrected X_fam. Phase 2–4 built, **default-OFF** (coupling wash). |
 
-> **⚠ CURRENT MODEL STATE — read this ONE line before reasoning about "the learned model", and trust nothing that
-> contradicts it (2026-07 convergence, MH-85):** the model is **ONE dense learned-τ² non-negative Bayesian posterior
-> per gene, two readouts** — π≡1 dense → coupling/attribution/identifiability; evidence-π → discovery — and **the
-> adaptive lasso is RETIRED to a baseline.** Canonical statement: **[`LEARNED_MODEL_DISCOVERY_SYNTHESIS.md §6b`](LEARNED_MODEL_DISCOVERY_SYNTHESIS.md)** (+ §0 thesis).
-> **Any text describing lasso-as-primary, "Bayes = uncertainty layer only", or the Decision A–J / Bars / "no-payoff"
-> gap ledger is PRE-CONVERGENCE (≤2026-07-05) and SUPERSEDED** — that includes `LEARNED_MODEL_DESIGN_RESPONSE.md`
-> (historical) and `LEARNED_MODEL_WHATS_NEXT.md §"DESIGN vs AS-BUILT"`. Never ground the *current* model on a
-> `historical`-tagged doc or a pre-convergence section; if a section's claim about "what the model is" is undated or
-> older than §6b, it does not describe the current model. (Guard added 2026-07-10 after a grounding error.)
+## 6. Forward planning
 
-The learned miRNA→gene regulatory matrix is **implemented and in production** in `learned/` (not parked). The
-canonical trio is **ESTIMATOR_MAP** (what model for what), **LEARNED_MODEL_METHODS** (formulas), **VALIDATION**
-(does it work); **DISCOVERY_SYNTHESIS** is the capstone (§6b = the converged model in one line); **WHATS_NEXT** is
-the living TODO. The three design-phase docs are now **historical** (their work is built — read for provenance).
-Inclusion migrated to POOLED-HE 2026-07-06. *Consolidation candidate: fold LEARNED_MODEL_METHODS formulas into
-FORMULAS.md and promote the trio into §1 canonical, so the learned model isn't a separate "cluster" now that it's core.*
+> ⚠ **Three competing forward docs, all predating MH-133…137. Consolidation pending.**
 
-| doc | status | refs | role in cluster |
-|-----|--------|-----:|------|
-| [LEARNED_MODEL_ESTIMATOR_MAP.md](LEARNED_MODEL_ESTIMATOR_MAP.md) | active | 2 | **Canonical map** — what estimator for what job, and why over alternatives. Current (pooled-HE, loss lens). |
-| [LEARNED_MODEL_METHODS.md](LEARNED_MODEL_METHODS.md) | active | 1 | Formula-level spec of every estimator (§0–§17). Current. |
-| [LEARNED_MODEL_RATIONALE.md](LEARNED_MODEL_RATIONALE.md) | active | 1 | **Conceptual companion** — the *why* behind every §of METHODS (why this construction, what breaks otherwise). §-aligned to METHODS. Current. |
-| [LEARNED_MODEL_DISCOVERY_SYNTHESIS.md](LEARNED_MODEL_DISCOVERY_SYNTHESIS.md) | active | 1 | **Capstone synthesis** — the whole learned-τ² + discovery + retrofit + dossier architecture in one doc (one fit → 4 jobs; deconv handling; candidacy TS∪K_D; 3-layer validation → 268 triple-validated edges). MH-82/83/84. |
-| [LEARNED_MODEL_VALIDATION.md](LEARNED_MODEL_VALIDATION.md) | active | 1 | Validation dossier — numbers pending pooled-HE regen. |
-| [LEARNED_MODEL_WHATS_NEXT.md](LEARNED_MODEL_WHATS_NEXT.md) | living | 1 | Cluster-local living TODO. |
-| [LEARNED_MODEL_CHANNEL_FUSION_DESIGN.md](LEARNED_MODEL_CHANNEL_FUSION_DESIGN.md) | parked | 1 | **Design (no code yet)** — the broader object §6b is a slice of: one latent M fused from many observation *channels*; CN channel = Gap-2B Bayes (between-family exclusion + within-family δ as one posterior, a conjugate Gaussian term on β). Grounded in `_gibbs_posterior`. |
-| [LEARNED_MODEL_STATE_CHANNEL_PLAN.md](LEARNED_MODEL_STATE_CHANNEL_PLAN.md) | active | 1 | **PLAN (awaiting review) — the STATE/progression channel `M_T = a·M_H + Δ`.** Carries the SETTLED deconvolution/confounder-panel decision (β is panel-invariant, ρ=0.94 across atlases; the CIBERSORTx "reconciliation blocker" is RETIRED — zero new runs) and the real cross-state problem (the matched-C policy; C's tumour-only terms). Binds the CPTAC session's C too. |
-| [LEARNED_REGULATORY_MATRIX_DESIGN.md](LEARNED_REGULATORY_MATRIX_DESIGN.md) | active | 2 | Design note on learning M (companion to MODELING_FRAMEWORK). |
-| [LEARNED_MODEL_DESIGN_RESPONSE.md](LEARNED_MODEL_DESIGN_RESPONSE.md) | historical | 3 | Design report (decision log). Work now built — provenance. |
-| [LEARNED_MODEL_DISCUSSION_PROMPT.md](LEARNED_MODEL_DISCUSSION_PROMPT.md) | historical | 1 | The framing prompt the design answered. Consumed. |
-| [LEARNED_MODEL_BUILD_PLAN.md](LEARNED_MODEL_BUILD_PLAN.md) | historical | 3 | Reuse-vs-rebuild + phased plan. Built. |
+| doc | currency |
+|-----|----------|
+| [PROGRAM_FORWARD_BOARD.md](PROGRAM_FORWARD_BOARD.md) | ⚠ stale (2026-07-12) — the consolidated board; still the best of the three. |
+| [WHATS_NEXT.md](WHATS_NEXT.md) | ⚠ stale — subproject-wide, pressure-arc era. |
+| [PRESSURE_FUTURE_OPTIONS.md](PRESSURE_FUTURE_OPTIONS.md) · [PRESSURE_PROGNOSTIC_DESIGN.md](PRESSURE_PROGNOSTIC_DESIGN.md) · [PRIMARY_TUMOR_ROADMAP.md](PRIMARY_TUMOR_ROADMAP.md) | parked. ⚠ PROGNOSTIC_DESIGN is blocked on "METABRIC-full (EGA-pending)" — **no DAR was ever filed**. |
 
-## 7. Historical — consumed session artifacts & handoffs
+## 7. Subfolders
 
-One-shot docs whose work is **done and folded into the registry/reports**. Read for
-provenance; they do **not** reflect current state. Candidates to move to a
-`docs/archive/` folder (see index footer).
+| folder | what |
+|--------|------|
+| [archive/](archive/README.md) | **Consumed / superseded.** Nothing here describes current state. 9 docs + a README explaining each. |
+| [derived/](derived/) | Generated renditions (PDF/DOCX) of the canonical docs. Don't edit — regenerate. |
+| [decisions/](decisions/) | Locked decision memos. ⭐ **Rescued from the gitignored `output/`** — they were untracked. |
+| [handoffs/](handoffs/) | Session handoffs. ⚠ `HANDOFF_PROTEIN_AND_COMPOSITION.md` is superseded on 3 counts — see STATE_OF_PLAY. |
 
-| doc | status | refs | what it captured (now consumed) |
-|-----|--------|-----:|------|
-| [HANDOFF_NORMAL_EXCLUDED_BATCH_RERUN.md](HANDOFF_NORMAL_EXCLUDED_BATCH_RERUN.md) | historical | 1 | Normal-excluded + batch-corrected rerun — **done** (registry MH-53). |
-| [ORPHAN_DISCOVERY_HANDOFF.md](ORPHAN_DISCOVERY_HANDOFF.md) | historical | **0** | CPTAC orphan-edge discovery → next-analysis handoff — consumed (orphan eCLIP validation done). |
-| [CPTAC_VALIDATION_SESSION_SUMMARY.md](CPTAC_VALIDATION_SESSION_SUMMARY.md) | historical | 1 | CPTAC protein validation session summary — consumed. |
-| [DCIS_EV_SYNTHESIS.md](DCIS_EV_SYNTHESIS.md) | historical | 1 | DCIS / pre-malignant / EV synthesis — done (MH-48..54). |
+## 8. Reference & renditions
 
-## 8. Reference scans
-
-| doc | status | refs | what it is |
-|-----|--------|-----:|------------|
-| [CRC_PORT_LITERATURE_SCAN.md](CRC_PORT_LITERATURE_SCAN.md) | reference | **0** | CRC-port literature scan (also `.pdf`). Orphan — link from WHATS_NEXT or a port-planning doc. |
+| doc | what |
+|-----|------|
+| [MODELING_FRAMEWORK_EXTERNAL.md](MODELING_FRAMEWORK_EXTERNAL.md) | derived — external/paper version, NotebookLM source. |
+| [CRC_PORT_LITERATURE_SCAN.md](CRC_PORT_LITERATURE_SCAN.md) | reference — CRC-port literature scan. |
 
 ---
 
 ## Markdown outside `docs/`
 
-Not part of this index's link graph, but part of the subproject knowledge base:
+- **Roots:** [AGENTS.md](../AGENTS.md) · [CLAUDE.md](../CLAUDE.md) · [README.md](../README.md)
+- **method_dev/**: see [method_dev/README.md](../method_dev/README.md) — 4 arcs (aggregate_pressure, arm_expression, site_ladder, landscape).
+- **Grant/**, **presentation/** — ⚠ `presentation/` F25 + deck are **stale** (figure from 2026-06-24; prose fixed 2026-07-12).
 
-- **Subproject roots:** [AGENTS.md](../AGENTS.md) (agent onboarding), [README.md](../README.md), [CLAUDE.md](../CLAUDE.md)
-- **method_dev/** (method-development notes):
-  [aggregate_pressure/AGGREGATE_FORCE_VS_ABUNDANCE_DESIGN.md](../method_dev/aggregate_pressure/AGGREGATE_FORCE_VS_ABUNDANCE_DESIGN.md),
-  [aggregate_pressure/AGGREGATE_PRESSURE_FINDINGS.md](../method_dev/aggregate_pressure/AGGREGATE_PRESSURE_FINDINGS.md),
-  [aggregate_pressure/FOLLOWUPS.md](../method_dev/aggregate_pressure/FOLLOWUPS.md),
-  [arm_expression/ARM_EXPRESSION_FLOOR.md](../method_dev/arm_expression/ARM_EXPRESSION_FLOOR.md),
-  [arm_expression/SILENT_ARM_REMOVAL.md](../method_dev/arm_expression/SILENT_ARM_REMOVAL.md),
-  [site_ladder/SITE_FILTER_LADDER_PLAN.md](../method_dev/site_ladder/SITE_FILTER_LADDER_PLAN.md),
-  [method_dev/README.md](../method_dev/README.md)
-- **output/** (per-run decisions/validation):
-  [dual_spine_comparison/CANONICAL_DECISION.md](../output/dual_spine_comparison/CANONICAL_DECISION.md),
-  [encori_share_sensitivity/VALIDATION.md](../output/encori_share_sensitivity/VALIDATION.md)
-- **Grant/**: [DRAFT_proposal_mirna_hallmark.md](../Grant/DRAFT_proposal_mirna_hallmark.md), [DRAFT_seed_grant_mirna_subtype.md](../Grant/DRAFT_seed_grant_mirna_subtype.md)
-- **presentation/**: [presentation/README.md](../presentation/README.md)
+## Known structural debt
 
----
-
-## Housekeeping flags (as of this index build, 2026-07-05)
-
-- **Broken link in [AGENTS.md](../AGENTS.md):** the parent-repo reference
-  `analysis/COHORT_AND_JOIN_CONVENTIONS.md` was missing its `docs/` segment (file is at
-  `analysis/docs/COHORT_AND_JOIN_CONVENTIONS.md`). *(Fixed in the pass that created this index.)*
-- **Orphans** (`refs 0`, reachable only from this index): `MODELING_FRAMEWORK_SLIDES_COMPANION`,
-  `DUAL_SPINE_COMPARISON_PLAN` (executed), `ORPHAN_DISCOVERY_HANDOFF` (consumed),
-  `CRC_PORT_LITERATURE_SCAN`.
-- **Proposed archive:** the §7 historical docs could move to `docs/archive/` to shrink
-  the active surface. Not done automatically — pending decision.
+1. **MH-131…137 have no doc and (for 133/134/136) no ledger row.** The registry is ahead of everything.
+2. **Three forward docs** need consolidating into one.
+3. **`DISCOVERY_REGISTRY.md` (338KB) and `ANALYSIS_RUN_LEDGER.md` (262KB)** are append-only monoliths;
+   single cells run 3,000+ chars and retractions live inside the rows they retract.
+4. **The doc protocol fans out with no consolidation rule** — "update EVERY applicable canonical home"
+   means a finding lands in N places and its later retraction lands in 1. That is the mechanism behind
+   MH-38 being dead in MH-114's row and alive in its own.
