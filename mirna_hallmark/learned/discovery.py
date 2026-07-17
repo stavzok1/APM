@@ -527,15 +527,22 @@ def calibrate(scan: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     per arm-abundance quintile (robust median / 1.4826·MAD), score each candidate against N(μ₀,σ₀) → continuous
     p. Exceedance counting is resolution-limited (min p = 1/N) and can never fire BH — see MH-123.
 
-    **TWO senses of "family", both reported (MH-155, matching MH-45):**
-      * `q_by_arm`  — BY across ALL arm-edges. **BY not BH** because arm-edges are dependent (shared Y/C within
-        a gene, shared population structure across genes) and BH is only valid under positive dependence.
-      * `q_seedfamily` — the DE-DUPLICATED hypothesis. Paralogues sharing a seed are non-independent, so each
-        (gene, seed-family) is collapsed to ONE **Simes** p, then BY across those. Simes is NOT itself an FDR —
-        it reduces the multiplicity (arm-edges → gene×family); BY is the FDR on top. This is the honest count.
+    **THE FDR HIERARCHY (MH-155, rebuilt with the user).** Three DIFFERENT problems, three tools — NOT BY's
+    worst-case blanket. BY assumes *arbitrary* dependence (ln(m) penalty); the dependence here is KNOWN and
+    largely positive (74% of candidate-arm pairs +ρ), so worst-case is both over-conservative AND aimed at the
+    wrong defect (the real one was the heavy-tailed null, a SCALE problem).
+      * **`q_family_emp` — THE PRIMARY.** Composes all three: (1) EMPIRICAL arm-p from the heavy-tailed null
+        (handles SCALE — the null is 2.7–8.4× the Gaussian tail); (2) **Simes** collapse within (gene, seed-
+        family) (handles WITHIN-FAMILY dependence at the hypothesis unit — the family, not the arm; Simes is
+        CONSERVATIVE under the positive paralogue correlation, the safe direction); (3) **BH** across families
+        (valid under the measured PRDS; the families are ~independent — different seeds, different targets).
+        No BY anywhere in the primary path.
+      * `q_empirical` — arm-level empirical FDR (same heavy-tailed null, no family collapse). Secondary.
+      * `q_by_arm` — **SENSITIVITY BOUND ONLY**: BY's worst-case arbitrary-dependence answer. Kept to show the
+        conservative extreme, not as the headline.
 
-    ⚠ **Any q-COUNT is a THRESHOLD statistic and is FRAGILE** (axiom 5): mass piles at the boundary, so a few-%
-    shift in σ₀ moves the count severalfold. `null_z` and the set-level shift are the robust readouts.
+    ⚠ Any q-COUNT is a THRESHOLD statistic and is FRAGILE (axiom 5). `null_z`, the SET-LEVEL shift, and the
+    concordance of coupling with independent evidence are the robust readouts.
     """
     from mirna_hallmark import stats as S
     from mirna_hallmark.coupling_inference import benjamini_yekutieli, simes_p
@@ -555,36 +562,31 @@ def calibrate(scan: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     real["null_z"] = ((real["partial_coupling"].to_numpy(float) - mu) / sd).round(3)
     p = norm.cdf(real["null_z"].to_numpy(float))
     real["p_sitefree"] = p
-    real["q_by_arm"] = benjamini_yekutieli(np.nan_to_num(p, nan=1.0)).round(4)      # arm-edge, dependence-robust
-    # ⭐ EMPIRICAL FDR (MH-155, user-asked option 4) — the HONEST primary q. The site-free null is HEAVY-TAILED
-    # (measured: 2.7× the Gaussian tail at z=−3, 8.4× at z=−4), so BH/BY on a fitted-GAUSSIAN p under-counts
-    # tail false-positives. Instead score each candidate's null_z against the EMPIRICAL null-draw distribution:
-    # FP-rate(z) = fraction of site-free draws with null_z ≤ z; FDR(z) = N·FP-rate(z) / #{cand ≤ z}; step-up
-    # monotonised. This makes NO tail-shape assumption. (Resolution floor = 1/n_draw; fine here, ~124k draws.)
-    znull = ((nul["rho"].to_numpy(float) - np.array([params[np.clip(np.digitize(a, bins) - 1, 0, N_BINS - 1)][0]
-             for a in nul["ab"]])) / np.array([params[np.clip(np.digitize(a, bins) - 1, 0, N_BINS - 1)][1]
-             for a in nul["ab"]]))
+    real["q_by_arm"] = benjamini_yekutieli(np.nan_to_num(p, nan=1.0)).round(4)      # SENSITIVITY bound (worst-case)
+    # --- the heavy-tailed EMPIRICAL null in null_z space ---
+    def _z(rho, ab):
+        b = np.clip(np.digitize(ab, bins) - 1, 0, N_BINS - 1)
+        return (rho - np.array([params[i][0] for i in b])) / np.array([params[i][1] for i in b])
+    znull = np.sort(_z(nul["rho"].to_numpy(float), nul["ab"].to_numpy(float)))
+    Nn = max(len(znull), 1)
     zc = real["null_z"].to_numpy(float)
-    N = len(zc)
-    order = np.argsort(zc)                                                          # most-negative first
-    znull_sorted = np.sort(znull)
+    # (a) ARM-level empirical FDR (secondary)
+    N = len(zc); order = np.argsort(zc)
     fdr = np.empty(N)
     for rank, idx in enumerate(order, start=1):
-        fp = np.searchsorted(znull_sorted, zc[idx], side="right") / max(len(znull), 1)
+        fp = np.searchsorted(znull, zc[idx], side="right") / Nn
         fdr[idx] = N * fp / rank
-    q_emp = np.minimum.accumulate(fdr[order][::-1])[::-1]                           # step-up monotone
     real["q_empirical"] = np.nan
-    real.iloc[order, real.columns.get_loc("q_empirical")] = q_emp.round(4)
-    # seed-family collapse: one Simes p per (gene, seed-family), BY across families, mapped back to members
+    real.iloc[order, real.columns.get_loc("q_empirical")] = np.minimum.accumulate(fdr[order][::-1])[::-1].round(4)
+    # (b) ⭐ PRIMARY: EMPIRICAL arm-p → SIMES within (gene, seed-family) → BH across families
+    p_emp = np.clip(np.searchsorted(znull, zc, side="right") / Nn, 1.0 / Nn, 1.0)   # heavy-tail-aware arm p
+    real["p_emp_arm"] = p_emp.round(6)
     key = list(zip(real["gene"], real["seed_family"].fillna("NA_" + real["arm"].astype(str))))
-    fam_p = {}
-    for k in set(key):
-        ps = p[[kk == k for kk in key]]
-        fam_p[k] = simes_p(ps)
+    fam_p = {k: simes_p(p_emp[[kk == k for kk in key]]) for k in set(key)}          # Simes: conservative under +dep
     fk = sorted(fam_p)
-    fq = dict(zip(fk, benjamini_yekutieli([fam_p[k] for k in fk])))
-    real["p_seedfamily"] = [round(float(fam_p[k]), 6) for k in key]
-    real["q_seedfamily"] = [round(float(fq[k]), 4) for k in key]
+    fq = dict(zip(fk, S.bh_fdr(np.array([fam_p[k] for k in fk]))))                  # BH across families (PRDS-valid)
+    real["p_family"] = [round(float(fam_p[k]), 6) for k in key]
+    real["q_family_emp"] = [round(float(fq[k]), 4) for k in key]                    # THE PRIMARY q
     if "same_seed_he" in real.columns:
         real["same_seed_he"] = real["same_seed_he"].astype(bool)   # object→bool so ~ counts, not bitwise-negates
     par = pd.DataFrame([{"bin": b, "ab_lo": bins[b], "ab_hi": bins[b + 1],
@@ -666,14 +668,16 @@ def run_all(*, min_partial: float = -0.15, min_scanmir: float = -0.5, top: int |
         print(f"[run_all] site-free null fitted on {int(par.n_null.sum()):,} arm-gene draws "
               f"(σ₀ {par.sd0.min():.4f}–{par.sd0.max():.4f}, μ₀ {par.mu0.min():+.4f}…{par.mu0.max():+.4f})")
         print(par.to_string(index=False))
-        n_arm = int((real["q_by_arm"] < 0.05).sum())
+        fam_prim = real[real["q_family_emp"] < 0.05].groupby(["gene", "seed_family"]).ngroups
         n_emp = int((real["q_empirical"] < 0.05).sum())
-        fam_sig = real[real["q_seedfamily"] < 0.05].groupby(["gene", "seed_family"]).ngroups
-        print(f"[run_all] {len(real)} arm-candidates past ρ<{min_partial} | q_empirical<0.05 {n_emp} "
-              f"(HEAVY-TAIL-aware, PRIMARY) | q_by_arm<0.05 {n_arm} | {fam_sig} (gene,seed-family) at "
-              f"q_seedfamily<0.05 | median null_z {real['null_z'].median():+.2f}")
+        n_by = int((real["q_by_arm"] < 0.05).sum())
+        n_novel = int((~real["same_seed_he"]).sum())
+        print(f"[run_all] {len(real)} arm-candidates past ρ<{min_partial} | "
+              f"⭐ q_family_emp<0.05 {fam_prim} (gene,seed-family) [PRIMARY: empirical→Simes→BH] | "
+              f"q_empirical(arm)<0.05 {n_emp} | q_by_arm<0.05 {n_by} (worst-case sensitivity) | "
+              f"median null_z {real['null_z'].median():+.2f}")
         print(f"[run_all] {n_novel} candidates are NOT paralogues of a curated regulator (same_seed_he=False)")
-        print("[run_all] ⚠ q-counts are threshold-FRAGILE (axiom 5); read null_z / the seed-family collapse.")
+        print("[run_all] ⚠ q-counts are threshold-FRAGILE (axiom 5); read null_z / evidence-concordance.")
     cand = real.nsmallest(top, "null_z") if top else real
     dv = deconv_validate(cand, min_partial=min_partial)                                  # single-pass
     if len(dv):
@@ -695,11 +699,11 @@ def run_families(*, min_partial: float = -0.15, n_null_arms: int = 40, universe:
     real, par = calibrate(scan)
     scan[scan["_is_null"]].to_csv(Path(out).parent / "discovery_family_null.tsv", sep="\t", index=False)
     if len(par):
-        n_arm = int((real["q_by_arm"] < 0.05).sum())
+        n_prim = int((real["q_family_emp"] < 0.05).sum())
         print(f"[run_families] site-free family null on {int(par.n_null.sum()):,} pseudo-families "
               f"(σ₀ {par.sd0.min():.4f}–{par.sd0.max():.4f})")
-        print(f"[run_families] {len(real)} whole-family-novel candidates | {n_arm} at q_by_arm<0.05 "
-              f"(=q_seedfamily, 1:1) | median null_z {real['null_z'].median():+.2f}")
+        print(f"[run_families] {len(real)} whole-family-novel candidates | {n_prim} at q_family_emp<0.05 "
+              f"(PRIMARY; each row is its own family so Simes is 1:1) | median null_z {real['null_z'].median():+.2f}")
     real.sort_values("null_z").to_csv(out, sep="\t", index=False)
     print(f"[run_families] wrote {out}")
     return real
