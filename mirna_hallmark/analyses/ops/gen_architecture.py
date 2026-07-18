@@ -114,8 +114,30 @@ def run() -> None:
             L.append(f"- **analyses ({len(ms)}):** " + ", ".join(f"`{m}`" for m in show) + (" …" if len(ms) > 14 else ""))
         L.append("")
     OUT.write_text("\n".join(L))
+    _emit_json(assign, heads, mods)                          # data for the artifact view (rendered separately)
     print(f"[gen-architecture] wrote {OUT}: {len(AXES)} axes, "
           f"{sum(len(v) for v in assign.values())} findings, {sum(len(v) for v in mods.values())} modules tagged")
+
+
+# per-axis status (curated from STATE_OF_PLAY — the ONE line of prose not derivable by join)
+STATUS = {"model": "strong", "edge-existence": "mixed", "cn-causal": "design-only", "attribution": "strong",
+          "decoy": "strong", "discovery": "strong", "protein": "mixed", "progression": "strong",
+          "subtype": "open", "outcome": "data-bound", "external": "strong", "dcis-ev": "strong"}
+
+
+def _emit_json(assign, heads, mods) -> None:
+    """Emit docs/derived/architecture_data.json — the data the HTML artifact renders (regenerate → re-publish
+    architecture.html, same file path keeps the URL)."""
+    import json
+    axes = []
+    for tag, title, q, model in AXES:
+        fs = [{"mh": mh, "h": heads.get(mh, ("", ""))[0][:120], "s": heads.get(mh, ("", ""))[1]}
+              for mh in assign.get(tag, [])]
+        axes.append({"tag": tag, "title": title, "q": q, "model": model, "status": STATUS.get(tag, ""),
+                     "findings": fs, "modules": sorted(mods.get(tag, []))})
+    out = {"axes": axes, "n_ax": len(axes), "n_find": sum(len(a["findings"]) for a in axes),
+           "n_mod": sum(len(a["modules"]) for a in axes)}
+    (ROOT / "docs" / "derived" / "architecture_data.json").write_text(json.dumps(out))
 
 
 if __name__ == "__main__":
