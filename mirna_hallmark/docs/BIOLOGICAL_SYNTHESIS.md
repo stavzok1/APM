@@ -511,6 +511,41 @@ alone; and "canonical" is a noisy automated proxy, so the 75 are candidate-grade
 the curated, recognizable ones. **Bottom line:** abundance-sum tells you *how much* miRNA; pressure tells you
 *which* miRNA — and on these genes the "which" is the textbook regulator.
 
+## 12. ★ The progression landscape — cross-state trajectory biology (characterization, 2026-07-18)
+
+The descriptive biological map of the GTEx→NAT→tumour landscape, read off the integrated `progression_edge_card`
+(MH-158/160) + arm trajectory (`mirna_state_class`) + genomic context. **⚠ DESCRIPTIVE** — `shift_class` per-edge
+FDR labels rest on the MH-124 null (3–4× too narrow); role annotations are incomplete. Read the *structural
+patterns* (cluster co-movement, convergence), not per-edge significance. Module:
+`analyses/progression/landscape_characterization.py` → `output/learned/realization/landscape_*.tsv`.
+
+**① CONVERGENCE HUBS — cancer genes as multi-family repression sinks.** Acquired repressive edges converge on a
+who's-who of BRCA genes, each hit by *many independent seed families* (`coordinated` = ≥3): **PTEN is the supersink
+— 28 acquired edges from 20 distinct families** (miR-141/96/429/21); then CCND1 (17/14), CDKN1A/p21 (15/10), **ZEB1
+(9 edges, acquired dose 2.10)**, EZH2 (dose 1.32, realized ρ −0.19), STAT3, BCL2, FOXO1, TGFBR2, PDCD4, RB1, FBXW7.
+The canonical **miR-200 ↔ ZEB1/EZH2** double-negative axis appears directly as coordinated acquired repression.
+
+**② CLUSTERS MOVE AS UNITS — co-transcription (shared host) drives coordinated trajectory.** OncomiR clusters
+coordinately ACQUIRE: **miR-17~92** (MIR17HG, 11 arms, dose-concordance 0.91, acquired_realized) + paralogues
+miR-106a~363 (MIR106AHG) and miR-106b~25 (MCM7 host), and **miR-183/96/182** (5 arms, concordance 1.00, dose +1.18).
+Tumour-suppressor clusters coordinately LOSE: **the 14q32 / DLK1–DIO3 imprinted locus** — MEG8 (12 arms, dose −0.62,
+**concordance 1.00**), MEG9 (21 arms, −0.41, 0.95), MIR493HG (14 arms); plus the **miR-30** family and **let-7/miR-100/
+125** (MIR100HG). (Coordination 0.9–1.0 is a structural fact, robust to the FDR caveat.)
+
+**③ DRIVER / LOSER rosters (named).** *Acquired oncomiRs → TSGs:* the miR-200 family (patient-specific, own-frac
+0.71–0.75) + miR-96/183 cluster + miR-21 → **PTEN, FOXO1 (miR-96→FOXO1 ρ −0.32), CDKN1A, TXNIP, DLC1, PTPN14**.
+*Silenced TSG-miRs → oncogenes:* miR-486→CDK4, miR-451→AKT1, miR-145→CDK4/MUC1, miR-335→BIRC5, miR-15/16/195/497→
+E2F3/IGF1R/RET, miR-205→ERBB2/HER2.
+
+**④ SUBTYPE.** Subtype-specific acquisition concentrates in **Basal/TNBC** (miR-599/802/137/551a/516a/519a, all
+subtype_tau>0.85 Basal) — but magnitude is small (rank-only), so a lineage flavour on the shared trajectory, not a
+separate program. (Complements §5's bulk PAM50 pressure view.)
+
+**Bottom line:** the malignant miRNA trajectory is *cluster-coordinated* (oncomiR polycistrons acquired, the 14q32
+TS-cluster and miR-30/let-7 lost, as co-transcribed units) and *convergent* (a handful of cancer genes — PTEN above
+all — absorb pressure from many independent families). This is textbook-concordant (miR-200/ZEB1, miR-17~92, 14q32,
+miR-21→PTEN) and is a *description*, not a null-tested claim.
+
 ## Literature standing — one-line summary
 
 | theme | standing |
