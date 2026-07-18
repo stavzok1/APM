@@ -69,7 +69,11 @@ def finalize_phase2() -> None:
     if len(bf):
         R.owner_convergence()
     R.retention_realization()
-    print(f"\n-> {OUT}/ : realization_family · realization_between_family · owner_convergence · retention_realization")
+    # ⭐ integrated progression cards (edge + gene) — now with the Phase-2 realization/owner columns
+    ec = R.progression_edge_card(); gc = R.progression_gene_card()
+    print(f"\n[progression cards] edge {ec.shape} · gene {gc.shape}")
+    print(f"-> {OUT}/ : realization_family · realization_between_family · owner_convergence · retention_realization "
+          f"· progression_edge_card · progression_gene_card")
 
 
 def drive_phase2(nshards: int = 8, m_ref: str = "complement") -> None:

@@ -565,21 +565,41 @@ def realize_between_family(genes: Sequence[str], *, m_ref: str = "complement",
 # --------------------------------------------------------------------------- #
 # DESCRIPTIVE PATTERN LAYER — homed from the 2026-07-18 exploratory thread (formerly inline heredocs).
 # All reuse the already-built outputs (canonical_card, ladder, dose, nat_decoy_control); no new heavy compute.
-def edge_pattern_table() -> pd.DataFrame:
-    """Master (gene,arm) join — canonical_card ⋈ dose ⋈ realization ρ ⋈ gene-profile(role/repression) — the
-    stratified-pattern table behind the owner-convergence (Shapley owner = acquirer = budget-gainer = realizer)
-    and TSG-3×-dose observations. -> master_edge_patterns.tsv."""
+_COREP = Path(C.OUTPUT_ROOT) / "tissue_reference" / "mirna_comovement" / "gene_corepression.tsv"
+_ACQ = Path(C.OUTPUT_ROOT) / "tissue_reference" / "mirna_state_class" / "gene_acquired_pressure.tsv"
+
+
+def progression_edge_card() -> pd.DataFrame:
+    """⭐ THE INTEGRATED PROGRESSION EDGE CARD — one row per (gene, arm), folding BOTH progression objects onto
+    the attribution card so every cross-resolution question is a column read, not a multi-file join:
+      • CROSS-STATE (cohort, `canonical_card`): `shift_class`, `coupling_{hly,nat,tum}`, `grank_*`,
+        `arm_lfc_*` (dHT/dNT/dHN), `retention_rho`, `beta`/`identity`/`share_TUM`;
+      • WITHIN-PATIENT PAIRED (MH-158): `edge_rho_adj`, `own_specific_frac`, `mean_own_shift`, `dShare_M_own`,
+        `family_rho_adj` (Res-3), `realization_identity`/`is_realization_owner` (Res-4, family→arm via seed_family);
+      • gene role + net-repression.
+    -> progression_edge_card.tsv. (Supersedes `master_edge_patterns.tsv`: same key, + the Phase-2 columns.)"""
     from mirna_hallmark import gene_roles as GR
     card = pd.read_csv(_LEARNED / "canonical_card.tsv", sep="\t")
     de = pd.read_csv(OUT / "dose_shift_edge.tsv", sep="\t")
     da = pd.read_csv(OUT / "dose_shift_arm.tsv", sep="\t")
     lad = pd.read_csv(OUT / "realization_ladder.tsv", sep="\t")
-    cor = pd.read_csv(Path(C.OUTPUT_ROOT) / "tissue_reference" / "mirna_comovement" / "gene_corepression.tsv", sep="\t")
+    cor = pd.read_csv(_COREP, sep="\t")
     m = card.merge(de[["gene", "arm", "dShare_M_own", "dShare_raw_own"]], on=["gene", "arm"], how="left")
     m = m.merge(da[["arm", "mean_own_shift", "mean_dGlobalRank", "own_specific_frac"]], on="arm", how="left")
     er = lad[lad.resolution == "edge"][["gene", "predictor", "rho_adj"]].rename(
         columns={"predictor": "arm", "rho_adj": "edge_rho_adj"})
     m = m.merge(er, on=["gene", "arm"], how="left")
+    # --- Phase-2 family-level realization, broadcast to arm via the card's seed_family ---
+    bf_p, fam_p = OUT / "realization_between_family.tsv", OUT / "realization_family.tsv"
+    if bf_p.exists():
+        bf = pd.read_csv(bf_p, sep="\t")[["gene", "family", "realization_identity", "is_owner"]].rename(
+            columns={"family": "seed_family", "is_owner": "is_realization_owner"})
+        m = m.merge(bf, on=["gene", "seed_family"], how="left")
+    if fam_p.exists():
+        fam = pd.read_csv(fam_p, sep="\t")
+        fr = fam[fam.resolution == "family"][["gene", "predictor", "rho_adj"]].rename(
+            columns={"predictor": "seed_family", "rho_adj": "family_rho_adj"})
+        m = m.merge(fr, on=["gene", "seed_family"], how="left")
     roles = GR.load_gene_roles(list(m.gene.unique())).set_index("gene")["role"]
     cp = cor.set_index("gene")
     m["role"] = m.gene.map(roles).fillna("unknown")
@@ -587,8 +607,85 @@ def edge_pattern_table() -> pd.DataFrame:
     m["gene_repr_class"] = m.gene.map(cp["gene_repression_class"])
     m["gene_net_repr"] = m.gene.map(cp["gene_net_repressed_tumor"])
     m["gene_dominated"] = m.groupby("gene").share_TUM.transform("max") > 0.6
-    m.to_csv(OUT / "master_edge_patterns.tsv", sep="\t", index=False)
+    m.to_csv(OUT / "progression_edge_card.tsv", sep="\t", index=False)
     return m
+
+
+def edge_pattern_table() -> pd.DataFrame:
+    """Backward-compat alias → `progression_edge_card` (renamed 2026-07-18: master_edge_patterns IS the edge card)."""
+    return progression_edge_card()
+
+
+def _dominant_by_state(card: pd.DataFrame, state_col: str) -> pd.Series:
+    """Per gene, the arm with the highest global-abundance rank in a state (`grank_HLY/NAT/TUM`) = the dominant
+    regulator in that state — for the regulatory-handoff flag (does the dominant regulator switch across states)."""
+    c = card.dropna(subset=[state_col])
+    if not len(c):
+        return pd.Series(dtype=object)
+    return c.loc[c.groupby("gene")[state_col].idxmax()].set_index("gene")["arm"]
+
+
+def progression_gene_card() -> pd.DataFrame:
+    """⭐ THE INTEGRATED PROGRESSION GENE CARD — one row per gene:
+      • tumour attribution summary (`readouts_genes`: n_fam, total_pressure, top_identity, concentration, retention);
+      • WITHIN-PATIENT paired realization — gene aggregate (`realized_rho_{raw,adj}`, retention, comp_explained) +
+        nonlinear family-pooled (`fam_pooled_rho_adj`) + `frac_edges_realized` (share of the gene's edges with ρ_adj<0);
+      • CROSS-STATE acquired dose (`gene_acquired_pressure`: pressure_tumor, acquired_vs_{gtex,nat}, frac_true_acquired);
+      • gene net-repression (`gene_corepression`: repression_class, net_repressed_tumor, rho_gene_pressure_tumor);
+      • OWNER — `realization_owner` (Res-4 is_owner) vs `static_owner_family` (max canonical identity) + `owner_agrees`;
+      • REGULATORY HANDOFF — dominant regulator per state (HLY/NAT/TUM) + `regulatory_handoff` (does it switch);
+      • `dominant_edge_shift_class` (the top-share edge's cross-state class).
+    -> progression_gene_card.tsv."""
+    rg = pd.read_csv(_LEARNED / "readouts_genes.tsv", sep="\t")
+    lad = pd.read_csv(OUT / "realization_ladder.tsv", sep="\t")
+    card = pd.read_csv(_LEARNED / "canonical_card.tsv", sep="\t")
+    G = rg.copy()
+    gr = lad[lad.resolution == "gene"][["gene", "rho_raw", "rho_adj", "retention", "composition_explained",
+                                        "n_reg", "mean_dTarget"]].rename(
+        columns={"rho_raw": "realized_rho_raw", "rho_adj": "realized_rho_adj", "retention": "realized_retention",
+                 "composition_explained": "realized_composition_explained", "n_reg": "realized_n_reg"})
+    G = G.merge(gr, on="gene", how="left")
+    if (OUT / "realization_family.tsv").exists():
+        fam = pd.read_csv(OUT / "realization_family.tsv", sep="\t")
+        fa = fam[fam.resolution == "family_agg"][["gene", "rho_adj"]].rename(columns={"rho_adj": "fam_pooled_rho_adj"})
+        G = G.merge(fa, on="gene", how="left")
+    # frac of the gene's EDGES realized within-patient (ρ_adj<0)
+    ed = lad[lad.resolution == "edge"]
+    G = G.merge(ed.groupby("gene")["rho_adj"].apply(lambda s: float((s < 0).mean())).rename("frac_edges_realized").reset_index(),
+                on="gene", how="left")
+    # cross-state acquired dose
+    if _ACQ.exists():
+        ap = pd.read_csv(_ACQ, sep="\t")
+        keep = [c for c in ["gene", "pressure_tumor", "acquired_vs_gtex", "acquired_vs_nat",
+                            "frac_gain_true_acquired", "top_gaining_arms", "n_hallmark_sets"] if c in ap.columns]
+        G = G.merge(ap[keep], on="gene", how="left")
+    # gene net-repression
+    cor = pd.read_csv(_COREP, sep="\t")
+    G = G.merge(cor[["gene", "n_regulators", "gene_repression_class", "gene_net_repressed_tumor",
+                     "rho_gene_pressure_tumor", "delta_tumor_nat"]], on="gene", how="left")
+    # OWNER — realization (Res-4) vs static identity, and agreement
+    if (OUT / "realization_between_family.tsv").exists():
+        bf = pd.read_csv(OUT / "realization_between_family.tsv", sep="\t")
+        own = bf[bf.is_owner].drop_duplicates("gene").set_index("gene")["family"]
+        G["realization_owner"] = G.gene.map(own)
+    if "identity" in card and "seed_family" in card:
+        st = card.dropna(subset=["identity"]).sort_values("identity").drop_duplicates("gene", keep="last").set_index("gene")
+        G["static_owner_family"] = G.gene.map(st["seed_family"])
+        if "realization_owner" in G:   # defined ONLY where a realization owner exists (multi-family genes); else NaN
+            agree = (G["realization_owner"] == G["static_owner_family"])
+            G["owner_agrees"] = agree.where(G["realization_owner"].notna() & G["static_owner_family"].notna())
+    # REGULATORY HANDOFF across states
+    domH, domN, domT = (_dominant_by_state(card, s) for s in ("grank_HLY", "grank_NAT", "grank_TUM"))
+    G["dominant_HLY"] = G.gene.map(domH); G["dominant_NAT"] = G.gene.map(domN); G["dominant_TUM"] = G.gene.map(domT)
+    G["regulatory_handoff"] = ((G.dominant_HLY != G.dominant_TUM) | (G.dominant_NAT != G.dominant_TUM)) & \
+        G.dominant_TUM.notna() & G.dominant_HLY.notna()
+    # dominant-edge cross-state shift_class (the top-share regulator's class)
+    sc = card.dropna(subset=["shift_class"])
+    if "share_TUM" in sc:
+        dom = sc.loc[sc.groupby("gene")["share_TUM"].idxmax()].set_index("gene")["shift_class"]
+        G["dominant_edge_shift_class"] = G.gene.map(dom)
+    G.to_csv(OUT / "progression_gene_card.tsv", sep="\t", index=False)
+    return G
 
 
 def mirna_nat_retention() -> pd.DataFrame:
