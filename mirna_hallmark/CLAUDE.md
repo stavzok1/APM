@@ -223,6 +223,7 @@ These are completion gates, on the same footing as the documentation protocol:
 
 | # | Doc | Purpose |
 |---|-----|---------|
+| **0** | **`docs/ARCHITECTURE.md`** | **⭐ HOW IT ALL FITS** — the generated axes×models×analyses×results map (12 axes + a `shared` bucket). Start here for orientation; it links into the docs below. Interactive view: `docs/derived/architecture.html`. Regenerate: `analyses/ops/gen_architecture.py`. |
 | **1** | **`docs/STATE_OF_PLAY.md`** | **⭐ WHERE WE ARE NOW.** Per axis (model · edge existence · attribution · decoy · CPTAC · progression · Buffa): what STANDS, what is DEAD, what is OPEN — with MH ids and dates. Carries the **doc-traps table**: which docs read as current but are not. |
 | **2** | `docs/DISCOVERY_REGISTRY.md` | **THE SOURCE OF TRUTH.** One `MH-##` row per finding + strength tag. **Where this and any other doc disagree, THIS WINS.** ⚠ It runs AHEAD of the docs — MH-131…137 exist only here. |
 | **3** | `docs/ANALYSIS_RUN_LEDGER.md` | One row per run: when, status, runtime. |

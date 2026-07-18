@@ -8,6 +8,14 @@
 
 Read this before editing code or answering questions about `mirna_hallmark/`.
 
+> **⭐ TWO THINGS FIRST (any tool, incl. Cursor):**
+> 1. **Orientation → `docs/ARCHITECTURE.md`** — the generated axes×models×analyses×results map (how the whole
+>    programme fits; interactive view `docs/derived/architecture.html`). Then `docs/STATE_OF_PLAY.md` for verdicts.
+> 2. **⛔ The MANDATORY rules live in `CLAUDE.md` (§DOCUMENTATION PROTOCOL + §Working axioms) — READ THEM even if
+>    your tool doesn't auto-load `CLAUDE.md`.** The one-home rule (each fact → exactly one doc) and the six axioms
+>    (measured-only gate, confounder-block discipline, null design, ratio/threshold fragility, naming-collision
+>    checks) are load-bearing here; skipping them is how findings rot. This file does NOT restate them — read `CLAUDE.md`.
+
 ---
 
 ## 1. What this subproject is
