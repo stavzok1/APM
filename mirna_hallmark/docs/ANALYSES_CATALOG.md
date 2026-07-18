@@ -178,6 +178,15 @@ explicitly bridging the two (e.g. optional EV contrast tables in `mir301_family_
 | `config.py` | paths, `STRATUM_SPECS`, `AgoGateParams`, evidence/pressure cutoffs, FDR α |
 | `data_loaders.py` | clinical strata, miRNA arms, RNA, AGO/RISC expr, target-gene CNV (cached), helpers |
 | `stats.py` | `bh_fdr`, `kruskal_across_strata`, `hypergeom_enrichment`, `zscore_rows` |
+| `learned/regression.py` | Gene-focused non-negative **adaptive-lasso** (§3a Phase-1). ⚠ **§6b-RETIRED** — kept as a baseline; the canonical estimator is the Gibbs (`spike_slab`). |
+| `learned/priors.py` | Per-edge priors π (inclusion), μ (magnitude), τ (confidence) — the Design §D/E prior block the posterior consumes. |
+| `learned/attribution_eb.py` | EB posterior vs bagged-NNLS for **attribution** (per-gene learned-τ²); the `_prep` z-scored/C-residualised design + the identity-vs-magnitude split. |
+| `learned/seq_specificity.py` | Per-edge **sequence specificity** = affinity CONCENTRATION (validated replacement for seed-count); feeds the inclusion prior. |
+| `learned/seed_rarity.py` | **Seed-rarity** specificity — the collinearity-immune resolver of who-owns-a-gene. |
+| `learned/rarity_bench.py` | Convergence bench for the specificity/rarity term — WHERE seed-rarity enters the final Bayes model (also the `_prep` used by the genome sweeps). |
+| `learned/chimeric_evidence.py` | Formalized **chimeric** (miRNA↔target ligation) evidence — the arm-resolving source (Manakov eCLIP + TarBase CLASH/qCLASH). ⚠ no breast chimeric exists. |
+| `learned/structural_identity.py` | **Structural identity** — the LOSS lens (precursor identity; Design §I). |
+| `learned/cptac_data.py` | CPTAC prospective data assembly for the **protein** axis — the CPTAC twin of `learned/data.py`. |
 
 ## Flags worth knowing
 
