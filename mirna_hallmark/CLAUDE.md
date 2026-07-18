@@ -260,6 +260,18 @@ Reports (`REPORT.md`, `LANDSCAPE_REPORT.md`, `MIRNA_CNV_DOSAGE_REPORT.md`, `DCIS
 per-axis docs are in `docs/INDEX.md`. **Consumed / superseded docs live in `docs/archive/` — nothing there
 describes current state.**
 
+## Guardrail agents (`.claude/agents/`) — use them
+
+- **`rigor-auditor`** (opus) — run it on a finding BEFORE it enters `DISCOVERY_REGISTRY`. It wraps
+  `apm-rigor-protocol` + the six axioms and returns PASS / CONCERNS / FAIL. The gate against a confounded or
+  unmeasured claim getting a row.
+- **`consistency-sweeper`** (sonnet, read-only) — run it before a wrap-up. It audits axis-tag coverage,
+  `ARCHITECTURE.md` freshness, catalog↔modules, ledger↔outputs, `/tmp` reads, and import orphans, and returns a
+  drift report. (AST imports, not regex; scope-aware catalog — see its prompt.)
+
+The architecture map, its join keys (`docs/derived/{axis_assignment,module_axis}.tsv`), and the map generator
+(`analyses/ops/gen_architecture.py`) are maintained BY these + the regenerate-not-hand-edit discipline.
+
 ## Environment
 
 Running on Linux at repo root `/sci/labs/michall/stavzok/APM`. No WSL bridge needed here.
