@@ -1345,3 +1345,85 @@ def acquired_unrealized_buffers() -> pd.DataFrame:
     except Exception as e:
         print(f"  [logistic skipped: {e}]")
     return df
+
+
+# --------------------------------------------------------------------------- #
+# ⭐ RIGOROUS PER-HALLMARK-PROGRAM REALIZATION — is a program realized BEYOND (i) random genes, (ii) its
+# shift_class composition (MH-160 confound), (iii) detection power (n_reg/pressure, FU-2 confound)? + decoy arbiter.
+def hallmark_realization(*, n_perm: int = 3000, seed: int = 0) -> pd.DataFrame:
+    """Per Hallmark program: mean gene ρ_adj vs a same-size random-gene null (RAW), vs the null on CLASS+POWER-
+    residualised ρ_adj (does it realize beyond its class/power composition?), and the decoy REAL−DECOY gap; BH-FDR
+    across programs. Continuous ρ_adj (axiom 5). -> hallmark_realization.tsv."""
+    from mirna_hallmark.hallmark_sets import gene_to_hallmarks
+    from mirna_hallmark.stats import bh_fdr
+    gc = pd.read_csv(OUT / "progression_gene_card.tsv", sep="\t").dropna(subset=["realized_rho_adj"]).copy()
+    # residual controls: dominant-edge shift-CLASS (MH-160 confound) and POWER (n_reg+total_pressure, FU-2 confound),
+    # each alone AND together — the decomposition shows the collapse is class-dominated, not a double-control artifact.
+    d = gc.dropna(subset=["dominant_edge_shift_class", "n_regulators", "total_pressure"]).copy()
+    D = pd.get_dummies(d["dominant_edge_shift_class"], drop_first=True).astype(float).to_numpy()
+    npw = d.n_regulators.to_numpy(float); tpw = d.total_pressure.to_numpy(float); one = np.ones(len(d))
+    yc = d.realized_rho_adj.to_numpy(float)
+
+    def _resid_on(X):
+        b, *_ = np.linalg.lstsq(X, yc, rcond=None)
+        return yc - X @ b
+    resid_maps = {
+        "class": pd.Series(_resid_on(np.column_stack([one, D])), index=d.gene),
+        "power": pd.Series(_resid_on(np.column_stack([one, npw, tpw])), index=d.gene),
+        "classpower": pd.Series(_resid_on(np.column_stack([one, npw, tpw, D])), index=d.gene),
+    }
+    resid = resid_maps["classpower"]
+    # decoy gene-level REAL−DECOY (aggregate the edge null to gene)
+    rmd = None
+    nd_p = OUT / "realization_null_edges.tsv"
+    if nd_p.exists():
+        nd = pd.read_csv(nd_p, sep="\t")
+        gr = nd[nd.group == "REAL"].groupby("gene")["rho_adj"].mean()
+        gd = nd[nd.group == "DECOY"].groupby("gene")["rho_adj"].mean()
+        rmd = (gr - gd).dropna()
+    g2h = gene_to_hallmarks()
+    rho = gc.set_index("gene")["realized_rho_adj"]
+    genome_rho = rho.to_numpy(float)
+    genome_res = resid.to_numpy(float)
+    genome_rmd = rmd.to_numpy(float) if rmd is not None else None
+    rng = np.random.default_rng(seed)
+
+    def _perm_p(vals, member, less=True):                # one-sided: program mean more negative than random sets
+        member = [v for v in member if np.isfinite(v)]
+        k = len(member)
+        if k < 8:
+            return np.nan, np.nan
+        obs = float(np.mean(member))
+        null = np.array([vals[rng.integers(0, len(vals), k)].mean() for _ in range(n_perm)])
+        p = (np.sum(null <= obs) + 1) / (n_perm + 1) if less else (np.sum(null >= obs) + 1) / (n_perm + 1)
+        return obs, float(p)
+    genome_res_maps = {k: v.to_numpy(float) for k, v in resid_maps.items()}
+    progs = sorted(set(h for hs in g2h.values() for h in hs))
+    rows = []
+    for prog in progs:
+        genes = [g for g, hs in g2h.items() if prog in hs]
+        gr_ = rho.reindex(genes).dropna()
+        if len(gr_) < 8:
+            continue
+        obs_raw, p_raw = _perm_p(genome_rho, gr_.to_numpy(float))
+        r = {"hallmark": prog, "n_genes": len(gr_), "mean_rho_adj": _r3(obs_raw), "p_raw": p_raw}
+        for k in ("class", "power", "classpower"):
+            o, p = _perm_p(genome_res_maps[k], resid_maps[k].reindex(genes).dropna().to_numpy(float))
+            r[f"mean_{k}_adj"] = _r3(o); r[f"p_{k}"] = p
+        o, p = (np.nan, np.nan) if rmd is None else _perm_p(genome_rmd, rmd.reindex(genes).dropna().to_numpy(float))
+        r["mean_real_minus_decoy"] = _r3(o); r["p_decoy"] = p
+        rows.append(r)
+    df = pd.DataFrame(rows)
+    for pc in ["p_raw", "p_class", "p_power", "p_classpower", "p_decoy"]:
+        m = df[pc].notna()
+        df.loc[m, pc.replace("p_", "q_")] = bh_fdr(df.loc[m, pc].to_numpy())
+    df = df.sort_values("mean_rho_adj")
+    df.to_csv(OUT / "hallmark_realization.tsv", sep="\t", index=False)
+    print(f"[hallmark_realization] {len(df)} programs vs same-size random-gene null | genome mean ρ_adj "
+          f"{genome_rho.mean():+.3f}. FDR q<0.1: RAW {int((df.q_raw<0.1).sum())} | class-only {int((df.q_class<0.1).sum())} "
+          f"| power-only {int((df.q_power<0.1).sum())} | class+power {int((df.q_classpower<0.1).sum())} | "
+          f"DECOY {int((df.q_decoy<0.1).sum())}  ⇒ EACH single control alone kills FDR sig (not a double-control artifact)")
+    show = df[df.q_raw < 0.1].sort_values("mean_rho_adj")
+    print(show[["hallmark", "n_genes", "mean_rho_adj", "q_raw", "mean_class_adj", "p_class", "mean_power_adj",
+                "p_power", "mean_classpower_adj", "mean_real_minus_decoy", "q_decoy"]].to_string(index=False))
+    return df

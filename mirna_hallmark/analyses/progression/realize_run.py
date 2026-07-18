@@ -75,6 +75,7 @@ def finalize_phase2() -> None:
     R.class_realization()   # cross-state class -> within-patient realization (gene-clustered, dose-ctrl, decoy-arbitrated)
     R.patient_realization_efficiency()   # FU-1: within-sample per-patient efficiency (decoy-controlled)
     R.acquired_unrealized_buffers()      # FU-2: acquired-but-unrealized gene buffers (power-controlled)
+    R.hallmark_realization()             # rigorous per-program realization (class+power adjusted, decoy-arbitrated)
     print(f"-> {OUT}/ : realization_family · realization_between_family · owner_convergence · retention_realization "
           f"· progression_edge_card · progression_gene_card")
 
