@@ -22,30 +22,40 @@
 
 ## Headline
 
-The malignant miRNA trajectory in TCGA-BRCA is **cluster-coordinated, convergent, two-step (field-dominated),
-regulatory-rewiring, and mostly buffered** — and its acquisition mechanism is **heterogeneous** (promoter
-hypomethylation + copy-number amplification each explain only a minority; the rest is transcriptional). It is
-textbook-concordant (miR-200↔ZEB1, miR-17~92, 14q32/DLK1–DIO3, miR-21→PTEN, C19MC).
+The malignant miRNA trajectory in TCGA-BRCA is **cluster-coordinated (incl. real across-loci trans-coordination),
+convergent (PTEN a genuine outlier), and two-step (field-dominated)** — with **acquisition ≫ realization** (a
+continuum, not a bimodal split). Its acquisition mechanism is **heterogeneous** (promoter hypomethylation +
+copy-number amplification each explain only a minority; the rest transcriptional). *(Rigor-audited: the
+"regulatory-handoff" and "buffered/driver 2×2" claims were downgraded/retracted — see §1.)* Textbook-concordant
+(miR-200↔ZEB1, miR-17~92, 14q32/DLK1–DIO3, miR-21→PTEN, C19MC).
 
 ---
 
 ## 1. STRUCTURE — how the trajectory is organized
 
-- **Cluster-coordinated (co-transcription drives it).** Genomic clusters move as *units* (dose-concordance 0.9–1.0):
-  oncomiR polycistrons **ACQUIRE** — miR-17~92 (MIR17HG), its paralogues miR-106a~363 / miR-106b~25, and
-  miR-183/96/182; tumour-suppressor clusters **LOSE** — the **14q32/DLK1–DIO3 imprinted locus** (MEG8 concordance
-  1.00, 12 arms; MEG9 21 arms), miR-30, let-7/miR-100/125.
-- **Convergent (cancer genes as multi-family sinks).** **PTEN is the supersink — 28 acquired repressive edges from
-  20 distinct seed families**; then CCND1 (17/14), CDKN1A (15/10), ZEB1 (dose 2.10), EZH2, STAT3, BCL2, FOXO1,
-  TGFBR2, PDCD4, RB1, FBXW7.
-- **Two INDEPENDENT waves (field-dominated).** Decomposing the healthy→tumour rank move: the **field step**
-  (healthy→NAT, 150 arms) is larger than **and uncorrelated with** (ρ(dHN,dNT)=0.003) the **malignant step**
-  (NAT→tumour, 32 arms). The DIRECT GTEx→tumour difference tracks the field step (ρ=0.84) far more than the
-  malignant step (ρ=0.45) ⇒ *what's different in cancer vs truly-healthy is mostly established pre-malignantly.*
-- **Regulatory rewiring.** 333 genes switch their **dominant regulator** healthy→tumour, typically an oncomiR taking
-  the seat (PTEN miR-148a→miR-21, AGO2 miR-99a→miR-375, HIF1A miR-199a→miR-30a, MYB miR-155→miR-16).
-- **Mostly buffered.** Functional 2×2: 455 genes acquire dose but DON'T realize vs 284 DRIVERS (ESR1/SMAD3/BCL2).
-  Even PTEN — the 28-edge supersink — is buffered at the gene-aggregate level (dose ≫ effective repression).
+*(Rigor-audited 2026-07-18 — `landscape_hardening_audit.tsv`. ✅ = survives a proper test; ⚠ = soft/downgraded.)*
+
+- ✅ **Cluster-coordinated — and REAL beyond co-transcription.** Same-host (co-transcribed) arms co-vary
+  trivially (paired Δx-corr +0.57, shared primary transcript). The non-trivial finding: **across-loci, same-family
+  arms co-vary at +0.29 vs random +0.12** (excess +0.17) — genuine *trans*-coordination of paralogous loci
+  (miR-200 chr1↔chr12, the miR-17~92 super-family). OncomiR polycistrons ACQUIRE; the 14q32/DLK1–DIO3 imprinted
+  locus, miR-30, and let-7/100/125 LOSE.
+- ✅ **Convergent — PTEN is a genuine outlier** (not just "many regulators"). Acquired-edge count partly tracks a
+  gene's total regulator count (ρ=0.61), but **PTEN has +11.8 acquired edges beyond its regulator-count
+  expectation — the top residual** (then WEE1, CDKN1A, TGFBR2, XIAP, TGFB1). *(Report the residual, not the raw
+  count of 28 — PTEN has 90 total regulators.)*
+- ✅ **Two INDEPENDENT waves (field-dominated).** field step (healthy→NAT, 150 arms) larger than **and uncorrelated
+  with** (ρ(dHN,dNT)=0.003) the malignant step (NAT→tumour, 32 arms); direct GTEx→tumour tracks the field (ρ=0.84)
+  » malignant (ρ=0.45). Rank-based, trusted.
+- ⚠ **Regulatory rewiring — DOWNGRADED (mostly argmax-noise).** Of 292 genes whose *dominant* regulator (by
+  abundance rank) differs healthy→tumour, only **~64 (22%) are DECISIVE**; the rest are close-call flips (median
+  tumour margin **2 percentile points** — a coin-flip). ⚠ Even the flagship **PTEN miR-148a→miR-21 is a TIE in
+  tumour** (margin 0.0). The *dose* rise of miR-21 is real (§3); the "dominant-regulator handoff" framing is weak.
+- ⛔ **Functional 2×2 — RETRACTED (axiom-5 threshold artifact).** The driver/buffered counts are entirely
+  threshold-dependent (driver fraction 0.54→0.38→0.25→0.14→0.06 as the cut moves −0.05→−0.25; 28% of genes sit
+  within ±0.05 of the −0.1 boundary; adjacent-cut overlap 0.64). There is **no stable bimodal split** — realization
+  is a *continuum* of acquired dose. The "455 buffered / 284 driver" headline is void. *(That acquired dose ≫
+  realized dose overall is the real, tested statement — see MH-160/163, not this 2×2.)*
 
 ## 2. MECHANISM — what drives acquisition and loss
 

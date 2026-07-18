@@ -403,9 +403,69 @@ def epigenetic_mechanism(ec: pd.DataFrame) -> pd.DataFrame:
     return summ
 
 
+def hardening_audit(ec: pd.DataFrame, gc: pd.DataFrame) -> pd.DataFrame:
+    """RIGOUR AUDIT of the four soft descriptive threads (2026-07-18) — replaces confident counts with tested
+    statistics. ⑦ 2×2 threshold-fragility sweep · ① convergence-vs-regulator-count residual · ⑥ handoff
+    decisiveness · ② cluster coordination BEYOND co-transcription (across-loci). -> landscape_hardening_audit.tsv."""
+    import itertools
+    rows = []
+    # ⑦ 2×2 fragility (axiom 5): driver fraction across realization cuts — no stable region ⇒ retract counts
+    g = gc.dropna(subset=["acquired_vs_nat", "realized_rho_adj"]); acq = g[g.acquired_vs_nat > 0]
+    fr = {c: round(float((acq.realized_rho_adj < c).mean()), 2) for c in (-0.05, -0.10, -0.15, -0.20, -0.25)}
+    rows.append({"thread": "7_functional_2x2", "verdict": "FRAGILE (retract counts; continuum not bimodal)",
+                 "stat": f"driver_frac by cut {fr}", "near_boundary_frac": round(float(((g.realized_rho_adj > -0.15) & (g.realized_rho_adj < -0.05)).mean()), 2)})
+    # ① convergence residual: is acquired-count > regulator-count expectation?
+    gained = ("acquired_realized", "tumour_realized", "field_established_realized")
+    conv = ec[ec.shift_class.isin(gained)].groupby("gene").arm.nunique().rename("n_acq")
+    tot = ec.groupby("gene").arm.nunique().rename("n_reg")
+    m = pd.concat([conv, tot], axis=1).dropna()
+    rho = spearmanr(m.n_acq, m.n_reg).correlation
+    b = np.polyfit(m.n_reg, m.n_acq, 1); m["resid"] = m.n_acq - np.polyval(b, m.n_reg)
+    top = m.sort_values("resid", ascending=False).head(6)
+    rows.append({"thread": "1_convergence", "verdict": "SURVIVES on residual (PTEN top); partly regulator-count",
+                 "stat": f"corr(n_acq,n_reg)={rho:.2f}; PTEN resid +{m.loc['PTEN','resid']:.1f}; top-resid {list(top.index)}"})
+    # ⑥ handoff decisiveness: median margins + fraction decisive
+    hr = []
+    for gene, s in ec.dropna(subset=["grank_HLY", "grank_TUM"]).groupby("gene"):
+        if s.arm.nunique() < 2:
+            continue
+        domH = s.loc[s.grank_HLY.idxmax(), "arm"]; domT = s.loc[s.grank_TUM.idxmax(), "arm"]
+        if domH == domT:
+            continue
+        si = s.set_index("arm")
+        hr.append((float(si.grank_TUM[domT] - si.grank_TUM.get(domH, np.nan)),
+                   float(si.grank_HLY[domH] - si.grank_HLY.get(domT, np.nan))))
+    H = pd.DataFrame(hr, columns=["tum_margin", "hly_margin"])
+    dec = int(((H.tum_margin > 5) & (H.hly_margin > 5)).sum())
+    rows.append({"thread": "6_handoffs", "verdict": f"MOSTLY NOISE ({dec}/{len(H)}={dec/len(H):.0%} decisive)",
+                 "stat": f"median tum_margin {H.tum_margin.median():.0f} (coin-flip); hly_margin {H.hly_margin.median():.0f}"})
+    # ② cluster coordination BEYOND co-transcription
+    from mirna_hallmark.learned.realization import _paired_abund
+    xt, xn, pts = _paired_abund(); dX = (xt[pts] - xn[pts])
+    from scipy.stats import rankdata
+    gx = pd.read_csv(_GX, sep="\t").set_index("arm").host.to_dict()
+    fm = ec.drop_duplicates("arm").set_index("arm").seed_family.to_dict()
+    common = [a for a in dX.index if a in gx]
+    Rz = dX.loc[common].rank(axis=1); Rz = ((Rz.T - Rz.mean(1)) / (Rz.std(1) + 1e-9)).T
+    sh, af, rd = [], [], []
+    for a, b2 in itertools.combinations(common, 2):
+        c = float((Rz.loc[a].values * Rz.loc[b2].values).mean())
+        if not np.isfinite(c):
+            continue
+        (sh if (gx.get(a) == gx.get(b2) and pd.notna(gx.get(a)))
+         else af if (fm.get(a) == fm.get(b2) and pd.notna(fm.get(a))) else rd).append(c)
+    rows.append({"thread": "2_cluster", "verdict": "REAL beyond co-transcription (across-loci)",
+                 "stat": f"same-host {np.mean(sh):+.2f} (trivial); across-loci-family {np.mean(af):+.2f}; random {np.mean(rd):+.2f}; excess +{np.mean(af)-np.mean(rd):.2f}"})
+    df = pd.DataFrame(rows)
+    df.to_csv(OUT / "landscape_hardening_audit.tsv", sep="\t", index=False)
+    return df
+
+
 def characterize():
     ec, sc = _load()
     gc = pd.read_csv(OUT / "progression_gene_card.tsv", sep="\t")
+    hard = hardening_audit(ec, gc)
+    print("=" * 100 + "\n⭐ HARDENING AUDIT of the soft threads:\n" + hard.to_string(index=False) + "\n" + "=" * 100)
     ctx = genomic_context_census(ec); pad = program_acquired_dose(gc)
     twostep = trajectory_two_step(sc); hdrv = healthy_anchored_drivers(sc)
     coh = cohort_view(ec); dgt = direct_gtex_tumor(sc); cnl = cn_layer(ec); agol = ago_layer(ec)

@@ -519,18 +519,24 @@ FDR labels rest on the MH-124 null (3–4× too narrow); role annotations are in
 patterns* (cluster co-movement, convergence), not per-edge significance. Module:
 `analyses/progression/landscape_characterization.py` → `output/learned/realization/landscape_*.tsv`.
 
-**① CONVERGENCE HUBS — cancer genes as multi-family repression sinks.** Acquired repressive edges converge on a
-who's-who of BRCA genes, each hit by *many independent seed families* (`coordinated` = ≥3): **PTEN is the supersink
-— 28 acquired edges from 20 distinct families** (miR-141/96/429/21); then CCND1 (17/14), CDKN1A/p21 (15/10), **ZEB1
-(9 edges, acquired dose 2.10)**, EZH2 (dose 1.32, realized ρ −0.19), STAT3, BCL2, FOXO1, TGFBR2, PDCD4, RB1, FBXW7.
-The canonical **miR-200 ↔ ZEB1/EZH2** double-negative axis appears directly as coordinated acquired repression.
+> **⚠ RIGOR-AUDITED 2026-07-18 (`landscape_hardening_audit.tsv`) — this map was hardened after an initial too-clean
+> pass.** ✅ threads ①②③④⑤⑨⑩⑬⑭⑯⑰ survive a proper test; ⚠ **⑥ downgraded** (mostly argmax-noise); ⛔ **⑦ retracted**
+> (axiom-5 threshold artifact). Read the per-thread ✅/⚠/⛔ tags.
 
-**② CLUSTERS MOVE AS UNITS — co-transcription (shared host) drives coordinated trajectory.** OncomiR clusters
-coordinately ACQUIRE: **miR-17~92** (MIR17HG, 11 arms, dose-concordance 0.91, acquired_realized) + paralogues
-miR-106a~363 (MIR106AHG) and miR-106b~25 (MCM7 host), and **miR-183/96/182** (5 arms, concordance 1.00, dose +1.18).
-Tumour-suppressor clusters coordinately LOSE: **the 14q32 / DLK1–DIO3 imprinted locus** — MEG8 (12 arms, dose −0.62,
-**concordance 1.00**), MEG9 (21 arms, −0.41, 0.95), MIR493HG (14 arms); plus the **miR-30** family and **let-7/miR-100/
-125** (MIR100HG). (Coordination 0.9–1.0 is a structural fact, robust to the FDR caveat.)
+**① CONVERGENCE HUBS — cancer genes as multi-family repression sinks (✅ hardened).** Acquired repressive edges
+converge on a who's-who of BRCA genes. ✅ **Nulled against regulator count:** acquired-edge count partly tracks a
+gene's total regulators (ρ=0.61), but **PTEN is a genuine outlier — +11.8 acquired edges beyond its regulator-count
+expectation, the TOP residual** (then WEE1, CDKN1A, TGFBR2, XIAP, TGFB1). *(Report the residual — the raw "28 from
+20 families" is inflated because PTEN has 90 total regulators.)* Also **ZEB1** (acquired dose 2.10), **EZH2** (dose
+1.32, realized ρ −0.19), CCND1, CDKN1A, STAT3, BCL2, FOXO1, TGFBR2. The canonical **miR-200 ↔ ZEB1/EZH2** axis
+appears directly as coordinated acquired repression.
+
+**② CLUSTERS MOVE AS UNITS — and it's REAL beyond co-transcription (✅ hardened).** ⚠ Same-host dose-concordance
+0.9–1.0 is **near-trivial** (co-transcribed arms share a primary transcript ⇒ paired Δx-corr +0.57 by construction).
+✅ **The non-trivial, hardened finding:** across-loci, same-family arms co-vary at **+0.29 vs random +0.12** (excess
++0.17) — genuine *trans*-coordination of paralogous loci (miR-200 chr1↔chr12; the miR-17~92 super-family). OncomiR
+clusters ACQUIRE (miR-17~92/MIR17HG, paralogues miR-106a~363 / miR-106b~25, miR-183/96/182); the **14q32/DLK1–DIO3
+imprinted locus** (MEG8/MEG9/MIR493HG, ~47 arms), **miR-30**, and **let-7/miR-100/125** LOSE.
 
 **③ DRIVER / LOSER rosters (named).** *Acquired oncomiRs → TSGs:* the miR-200 family (patient-specific, own-frac
 0.71–0.75) + miR-96/183 cluster + miR-21 → **PTEN, FOXO1 (miR-96→FOXO1 ρ −0.32), CDKN1A, TXNIP, DLC1, PTPN14**.
@@ -552,15 +558,17 @@ QN'd `log2fc_tumor_vs_healthy` — the cross-platform bridge is a softer assumpt
 as the lower-confidence supporting layer, not headlined. (The paired NAT→tumour dose used in ①–④ is TCGA-only,
 same-platform, so not a QN concern at all.)
 
-**⑥ REGULATORY HANDOFFS — 333 genes switch dominant regulator healthy→tumour**, typically an oncomiR taking the
-seat from the healthy one (mostly `lost_repression`): **PTEN miR-148a→miR-21**, AGO2 miR-99a→miR-375, HIF1A
-miR-199a→miR-30a, MYB miR-155→miR-16, ISCU miR-210→miR-21, STAT4 miR-200a→miR-141.
+**⑥ REGULATORY HANDOFFS — ⚠ DOWNGRADED (mostly argmax-noise).** Of 292 genes whose *dominant* regulator (by
+abundance rank) differs healthy→tumour, only **~64 (22%) are DECISIVE** (both-state margins >5 pctile); the rest are
+close-call flips — median tumour margin **2 percentile points** (a coin-flip). ⚠ **Even the flagship PTEN
+miR-148a→miR-21 is a TIE in tumour** (margin 0.0). The *dose* rise of miR-21 (§3) is real; the "dominant-regulator
+handoff" framing by abundance-argmax is not. Use the ~64 decisive switches only, not "333."
 
-**⑦ THE FUNCTIONAL 2×2 (acquired dose × realized) — BUFFERED dominates.** 455 genes acquire dose but do NOT realize
-(mean ρ +0.017) vs **284 DRIVERS** (acquired + realized, mean −0.190: ESR1, SMAD3, BCL2, MAP3K8, FBP1), 149 PRE-SET,
-363 inert. Acquisition ≠ realization at scale. ⚠ Notable: **PTEN — the 28-edge convergence supersink — is itself
-BUFFERED** at the gene-aggregate level (−0.070): massive convergent pressure, weak net realization (the PTEN-dosage
-robustness story; convergence ≠ effective repression).
+**⑦ THE FUNCTIONAL 2×2 (acquired dose × realized) — ⛔ RETRACTED (axiom-5 threshold artifact).** The driver/buffered
+counts are entirely threshold-dependent: driver fraction **0.54→0.38→0.25→0.14→0.06** as the realization cut moves
+−0.05→−0.25, 28% of genes sit within ±0.05 of the −0.1 boundary, adjacent-cut set overlap 0.64. **No stable bimodal
+split — realization is a CONTINUUM.** The "455 buffered / 284 driver" headline is void. *(That acquired dose ≫
+realized dose overall is the real, TESTED statement — MH-160/163, not this 2×2.)*
 
 **⑧ SUBTYPE-SPECIFIC CLUSTER ACQUISITION.** Basal broadest (20 subtype-specific gainers); **LumA acquires C19MC**
 (chr19 miR-524/525/526); **Her2 acquires miR-371~373** (miR-371a/302b); LumB miR-325/124. Distinct clusters per lineage.
@@ -639,7 +647,8 @@ not one epigenetic switch.
 TS-cluster and miR-30/let-7 lost, as co-transcribed units), *convergent* (a handful of cancer genes — PTEN above
 all — absorb pressure from many independent families), *field-established and TWO-STEP* (the healthy→NAT field wave
 is larger than and UNCORRELATED with the NAT→tumour malignant wave, ρ=0.003; the direct GTEx→tumour difference is
-field-dominated, dHT~dHN ρ=0.84), *rewiring* (333 dominant-regulator handoffs), and mostly *buffered* (dose acquired
+field-dominated, dHT~dHN ρ=0.84), *rewiring* (~64 DECISIVE dominant-regulator switches — not the 333 argmax flips),
+and *acquisition ≫ realization* (a continuum, NOT a bimodal buffered/driver split — the 2×2 counts are retracted; dose acquired
 ≫ dose realized). MECHANISM: acquisition is predominantly transcriptional/epigenetic with a real SECONDARY
 copy-number contribution (amplified loci acquire more, MWU p=0.035; key oncomiRs miR-21/96/182 are CN-amplified —
 CORRECTED from an initial coarse-metric null), and realization is NOT AGO-gated (ρ=0.08). Acquisition splits into
