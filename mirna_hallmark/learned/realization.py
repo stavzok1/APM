@@ -1019,3 +1019,131 @@ def own_retaining_clinical() -> pd.DataFrame:
             _, pf = fisher_exact(ct)
             print(f"  early-stage(I/II) × own-retaining Fisher p={pf:.2f}")
     return j
+
+
+# --------------------------------------------------------------------------- #
+# ⭐ CLASS → WITHIN-PATIENT REALIZATION — does the cross-state shift_class predict paired realization ρ_adj?
+# Gene-CLUSTERED (edges within a gene correlated), dose-CONTROLLED (verification item 7), decoy-arbitrated
+# (axiom 4). Set-level (n=103). The non-circular contrast is AMONG coupled classes: "live-in-NAT"
+# {constitutive, field_established_realized} vs "acquired-only" {acquired_realized, tumour_realized}.
+_LIVE_IN_NAT = ("constitutive", "field_established_realized")
+_ACQUIRED_ONLY = ("acquired_realized", "tumour_realized")
+
+
+def _gene_boot(gene_arr: np.ndarray, stat, n: int = 2000, seed: int = 0):
+    """Gene-CLUSTER bootstrap: `stat(idx)` computed on numpy ROW INDICES; each draw resamples GENES with
+    replacement and gathers their row positions (numpy concat, not pd.concat — profile-before-batch). Returns
+    (point, lo95, hi95, p_two_sided_vs_0)."""
+    uniq = pd.unique(gene_arr)
+    pos = {g: np.where(gene_arr == g)[0] for g in uniq}
+    rng = np.random.default_rng(seed)
+    point = stat(np.arange(len(gene_arr)))
+    draws = np.empty(n)
+    for i in range(n):
+        pick = rng.choice(uniq, size=len(uniq), replace=True)
+        draws[i] = stat(np.concatenate([pos[g] for g in pick]))
+    draws = draws[np.isfinite(draws)]
+    lo, hi = np.percentile(draws, [2.5, 97.5])
+    p = 2.0 * min((draws >= 0).mean(), (draws <= 0).mean()) if len(draws) else np.nan
+    return float(point), float(lo), float(hi), float(p)
+
+
+def class_realization() -> pd.DataFrame:
+    """Does the cross-state `shift_class` predict within-patient paired realization ρ_adj? (gene-clustered,
+    dose-controlled, decoy-arbitrated; set-level, n=103). -> class_realization{,_contrast}.tsv."""
+    ec = pd.read_csv(OUT / "progression_edge_card.tsv", sep="\t").dropna(subset=["shift_class", "edge_rho_adj"])
+    # (1) gene-clustered mean ρ_adj + acquired dose per class
+    rows = []
+    for cls, s in ec.groupby("shift_class"):
+        rho = s["edge_rho_adj"].to_numpy(float)
+        pt, lo, hi, p = _gene_boot(s["gene"].to_numpy(), lambda idx: np.nanmean(rho[idx]), n=1000)
+        rows.append({"shift_class": cls, "n_edges": len(s), "n_genes": s.gene.nunique(),
+                     "mean_rho_adj": _r3(pt), "ci_lo": _r3(lo), "ci_hi": _r3(hi), "boot_p_vs0": _r3(p),
+                     "mean_own_shift": _r3(s["mean_own_shift"].mean()), "coupled": cls not in ("uncoupled", "undetectable", "lost")})
+    census = pd.DataFrame(rows).sort_values("mean_rho_adj")
+    census.to_csv(OUT / "class_realization.tsv", sep="\t", index=False)
+
+    # circularity magnitude (rigor fix): shared repression signal with the DEFINING coupling_nat + the stronger
+    # correlate coupling_tum — NOT tautological (would be ≈1). ρ<0.4 ⇒ different estimators.
+    def _c(a, b):
+        d = ec.dropna(subset=[a, b])
+        return _r3(float(spearmanr(d[a], d[b]).correlation)) if len(d) > _MIN_PAIRS else np.nan
+    circ = {"corr_rho_couplingNAT": _c("edge_rho_adj", "coupling_nat"),
+            "corr_rho_couplingTUM": _c("edge_rho_adj", "coupling_tum")}
+
+    # (2) the non-circular COUPLED contrast: live-in-NAT vs acquired-only, gene-clustered; RAW, dose-controlled,
+    # and dose+coupling_tum-controlled (rigor fix: coupling_tum is the STRONGER correlate and must be balanced/controlled)
+    sub = ec[ec.shift_class.isin(_LIVE_IN_NAT + _ACQUIRED_ONLY)].dropna(
+        subset=["mean_own_shift", "coupling_tum"]).copy()
+    g_sub = sub["gene"].to_numpy()
+    rho = sub["edge_rho_adj"].to_numpy(float)
+    islive = sub.shift_class.isin(_LIVE_IN_NAT).to_numpy(float)
+    dose = sub["mean_own_shift"].to_numpy(float)
+    ctum = sub["coupling_tum"].to_numpy(float)
+    ctum_bal = {"coupling_tum_live": _r3(float(ctum[islive == 1].mean())),      # balance check (should be ~equal)
+                "coupling_tum_acquired": _r3(float(ctum[islive == 0].mean()))}
+
+    def _diff(idx):                                      # mean ρ(live) − mean ρ(acquired)  (expect <0)
+        li = islive[idx]
+        a, b = rho[idx][li == 1], rho[idx][li == 0]
+        return (a.mean() - b.mean()) if (len(a) and len(b)) else np.nan
+
+    def _beta(idx, cols):                                # OLS coef of is_live controlling `cols` (list of arrays)
+        li = islive[idx]
+        if li.min() == li.max():
+            return np.nan
+        X = np.column_stack([np.ones(len(idx)), li] + [c[idx] for c in cols])
+        beta, *_ = np.linalg.lstsq(X, rho[idx], rcond=None)
+        return beta[1]
+
+    d_pt, d_lo, d_hi, d_p = _gene_boot(g_sub, _diff, n=2000)
+    b_pt, b_lo, b_hi, b_p = _gene_boot(g_sub, lambda i: _beta(i, [dose]), n=2000)
+    bt_pt, bt_lo, bt_hi, bt_p = _gene_boot(g_sub, lambda i: _beta(i, [dose, ctum]), n=2000)
+    contrast = [{"test": "live_vs_acquired_raw", "estimate": _r3(d_pt), "ci_lo": _r3(d_lo), "ci_hi": _r3(d_hi),
+                 "boot_p": _r3(d_p), "n_edges": len(sub), "n_genes": sub.gene.nunique()},
+                {"test": "live_vs_acquired_dose_controlled", "estimate": _r3(b_pt), "ci_lo": _r3(b_lo),
+                 "ci_hi": _r3(b_hi), "boot_p": _r3(b_p), "n_edges": len(sub), "n_genes": sub.gene.nunique()},
+                {"test": "live_vs_acquired_dose+couplingTUM_controlled", "estimate": _r3(bt_pt), "ci_lo": _r3(bt_lo),
+                 "ci_hi": _r3(bt_hi), "boot_p": _r3(bt_p), "n_edges": len(sub), "n_genes": sub.gene.nunique()}]
+
+    # (3) DECOY ARBITER (axiom 4): REAL vs matched site-free DECOY ρ_adj, by class of the REAL edge — reported as
+    # the DIRECT paired-bootstrap DIFFERENCE (live REAL−DECOY) − (acquired REAL−DECOY) (rigor fix: two separate
+    # vs-0 CIs overlap and do NOT establish the difference; the paired diff is the correct statistic).
+    nd_p = OUT / "realization_null_edges.tsv"
+    if nd_p.exists():
+        nd = pd.read_csv(nd_p, sep="\t")
+        cls_map = ec.set_index(["gene", "arm"])["shift_class"]
+        real = nd[nd.group == "REAL"].copy()
+        real["shift_class"] = [cls_map.get((g, a), np.nan) for g, a in zip(real.gene, real.arm)]
+        decoy_floor = nd[nd.group == "DECOY"].groupby("gene")["rho_adj"].mean()   # per-gene null floor
+        real["decoy_floor"] = real.gene.map(decoy_floor)
+        real["real_minus_decoy"] = real["rho_adj"] - real["decoy_floor"]
+        rc = real[real.shift_class.isin(_LIVE_IN_NAT + _ACQUIRED_ONLY)].dropna(subset=["real_minus_decoy"]).copy()
+        rmd = rc["real_minus_decoy"].to_numpy(float)
+        rlive = rc.shift_class.isin(_LIVE_IN_NAT).to_numpy(float)
+        for grp, name in ((_LIVE_IN_NAT, "live_in_nat"), (_ACQUIRED_ONLY, "acquired_only")):
+            g = real[real.shift_class.isin(grp)].dropna(subset=["real_minus_decoy"])
+            if len(g) >= 30:
+                v = g["real_minus_decoy"].to_numpy(float)
+                pt, lo, hi, p = _gene_boot(g["gene"].to_numpy(), lambda idx: np.nanmean(v[idx]), n=1000)
+                contrast.append({"test": f"REAL_minus_DECOY_{name}", "estimate": _r3(pt), "ci_lo": _r3(lo),
+                                 "ci_hi": _r3(hi), "boot_p": _r3(p), "n_edges": len(g), "n_genes": g.gene.nunique()})
+
+        def _rmd_diff(idx):                              # (live REAL−DECOY) − (acquired REAL−DECOY), paired per draw
+            li = rlive[idx]
+            a, b = rmd[idx][li == 1], rmd[idx][li == 0]
+            return (a.mean() - b.mean()) if (len(a) and len(b)) else np.nan
+        pt, lo, hi, p = _gene_boot(rc["gene"].to_numpy(), _rmd_diff, n=2000)
+        contrast.append({"test": "REAL_minus_DECOY_live_minus_acquired", "estimate": _r3(pt), "ci_lo": _r3(lo),
+                         "ci_hi": _r3(hi), "boot_p": _r3(p), "n_edges": len(rc), "n_genes": rc.gene.nunique()})
+    con = pd.DataFrame(contrast)
+    con.attrs.update(circ); con.attrs.update(ctum_bal)
+    print(f"[circularity] corr(edge_rho_adj, coupling_nat)={circ['corr_rho_couplingNAT']} "
+          f"(defining var) · corr(·, coupling_tum)={circ['corr_rho_couplingTUM']} (stronger correlate) — both <0.4, not tautological")
+    print(f"[coupling_tum balance] live {ctum_bal['coupling_tum_live']} vs acquired {ctum_bal['coupling_tum_acquired']} (should be ~equal)")
+    con.to_csv(OUT / "class_realization_contrast.tsv", sep="\t", index=False)
+    print("[class_realization] mean ρ_adj by cross-state shift_class (gene-clustered):")
+    print(census.to_string(index=False))
+    print("\n[contrast] live-in-NAT {constitutive,field_established} vs acquired-only {acquired_realized,tumour_realized}:")
+    print(con.to_string(index=False))
+    return census

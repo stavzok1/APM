@@ -382,6 +382,11 @@ distinguishable from static~dose ⇒ the realization-SPECIFIC ownership content 
 near-null. Genomic-context (P): host-coupled retain+realize more than intergenic (antisense exception noted).
 Hallmark (P, descriptive): metabolic/differentiation programs most realized. Res-5 within-family at chance (prereg
 null). Own-retaining 7% not clinically distinct (fragile purity hit, n=5). Details in MH-158's registry row.
+✅ **CLASS → REALIZATION (MH-160, rigor-auditor A):** the cross-state `shift_class` PREDICTS within-patient
+realization, ordered by repression-LIVENESS not dose — live-in-NAT edges {constitutive, field_established}
+realize more than acquired-only ones (Δ −0.039, gene-clustered) despite LOWER dose; anti-dose (dose+coupling_tum
+controlled −0.032), decoy-arbitrated (direct paired diff −0.024, p=0.01); partial circularity (ρ=0.234 with the
+defining coupling_nat) quantified + defused. Enabled by the integrated `progression_edge_card`.
 
 ---
 

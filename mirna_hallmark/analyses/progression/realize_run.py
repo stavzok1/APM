@@ -72,6 +72,7 @@ def finalize_phase2() -> None:
     # ⭐ integrated progression cards (edge + gene) — now with the Phase-2 realization/owner columns
     ec = R.progression_edge_card(); gc = R.progression_gene_card()
     print(f"\n[progression cards] edge {ec.shape} · gene {gc.shape}")
+    R.class_realization()   # cross-state class -> within-patient realization (gene-clustered, dose-ctrl, decoy-arbitrated)
     print(f"-> {OUT}/ : realization_family · realization_between_family · owner_convergence · retention_realization "
           f"· progression_edge_card · progression_gene_card")
 
