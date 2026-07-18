@@ -624,6 +624,17 @@ real copy-number-amplification contribution for a subset that includes textbook 
 `ago_loading` tertiles (−0.042 low → −0.050 mid → −0.042 high; ρ=0.08) ⇒ RISC-loading capacity is not the realization
 bottleneck.
 
+**⑰ EPIGENETIC MECHANISM (methylation Δβ gate, imprinting-aware — reuses `learned.methylation`; Δβ=tumour−normal
+sees through the 14q32 imprinting that absolute β cannot).** ✅ **Positive controls validate the detector**:
+miR-124/9/129/137 hyper-methylate (Δβ **+0.18**, gate 100%, normal β 0.17→tumour 0.34). ⛔ **The 14q32 coordinated
+LOSS is NOT hyper-methylation silencing** (hypothesis REFUTED): the locus has high *imprinting* baseline β (0.87) and
+in tumour **73% of its arms HYPO-methylate** (mean Δβ −0.12) — the opposite of silencing; the loss mechanism is NOT
+promoter methylation (unexplained — imprinting-control-region / transcriptional). **Acquisition has two PARTIAL
+routes**: promoter-hypomethylation (miR-21/141/200c/miR-17, Δβ −0.14 to −0.18) and CN-amplification (miR-96/182, from
+⑮) — but together they explain only a **MINORITY (~35%, ~13 hypometh + ~12 CN of ~60 top acquirers)**; the majority
+(39/60) have neither identifiable route (likely TF/enhancer-driven). ⇒ acquisition is mechanistically HETEROGENEOUS,
+not one epigenetic switch.
+
 **Bottom line:** the malignant miRNA trajectory is *cluster-coordinated* (oncomiR polycistrons acquired, the 14q32
 TS-cluster and miR-30/let-7 lost, as co-transcribed units), *convergent* (a handful of cancer genes — PTEN above
 all — absorb pressure from many independent families), *field-established and TWO-STEP* (the healthy→NAT field wave
@@ -631,7 +642,10 @@ is larger than and UNCORRELATED with the NAT→tumour malignant wave, ρ=0.003; 
 field-dominated, dHT~dHN ρ=0.84), *rewiring* (333 dominant-regulator handoffs), and mostly *buffered* (dose acquired
 ≫ dose realized). MECHANISM: acquisition is predominantly transcriptional/epigenetic with a real SECONDARY
 copy-number contribution (amplified loci acquire more, MWU p=0.035; key oncomiRs miR-21/96/182 are CN-amplified —
-CORRECTED from an initial coarse-metric null), and realization is NOT AGO-gated (ρ=0.08). Program effect requires ARCHITECTURE not a flat mean (acquired pressure is pro-tumour by
+CORRECTED from an initial coarse-metric null), and realization is NOT AGO-gated (ρ=0.08). Acquisition splits into
+promoter-HYPOmethylation (miR-21/200) + CN-amplification (miR-96/182) routes but only for a MINORITY (~35%); the
+14q32 coordinated LOSS is NOT hyper-methylation (it hypo-methylates — imprinting-aware Δβ refutes the silencing
+hypothesis; positive controls miR-124/9/129/137 pass at +0.18). Program effect requires ARCHITECTURE not a flat mean (acquired pressure is pro-tumour by
 repressing P53/apoptosis, anti-tumour by damaging G2M — `geneset_architecture`). Paired (103) and cohort (~1000)
 agree (ρ=0.94). Cross-platform GTEx: trust the rank axis (dHT/grank) + Shapley over the QN magnitude bridge.
 Textbook-concordant (miR-200/ZEB1, miR-17~92, 14q32, miR-21→PTEN, C19MC) — a *description*, not a null-tested claim.

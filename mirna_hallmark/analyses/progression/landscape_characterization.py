@@ -352,12 +352,64 @@ def ago_layer(ec: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def epigenetic_mechanism(ec: pd.DataFrame) -> pd.DataFrame:
+    """The MECHANISM leg (reuses the built `learned.methylation` promoter Δβ gate — Δβ=tumour−normal handles the
+    14q32 IMPRINTING trap, absolute β does not). (1) positive controls (miR-124/9/129/137) must hyper-methylate;
+    (2) is the 14q32 coordinated LOSS hyper-methylation-driven? (3) acquisition ROUTES: promoter-hypomethylation
+    vs CN-amplification. Focused (per-arm cache slices), not genome-wide."""
+    from mirna_hallmark.learned import methylation as MET
+    a = ec.dropna(subset=["mean_own_shift"]).drop_duplicates("arm")   # ec already carries `host` from _load()
+
+    def _db(arms):
+        rows = []
+        for arm in arms:
+            try:
+                r = MET.locus_methylation([arm.replace("hsa-", "")])
+                if r and r.get("delta_beta") is not None:
+                    rows.append({"arm": arm.replace("hsa-", ""), "tumour_beta": r["tumour_beta"],
+                                 "normal_beta": r["normal_beta"], "delta_beta": r["delta_beta"]})
+            except Exception:
+                pass
+        d = pd.DataFrame(rows)
+        return d.assign(**{c: pd.to_numeric(d[c], errors="coerce") for c in ["tumour_beta", "normal_beta", "delta_beta"]}) if len(d) else d
+    groups = {
+        "POS_CONTROL_lost": ["miR-124-3p", "miR-9-5p", "miR-129-5p", "miR-137"],
+        "14q32_LOST": list(a[a.host.astype(str).str.contains("MEG|MIR493HG", na=False)].arm),
+        "ACQUIRED_top": list(a[a.mean_own_shift > 1.0].arm),
+    }
+    rows = []
+    for g, arms in groups.items():
+        d = _db(arms)
+        if not len(d):
+            continue
+        rows.append({"group": g, "n": len(d), "mean_delta_beta": round(float(d.delta_beta.mean()), 3),
+                     "mean_tumour_beta": round(float(d.tumour_beta.mean()), 2), "mean_normal_beta": round(float(d.normal_beta.mean()), 2),
+                     "frac_hypermeth_gate": round(float(((d.delta_beta >= 0.15) & (d.tumour_beta >= 0.20)).mean()), 2),
+                     "frac_hypometh": round(float((d.delta_beta <= -0.1).mean()), 2)})
+    summ = pd.DataFrame(rows)
+    # acquisition ROUTES per acquired arm: hypomethylation vs CN-amplification
+    cn = pd.read_csv(_CN / "mirna_cnv_by_stratum.tsv", sep="\t")
+    cn = cn[(cn.entity_level == "arm") & (cn.stratum == "cohort_all")]
+    cnm = cn.assign(k=cn.entity_label.map(_norm)).groupby("k")["median_copy_number"].mean()
+    acq = a[a.mean_own_shift > 1.0].copy()
+    db = _db(list(acq.arm)).set_index("arm")["delta_beta"]
+    acq["a2"] = acq.arm.str.replace("hsa-", "", regex=False)
+    acq["delta_beta"] = acq.a2.map(db); acq["tumour_cn"] = acq.arm.map(lambda x: cnm.get(_norm(x)))
+    acq["route"] = np.select([(acq.delta_beta <= -0.1) & (acq.tumour_cn > 2.5), acq.delta_beta <= -0.1, acq.tumour_cn > 2.5],
+                             ["both", "hypomethylation", "CN_amplification"], "other")
+    acq[["a2", "mean_own_shift", "delta_beta", "tumour_cn", "route"]].to_csv(OUT / "landscape_epigenetic_routes.tsv", sep="\t", index=False)
+    summ.to_csv(OUT / "landscape_epigenetic_mechanism.tsv", sep="\t", index=False)
+    summ.attrs["acquisition_routes"] = acq.route.value_counts().to_dict()
+    return summ
+
+
 def characterize():
     ec, sc = _load()
     gc = pd.read_csv(OUT / "progression_gene_card.tsv", sep="\t")
     ctx = genomic_context_census(ec); pad = program_acquired_dose(gc)
     twostep = trajectory_two_step(sc); hdrv = healthy_anchored_drivers(sc)
     coh = cohort_view(ec); dgt = direct_gtex_tumor(sc); cnl = cn_layer(ec); agol = ago_layer(ec)
+    epi = epigenetic_mechanism(ec)
     hubs = convergence_hubs(ec); clusters = cluster_units(ec)
     subt = subtype_trajectories(sc); drv, los = driver_loser_rosters(ec)
     arch = trajectory_archetypes(sc); hand = regulatory_handoffs(gc)
@@ -408,6 +460,9 @@ def characterize():
     print(cnl.head(6).to_string(index=False))
     print(f"\n[16] AGO LAYER — is acquired pressure realized where RISC loading is present? {agol.attrs}")
     print(agol.to_string())
+    print("\n[17] EPIGENETIC MECHANISM (methylation Δβ gate, imprinting-aware) — pos-controls / 14q32-loss / acquisition:")
+    print(epi.to_string(index=False))
+    print(f"    acquisition ROUTES (hypomethylation vs CN-amplification): {epi.attrs.get('acquisition_routes')}")
     print(f"\n-> {OUT}/ : landscape_{{convergence_hubs, cluster_units, subtype_trajectories, driver_roster, loser_roster, "
           f"trajectory_archetypes, regulatory_handoffs, dose_realization_quadrants, subtype_driver_rosters}}.tsv")
     return hubs, clusters, subt, drv, los, arch, hand, quad, subr
