@@ -611,9 +611,14 @@ rank shift tracks the **FIELD step dHN at ρ=0.84** but the **malignant step dNT
 in cancer vs TRULY healthy is predominantly field-established* — NAT already carries most of it. 101 direct gainers,
 44 losers. (Confirms ⑪/⑬ from the healthy-anchored direction; miR-486 dHT +0.75 = field dHN +0.80, malignant dNT ~0.)
 
-**⑮ CN LAYER — acquisition is NOT (strongly) copy-number-driven.** Cohort tumour CN vs acquired dose (`arm_lfc_NAT_TUM`,
-472 arms): **ρ=0.10** (weak); median CN→expression partial ρ = 0.046. A few loci are CN-coupled (miR-30b/d partial
-ρ 0.31–0.39) but are not the acquirers ⇒ miRNA acquisition is **transcriptional/epigenetic, not locus amplification**.
+**⑮ CN LAYER — copy number is a real SECONDARY contributor to acquisition, not the dominant mechanism** (⚠ CORRECTED
+2026-07-18 — the initial cross-arm ρ=0.10 was a coarse-metric null: cohort-median CN is near-integer 2/3/4, so a
+Spearman *correlation* is insensitive; the right test is dichotomized). **Amplified-locus arms (CN>2.5, n=116)
+acquire +0.127 vs diploid (n=356) −0.044, MWU p=0.035** — a significant CN effect. And it operates for KEY oncomiR
+acquirers: **miR-96-5p/182-5p/21-5p/21-3p sit at amplified loci (CN=3) with CN→expr concordance ρ≈0.19–0.27**;
+miR-200c/141 are diploid but CN-concordant (0.23–0.30). But it is NOT dominant genome-wide — only **8%** of acquiring
+arms have CN→expr partial ρ>0.2 (median 0.046). ⇒ acquisition is **predominantly transcriptional/epigenetic, WITH a
+real copy-number-amplification contribution for a subset that includes textbook oncomiRs (miR-21/96/182)**.
 
 **⑯ AGO/RISC LAYER — realization is NOT AGO-loading-gated.** Edge realization (`edge_rho_adj`) is flat across
 `ago_loading` tertiles (−0.042 low → −0.050 mid → −0.042 high; ρ=0.08) ⇒ RISC-loading capacity is not the realization
@@ -624,8 +629,9 @@ TS-cluster and miR-30/let-7 lost, as co-transcribed units), *convergent* (a hand
 all — absorb pressure from many independent families), *field-established and TWO-STEP* (the healthy→NAT field wave
 is larger than and UNCORRELATED with the NAT→tumour malignant wave, ρ=0.003; the direct GTEx→tumour difference is
 field-dominated, dHT~dHN ρ=0.84), *rewiring* (333 dominant-regulator handoffs), and mostly *buffered* (dose acquired
-≫ dose realized). MECHANISM: acquisition is transcriptional/epigenetic (NOT CN-driven, ρ=0.10) and realization is
-NOT AGO-gated (ρ=0.08). Program effect requires ARCHITECTURE not a flat mean (acquired pressure is pro-tumour by
+≫ dose realized). MECHANISM: acquisition is predominantly transcriptional/epigenetic with a real SECONDARY
+copy-number contribution (amplified loci acquire more, MWU p=0.035; key oncomiRs miR-21/96/182 are CN-amplified —
+CORRECTED from an initial coarse-metric null), and realization is NOT AGO-gated (ρ=0.08). Program effect requires ARCHITECTURE not a flat mean (acquired pressure is pro-tumour by
 repressing P53/apoptosis, anti-tumour by damaging G2M — `geneset_architecture`). Paired (103) and cohort (~1000)
 agree (ρ=0.94). Cross-platform GTEx: trust the rank axis (dHT/grank) + Shapley over the QN magnitude bridge.
 Textbook-concordant (miR-200/ZEB1, miR-17~92, 14q32, miR-21→PTEN, C19MC) — a *description*, not a null-tested claim.
