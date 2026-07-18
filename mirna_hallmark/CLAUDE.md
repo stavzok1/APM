@@ -1,15 +1,35 @@
 # mirna_hallmark — Claude Code
 
+> **⭐ THIS FILE IS THE CANONICAL onboarding for `mirna_hallmark/`** — orientation, the reuse contract, the
+> module spine, the documentation protocol, the working axioms, and the doc map. Claude Code auto-loads it; other
+> tools (Cursor) are sent here by the thin `AGENTS.md`. There is no second onboarding doc to read.
+> **First, get oriented:** `docs/ARCHITECTURE.md` (the axes×models×analyses×results map) → `docs/STATE_OF_PLAY.md`
+> (per-axis verdicts).
+
 ## Before any task here
 
-Read **`mirna_hallmark/AGENTS.md`** first. This subproject has its **own** analysis catalog,
-discovery registry, and run ledger under `mirna_hallmark/docs/` — do **not** mix them with the
-main `analysis/` docs, `analysis/DISCOVERY_REGISTRY.md`, or `analysis/docs/ANALYSIS_RUN_LEDGER.md`.
+This subproject is **SEPARATE** — it has its **own** analysis catalog, discovery registry, and run ledger under
+`mirna_hallmark/docs/`. Do **not** mix them with the main `analysis/` docs, `analysis/DISCOVERY_REGISTRY.md`, or
+`analysis/docs/ANALYSIS_RUN_LEDGER.md`.
 
 ## What this subproject is
 
-A focused study of **miRNA regulation of MSigDB Hallmark programs** in TCGA-BRCA. Reuses parent
-APM data and loaders; writes all outputs under `mirna_hallmark/output/`.
+A focused study of **miRNA regulation of MSigDB Hallmark programs** in TCGA-BRCA. Reuses parent APM data and
+loaders; writes all outputs under `mirna_hallmark/output/`. Central questions: which Hallmark programs are most
+targeted by high-evidence miRNAs; does evidence-weighted miRNA pressure anti-correlate with target expression
+(AGO/RISC-gated); how do the miRNA loci and target genes vary by copy number across strata.
+
+## Reuse, don't duplicate (import from the parent, don't re-implement)
+
+| Need | Reused from |
+|------|-------------|
+| miRTarBase normalize | `pipeline.genes.mirtarbase.load_mirtarbase` (+ constants) — **NOT** the slow `get_mirtarbase_targets`; use `build_edges.compute_interaction_summary_fast` (vectorized) |
+| miRNA pressure | `mirna_hallmark.pressure_build` / `pressure_engine` (spine `softmax_z_logrpm + evidence_mass`) — ⚠ the pressure heuristic is **§6b-RETIRED** (MH-115); the canonical estimator is the learned Gibbs (`learned/`) |
+| miRNA-universe CNV | `analysis.cohort_landscapes.cnv.dosage_landscape_cnv` |
+| clinical / RNA / partial Spearman | `analysis.utils.common.loaders` |
+
+*(Confounder-block `C` policy, module spine, and design decisions are NOT restated here — they have homes:
+axiom 2a below, `docs/ARCHITECTURE.md` + `docs/ANALYSES_CATALOG.md`, and `docs/MODELING_FRAMEWORK.md`.)*
 
 ## Essential commands
 
