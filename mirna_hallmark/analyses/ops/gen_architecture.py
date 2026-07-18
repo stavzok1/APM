@@ -69,18 +69,17 @@ def _mh_headlines() -> dict:
     return out
 
 
+MODULE_AXIS = ROOT / "docs" / "derived" / "module_axis.tsv"
+
+
 def _modules_by_axis() -> dict:
-    """Auto-tag every module to an axis by its docstring (first pass — reviewable)."""
+    """Module→axis from the persisted, reviewable `module_axis.tsv` (built by axis_bootstrap logic + curated
+    `shared`/`model` overrides; every module homed, incl. a `shared` infrastructure bucket). Edit that file to
+    correct a tag, then regenerate — the map never re-guesses."""
     by = defaultdict(list)
-    for f in glob.glob(f"{ROOT.name}/**/*.py", recursive=True):
-        base = f.split("/")[-1]
-        if base == "__init__.py" or "__pycache__" in f:
-            continue
-        src = open(f, encoding="utf-8", errors="ignore").read()
-        doc = src[:900]
-        ax, s, _ = classify(doc + " " + base.replace("_", " "))
-        if ax != "?":
-            by[ax].append(f.replace(f"{ROOT.name}/", ""))
+    for line in MODULE_AXIS.read_text().splitlines()[1:]:
+        mod, ax, *_ = line.split("\t")
+        by[ax].append(mod)
     return by
 
 
@@ -113,6 +112,13 @@ def run() -> None:
             show = ms[:14]
             L.append(f"- **analyses ({len(ms)}):** " + ", ".join(f"`{m}`" for m in show) + (" …" if len(ms) > 14 else ""))
         L.append("")
+    sh = mods.get("shared", [])
+    if sh:
+        L.append("## Shared / infrastructure  `shared`")
+        L.append("*axis-agnostic loaders, builders, batch/CN helpers, and the retired-pressure builders — serve every axis*")
+        L.append("")
+        L.append(f"- **modules ({len(sh)}):** " + ", ".join(f"`{m}`" for m in sh[:20]) + (" …" if len(sh) > 20 else ""))
+        L.append("")
     OUT.write_text("\n".join(L))
     _emit_json(assign, heads, mods)                          # data for the artifact view (rendered separately)
     print(f"[gen-architecture] wrote {OUT}: {len(AXES)} axes, "
@@ -135,7 +141,13 @@ def _emit_json(assign, heads, mods) -> None:
               for mh in assign.get(tag, [])]
         axes.append({"tag": tag, "title": title, "q": q, "model": model, "status": STATUS.get(tag, ""),
                      "findings": fs, "modules": sorted(mods.get(tag, []))})
-    out = {"axes": axes, "n_ax": len(axes), "n_find": sum(len(a["findings"]) for a in axes),
+    if mods.get("shared"):
+        axes.append({"tag": "shared", "title": "Shared / infrastructure", "status": "shared",
+                     "q": "axis-agnostic loaders, builders, batch/CN helpers, retired-pressure builders",
+                     "model": "not an axis — cross-cutting infrastructure every axis depends on.",
+                     "findings": [], "modules": sorted(mods["shared"])})
+    out = {"axes": axes, "n_ax": len([a for a in axes if a["tag"] != "shared"]),
+           "n_find": sum(len(a["findings"]) for a in axes),
            "n_mod": sum(len(a["modules"]) for a in axes)}
     (ROOT / "docs" / "derived" / "architecture_data.json").write_text(json.dumps(out))
 
