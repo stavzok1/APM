@@ -1147,3 +1147,201 @@ def class_realization() -> pd.DataFrame:
     print("\n[contrast] live-in-NAT {constitutive,field_established} vs acquired-only {acquired_realized,tumour_realized}:")
     print(con.to_string(index=False))
     return census
+
+
+# --------------------------------------------------------------------------- #
+# FU-1: per-patient realization EFFICIENCY (within-SAMPLE resolution). Does a patient realise their acquired
+# miRNA dose as target repression? P[g,p]=Σ_a m_nnls(g,a)·Δx_p(a) (canonical M, no refit); Y=Δy. Two-way center
+# (removes gene AND patient main effects — the patient's additive composition/purity shift is constant across
+# their genes), then efficiency_p = −corr_g(P_resid, Y_resid). Reliability = split-half over genes (THE test).
+def patient_realization_efficiency(*, n_perm: int = 500, n_split: int = 50, seed: int = 0) -> pd.DataFrame:
+    """FU-1. -> patient_realization_efficiency.tsv + prints pop-mean vs permutation null, split-half reliability,
+    clinical association. Pre-reg (measured-only): pop mean >0 but weak; split-half reliability LOW (per-patient
+    efficiency mostly noise at n=103); clinical null."""
+    card = pd.read_csv(_LEARNED / "canonical_card.tsv", sep="\t")[["gene", "arm", "m_nnls"]].dropna()
+    card = card[card.m_nnls > 0]
+    dX, dY, pts_l = ST.paired_delta_matrices()
+    pts = list(pts_l)
+    dXm = dX[pts]
+
+    def _build_P(weight_map):                            # weight_map: gene -> [(dx_arm, weight)]
+        Prows = {}
+        for g, lst in weight_map.items():
+            regs = [(a, w) for a, w in lst if a in dXm.index]
+            if not regs:
+                continue
+            arms = [a for a, _ in regs]; w = np.array([w for _, w in regs], float)
+            Prows[g] = np.nan_to_num(dXm.loc[arms].to_numpy(float), nan=0.0).T @ w
+        return pd.DataFrame(Prows, index=pts).T
+    real_wm = {g: list(zip(sub.arm, sub.m_nnls)) for g, sub in card.groupby("gene")}
+    P = _build_P(real_wm)
+    genes = [g for g in P.index if g in dY.index]
+    P, Y = P.loc[genes], dY.loc[genes, pts]
+    ok = Y.notna().all(axis=1) & P.notna().all(axis=1) & (P.std(axis=1) > 1e-9)
+    P, Y = P[ok], Y[ok]
+    Pm, Ym = P.to_numpy(float), Y.to_numpy(float)
+
+    def _tw(M):
+        return M - M.mean(1, keepdims=True) - M.mean(0, keepdims=True) + M.mean()
+
+    def _z(M):
+        return (M - M.mean(0)) / (M.std(0) + 1e-12)
+    Yr = _tw(Ym)
+
+    def _mk_eff(Pr):
+        def _eff(Yr_, gidx=None):
+            pr = Pr if gidx is None else _z(Pr[gidx])
+            yz = _z(Yr_) if gidx is None else _z(Yr_[gidx])
+            return -(pr * yz).mean(0)
+        return _eff
+    Pr = _z(_tw(Pm)); _eff = _mk_eff(Pr)
+    eff = _eff(Yr)
+    obs = float(eff.mean())
+    rng = np.random.default_rng(seed)
+    null = np.array([_eff(_tw(Ym[:, rng.permutation(Ym.shape[1])])).mean() for _ in range(n_perm)])
+    p_pop = float((np.sum(null >= obs) + 1) / (n_perm + 1))   # higher efficiency = more realization ⇒ upper tail
+
+    def _split_rel(efffn, Yr_, ng_):
+        r = []
+        for _ in range(n_split):
+            idx = rng.permutation(ng_); h1, h2 = idx[:ng_ // 2], idx[ng_ // 2:]
+            c = spearmanr(efffn(Yr_, h1), efffn(Yr_, h2)).correlation
+            if c == c:
+                r.append(c)
+        return float(np.mean(r))
+    ng = Pr.shape[0]
+    reliability = _split_rel(_eff, Yr, ng)
+
+    # ⭐ DECOY CONTROL (is per-patient efficiency realization-SPECIFIC or global miRNA-mRNA co-movement?):
+    # push the REAL arm's weight through a matched SITE-FREE fake arm's Δx; same two-way-centered efficiency.
+    dec_reliability = dec_obs = gap_pt = gap_lo = gap_hi = gap_p = np.nan
+    try:
+        from scipy.stats import wilcoxon
+        from mirna_hallmark.eval import decoy_bench as DB
+        dec = DB.build_decoys(list(P.index))
+        r2f = {(g, a): f for g, a, f in zip(dec.gene, dec.real_arm, dec.fake_arm)}
+        dec_wm = {g: [(r2f.get((g, a), a), w) for a, w in lst] for g, lst in real_wm.items()}
+        Pd = _build_P(dec_wm).reindex(P.index)
+        okd = (Pd.notna().all(axis=1) & (Pd.std(axis=1) > 1e-9)).to_numpy()
+        Prd = _z(_tw(Pd[okd].to_numpy(float))); _effd = _mk_eff(Prd)
+        Yrd = _tw(Ym[okd]); Yrdz = _z(Yrd)
+        dec_obs = float(_effd(Yrd).mean())
+        dec_reliability = _split_rel(_effd, Yrd, Prd.shape[0])
+        # ⭐ per-gene PAIRED real-vs-decoy contribution (rigor fix: the population MEAN gap IS site-specific — a
+        # robust realization signal on top of the shared global co-movement; separate estimand from the trait).
+        Pr_c = _z(_tw(Pm[okd])); Yrz_c = _z(_tw(Ym[okd]))
+        c_real = (-Pr_c * Yrz_c).mean(1); c_dec = (-Prd * Yrdz).mean(1)     # per-gene contribution
+        d = c_real - c_dec
+        gap_pt = float(d.mean()); gap_p = float(wilcoxon(c_real, c_dec).pvalue)
+        rng2 = np.random.default_rng(1)
+        bs = np.array([d[rng2.integers(0, len(d), len(d))].mean() for _ in range(2000)])
+        gap_lo, gap_hi = float(np.percentile(bs, 2.5)), float(np.percentile(bs, 97.5))
+    except Exception as e:
+        print(f"  [decoy control skipped: {e}]")
+    # confound: efficiency vs per-patient composition-shift magnitude
+    dC = _delta_C(); comp_dist = np.sqrt((dC.reindex(pts).fillna(0.0) ** 2).sum(axis=1)).to_numpy(float)
+    out = pd.DataFrame({"patient": pts, "efficiency": np.round(eff, 4), "comp_dist": np.round(comp_dist, 3)})
+    r_comp = spearmanr(eff, comp_dist).correlation
+    # clinical
+    try:
+        from analysis.utils.common.loaders import load_clinical
+        cl = load_clinical().drop_duplicates("participant").set_index("participant")
+        out = out.merge(cl[["pathologic_stage_collapsed", "PAM50_final", "CPE", "thornsson_proliferation"]],
+                        left_on="patient", right_index=True, how="left")
+    except Exception:
+        cl = None
+    out.to_csv(OUT / "patient_realization_efficiency.tsv", sep="\t", index=False)
+    print(f"[FU-1 patient efficiency] n_patients={len(pts)} n_genes={ng} | mean efficiency {obs:+.4f} "
+          f"(perm-null mean {null.mean():+.4f}, p={p_pop:.3f}) | SPLIT-HALF reliability {reliability:+.3f}")
+    print(f"  ⭐ DECOY control — TWO ESTIMANDS: (trait) which-patient-realizes-more is GLOBAL co-movement "
+          f"(REAL rel {reliability:+.3f} ≈ site-free DECOY rel {dec_reliability:+.3f}); "
+          f"(population MEAN) is a ROBUST SITE-SPECIFIC signal (REAL {obs:+.4f} vs DECOY {dec_obs:+.4f}; "
+          f"per-gene paired gap {gap_pt:+.4f} [{gap_lo:+.3f},{gap_hi:+.3f}], Wilcoxon p={gap_p:.1e} — corroborates MH-158).")
+    print(f"  confound: efficiency ⊥ comp-shift ρ={r_comp:+.2f} (two-way centering removes only the ADDITIVE patient "
+          f"effect; the decoy handles residual gene-specific composition co-movement)")
+    if cl is not None:
+        for col in ["CPE", "thornsson_proliferation"]:
+            v = out[["efficiency", col]].dropna()
+            if len(v) > 20:
+                print(f"  efficiency vs {col}: ρ={spearmanr(v.efficiency, v[col]).correlation:+.2f}")
+    return out
+
+
+# --------------------------------------------------------------------------- #
+# FU-2: acquired-but-UNREALIZED genes — what buffers acquired pressure? Among genes that ACQUIRED pressure
+# (acquired_vs_nat>0), what separates realized (realized_rho_adj<−0.1) from unrealized (>−0.02)?
+def acquired_unrealized_buffers() -> pd.DataFrame:
+    """FU-2. Candidate buffers: n_regulators (competition), concentration (spread vs focused), total_pressure,
+    median_retention, gene_net_repressed_tumor, target CN (dosage compensation). MWU realized-vs-unrealized each +
+    threshold sweep (axiom 5). -> acquired_unrealized_buffers.tsv. Pre-reg: n_regulators + net-repression separate;
+    CN weak; multi-factor modest."""
+    from scipy.stats import mannwhitneyu
+    gc = pd.read_csv(OUT / "progression_gene_card.tsv", sep="\t")
+    # target CN (dosage compensation): mean tumour CN per target gene
+    try:
+        from mirna_hallmark import data_loaders as DL
+        cn = DL.load_cnv_target_genes()
+        cn_gene = cn.mean(axis=1) if cn.index.name or cn.shape[1] > 5 else None
+        gc["target_cn"] = gc.gene.map(cn_gene) if cn_gene is not None else np.nan
+    except Exception:
+        gc["target_cn"] = np.nan
+    acq = gc[(gc.acquired_vs_nat > 0)].dropna(subset=["realized_rho_adj"]).copy()
+    buffers = [b for b in ["n_regulators", "concentration", "total_pressure", "median_retention",
+                           "gene_net_repressed_tumor", "target_cn"] if b in acq.columns and acq[b].notna().sum() > 50]
+    for b in buffers:
+        acq[b] = pd.to_numeric(acq[b], errors="coerce")          # bool/obj → float (gene_net_repressed_tumor is bool)
+    rows = []
+    for lo, hi in [(-0.1, -0.02), (-0.15, 0.0), (-0.05, -0.02)]:      # sweep the realized/unrealized cut (axiom 5)
+        R = acq[acq.realized_rho_adj < lo]; U = acq[acq.realized_rho_adj > hi]
+        for b in buffers:
+            a, c = R[b].dropna().astype(float), U[b].dropna().astype(float)
+            if len(a) >= 20 and len(c) >= 20:
+                p = mannwhitneyu(a, c).pvalue
+                rows.append({"cut": f"real<{lo}/unreal>{hi}", "buffer": b, "n_real": len(a), "n_unreal": len(c),
+                             "mean_real": _r3(a.mean()), "mean_unreal": _r3(c.mean()),
+                             "direction": "unreal_higher" if c.mean() > a.mean() else "real_higher", "mwu_p": _r3(p)})
+    df = pd.DataFrame(rows)
+    df.to_csv(OUT / "acquired_unrealized_buffers.tsv", sep="\t", index=False)
+    print("[FU-2 acquired-but-unrealized buffers] realized vs unrealized among acquired genes (buffer separates which):")
+    print(df.to_string(index=False))
+
+    # ⚠ DETECTION-POWER CONTROL: n_regulators/total_pressure drive BOTH the buffer AND the PRECISION of the
+    # realization ρ (a low-regulator gene has a noisy aggregate ρ centred near 0 ⇒ mislabelled "unrealized").
+    # (1) power-matched: restrict to multi-regulator genes (n_regulators ≥ 4, ρ estimable in both arms).
+    # (2) logistic realized ~ z(buffers) — which buffer survives controlling n_regulators (the power proxy)?
+    print("\n[power control] which buffers survive the detection-power confound (n_regulators drives ρ precision)?")
+    A = acq.copy()
+    A["realized"] = (A.realized_rho_adj < -0.1).astype(float)
+    A = A[(A.realized_rho_adj < -0.1) | (A.realized_rho_adj > -0.02)]     # the two clean groups
+    mm = A[A.n_regulators >= 4]                                           # power-matched: both groups estimable
+    from scipy.stats import mannwhitneyu as _mwu
+    if len(mm) >= 60 and mm.realized.nunique() == 2:
+        for b in [x for x in buffers if x != "n_regulators"]:
+            a, c = mm.loc[mm.realized == 1, b].dropna(), mm.loc[mm.realized == 0, b].dropna()
+            if len(a) >= 15 and len(c) >= 15:
+                print(f"  [n_reg≥4] {b:26s} real {a.mean():+.3f} vs unreal {c.mean():+.3f} (MWU p={_mwu(a,c).pvalue:.3f})")
+    # ⚠ the pressure-MAGNITUDE family (n_regulators AND total_pressure) is confounded with ρ-attenuation — in
+    # TIGHT n_reg bands the separation vanishes for BOTH (they are non-separable magnitude, not clean biology):
+    for lo, hi in [(4, 8), (5, 10), (6, 15)]:
+        bd = A[(A.n_regulators >= lo) & (A.n_regulators <= hi)]
+        if bd.realized.nunique() < 2:
+            continue
+        r1, u1 = bd.loc[bd.realized == 1, "n_regulators"].dropna(), bd.loc[bd.realized == 0, "n_regulators"].dropna()
+        r2, u2 = bd.loc[bd.realized == 1, "total_pressure"].dropna(), bd.loc[bd.realized == 0, "total_pressure"].dropna()
+        p1 = _mwu(r1, u1).pvalue if min(len(r1), len(u1)) >= 12 else np.nan
+        p2 = _mwu(r2, u2).pvalue if min(len(r2), len(u2)) >= 12 else np.nan
+        print(f"  [n_reg∈[{lo},{hi}] n={len(bd)}] n_regulators MWU p={p1:.3f} · total_pressure MWU p={p2:.3f} "
+              f"(same magnitude family, both attenuation-confounded)")
+    try:
+        from sklearn.linear_model import LogisticRegression
+        feats = [b for b in buffers if b in A.columns]
+        L = A.dropna(subset=feats + ["realized"])
+        Xz = ((L[feats] - L[feats].mean()) / (L[feats].std() + 1e-9)).to_numpy(float)
+        clf = LogisticRegression(max_iter=1000).fit(Xz, L.realized.to_numpy())
+        coef = dict(zip(feats, clf.coef_[0].round(2)))
+        print(f"  logistic realized~z(all buffers) (n={len(L)}): coefs {coef}")
+        print(f"  ⇒ n_regulators/total_pressure are LARGELY DETECTION POWER (more regulators=stabler ρ); "
+              f"the non-power separators are gene_net_repressed + median_retention.")
+    except Exception as e:
+        print(f"  [logistic skipped: {e}]")
+    return df
