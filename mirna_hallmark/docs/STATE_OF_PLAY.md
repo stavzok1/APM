@@ -9,7 +9,7 @@
 > or retracts something, update the matching block here **in the same pass**.
 > **Sync-partner:** `DISCOVERY_REGISTRY.md` (the record of record — this doc is its executive summary).
 
-**Last updated: 2026-07-17** · covering the registry through **MH-153**.
+**Last updated: 2026-07-18** · covering the registry through **MH-159**.
 
 ---
 
@@ -106,8 +106,21 @@ both observational and never independent of each other.
 - The within-arm two-way-FE replacement: its control class was **71% real binders**. Against a
   genuinely site-free control **τ=−0.0007, p=0.84**, and it fails the site-type efficacy ladder
   (8mer/7mer-m8/7mer-A1 not monotone, p=0.26) — copy number cannot see a site type, so genuine
-  site-mediated repression *must* follow it (MH-133, 2026-07-16). **Refutations at n=216k–235k pairs,
-  not power failures.**
+  site-mediated repression *must* follow it (MH-133, 2026-07-16). ⚠ **LANGUAGE CORRECTED (MH-157,
+  2026-07-18): these are UNDERPOWERED / can't-tell, NOT "refutations."** The ladder's MDE@80% (0.00442)
+  exceeds the whole 8mer effect (0.00174); no bin is distinguishable from 0. The "τ=−0.0007, p=0.84" was
+  the F>10-**gated** spec — F-weighted on the same control gives p=0.057. **The two named instruments stay
+  dead regardless** (their retraction is unaffected); only the framing is downgraded.
+
+**⛔ AND A THIRD DESIGN — guide/passenger within-hairpin — IS ALSO FORECLOSED (MH-157, 2026-07-18).** The
+one confound-immune-*looking* CN design (two arms of a hairpin share the identical locus CN ⇒ ploidy &
+co-amplification difference out; contrast identified only by which seed targets which gene) does **not**
+revive the instrument. It is (a) **conceptually foreclosed** — CN cannot separate hairpin arms (`CN_INSTRUMENT
+§3`), so the contrast is a *gene-set* comparison, not edge identification; and (b) **empirically an abundance
+confound** — it vanishes when arms are comparable-abundance (|ΔabundE|<1 gap +0.004, p=0.65) and is ~half
+co-cluster leak (guide targets co-targeted by a polycistron neighbour 43% vs passenger 16%); the clean
+guide-own residual (−0.006, p=0.12) fails the site-efficacy ladder (context++ slope p=0.53). **Edge existence
+still has NO surviving exogenous validation.**
 
 **⚠ Also bounding this axis:** the per-edge null is **3–4× too narrow**. Site-free (cannot-repress)
 pairs pass "FDR q<0.05" at **25–35%**; under an honest empirical null **0.0%** of curated HE edges
@@ -133,7 +146,19 @@ coincidence climbs the site-confidence ladder monotonically (9%→27%). Delivera
 is the convergence. **⚠ NOT a per-edge licence.** Home: `learned/discovery.py`, `method_dev/site_ladder/`.
 
 **OPEN:** restoring an exogenous existence validation is, by both docs' own assessment, **the single
-highest-value open item in the program.** For the discovery lane specifically: correlation-matched/scrambled-seed
+highest-value open item in the program** — and it is now **TESTED, not aspirational (MH-159, 2026-07-18).**
+**⛔ GERMLINE cis-eQTL MR built + run + refuted.** Germline genotype is genuinely exogenous (randomized at
+meiosis; no reverse causation / tumour-state confound), so a germline cis-eQTL instruments a miRNA's dose.
+Built at n=1,075 (near-complete overlap): SNP6 birdseed → hg38 cis-SNP matrix (1,075×128k). But the
+instruments are **honestly WEAK** (cross-fitted OOF: only **10 arms F>10**; the single-SNP "38" was
+winner's-curse inflation) and **NON-SPECIFIC** — the reduced form is repression-directed for the miRNA's
+curated targets **no more than for random non-target genes** (curated +0.0027 vs control +0.0049, paired
+p=0.66; still null with the strong multi-SNP instruments, p=0.42). ⇒ **germline fixes EXOGENEITY but not
+EXCLUSION** (cis-SNPs still hit host genes/clusters/paralogs) and the miRNA cis-heritability is small; SNP
+aggregation doesn't rescue it. **Edge existence still rests on ONE observational line.** ⬜ Only untested
+extension: full genotype imputation (unlikely to change it — low OOF-F + specificity null). Home:
+`method_dev/cn_guide_passenger/GERMLINE_FINDINGS.md`.
+For the discovery lane specifically: correlation-matched/scrambled-seed
 family null · unify the two lanes by family size · subtype-stratified (PAM50) run.
 
 ---
@@ -338,6 +363,25 @@ vs **no C at all** (mean |β| halves). ⇒ ***which* composition control you use
 **What survives the cancellation:** `learned/gauge.py` and `learned/confounders.py` — *they are what
 killed the axis, which is what falsifiable infrastructure is for.* **Standing rule:** any future
 cross-cohort channel runs `gauge.calibrate()` → read `info_ratio` + τ **BEFORE** it is built.
+
+**✅ NEW — the WITHIN-PATIENT PAIRED axis is a THIRD object (MH-158, 2026-07-18), and it works where the
+cross-cohort channel couldn't:** differencing tumour − **own-NAT** (n=103 matched pairs) removes the patient
+baseline, bypassing the composition attenuation that killed the channel. Engine `learned/realization.py`
+(M = `M_complement`, fit on the 975 non-matched tumours — leak-free). **DOSE/potential:** the acquired dose is
+~46% patient-specific (`own_specific_frac` median **0.46**) ⇒ own-NAT ≠ cohort/subtype anchor; within-gene
+share shifts recover canonical grip (miR-21→PTEN). **COUPLING/realized:** a WEAK set-level signal — real edges
+beat matched site-free decoys by **~0.017 ρ in the OPPOSITE-compartment stratum after composition-Δ**
+(gene-clustered p=2.7e-4; SAME n.s.). Own-NAT gives a stronger raw within-patient ρ than cohort (p=2.8e-6) **but a decoy control DEMOTES that advantage to SHARED-baseline** (decoys show the same own−cohort gap, MWU p=0.92) — the repression-specific signal is the real-vs-decoy gap alone, reference-independent. ⚠ Tiny
+(~1/6 single-gene SE), **NOT per-edge**, single cohort; **NAT≠healthy** ⇒ final malignant step only.
+rigor-auditor **A** (CONCERNS→re-scoped: null-referenced gap not −0.050/64%; retention median 0.61 not 38%).
+✅ **Phase 2/3 DONE (2026-07-18, rigor-auditor PASS, all 9 predictions pre-registered+confirmed).** Res-3 family:
+nonlinear pooling adds no coupling (`family_agg` −0.046 ≈ arm-level −0.050). **Owner-convergence** (Res-4): the
+realization-Shapley owner tracks the static-identity owner above a within-gene random-owner null (z=6.1) **but the
+coincidence is partly MECHANICAL (shared M vector), realization~dose is n.s. (z=1.6), and realization~static is not
+distinguishable from static~dose ⇒ the realization-SPECIFIC ownership content is NULL.** Retention×realization
+near-null. Genomic-context (P): host-coupled retain+realize more than intergenic (antisense exception noted).
+Hallmark (P, descriptive): metabolic/differentiation programs most realized. Res-5 within-family at chance (prereg
+null). Own-retaining 7% not clinically distinct (fragile purity hit, n=5). Details in MH-158's registry row.
 
 ---
 

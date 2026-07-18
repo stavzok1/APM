@@ -3,7 +3,7 @@
 > **GENERATED** by `analyses/ops/gen_architecture.py` — do NOT hand-edit. A materialized VIEW over the
 > one-home docs (registry, catalog, STATE_OF_PLAY): every finding is an `MH-##` (→ registry), every
 > module a path. Regenerate after tagging changes. Join key: `docs/derived/axis_assignment.tsv`.
-> Axes: **12** · findings mapped: **177** · modules tagged: **254**.
+> Axes: **12** · findings mapped: **180** · modules tagged: **257**.
 
 ## The learned model  `model`
 *what the estimator IS*
@@ -25,8 +25,8 @@
 *CN-dose causal identification (instrument, exclusion)*
 
 - **model:** CN-locus 2SLS instrument + Hansen-J over-ID + T1 screen. ⛔ instruments RETRACTED; DESIGN live (highest-value open item).
-- **status → verdict:** see [`STATE_OF_PLAY.md`](STATE_OF_PLAY.md) · **15** findings · **8** modules
-- **results (15):** [MH-99](DISCOVERY_REGISTRY.md) · [MH-91](DISCOVERY_REGISTRY.md) · [MH-89](DISCOVERY_REGISTRY.md) · [MH-87](DISCOVERY_REGISTRY.md) · [MH-4](DISCOVERY_REGISTRY.md) · [MH-5](DISCOVERY_REGISTRY.md) · [MH-28](DISCOVERY_REGISTRY.md) · [MH-29](DISCOVERY_REGISTRY.md) · [MH-43](DISCOVERY_REGISTRY.md) · [MH-119/120](DISCOVERY_REGISTRY.md) · [MH-126](DISCOVERY_REGISTRY.md) · [MH-124r](DISCOVERY_REGISTRY.md) · [MH-128c](DISCOVERY_REGISTRY.md) · [MH-129](DISCOVERY_REGISTRY.md) · [MH-133](DISCOVERY_REGISTRY.md)
+- **status → verdict:** see [`STATE_OF_PLAY.md`](STATE_OF_PLAY.md) · **17** findings · **8** modules
+- **results (17):** [MH-99](DISCOVERY_REGISTRY.md) · [MH-91](DISCOVERY_REGISTRY.md) · [MH-89](DISCOVERY_REGISTRY.md) · [MH-87](DISCOVERY_REGISTRY.md) · [MH-4](DISCOVERY_REGISTRY.md) · [MH-5](DISCOVERY_REGISTRY.md) · [MH-28](DISCOVERY_REGISTRY.md) · [MH-29](DISCOVERY_REGISTRY.md) · [MH-43](DISCOVERY_REGISTRY.md) · [MH-119/120](DISCOVERY_REGISTRY.md) · [MH-126](DISCOVERY_REGISTRY.md) · [MH-124r](DISCOVERY_REGISTRY.md) · [MH-128c](DISCOVERY_REGISTRY.md) · [MH-129](DISCOVERY_REGISTRY.md) · [MH-133](DISCOVERY_REGISTRY.md) · [MH-157](DISCOVERY_REGISTRY.md) · [MH-159](DISCOVERY_REGISTRY.md)
 - **analyses (8):** `analyses/cnv_locus/cn_dosage_attribution.py`, `analyses/cnv_locus/mirna_cnv_genome_maps.py`, `analyses/cnv_locus/mirna_cnv_subtype_depth.py`, `analyses/cnv_locus/mirna_locus_genome_dispersion.py`, `analyses/cnv_locus/mirna_locus_sv_overlap.py`, `eval/within_family_cn_iv.py`, `learned/instrument.py`, `mirna_locus_cnv.py`
 
 ## Attribution / identity  `attribution`
@@ -65,9 +65,9 @@
 *GTEx→NAT→tumor trajectory / state*
 
 - **model:** nested state model M_t = a·M_H + Δ; GTEx-healthy anchor (NAT is field-effect-contaminated).
-- **status → verdict:** see [`STATE_OF_PLAY.md`](STATE_OF_PLAY.md) · **16** findings · **17** modules
-- **results (16):** [MH-102](DISCOVERY_REGISTRY.md) · [MH-102b](DISCOVERY_REGISTRY.md) · [MH-102g](DISCOVERY_REGISTRY.md) · [MH-102d](DISCOVERY_REGISTRY.md) · [MH-79](DISCOVERY_REGISTRY.md) · [MH-72](DISCOVERY_REGISTRY.md) · [MH-70](DISCOVERY_REGISTRY.md) · [MH-66](DISCOVERY_REGISTRY.md) · [MH-64](DISCOVERY_REGISTRY.md) · [MH-9](DISCOVERY_REGISTRY.md) · [MH-27](DISCOVERY_REGISTRY.md) · [MH-64](DISCOVERY_REGISTRY.md) · [MH-58](DISCOVERY_REGISTRY.md) · [MH-50](DISCOVERY_REGISTRY.md) · [MH-132](DISCOVERY_REGISTRY.md) · [MH-137](DISCOVERY_REGISTRY.md)
-- **analyses (17):** `analyses/cross_state/cross_state_coupling.py`, `analyses/cross_state/cross_state_deep_dive.py`, `analyses/cross_state/cross_state_expression_panels.py`, `analyses/cross_state/cross_state_landscape.py`, `analyses/dcis_ev/dcis_ev_progression.py`, `analyses/edge_panels/edge_acquired_pressure_panels.py`, `analyses/edge_panels/edge_transition_pressure_panels.py`, `analyses/misc/mirna_comovement.py`, `analyses/misc/nat_tumor_umap.py`, `analyses/pressure_dev/pressure_prognostic_signature.py`, `analyses/pressure_dev/program_pressure_by_role.py`, `family_normal_reference.py`, `learned/ago_loading.py`, `learned/analyses/parallel_view.py` …
+- **status → verdict:** see [`STATE_OF_PLAY.md`](STATE_OF_PLAY.md) · **17** findings · **20** modules
+- **results (17):** [MH-102](DISCOVERY_REGISTRY.md) · [MH-102b](DISCOVERY_REGISTRY.md) · [MH-102g](DISCOVERY_REGISTRY.md) · [MH-102d](DISCOVERY_REGISTRY.md) · [MH-79](DISCOVERY_REGISTRY.md) · [MH-72](DISCOVERY_REGISTRY.md) · [MH-70](DISCOVERY_REGISTRY.md) · [MH-66](DISCOVERY_REGISTRY.md) · [MH-64](DISCOVERY_REGISTRY.md) · [MH-9](DISCOVERY_REGISTRY.md) · [MH-27](DISCOVERY_REGISTRY.md) · [MH-64](DISCOVERY_REGISTRY.md) · [MH-58](DISCOVERY_REGISTRY.md) · [MH-50](DISCOVERY_REGISTRY.md) · [MH-132](DISCOVERY_REGISTRY.md) · [MH-137](DISCOVERY_REGISTRY.md) · [MH-158](DISCOVERY_REGISTRY.md)
+- **analyses (20):** `analyses/cross_state/cross_state_coupling.py`, `analyses/cross_state/cross_state_deep_dive.py`, `analyses/cross_state/cross_state_expression_panels.py`, `analyses/cross_state/cross_state_landscape.py`, `analyses/dcis_ev/dcis_ev_progression.py`, `analyses/edge_panels/edge_acquired_pressure_panels.py`, `analyses/edge_panels/edge_transition_pressure_panels.py`, `analyses/misc/mirna_comovement.py`, `analyses/misc/nat_tumor_umap.py`, `analyses/pressure_dev/pressure_prognostic_signature.py`, `analyses/pressure_dev/program_pressure_by_role.py`, `family_normal_reference.py`, `learned/ago_loading.py`, `learned/analyses/parallel_view.py` …
 
 ## Subtype  `subtype`
 *PAM50-stratified coupling / who-is-pressured*
