@@ -1,6 +1,11 @@
 # Formulas reference — `mirna_hallmark`
 
-> ⚠ **THE ESTIMATOR THIS DOC SPECS IS RETIRED — read this before citing any number here (MH-115, 2026-07-13).**
+> ⚠ **SCOPE (2026-07-18): the PRESSURE-HEURISTIC CONSTRUCTION here (§1 backbone · §3 expression · §4 modes ·
+> §5 share) is RETIRED — but this doc is NOT wholly dead: §7 coupling ladder, §8 family aggregates, §11
+> state-trajectory (the LIVE `mirna_state_class` module), §2 evidence weight, and §2b harmonization home formulas
+> still in use. Cite BY SECTION and verify against `learned/` — do not treat the whole doc as a baseline record.**
+
+> ⚠ **THE PRESSURE-CONSTRUCTION ESTIMATOR SPECCED IN §1–5 IS RETIRED — read this before citing a §1–5 number (MH-115, 2026-07-13).**
 > The evidence-weighted **pressure heuristic** (`compute_gene_pressure`, the `edge_w × expr_mult` construction
 > below) was benchmarked against the learned β on the SAME design matrix, varying only the weight:
 > on CPTAC protein — abundance −0.006 (p=0.20) · **heuristic −0.008 (p=0.11)** · **learned β −0.036 (p=5.3e-13)**;

@@ -73,10 +73,19 @@ A script (`docs/gen_architecture.py` or `analyses/ops/`) that JOINS the linkage 
 registry + catalog + code and emits: (a) `ARCHITECTURE.md` (the canonical matrix, per-axis, all links);
 (b) an HTML artifact (rendered, navigable). Regenerable on demand ⇒ cannot drift.
 
-## Phase 3 — convergence (DEFERRED per decision 2)
-Once the view exists, audit the type-docs for role overlap (RATIONALE vs VALIDATION vs FRAMEWORK; METHODS vs
-FORMULAS) and collapse to a minimal non-redundant set. Safe only AFTER the map exists (docs that only provided
-cross-axis context can then collapse into pointers).
+## Phase 3 — convergence (STARTED 2026-07-18; MEASURED narrow)
+**Measured, not assumed (Jaccard of MH-references):** the model docs are **distinct, not redundant** —
+`RATIONALE`/`VALIDATION`/`FRAMEWORK`/`DISCOVERY_SYNTHESIS` each carry a load-bearing charter with low overlap;
+collapsing them would LOSE content. The "converge to non-redundant" goal was **largely already met** by the
+56→22 reorg + the map. The measurement's value was **preventing a destructive mass-merge.**
+Residual redundancy is narrow:
+- **`LEARNED_MODEL_METHODS` ∩ `_FORMAL` = 0.91** (plain/LaTeX twins). **KEPT** (user: formal-math need). Edit both.
+- **`METHODS`/`FORMULAS` retired-pressure spec** — user chose trim+archive, **BUT the safety check found they are
+  NOT wholly retired**: they home LIVE formulas (FORMULAS §7 coupling, §8 family, §11 `mirna_state_class`
+  state-trajectory, §2 evidence, §2b harmonization; METHODS §1/§2/§4). Wholesale archive would ORPHAN them.
+  **DONE:** re-scoped both banners to flag retirement **by section** (retired = FORMULAS §1–5 / METHODS §3).
+  ⬜ **OPEN (precise split):** extract the pure-pressure sections (FORMULAS §1,§3,§4,§5; METHODS §3) → archive,
+  keep the live sections in a trimmed doc. Needs per-section verification of current-relevance — do NOT rush.
 
 ## Phase 4 — maintenance
 The map regenerates from the Phase-1 tags. Discipline: every new MH-row and module gets its `axis:` tag at

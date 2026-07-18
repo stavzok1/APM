@@ -1,6 +1,10 @@
 # Methods — `mirna_hallmark`
 
-> ⚠ **THE ESTIMATOR THIS DOC SPECS IS RETIRED — read this before citing any number here (MH-115, 2026-07-13).**
+> ⚠ **SCOPE (2026-07-18): the PRESSURE construction (§3 miRNA pressure, §3.1–3.5) is RETIRED — but §1 Hallmark
+> universe, §2 miRTarBase edges, §2a evidence weight (feeds the ledger), §2b harmonization, and §4 AGO gate
+> home methods still in use. Cite BY SECTION; verify against `learned/`. Not a wholly-dead doc.**
+
+> ⚠ **THE PRESSURE-HEURISTIC ESTIMATOR SPECCED IN §3 IS RETIRED — read this before citing a §3 number (MH-115, 2026-07-13).**
 > The evidence-weighted **pressure heuristic** (`compute_gene_pressure`, the `edge_w × expr_mult` construction
 > below) was benchmarked against the learned β on the SAME design matrix, varying only the weight:
 > on CPTAC protein — abundance −0.006 (p=0.20) · **heuristic −0.008 (p=0.11)** · **learned β −0.036 (p=5.3e-13)**;
