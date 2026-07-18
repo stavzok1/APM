@@ -10,6 +10,10 @@ dose, realization, roles, host/genomic context, seed family, PAM50 subtype, arm 
 ⚠ DESCRIPTIVE, on annotations with known caveats: shift_class per-edge FDR null is 3–4× too narrow
 (LANDSCAPE_REPORT banner debt); role annotations incomplete (many 'unknown'). Read the PATTERNS (cluster
 co-movement, TSG-miR loss, convergence hubs), NOT per-edge significance. Reuses built outputs; cheap.
+⚠ CROSS-PLATFORM (GTEx TPM → TCGA RPM): TRUST the RANK axis (dHT/grank percentile deltas) + Shapley over the QN
+magnitude bridge (log2fc/arm_lfc_HLY_TUM_QN) — QN is correct+settled but a softer assumption. The healthy→tumour
+'acquired' calls lead with rank; QN-magnitude-only gainers are the lower-confidence layer. The NAT→tumour paired
+dose/realization (①–④) is TCGA same-platform ⇒ NOT a QN concern.
 
   python -m mirna_hallmark.analyses.progression.landscape_characterization
 """

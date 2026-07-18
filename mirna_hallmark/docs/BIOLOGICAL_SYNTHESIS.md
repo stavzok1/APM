@@ -542,10 +542,15 @@ subtype_tau>0.85 Basal) — but magnitude is small (rank-only), so a lineage fla
 separate program. (Complements §5's bulk PAM50 pressure view.)
 
 **⑤ MOST trajectory change is a pre-malignant FIELD EFFECT, not tumour-specific acquisition.** Per-arm trajectory
-census (`mirna_state_class.primary_class`): of the arms that move, **field-effect 91** (58 gain + 33 loss — already
-changed in histologically-normal NAT) vs **truly tumour-acquired only 12** (miR-449a/b cluster, miR-802, miR-33b);
-plus 467 stable. And acquisition is **magnitude, not rank** (141 magnitude-only vs 69 rank-only vs 32 both) — arms
-*surge in abundance* without changing rank order. ⇒ the malignant miRNA program is largely laid down in the field.
+census (`mirna_state_class.primary_class`, built on within-state percentile-**rank** deltas dHN/dNT/dHT — the
+cross-platform-robust axis, trusted over QN magnitude): of the arms that move, **field-effect 91** (58 gain + 33
+loss — already changed in histologically-normal NAT) vs **truly tumour-acquired only 12** (miR-449a/b cluster,
+miR-802, miR-33b); plus 467 stable. ⇒ the malignant miRNA program is largely laid down in the field.
+**⚠ RANK vs QN-magnitude (trust the rank axis):** the confident acquired-gainer set is the **rank-supported 101**
+(69 rank-only dHT>0.15 + 32 rank+magnitude); a further **141 are magnitude-only**, i.e. defined *solely* by the
+QN'd `log2fc_tumor_vs_healthy` — the cross-platform bridge is a softer assumption than ranks, so these are treated
+as the lower-confidence supporting layer, not headlined. (The paired NAT→tumour dose used in ①–④ is TCGA-only,
+same-platform, so not a QN concern at all.)
 
 **⑥ REGULATORY HANDOFFS — 333 genes switch dominant regulator healthy→tumour**, typically an oncomiR taking the
 seat from the healthy one (mostly `lost_repression`): **PTEN miR-148a→miR-21**, AGO2 miR-99a→miR-375, HIF1A
