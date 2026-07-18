@@ -541,10 +541,31 @@ E2F3/IGF1R/RET, miR-205→ERBB2/HER2.
 subtype_tau>0.85 Basal) — but magnitude is small (rank-only), so a lineage flavour on the shared trajectory, not a
 separate program. (Complements §5's bulk PAM50 pressure view.)
 
+**⑤ MOST trajectory change is a pre-malignant FIELD EFFECT, not tumour-specific acquisition.** Per-arm trajectory
+census (`mirna_state_class.primary_class`): of the arms that move, **field-effect 91** (58 gain + 33 loss — already
+changed in histologically-normal NAT) vs **truly tumour-acquired only 12** (miR-449a/b cluster, miR-802, miR-33b);
+plus 467 stable. And acquisition is **magnitude, not rank** (141 magnitude-only vs 69 rank-only vs 32 both) — arms
+*surge in abundance* without changing rank order. ⇒ the malignant miRNA program is largely laid down in the field.
+
+**⑥ REGULATORY HANDOFFS — 333 genes switch dominant regulator healthy→tumour**, typically an oncomiR taking the
+seat from the healthy one (mostly `lost_repression`): **PTEN miR-148a→miR-21**, AGO2 miR-99a→miR-375, HIF1A
+miR-199a→miR-30a, MYB miR-155→miR-16, ISCU miR-210→miR-21, STAT4 miR-200a→miR-141.
+
+**⑦ THE FUNCTIONAL 2×2 (acquired dose × realized) — BUFFERED dominates.** 455 genes acquire dose but do NOT realize
+(mean ρ +0.017) vs **284 DRIVERS** (acquired + realized, mean −0.190: ESR1, SMAD3, BCL2, MAP3K8, FBP1), 149 PRE-SET,
+363 inert. Acquisition ≠ realization at scale. ⚠ Notable: **PTEN — the 28-edge convergence supersink — is itself
+BUFFERED** at the gene-aggregate level (−0.070): massive convergent pressure, weak net realization (the PTEN-dosage
+robustness story; convergence ≠ effective repression).
+
+**⑧ SUBTYPE-SPECIFIC CLUSTER ACQUISITION.** Basal broadest (20 subtype-specific gainers); **LumA acquires C19MC**
+(chr19 miR-524/525/526); **Her2 acquires miR-371~373** (miR-371a/302b); LumB miR-325/124. Distinct clusters per lineage.
+
 **Bottom line:** the malignant miRNA trajectory is *cluster-coordinated* (oncomiR polycistrons acquired, the 14q32
-TS-cluster and miR-30/let-7 lost, as co-transcribed units) and *convergent* (a handful of cancer genes — PTEN above
-all — absorb pressure from many independent families). This is textbook-concordant (miR-200/ZEB1, miR-17~92, 14q32,
-miR-21→PTEN) and is a *description*, not a null-tested claim.
+TS-cluster and miR-30/let-7 lost, as co-transcribed units), *convergent* (a handful of cancer genes — PTEN above
+all — absorb pressure from many independent families), *field-established* (most change precedes the tumour),
+*rewiring* (333 dominant-regulator handoffs), and mostly *buffered* (dose acquired ≫ dose realized). This is
+textbook-concordant (miR-200/ZEB1, miR-17~92, 14q32, miR-21→PTEN, C19MC/Her2-miR-371) and is a *description*, not a
+null-tested claim.
 
 ## Literature standing — one-line summary
 

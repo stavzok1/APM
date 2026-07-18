@@ -111,10 +111,76 @@ def driver_loser_rosters(ec: pd.DataFrame):
     return drv, los
 
 
+# --------------------------------------------------------------------------- #
+# WIDENING threads (2026-07-18) — more descriptive dimensions across the landscape.
+def trajectory_archetypes(sc: pd.DataFrame) -> pd.DataFrame:
+    """Census of per-arm TRAJECTORY archetypes (`primary_class` = progressive/tumor_acquired/field_effect × gain/loss,
+    + `acquired_axis` = rank vs magnitude) with named exemplars — the miRNA-level trajectory taxonomy."""
+    rows = []
+    for cls, s in sc.groupby("primary_class"):
+        ex = s.reindex(s.get("dHT", pd.Series(0, index=s.index)).abs().sort_values(ascending=False).index)
+        rows.append({"primary_class": cls, "n_arms": len(s),
+                     "frac_acquired_gainer": round(float((s.get("acquired_gainer") == True).mean()), 2) if "acquired_gainer" in s else np.nan,
+                     "exemplars": ", ".join(ex["arm"].str.replace("hsa-", "", regex=False).head(5)) if "arm" in ex else ""})
+    df = pd.DataFrame(rows).sort_values("n_arms", ascending=False)
+    if "acquired_axis" in sc:
+        df.attrs["axis_census"] = sc[sc.get("acquired_gainer") == True]["acquired_axis"].value_counts().to_dict()
+    df.to_csv(OUT / "landscape_trajectory_archetypes.tsv", sep="\t", index=False)
+    return df
+
+
+def regulatory_handoffs(gc: pd.DataFrame) -> pd.DataFrame:
+    """Genes whose DOMINANT regulator SWITCHES across states (healthy→tumour) — named handoffs (who takes over)."""
+    h = gc[gc.regulatory_handoff == True].dropna(subset=["dominant_HLY", "dominant_TUM"]).copy()
+    for c in ["dominant_HLY", "dominant_NAT", "dominant_TUM"]:
+        h[c] = h[c].str.replace("hsa-", "", regex=False)
+    h["handoff"] = h["dominant_HLY"] + " → " + h["dominant_TUM"]
+    keep = [c for c in ["gene", "dominant_HLY", "dominant_NAT", "dominant_TUM", "realized_rho_adj",
+                        "acquired_vs_nat", "gene_repression_class"] if c in h.columns]
+    out = h[keep].sort_values("acquired_vs_nat", ascending=False)
+    out.to_csv(OUT / "landscape_regulatory_handoffs.tsv", sep="\t", index=False)
+    return out
+
+
+def dose_realization_quadrants(gc: pd.DataFrame) -> pd.DataFrame:
+    """The FUNCTIONAL 2×2 — gene acquired dose (acquired_vs_nat) × realized (realized_rho_adj<−0.1): DRIVER
+    (acquired+realized) · BUFFERED (acquired+unrealized) · PRE-SET (not-acquired+realized) · INERT."""
+    g = gc.dropna(subset=["acquired_vs_nat", "realized_rho_adj"]).copy()
+    acq = g.acquired_vs_nat > 0; real = g.realized_rho_adj < -0.1
+    g["quadrant"] = np.select([acq & real, acq & ~real, ~acq & real], ["DRIVER", "BUFFERED", "PRE-SET"], "INERT")
+    cen = g.groupby("quadrant").agg(n_genes=("gene", "size"), mean_dose=("acquired_vs_nat", "mean"),
+                                    mean_realization=("realized_rho_adj", "mean"),
+                                    frac_net_repressed=("gene_net_repressed_tumor", "mean")).round(3)
+    g[["gene", "quadrant", "acquired_vs_nat", "realized_rho_adj", "n_regulators", "gene_net_repressed_tumor"]].to_csv(
+        OUT / "landscape_dose_realization_quadrants.tsv", sep="\t", index=False)
+    cen.attrs["drivers_top"] = ", ".join(g[g.quadrant == "DRIVER"].sort_values("realized_rho_adj").gene.head(10))
+    cen.attrs["buffered_top"] = ", ".join(g[g.quadrant == "BUFFERED"].sort_values("acquired_vs_nat", ascending=False).gene.head(10))
+    return cen
+
+
+def subtype_driver_rosters(sc: pd.DataFrame) -> pd.DataFrame:
+    """Per-PAM50-subtype ACQUIRED drivers — the top subtype-specific gainers per dominant_subtype."""
+    if "dominant_subtype" not in sc:
+        return pd.DataFrame()
+    g = sc[(sc.get("acquired_gainer") == True) & (sc.subtype_tau > 0.5)].copy()
+    g["arm"] = g["arm"].str.replace("hsa-", "", regex=False)
+    rows = []
+    for st, s in g.groupby("dominant_subtype"):
+        top = s.sort_values("subtype_tau", ascending=False).head(6)
+        rows.append({"subtype": st, "n_specific_gainers": len(s),
+                     "top_arms": ", ".join(top["arm"] + "(" + top["subtype_tau"].round(2).astype(str) + ")")})
+    df = pd.DataFrame(rows).sort_values("n_specific_gainers", ascending=False)
+    df.to_csv(OUT / "landscape_subtype_driver_rosters.tsv", sep="\t", index=False)
+    return df
+
+
 def characterize():
     ec, sc = _load()
+    gc = pd.read_csv(OUT / "progression_gene_card.tsv", sep="\t")
     hubs = convergence_hubs(ec); clusters = cluster_units(ec)
     subt = subtype_trajectories(sc); drv, los = driver_loser_rosters(ec)
+    arch = trajectory_archetypes(sc); hand = regulatory_handoffs(gc)
+    quad = dose_realization_quadrants(gc); subr = subtype_driver_rosters(sc)
     print("=" * 100)
     print("PROGRESSION LANDSCAPE — BIOLOGICAL CHARACTERIZATION (descriptive; annotation caveats apply)")
     print("=" * 100)
@@ -129,8 +195,21 @@ def characterize():
     print(drv.head(14).to_string(index=False))
     print("\n[4b] LOSER ROSTER — silenced TSG-miRs de-repressing oncogenes:")
     print(los.head(12).to_string(index=False))
-    print(f"\n-> {OUT}/ : landscape_{{convergence_hubs, cluster_units, subtype_trajectories, driver_roster, loser_roster}}.tsv")
-    return hubs, clusters, subt, drv, los
+    print("\n[5] TRAJECTORY ARCHETYPES — per-arm trajectory taxonomy (primary_class):")
+    print(arch.to_string(index=False))
+    print(f"    acquired-gainer axis census (rank vs magnitude): {arch.attrs.get('axis_census')}")
+    print("\n[6] REGULATORY HANDOFFS — genes whose dominant regulator SWITCHES healthy→tumour (top by acquired pressure):")
+    print(hand.head(14).to_string(index=False))
+    print(f"    ({len(hand)} genes switch dominant regulator across states)")
+    print("\n[7] FUNCTIONAL 2×2 — acquired dose × realized:")
+    print(quad.to_string())
+    print(f"    DRIVER (acquired+realized): {quad.attrs.get('drivers_top')}")
+    print(f"    BUFFERED (acquired+unrealized): {quad.attrs.get('buffered_top')}")
+    print("\n[8] PER-SUBTYPE ACQUIRED DRIVERS:")
+    print(subr.to_string(index=False))
+    print(f"\n-> {OUT}/ : landscape_{{convergence_hubs, cluster_units, subtype_trajectories, driver_roster, loser_roster, "
+          f"trajectory_archetypes, regulatory_handoffs, dose_realization_quadrants, subtype_driver_rosters}}.tsv")
+    return hubs, clusters, subt, drv, los, arch, hand, quad, subr
 
 
 if __name__ == "__main__":
