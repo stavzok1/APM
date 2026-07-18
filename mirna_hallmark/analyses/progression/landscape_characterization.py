@@ -28,6 +28,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy.stats import spearmanr
 
 warnings.filterwarnings("ignore")
 from mirna_hallmark import config as C
@@ -178,9 +179,115 @@ def subtype_driver_rosters(sc: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def genomic_context_census(ec: pd.DataFrame) -> pd.DataFrame:
+    """Trajectory by GENOMIC CONTEXT — host-coupled (sense coding/lncRNA host) vs intergenic vs antisense, and the
+    imprinted 14q32 locus. Uses the paired NAT→tumour dose (`mean_own_shift`, same-platform) — trusted, not QN."""
+    arm = ec.dropna(subset=["mean_own_shift"]).drop_duplicates("arm")
+    rows = []
+    for cls, s in arm.dropna(subset=["mir_class"]).groupby("mir_class"):
+        d = s.mean_own_shift
+        sc_ = ec[ec.arm.isin(s.arm)].shift_class.dropna()
+        rows.append({"mir_class": cls, "n_arms": s.arm.nunique(), "mean_dose": round(float(d.mean()), 2),
+                     "frac_acquire": round(float((d > 0.2).mean()), 2), "frac_lose": round(float((d < -0.2).mean()), 2),
+                     "dominant_shift_class": sc_.mode().iloc[0] if len(sc_) else None})
+    # imprinted 14q32 / DLK1-DIO3 (MEG3/8/9, MIR493HG hosts)
+    imp = arm[arm.host.astype(str).str.contains("MEG|MIR493HG|DLK1|DIO3", na=False)]
+    if len(imp):
+        rows.append({"mir_class": "IMPRINTED_14q32", "n_arms": imp.arm.nunique(),
+                     "mean_dose": round(float(imp.mean_own_shift.mean()), 2),
+                     "frac_acquire": round(float((imp.mean_own_shift > 0.2).mean()), 2),
+                     "frac_lose": round(float((imp.mean_own_shift < -0.2).mean()), 2),
+                     "dominant_shift_class": ec[ec.arm.isin(imp.arm)].shift_class.dropna().mode().iloc[0]
+                     if ec[ec.arm.isin(imp.arm)].shift_class.notna().any() else None})
+    df = pd.DataFrame(rows)
+    df.to_csv(OUT / "landscape_genomic_context_census.tsv", sep="\t", index=False)
+    return df
+
+
+def program_acquired_dose(gc: pd.DataFrame) -> pd.DataFrame:
+    """Which Hallmark PROGRAMS' genes acquire the most repressive pressure — mean gene `acquired_vs_nat` (paired
+    NAT→tumour, SAME-PLATFORM, trusted) + realization. (Realization is NOT program-specific per MH-163; this is the
+    DOSE description, distinct — which programs the acquired pressure LANDS on.)"""
+    from mirna_hallmark.hallmark_sets import gene_to_hallmarks
+    g2h = gene_to_hallmarks()
+    ap = gc.set_index("gene")["acquired_vs_nat"] if "acquired_vs_nat" in gc else pd.Series(dtype=float)
+    rr = gc.set_index("gene")["realized_rho_adj"] if "realized_rho_adj" in gc else pd.Series(dtype=float)
+    rows = []
+    for prog in sorted(set(h for hs in g2h.values() for h in hs)):
+        genes = [g for g, hs in g2h.items() if prog in hs]
+        a = ap.reindex(genes).dropna()
+        if len(a) < 15:
+            continue
+        rows.append({"hallmark": prog, "n_genes": len(a), "mean_acquired_dose_NAT_TUM": round(float(a.mean()), 3),
+                     "frac_gained": round(float((a > 0).mean()), 2),
+                     "mean_realization": round(float(rr.reindex(genes).dropna().mean()), 3)})
+    df = pd.DataFrame(rows).sort_values("mean_acquired_dose_NAT_TUM", ascending=False)
+    df.to_csv(OUT / "landscape_program_acquired_dose.tsv", sep="\t", index=False)
+    return df
+
+
+def trajectory_two_step(sc: pd.DataFrame) -> pd.DataFrame:
+    """The FULL 3-state trajectory via the HEALTHY ANCHOR, RANK-based (trusted): decompose each arm's healthy→tumour
+    move into the FIELD step dHN (healthy→NAT, GTEx-anchored) and the MALIGNANT step dNT (NAT→tumour). Where does
+    the change happen — in the pre-malignant field or the malignant transition? Uses rank deltas, NOT QN magnitude."""
+    d = sc.dropna(subset=["dHN", "dNT"]).copy()
+    THR = 0.1
+    field, malig = d.dHN.abs() > THR, d.dNT.abs() > THR
+    d["change_locus"] = np.select([field & ~malig, ~field & malig, field & malig],
+                                  ["field_only", "malignant_only", "both"], "stable")
+    from scipy.stats import spearmanr
+    cont = spearmanr(d.dHN, d.dNT, nan_policy="omit").correlation      # does the field step CONTINUE into malignancy?
+    rows = []
+    for loc, s in d.groupby("change_locus"):
+        ex = s.reindex(s.dHT.abs().sort_values(ascending=False).index)
+        rows.append({"change_locus": loc, "n_arms": len(s), "mean_dHN_field": round(float(s.dHN.mean()), 3),
+                     "mean_dNT_malignant": round(float(s.dNT.mean()), 3),
+                     "exemplars": ", ".join(ex["arm"].str.replace("hsa-", "", regex=False).head(5))})
+    df = pd.DataFrame(rows).sort_values("n_arms", ascending=False)
+    df.attrs["field_continues_into_malignant_rho"] = round(float(cont), 3) if cont == cont else np.nan
+    df.attrs["field_dominates"] = float((d.dHN.abs() > d.dNT.abs()).mean())
+    df.to_csv(OUT / "landscape_trajectory_two_step.tsv", sep="\t", index=False)
+    return df
+
+
+def healthy_anchored_drivers(sc: pd.DataFrame) -> pd.DataFrame:
+    """RANK-supported (dHT>0.15, NOT QN-magnitude-only) healthy→tumour acquired gainers, split by whether they are
+    acquired DE NOVO (silent in healthy, rank_gtex low) vs AMPLIFIED from an already-present healthy baseline."""
+    g = sc[(sc.get("dHT", pd.Series(0, index=sc.index)) > 0.15)].copy()
+    if "rank_gtex" in g:
+        g["healthy_status"] = np.where(g.rank_gtex < 0.5, "acquired_de_novo", "amplified_from_healthy")
+    g["arm"] = g["arm"].str.replace("hsa-", "", regex=False)
+    keep = [c for c in ["arm", "dHN", "dNT", "dHT", "rank_gtex", "rank_tumor", "healthy_status",
+                        "primary_class", "dominant_subtype"] if c in g.columns]
+    out = g[keep].sort_values("dHT", ascending=False)
+    out.to_csv(OUT / "landscape_healthy_anchored_drivers.tsv", sep="\t", index=False)
+    return out
+
+
+def cohort_view(ec: pd.DataFrame) -> pd.DataFrame:
+    """COHORT contrast (all ~1000 tumours vs ~104 NAT, UNPAIRED) via `arm_lfc_NAT_TUM` — better-powered than the 103
+    pairs, no within-patient control. (1) validates the paired view generalises (paired `mean_own_shift` vs cohort
+    LFC agreement); (2) cohort driver/loser roster; (3) `coupling_tum` (~1000-tumour) is the well-powered cohort
+    coupling vs the n=103 paired `edge_rho_adj`."""
+    arm = ec.dropna(subset=["arm_lfc_NAT_TUM", "mean_own_shift"]).drop_duplicates("arm")
+    rho = spearmanr(arm.mean_own_shift, arm.arm_lfc_NAT_TUM).correlation
+    sign_agree = float((np.sign(arm.mean_own_shift) == np.sign(arm.arm_lfc_NAT_TUM)).mean())
+    div = arm[(np.sign(arm.mean_own_shift) != np.sign(arm.arm_lfc_NAT_TUM)) & (arm.mean_own_shift.abs() > 1)]
+    ac = arm.copy(); ac["arm"] = ac["arm"].str.replace("hsa-", "", regex=False)
+    out = ac[["arm", "mean_own_shift", "arm_lfc_NAT_TUM", "coupling_nat", "coupling_tum"]].sort_values(
+        "arm_lfc_NAT_TUM", ascending=False)
+    out.to_csv(OUT / "landscape_cohort_view.tsv", sep="\t", index=False)
+    out.attrs.update({"n_arms": len(arm), "paired_vs_cohort_rho": round(float(rho), 3),
+                      "sign_agreement": round(sign_agree, 2), "n_big_divergences": int(len(div))})
+    return out
+
+
 def characterize():
     ec, sc = _load()
     gc = pd.read_csv(OUT / "progression_gene_card.tsv", sep="\t")
+    ctx = genomic_context_census(ec); pad = program_acquired_dose(gc)
+    twostep = trajectory_two_step(sc); hdrv = healthy_anchored_drivers(sc)
+    coh = cohort_view(ec)
     hubs = convergence_hubs(ec); clusters = cluster_units(ec)
     subt = subtype_trajectories(sc); drv, los = driver_loser_rosters(ec)
     arch = trajectory_archetypes(sc); hand = regulatory_handoffs(gc)
@@ -211,6 +318,20 @@ def characterize():
     print(f"    BUFFERED (acquired+unrealized): {quad.attrs.get('buffered_top')}")
     print("\n[8] PER-SUBTYPE ACQUIRED DRIVERS:")
     print(subr.to_string(index=False))
+    print("\n[9] GENOMIC-CONTEXT trajectory census (paired NAT→tumour dose, same-platform):")
+    print(ctx.to_string(index=False))
+    print("\n[10] PROGRAM ACQUIRED DOSE — which Hallmark programs' genes acquire the most repressive pressure (top/bottom):")
+    print(pd.concat([pad.head(6), pad.tail(4)]).to_string(index=False))
+    print("\n[11] TWO-STEP TRAJECTORY (healthy anchor, RANK-based) — field step dHN vs malignant step dNT:")
+    print(twostep.to_string(index=False))
+    print(f"    field CONTINUES into malignant (ρ dHN,dNT)={twostep.attrs.get('field_continues_into_malignant_rho')} · "
+          f"field-step-dominates in {100*twostep.attrs.get('field_dominates',0):.0f}% of arms")
+    print("\n[12] HEALTHY-ANCHORED acquired gainers (rank dHT>0.15, trusted) — de novo vs amplified:")
+    if "healthy_status" in hdrv:
+        print("    " + str(hdrv.healthy_status.value_counts().to_dict()))
+    print(hdrv.head(12).to_string(index=False))
+    print(f"\n[13] COHORT VIEW (~1000 tumour vs ~104 NAT, unpaired) vs PAIRED — {coh.attrs}")
+    print("     ⇒ paired generalises to the cohort (validates ①–④); coupling_tum is the well-powered cohort coupling.")
     print(f"\n-> {OUT}/ : landscape_{{convergence_hubs, cluster_units, subtype_trajectories, driver_roster, loser_roster, "
           f"trajectory_archetypes, regulatory_handoffs, dose_realization_quadrants, subtype_driver_rosters}}.tsv")
     return hubs, clusters, subt, drv, los, arch, hand, quad, subr

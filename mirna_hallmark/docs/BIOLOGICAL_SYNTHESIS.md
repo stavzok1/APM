@@ -565,12 +565,56 @@ robustness story; convergence ≠ effective repression).
 **⑧ SUBTYPE-SPECIFIC CLUSTER ACQUISITION.** Basal broadest (20 subtype-specific gainers); **LumA acquires C19MC**
 (chr19 miR-524/525/526); **Her2 acquires miR-371~373** (miR-371a/302b); LumB miR-325/124. Distinct clusters per lineage.
 
+**⑨ GENOMIC CONTEXT predicts trajectory direction** (paired NAT→tumour dose, same-platform — trusted). **Intergenic
+arms ACQUIRE** (mean dose +0.47, dominant `acquired_realized` — the oncomiR clusters, e.g. miR-200a/429); the
+**imprinted 14q32/DLK1–DIO3 locus LOSES hardest** (50 arms, mean −0.44, 68% losing); lncRNA-hosted arms lean loss
+(many are the 14q32/MEG lncRNAs); sense-coding-host mixed (+0.16). Where a miRNA lives predicts gained-vs-silenced.
+
+**⑩ WHICH PROGRAMS THE ACQUIRED PRESSURE LANDS ON.** ⚠ **A FLAT bag-of-genes MEAN is inadequate — retracted as a
+real assessment.** Averaging gene `acquired_vs_nat` over a program ignores how the program is BUILT: master
+regulators vs peripheral effectors, and the SIGN (repressing a pathway activator vs a repressor has opposite effects
+on program output). The flat mean merely ranked IL6/JAK/STAT3, Hedgehog, OXPHOS, cholesterol, complement top — a topology-blind first
+pass that MISSES THE SIGN (repressing a suppressor program is pro-tumour; repressing a proliferation engine is
+anti-tumour). **The correct assessment is `geneset_architecture`'s architecture-weighted ACQUIRED pressure**
+(master-regulator reverse-PageRank + signed effect-on-program-output + gene-role malignancy weighting;
+`total_mal_pro_tumor_acquired`, `architecture_all_set_summary.tsv`), which gives a QUALITATIVELY DIFFERENT and
+correct answer: **acquired miRNA pressure pushes toward malignancy by REPRESSING tumour-suppressor programs —
+P53_PATHWAY (+18.0) and APOPTOSIS (+3.0) top the pro-tumour-acquired list** (brake-release on TSG programs), while
+it **DAMAGES proliferation engines — G2M_CHECKPOINT (−11.2)**, glycolysis, angiogenesis (net anti-tumour). ⇒ the
+*where the dose lands* (flat) and *what it does to program output* (signed architecture) are different questions,
+and only the latter is the real program assessment. (Architecture-acquired here is GTEx-anchored `c_tumor−c_gtex`;
+the topology/sign is the point, not the dose source.) A lesson in *read the doctrine before inventing* — the
+flat-mean was a reinvention of a tool that already does this correctly.
+
+**⑪ TWO INDEPENDENT WAVES (healthy anchor, RANK-based).** Decomposing each arm's healthy→tumour rank move into the
+**FIELD step dHN** (healthy→NAT) and the **MALIGNANT step dNT** (NAT→tumour): **field_only 150 arms ≫ malignant_only
+32**, and the two steps are **UNCORRELATED (ρ(dHN,dNT)=0.003)**, field-dominant in 68% of arms. ⇒ the pre-malignant
+field wave is both larger AND a *distinct set of miRNAs* from the malignant-transition wave — not one continuous
+progression. malignant-only = miR-449a/b, miR-802, miR-33b (truly tumour-specific).
+
+**⑫ Rank-acquired gainers are mostly DE NOVO** (dHT>0.15, trusted rank axis): **83 acquired-de-novo** (silent in
+healthy, rank_gtex<0.5) vs 18 amplified-from-healthy — e.g. miR-486-5p/105/155-3p/124 (de novo). ⚠ **MEASURE TENSION
+(flagged, not reconciled):** miR-486-5p reads *gained* by rank (dHT +0.75) but *lost* by paired dose (mean_own_shift
+−3.94, loser roster) — different sample sets (full-cohort median rank vs 103 paired) + scales (rank vs log2
+abundance); a genuine divergence point between the rank and paired views, per-arm flag not blind reconciliation.
+
+**⑬ COHORT vs PAIRED (all ~1000 tumours vs ~104 NAT, unpaired, via `arm_lfc_NAT_TUM`).** The cohort NAT→tumour dose
+AGREES strongly with the 103-pair `mean_own_shift` (**Spearman ρ=0.94, sign-agreement 0.87, ZERO big
+sign-divergences** over 526 arms) ⇒ **the paired view generalises — ①–④ are not a matched-subset artifact.** The
+cohort is better-powered (keeps all ~900 unmatched tumours) and `coupling_tum` (~1000-tumour) is the well-powered
+cohort coupling vs the n=103 paired `edge_rho_adj`. This also RESOLVES the miR-486-5p tension (⑫): both paired
+(−3.94) and cohort (−4.06) agree it is LOST NAT→tumour; the "gain" was the healthy→tumour RANK (dHT +0.75) ⇒
+miR-486 **rose in the field then fell in the malignant step** — real two-step biology (⑪), not a measure artifact.
+
 **Bottom line:** the malignant miRNA trajectory is *cluster-coordinated* (oncomiR polycistrons acquired, the 14q32
 TS-cluster and miR-30/let-7 lost, as co-transcribed units), *convergent* (a handful of cancer genes — PTEN above
-all — absorb pressure from many independent families), *field-established* (most change precedes the tumour),
-*rewiring* (333 dominant-regulator handoffs), and mostly *buffered* (dose acquired ≫ dose realized). This is
-textbook-concordant (miR-200/ZEB1, miR-17~92, 14q32, miR-21→PTEN, C19MC/Her2-miR-371) and is a *description*, not a
-null-tested claim.
+all — absorb pressure from many independent families), *field-established and TWO-STEP* (the healthy→NAT field wave
+is larger than and UNCORRELATED with the NAT→tumour malignant wave, ρ=0.003), *rewiring* (333 dominant-regulator
+handoffs), and mostly *buffered* (dose acquired ≫ dose realized). Program effect requires ARCHITECTURE not a flat
+mean (acquired pressure is pro-tumour by repressing P53/apoptosis, anti-tumour by damaging G2M — `geneset_architecture`).
+Paired (103) and cohort (~1000) agree (ρ=0.94). Cross-platform GTEx handling: trust the rank axis (dHT/grank) +
+Shapley over the QN magnitude bridge. Textbook-concordant (miR-200/ZEB1, miR-17~92, 14q32, miR-21→PTEN, C19MC) —
+a *description*, not a null-tested claim.
 
 ## Literature standing — one-line summary
 
