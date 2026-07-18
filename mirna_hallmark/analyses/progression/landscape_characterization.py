@@ -282,12 +282,72 @@ def cohort_view(ec: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+_CN = Path(C.OUTPUT_ROOT) / "mirna_locus_cnv"
+
+
+def _norm(a):
+    return str(a).replace("hsa-", "").lower()
+
+
+def direct_gtex_tumor(sc: pd.DataFrame) -> pd.DataFrame:
+    """DIRECT healthy(GTEx)→tumour comparison via dHT rank (bypasses the field-contaminated NAT intermediate — the
+    'what's different in cancer vs TRULY healthy' question). Is the direct change field-mediated (tracks dHN) or
+    malignant (tracks dNT)? Named direct gainers/losers."""
+    d = sc.dropna(subset=["dHT"]).copy()
+    d["arm"] = d["arm"].str.replace("hsa-", "", regex=False)
+    has = d.dropna(subset=["dHN", "dNT"])
+    cf = spearmanr(has.dHT, has.dHN, nan_policy="omit").correlation
+    cm = spearmanr(has.dHT, has.dNT, nan_policy="omit").correlation
+    top = d.sort_values("dHT", ascending=False)
+    out = top[[c for c in ["arm", "dHT", "dHN", "dNT", "primary_class", "dominant_subtype"] if c in top.columns]]
+    out.to_csv(OUT / "landscape_direct_gtex_tumor.tsv", sep="\t", index=False)
+    out.attrs.update({"dHT_tracks_field_dHN_rho": round(float(cf), 3), "dHT_tracks_malignant_dNT_rho": round(float(cm), 3),
+                      "n_direct_gain": int((d.dHT > 0.15).sum()), "n_direct_lose": int((d.dHT < -0.15).sum())})
+    return out
+
+
+def cn_layer(ec: pd.DataFrame) -> pd.DataFrame:
+    """Is ACQUISITION copy-number-driven? Join per-arm cohort tumour CN + CN↔expr concordance with acquired dose
+    (`arm_lfc_NAT_TUM`, cohort). Correlate; flag CN-driven acquirers (e.g. miR-17~92 at 13q31)."""
+    cn = pd.read_csv(_CN / "mirna_cnv_by_stratum.tsv", sep="\t")
+    cn = cn[(cn.entity_level == "arm") & (cn.stratum == "cohort_all")].copy()
+    cn["k"] = cn.entity_label.map(_norm); cn_med = cn.groupby("k")["median_copy_number"].mean()
+    conc = pd.read_csv(_CN / "mirna_cnv_expr_concordance.tsv", sep="\t")
+    conc["k"] = conc.arm.map(_norm); cn_drv = conc.set_index("k")["partial_rho"]
+    arm = ec.dropna(subset=["arm_lfc_NAT_TUM"]).drop_duplicates("arm").copy()
+    arm["k"] = arm.arm.map(_norm)
+    arm["tumour_cn"] = arm.k.map(cn_med); arm["cn_expr_partial_rho"] = arm.k.map(cn_drv)
+    arm["arm2"] = arm.arm.str.replace("hsa-", "", regex=False)
+    m = arm.dropna(subset=["tumour_cn"])
+    rho_dose_cn = spearmanr(m.arm_lfc_NAT_TUM, m.tumour_cn, nan_policy="omit").correlation
+    out = m[["arm2", "arm_lfc_NAT_TUM", "tumour_cn", "cn_expr_partial_rho"]].sort_values("tumour_cn", ascending=False)
+    out.to_csv(OUT / "landscape_cn_layer.tsv", sep="\t", index=False)
+    out.attrs.update({"n_arms": len(m), "rho_acquired_dose_vs_tumourCN": round(float(rho_dose_cn), 3),
+                      "median_cn_expr_partial_rho": round(float(conc.partial_rho.median()), 3)})
+    return out
+
+
+def ago_layer(ec: pd.DataFrame) -> pd.DataFrame:
+    """Is acquired pressure REALIZED where RISC/AGO loading is present? Stratify edge realization (`edge_rho_adj`)
+    by `ago_loading` tertile, among ACQUIRED-dose edges (mean_own_shift>0)."""
+    e = ec.dropna(subset=["edge_rho_adj", "ago_loading", "mean_own_shift"]).copy()
+    acq = e[e.mean_own_shift > 0].copy()
+    acq["ago_tertile"] = pd.cut(acq.ago_loading, [-0.01, 0.33, 0.67, 1.01], labels=["low", "mid", "high"])
+    out = acq.groupby("ago_tertile").agg(n_edges=("edge_rho_adj", "size"),
+                                         mean_realization=("edge_rho_adj", "mean"),
+                                         frac_realized=("edge_rho_adj", lambda s: float((s < 0).mean()))).round(3)
+    out.to_csv(OUT / "landscape_ago_layer.tsv", sep="\t")
+    rho = spearmanr(acq.ago_loading, acq.edge_rho_adj, nan_policy="omit").correlation
+    out.attrs["rho_agoloading_vs_realization"] = round(float(rho), 3)
+    return out
+
+
 def characterize():
     ec, sc = _load()
     gc = pd.read_csv(OUT / "progression_gene_card.tsv", sep="\t")
     ctx = genomic_context_census(ec); pad = program_acquired_dose(gc)
     twostep = trajectory_two_step(sc); hdrv = healthy_anchored_drivers(sc)
-    coh = cohort_view(ec)
+    coh = cohort_view(ec); dgt = direct_gtex_tumor(sc); cnl = cn_layer(ec); agol = ago_layer(ec)
     hubs = convergence_hubs(ec); clusters = cluster_units(ec)
     subt = subtype_trajectories(sc); drv, los = driver_loser_rosters(ec)
     arch = trajectory_archetypes(sc); hand = regulatory_handoffs(gc)
@@ -332,6 +392,12 @@ def characterize():
     print(hdrv.head(12).to_string(index=False))
     print(f"\n[13] COHORT VIEW (~1000 tumour vs ~104 NAT, unpaired) vs PAIRED — {coh.attrs}")
     print("     ⇒ paired generalises to the cohort (validates ①–④); coupling_tum is the well-powered cohort coupling.")
+    print(f"\n[14] DIRECT GTEx→TUMOUR (rank dHT, bypasses NAT) — {dgt.attrs}")
+    print(dgt.head(6).to_string(index=False))
+    print(f"\n[15] CN LAYER — is acquisition copy-number-driven? {cnl.attrs}")
+    print(cnl.head(6).to_string(index=False))
+    print(f"\n[16] AGO LAYER — is acquired pressure realized where RISC loading is present? {agol.attrs}")
+    print(agol.to_string())
     print(f"\n-> {OUT}/ : landscape_{{convergence_hubs, cluster_units, subtype_trajectories, driver_roster, loser_roster, "
           f"trajectory_archetypes, regulatory_handoffs, dose_realization_quadrants, subtype_driver_rosters}}.tsv")
     return hubs, clusters, subt, drv, los, arch, hand, quad, subr

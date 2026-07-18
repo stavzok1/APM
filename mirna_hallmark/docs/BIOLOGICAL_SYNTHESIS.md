@@ -606,15 +606,29 @@ cohort coupling vs the n=103 paired `edge_rho_adj`. This also RESOLVES the miR-4
 (−3.94) and cohort (−4.06) agree it is LOST NAT→tumour; the "gain" was the healthy→tumour RANK (dHT +0.75) ⇒
 miR-486 **rose in the field then fell in the malignant step** — real two-step biology (⑪), not a measure artifact.
 
+**⑭ DIRECT GTEx→TUMOUR (rank dHT, bypasses the field-contaminated NAT intermediate).** The direct healthy→tumour
+rank shift tracks the **FIELD step dHN at ρ=0.84** but the **malignant step dNT only at ρ=0.45** ⇒ *what's different
+in cancer vs TRULY healthy is predominantly field-established* — NAT already carries most of it. 101 direct gainers,
+44 losers. (Confirms ⑪/⑬ from the healthy-anchored direction; miR-486 dHT +0.75 = field dHN +0.80, malignant dNT ~0.)
+
+**⑮ CN LAYER — acquisition is NOT (strongly) copy-number-driven.** Cohort tumour CN vs acquired dose (`arm_lfc_NAT_TUM`,
+472 arms): **ρ=0.10** (weak); median CN→expression partial ρ = 0.046. A few loci are CN-coupled (miR-30b/d partial
+ρ 0.31–0.39) but are not the acquirers ⇒ miRNA acquisition is **transcriptional/epigenetic, not locus amplification**.
+
+**⑯ AGO/RISC LAYER — realization is NOT AGO-loading-gated.** Edge realization (`edge_rho_adj`) is flat across
+`ago_loading` tertiles (−0.042 low → −0.050 mid → −0.042 high; ρ=0.08) ⇒ RISC-loading capacity is not the realization
+bottleneck.
+
 **Bottom line:** the malignant miRNA trajectory is *cluster-coordinated* (oncomiR polycistrons acquired, the 14q32
 TS-cluster and miR-30/let-7 lost, as co-transcribed units), *convergent* (a handful of cancer genes — PTEN above
 all — absorb pressure from many independent families), *field-established and TWO-STEP* (the healthy→NAT field wave
-is larger than and UNCORRELATED with the NAT→tumour malignant wave, ρ=0.003), *rewiring* (333 dominant-regulator
-handoffs), and mostly *buffered* (dose acquired ≫ dose realized). Program effect requires ARCHITECTURE not a flat
-mean (acquired pressure is pro-tumour by repressing P53/apoptosis, anti-tumour by damaging G2M — `geneset_architecture`).
-Paired (103) and cohort (~1000) agree (ρ=0.94). Cross-platform GTEx handling: trust the rank axis (dHT/grank) +
-Shapley over the QN magnitude bridge. Textbook-concordant (miR-200/ZEB1, miR-17~92, 14q32, miR-21→PTEN, C19MC) —
-a *description*, not a null-tested claim.
+is larger than and UNCORRELATED with the NAT→tumour malignant wave, ρ=0.003; the direct GTEx→tumour difference is
+field-dominated, dHT~dHN ρ=0.84), *rewiring* (333 dominant-regulator handoffs), and mostly *buffered* (dose acquired
+≫ dose realized). MECHANISM: acquisition is transcriptional/epigenetic (NOT CN-driven, ρ=0.10) and realization is
+NOT AGO-gated (ρ=0.08). Program effect requires ARCHITECTURE not a flat mean (acquired pressure is pro-tumour by
+repressing P53/apoptosis, anti-tumour by damaging G2M — `geneset_architecture`). Paired (103) and cohort (~1000)
+agree (ρ=0.94). Cross-platform GTEx: trust the rank axis (dHT/grank) + Shapley over the QN magnitude bridge.
+Textbook-concordant (miR-200/ZEB1, miR-17~92, 14q32, miR-21→PTEN, C19MC) — a *description*, not a null-tested claim.
 
 ## Literature standing — one-line summary
 
