@@ -81,6 +81,7 @@
 | [reports/REPORT.md](reports/REPORT.md) | detail | Detailed TCGA-BRCA results. |
 | [reports/LANDSCAPE_REPORT.md](reports/LANDSCAPE_REPORT.md) | ⚠ detail | Cross-state landscape. **Its per-edge FDR counts rest on the uncalibrated null** (MH-123/124) — banner pending. |
 | [reports/MIRNA_CNV_DOSAGE_REPORT.md](reports/MIRNA_CNV_DOSAGE_REPORT.md) | detail | miRNA CNV dosage. |
+| [reports/PROGRESSION_LANDSCAPE_REPORT.md](reports/PROGRESSION_LANDSCAPE_REPORT.md) | detail | **⭐ Consolidated progression-landscape characterization** (17-thread map: structure · mechanism · players · validation). Descriptive; sync-partner `BIOLOGICAL_SYNTHESIS.md §12`; tested spine = MH-158/160/162/163. |
 | [DCIS_EV_SYNTHESIS.md](DCIS_EV_SYNTHESIS.md) | active | DCIS/EV arc (MH-48..56). ⭐ Its MH-55 result **independently corroborates MH-114** 16 days early. |
 
 ## 5. Channels & axes
@@ -96,6 +97,7 @@
 | doc | currency | what it is |
 |-----|----------|------------|
 | [CN_INSTRUMENT.md](CN_INSTRUMENT.md) | ⚠ **design LIVE, instruments DEAD** | The CN-locus instrument's design + identifiability argument. ⛔ Both instruments retracted (MH-124r/126, MH-133) — **do not cite it as causal evidence**. ✅ **Kept for the REVIVAL**: §2 exclusion restriction · §5 multi-IV + Hansen-J over-ID · §6 the CN/expression asymmetry · §7 the corrected architecture · §9 built-vs-gaps. The estimator spec (F>10 ∧ T1-clean, soft F-weight) moved to `LEARNED_MODEL_METHODS §8a`. |
+| [SEED_SITE_INSTRUMENT_DESIGN.md](SEED_SITE_INSTRUMENT_DESIGN.md) | 🔧 **design ONLY, nothing built** | The **target-side** edge-existence instrument (board §A↔§E): a seed-disrupting 3′UTR SNV/editing/APA perturbs the *site*, not arm dose, so it is blind to the confounds that killed CN. Carries the causal DAG, the `site×dose` interaction identification, and the exclusion-violation ledger. P0a run (128 overlap events → SNV-alone is set-level-only). No registry row. |
 
 | doc | currency | what it is |
 |-----|----------|------------|
