@@ -23,6 +23,17 @@ Status: ✅ done (anchor only) · 🔨 immediate/flagged · ⬜ open · 🔬 inv
 Highest value ÷ cost. ⚠ Two of the original four turned out to be claims that did not survive checking
 (MH-38's 108 orphans were 3; E6's "live bug" was never live) — verify the claim before building the fix.
 
+0. 🔨 **⭐ MODEL EXPANSION + REFIT (user-requested 2026-07-19, MH-166 external arc) — NOT YET RUN.** Fold the
+   externally-validated missed edges into the HE universe and **re-run the Gibbs** (β is a joint per-gene
+   posterior — a new edge re-decomposes the whole gene, so it needs a refit, not an appended weight). Priority
+   candidates, in order: **(a)** the 21 gold∩external crown-jewels (internal coupling-discovery `dossier_gold`
+   ∩ external functional/binding) — miR-17~92→TMBIM6/AHNAK/NEDD4/SERTAD3; **(b)** the 134 multi-evidence
+   (`model_expansion_list.tsv`, ≥2 of functional/binding/coupling, not family-covered); **(c)** the double-breast
+   set. Note some targets (TMBIM6, NEDD4, SERTAD3) have **0 current edges** → new *genes*, not just regulators.
+   ⚠ prioritize by evidence QUALITY (seed type / functional lfc), not raw count — the list tilts to abundant
+   arms. Files: `output/learned/realization/{model_expansion_list,missed_edges_*,breast_chimeric_discovery_*}.tsv`.
+   After refit: read the new edges' β + updated gene pressure; treat coupling as REALIZATION not existence. **(→ MH-166)**
+
 1. ✅ **DONE 2026-07-17 — `eval/buffa_validation` re-run: the "108 triple-validated orphans" ARE 3.**
    `triple_validated` **108 → 3**; **ECM/collagen among them 30 → 0**. Survivors (all guide arms):
    **miR-195-5p→PSMD7 · miR-181b-5p→IRS2 · miR-22-3p→STK39**; 1 neg-sig in Buffa. ⚠ **It required a code fix —
@@ -51,7 +62,14 @@ Highest value ÷ cost. ⚠ Two of the original four turned out to be claims that
    docstring in `learned/eval/__init__.py`; no `ood_cohort.py`. Inputs are on disk.
    ⚠ **Pre-register MH-114's compartment-orientation stratification** — both cohorts are bulk breast and share
    the CAF confound, so a clean replication proves nothing on its own. **(→ axiom 4; MH-104, MH-114)**
-6. ⬜ **CURATED-EDGE ADMISSIBILITY — can this HE edge repress IN BREAST AT ALL? (user-proposed 2026-07-17)**
+6. ✅ **DONE 2026-07-18 (MH-161) — REFUTED: admissibility is NOT a decoy-gap sharpener.** The pre-registered
+   prediction (gap grows) failed — admissible vs all gap_core is **n.s. at every width** (pooled p=0.39); the
+   complement guardrail fails (inadmissible not ~0); the only firmed signal is that admissible edges are more
+   **cell-intrinsic** than inadmissible in **single-family genes** (n_fam=1 gap_deconv −0.0154 vs −0.0027, MWU
+   p=0.023, held K=1→3 fold-seeds). **Keep as a diagnostic flag, not a filter.** Census: has_site 89.9%,
+   expressed 63.9%, admissible 60.4%. `eval/admissibility_bench.py`; `output/learned/admissibility_{edge_tags,bench}.tsv`.
+   Method gotcha: `decoy_bench --seeds` is order-only (fold seed is the real MC axis). **Pre-registration kept below for provenance.**
+   ⬛ ~~**CURATED-EDGE ADMISSIBILITY — can this HE edge repress IN BREAST AT ALL? (user-proposed 2026-07-17)**~~
    An HE edge earns its place by a luciferase assay somewhere — not necessarily in **this tissue**. Two a-priori,
    Y-blind, model-blind gates ask whether it *could* operate here:
    * **SITE:** does the arm have a seed site in the target's 3'UTR? (TargetScan context++ ∪ scanMiR duplex ∪
@@ -69,7 +87,9 @@ Highest value ÷ cost. ⚠ Two of the original four turned out to be claims that
    **THE TEST (cheap — both artifacts exist):** tag every HE edge `admissible = has_site ∧ expressed_breast`;
    re-run `decoy_bench` on the admissible subset. **PREDICTION (register before running): the gap GROWS** —
    inadmissible edges are noise in the REAL arm, so removing them should sharpen the contrast beyond MH-137's
-   −0.0119 / MH-139's −0.0129.
+   −0.0119 / MH-139's −0.0129. **⛔ REFUTED 2026-07-18 (MH-161) — it did NOT grow; no sharpening at any width.
+   Guardrail (d) mattered: the gate shrinks n_fam 2→1, and the residual signal is cell-intrinsic-vs-compartment
+   in single-family genes only, not a magnitude gain.**
    ⚠ **Guardrails.** (a) This is **DIAGNOSTIC first, a filter second** — axiom 2a: flag, don't delete. A gate
    that removes 30% of the universe needs its own null before it changes a headline. (b) It is **NOT** the
    decoy's site-free rule (that defines the FAKE; this classifies the REAL). (c) Report on the gated set AND
@@ -90,7 +110,15 @@ ported to the learned model, and both target live gaps.** Found by asking what M
 rather than by merging the docs. (Its other content is not unique: **coupling** → `FORMULAS §7`, the
 anti-correlation ladder; **data/edges/harmonization** → `DATA_SOURCES §0/§1/§2`.)
 
-- ⬜ **⭐ DOES RISC AVAILABILITY MODIFY β? — the learned model has NEVER used the AGO/RISC capacity gate.**
+- ✅ **DONE 2026-07-18 (MH-164) — UNDETECTED, gate retired to rationale-only.** Ran the never-before-run test:
+  per-gene `r ~ M + ago + prolif + M:ago + M:prolif`, ago ⊥ confounders, shuffled-ago null. The ago-specific
+  `M:ago` interaction is **+0.00656, perm p=0.116, ~40% power (MDE 1.7× observed)** — a sub-significant trend
+  in the predicted (positive) direction, NOT "AGO does not modify β". The naive Stouffer Z=+7.8 was
+  pseudo-replication (shared patients). Over-control excluded (raw +0.00118 vs ⊥C +0.00656 — residualisation
+  un-masks, ago's 40% prolif component carries the opposite modification). Per the rule below (*null retires
+  the gate*): the AGO gate sits on biological rationale, not demonstrated coupling-modification, at n≈1000.
+  `learned/ago_interaction.py`. rigor-auditor CONCERNS→admissible (P). **Details kept below for provenance.**
+  ⬛ ~~**⭐ DOES RISC AVAILABILITY MODIFY β? — the learned model has NEVER used the AGO/RISC capacity gate.**~~
   **VERIFIED:** `learned/` contains only `ago_loading.py` (*which arm* is loaded, from Manakov chimeric —
   already measured **coupling-INERT**). **`ago_gate.py` DOES exist and ~25 pressure-arc modules import it** —
   it is absent specifically from `learned/`: **no per-sample RISC-capacity term anywhere in the learned tree.**
@@ -146,7 +174,9 @@ anti-correlation ladder; **data/edges/harmonization** → `DATA_SOURCES §0/§1/
   tests whole seed families uncurated for the gene as a dose aggregate. **Honest state:** per-edge ~nothing survives
   BY (2 arm / 1 family on the HE universe) — the signal is the SET-LEVEL shift (median null_z −1.6) and the
   concordance of INDEPENDENT evidence with coupling (chimeric-present edges couple stronger, MWU p=4.6e−8). ⬜ **NEXT:**
-  ① decide the set-level framing worth a registry finding; ② **⭐ SUBTYPE-STRATIFIED run (user-asked)** — PAM50-stratified
+  ① decide the set-level framing worth a registry finding; ② ⛔ **DONE/NEGATIVE 2026-07-18 (MH-165) — the HE surfacing hope is at chance** (337 vs 287±35 shuffle, z=+1.4;
+   83% family-lone), so **non-HE orphan discovery per subtype is NOT worth running** (weaker/noisier at n=93–197
+   than HE, which already failed). ⬛ ~~**SUBTYPE-STRATIFIED run (user-asked)**~~ — PAM50-stratified
   discovery, since coupling washed out in the pooled cohort can surface within a subtype; ③ family-lane evidence-attach
   (pool members' chimeric/ledger). **(→ MH-155; `output/learned/{discoveries,discoveries_family}.tsv`)**
 
@@ -160,7 +190,15 @@ The retired estimator is dead, but the arc's **auxiliary machinery and biologica
 learned model lacks them. **Do NOT archive these files — extract from them.** Verified by reading, not docstrings.
 
 **⬜ THREE NEW ANALYSES the learned model wants and has never done:**
-1. **⭐ SUBTYPE-STRATIFIED LEARNED LANE** — unifies the discovery §E ask (PAM50-stratified discovery) with the
+1. ✅ **DONE 2026-07-18 (MH-165) — subtype coupling HETEROGENEITY is REAL (distributional), but the discovery
+   hope FAILS.** Per-edge realized coupling is heterogeneous in strength AND sign across PAM50 (16% vs a
+   marginal-preserving null 5%, 3×; net of composition-slope-modification; NOT a detectability artifact —
+   best_sub doesn't track n, ~half sign-flip). ⚠ a **distributional** shift (tag P), not validated edge lists;
+   no new betas (fixed pooled β re-scored). The "coupling surfaces in a subtype" hope is **at chance** (337 vs
+   287±35, z=+1.4; 83% family-lone), and subtype β-remodeling (wiring) is weak (+12% over placebo). `learned/
+   subtype.py::genomewide_edge_heterogeneity`. Method: use the within-subtype y-permutation null (a label-shuffle
+   is anti-conservative, MH-154). **Details/pre-registration below.**
+   ⬛ ~~**SUBTYPE-STRATIFIED LEARNED LANE**~~ — unifies the discovery §E ask (PAM50-stratified discovery) with the
    pressure arc's subtype contrasts (`subtype_contrasts` / `visibility_archetype_contrasts` / `pam50_gene_resolution`).
    `learned/subtype.py` does only the per-PAM50 **coupling test** — NOT "who is pressured, by which miRNAs, the
    immune axis, cold-Basal/hot-Luminal archetypes" on learned β. Build once, serves both. **HIGHEST value.**
@@ -318,13 +356,18 @@ MH-124 §4b (n=21). β is at chance (rank 0.518, p=0.66); `shapley_identity` 0.3
 
 ## E. Discovery lane
 
-- 🔨 **Per-edge (+ per-gene) attribution card** — one row/edge joining what is already computed: regime context
-  (arm median RPM, % samples above the RPM≥10 floor, IQR, **spiker flag**; target median + IQR), budget share
-  (E7/G4 `states.budget_shift`, GTEx→NAT→tumour Δ), composition tag (deconv retention: cell-intrinsic ≥0.7 /
-  partial / composition-explained <0.4), and shift-class (`mirna_state_class.joint_edge_class` extended with
-  paired-E5 realization + a low-variance/undetectable split). Per-gene card = the G-series roll-up (G1 net
-  repression, G8 coherence+role, G4 budget concentration, composition fraction, G10 shift-class). Pure join.
-  **(→ `ATTRIBUTION_CONTEXT_AXIS.md`)**
+- ✅ **DONE 2026-07-18 — the per-EDGE card is built as the CANONICAL two-block card** (`learned/canonical_card.py`
+  → `output/learned/canonical_card.tsv`, 5,650 (gene,arm) rows / 1,421 genes / 3,941 both-block). One `(gene,arm)`
+  key, two provenance-tagged estimator blocks joined: **ATTRIBUTION** (Gibbs β/`identity`/`beta_frac`/`pip`, from
+  `readouts_arm_edges.tsv`) + **PROGRESSION** (regime `arm_med_rpm`/`arm_pct_floor`/`spiker`; budget
+  `states.budget_shift` rank/share + GTEx→NAT→tumour Δ; composition `retention_rho`; 3-state coupling
+  `coupling_{hly,nat,tum}`; **`shift_class`**). ⚠ **`shift_class` is LEARNED-NATIVE** (`card._shift_class`,
+  partial-ρ), **NOT** `mirna_state_class.joint_edge_class` (retired-pressure) — same names, different label
+  system; never map one onto the other. Companion `canonical_card_provenance.tsv` maps every column→estimator.
+  Also consolidated the card DUPLICATION (deleted 3 orphans, repointed `discovery.py`). Ledger 2026-07-18.
+  ⬜ **REMAINING: the per-GENE roll-up** (G-series: net repression, coherence+role, budget concentration,
+  composition fraction, shift-class) — the (gene,arm) card is the input; the gene-level aggregation is not yet built.
+  **(→ ledger 2026-07-18; `canonical_card.py` docstring; `ATTRIBUTION_CONTEXT_AXIS.md`)**
 - 🔬 **Top-discovery deep-dives.** (a) the **miR-17~92 / miR-106b-25 target cluster** (miR-106b/93/17/19a →
   RABEP1, AHNAK, TGFBRAP1, IL6ST, AFF1, WWP1, M6PR — ubiquitous arms, cell-intrinsic, strong, weakly-curated):
   lit scan each, then CPTAC protein + Manakov binding + within-patient realization; is it a coordinated
