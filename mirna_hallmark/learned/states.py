@@ -73,14 +73,22 @@ def _resid(v, Cmat):
     return v - LinearRegression().fit(Cmat, v).predict(Cmat)
 
 
+@lru_cache(maxsize=1)
+def _deconv_raw():
+    """The CIBERSORTx fractions file, read ONCE. Was re-read from NFS on every _cibersortx_state_cov call
+    (i.e. once per gene in a batch) — the dominant per-gene I/O cost that thrashed the genome-wide card
+    build under parallel workers (memory `batch-nfs-per-unit-reads`). Cache it; slice per call is cheap."""
+    from mirna_hallmark.learned import data as LD
+    return pd.read_csv(LD._DECONV_PATH, sep="\t").drop_duplicates("Mixture").set_index("Mixture")
+
+
 def _cibersortx_state_cov(parts, sample_type: str):
     """CIBERSORTx non-malignant compartment fractions for a state — the file HAS tumour (12-char keys)
     AND NAT (`TCGA-..-....-NAT` keys); 111 paired (user, 2026-07-05). Gold-standard composition, consistent
     with the tumour C. Returns None for GTEx (not deconvolved — metagene fallback)."""
-    from mirna_hallmark.learned import data as LD
     if sample_type not in ("01", "11"):
         return None
-    f = pd.read_csv(LD._DECONV_PATH, sep="\t").drop_duplicates("Mixture").set_index("Mixture")
+    f = _deconv_raw()
     cols = [c for c in LD._DECONV_COLS if c in f.columns]
     key = {p: (f"{p}-NAT" if sample_type == "11" else p) for p in parts}    # NAT rows are '<participant>-NAT'
     idx = {p: k for p, k in key.items() if k in f.index}
@@ -429,11 +437,13 @@ def budget_shift(gene: str, *, alpha: float = 0.005, deconv: bool = True) -> pd.
     Mv = M.reindex(regs).to_numpy(float)
     # state mean abundances. GTEx (healthy) uses within-GTEx rank/share only — NO QN needed: a share is a
     # within-state ratio (scale-free) and rank is ordinal, so the cross-platform TPM/RPM offset cancels.
-    levels = {"HLY": None, "NAT": state_matrices("11")[0].reindex(regs).mean(axis=1),
-              "TUM": state_matrices("01")[0].reindex(regs).mean(axis=1)}
+    # MEDIAN, not mean — robust to rare-spike arms (a few very-high samples pull the mean up and overstate an arm
+    # typically absent), and consistent with the card's regime/grank axes (MH-166 follow-up).
+    levels = {"HLY": None, "NAT": state_matrices("11")[0].reindex(regs).median(axis=1),
+              "TUM": state_matrices("01")[0].reindex(regs).median(axis=1)}
     try:
         from mirna_hallmark.learned import state as ST
-        levels["HLY"] = ST._gtex_mirna().reindex(regs).mean(axis=1)
+        levels["HLY"] = ST._gtex_mirna().reindex(regs).median(axis=1)
     except Exception:
         levels.pop("HLY")
     df = pd.DataFrame({"arm": regs, "M": np.round(Mv, 3)})

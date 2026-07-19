@@ -569,6 +569,14 @@ share_X(m) = mass_X(m) / Σ_m' mass_X(m')
 rank_X(m)  = within-state percentile rank of mass_X(m)
 ```
 
+**Abundance ranks use RAW expression on the MEDIAN (MH-166 follow-up).** The card's global `grank_{HLY,NAT,TUM}` and
+the per-target budget `rank_*`/`share_*` (`states.budget_shift`) rank on **raw** abundance (residualization is for the
+COUPLING axis — removing composition from a *dose* would destroy the dose signal). They rank on the **MEDIAN**, not the
+mean: the mean over-ranks rare-spike arms (miR-122-3p median-rank 15 vs mean-rank 81; ~15% of arms shift >10 pctile),
+and the median is consistent with `arm_med_rpm`/spiker. ⚠ the budget rank is `M_cell-intrinsic · raw_bulk_abundance`
+— cell-intrinsic-ness is in the *weight* M, not the level; the level is bulk (composition-inflatable). Measured: the
+NAT→TUM dose is cell-intrinsic at the median (raw +0.39 → composition-adjusted +0.41; ~21% composition-driven).
+
 `c(m, g, X) = edge_w(m, g) * expr_mult_softmax_logrpm(m, X)` (§1, §4 with `ATTR_MODE`).
 The three legs (rank deltas, range −1..+1):
 

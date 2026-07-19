@@ -272,12 +272,15 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
     gene_lfc = round(tg - ng, 2) if (tg == tg and ng == ng) else np.nan   # target NAT→tumour logFC (direct)
     # GLOBAL abundance rank (percentile among ALL miRNAs, per state) — the mirna_state_class level axis,
     # complementary to the gene-centric budget rank (share among the GENE's regulators). QN-safe (percentile).
-    gr_tum = Xt2.mean(axis=1).rank(pct=True) * 100
-    gr_nat = Xn.mean(axis=1).rank(pct=True) * 100
+    # ⭐ rank on the MEDIAN, not the mean — the mean is pulled up by rare-spike arms (miR-122-3p rank 15→81 on the
+    # mean), overstating arms typically absent but occasionally high; median is robust and consistent with the card's
+    # regime/spiker axes (`arm_med_rpm`). (MH-166 follow-up; ~15% of arms shift >10 pctile, corr 0.96.)
+    gr_tum = Xt2.median(axis=1).rank(pct=True) * 100
+    gr_nat = Xn.median(axis=1).rank(pct=True) * 100
     try:
         from mirna_hallmark.learned import state as STA
-        gmean = STA._gtex_mirna().mean(axis=1)                 # raw GTEx per-arm mean (log2(TPM+1))
-        gr_hly = gmean.rank(pct=True) * 100
+        gmean = STA._gtex_mirna().mean(axis=1)                 # raw GTEx per-arm mean — kept (mean) for the raw logFC
+        gr_hly = STA._gtex_mirna().median(axis=1).rank(pct=True) * 100   # rank on median (robust to rare spikes)
     except Exception:
         gmean, gr_hly = pd.Series(dtype=float), pd.Series(dtype=float)
 
