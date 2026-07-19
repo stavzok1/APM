@@ -574,8 +574,13 @@ the per-target budget `rank_*`/`share_*` (`states.budget_shift`) rank on **raw**
 COUPLING axis — removing composition from a *dose* would destroy the dose signal). They rank on the **MEDIAN**, not the
 mean: the mean over-ranks rare-spike arms (miR-122-3p median-rank 15 vs mean-rank 81; ~15% of arms shift >10 pctile),
 and the median is consistent with `arm_med_rpm`/spiker. ⚠ the budget rank is `M_cell-intrinsic · raw_bulk_abundance`
-— cell-intrinsic-ness is in the *weight* M, not the level; the level is bulk (composition-inflatable). Measured: the
-NAT→TUM dose is cell-intrinsic at the median (raw +0.39 → composition-adjusted +0.41; ~21% composition-driven).
+— cell-intrinsic-ness is in the *weight* M, not the level; the level is bulk. So `card.py::_dose_retention_map` reports
+the dose's **retention** under composition ({epi,immune,stroma}) AND **proliferation** ({prolif}) — pooled `abund ~
+state + C` on the state-comparable metagene block, GATED (|raw dose| > 0.2; axiom 5: the ratio is noise at a vanishing
+denominator). Measured: gated retention ≈ **1.00 on BOTH** (median comp 1.00, prolif 1.00; `dose_confounded` **1/5648**
+edges, **0/1306** acquired-class) ⇒ the NAT→tumour dose-acquisitions are **cell-intrinsic**, not composition- or
+proliferation-driven. (An earlier UNgated ratio read "~21% composition-driven" — that was the denominator pile-up the
+gate removes.) Columns `dose_comp_retention`/`dose_prolif_retention`/`dose_confounded`.
 
 `c(m, g, X) = edge_w(m, g) * expr_mult_softmax_logrpm(m, X)` (§1, §4 with `ATTR_MODE`).
 The three legs (rank deltas, range −1..+1):

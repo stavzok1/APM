@@ -132,6 +132,45 @@ def HA_FL():
     return HA.ABUND_FLOOR
 
 
+DOSE_RAW_FLOOR = 0.2   # gate the retention ratio's denominator (axiom 5: near-zero dose ⇒ ratio is noise)
+
+
+def _dose_retention_map():
+    """arm → (comp_retention, prolif_retention) of the SAME-PLATFORM NAT→tumour dose. A bulk dose rise can be a
+    composition shift (more of the arm's cell type) or a proliferation shift (cell-cycle-linked) rather than a
+    cell-intrinsic per-cell increase. Pooled OLS `abund ~ state + C` on the state-comparable metagene block
+    ({epi,immune,stroma} for composition; {prolif} for proliferation); retention = coef_state|C / coef_state.
+    GATED (NaN where |raw dose| < DOSE_RAW_FLOOR — the ratio is unstable at a vanishing denominator). Measured:
+    for real doses retention ≈ 1.00 on BOTH ⇒ the dose is cell-intrinsic (MH-166 follow-up). Doctrine: report
+    retention, flag not delete."""
+    if "dret" not in _NULL_CACHE:
+        from sklearn.linear_model import LinearRegression
+        from mirna_hallmark.eval.site_free_null import _state_design
+        Xt, Yt, pt, _ = _state_design("tumour", True)
+        Xn, Yn, pn, _ = _state_design("nat", True)
+        Mt, Mn = ST._state_metagene_cov(Yt), ST._state_metagene_cov(Yn)
+        comp, prol = ["epi", "immune", "stroma"], ["prolif"]
+        st = np.r_[np.ones(len(pt)), np.zeros(len(pn))]
+        def _blk(cols):
+            C = np.vstack([Mt.loc[pt, cols].to_numpy(float), Mn.loc[pn, cols].to_numpy(float)])
+            return np.nan_to_num(C, nan=np.nanmedian(C))
+        Bc, Bp = _blk(comp), _blk(prol)
+        out = {}
+        for a in [x for x in Xt.index if x in Xn.index]:
+            y = np.r_[Xt.loc[a, pt].to_numpy(float), Xn.loc[a, pn].to_numpy(float)]
+            m = np.isfinite(y)
+            if m.sum() < 50:
+                continue
+            raw = LinearRegression().fit(st[m, None], y[m]).coef_[0]
+            if abs(raw) < DOSE_RAW_FLOOR:
+                continue
+            rc = LinearRegression().fit(np.column_stack([st[m], Bc[m]]), y[m]).coef_[0] / raw
+            rp = LinearRegression().fit(np.column_stack([st[m], Bp[m]]), y[m]).coef_[0] / raw
+            out[a] = (round(float(rc), 2), round(float(rp), 2))
+        _NULL_CACHE["dret"] = out
+    return _NULL_CACHE["dret"]
+
+
 def _coupling_calibrated(state_key: str, arm: str, rho: float):
     """(one-sided repressive p, z) of a coupling ρ against the state's site-free null, abundance-matched.
     p < COUPLING_ALPHA ⇒ significantly repressive vs pairs that CANNOT repress (calibrated, not the −0.1 cut)."""
@@ -361,6 +400,8 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
                      "wiring_frac": round(wf, 2) if wf == wf else np.nan,
                      "healthy_leg": _healthy_leg_map()[0].get(arm, "true_absent"),  # GTEx-collapse provenance (miTED-aware)
                      "healthy_potential": round(_healthy_leg_map()[1].get(arm, np.nan), 2),  # imputed healthy level (potential)
+                     "dose_comp_retention": _dose_retention_map().get(arm, (np.nan, np.nan))[0],   # dose | composition
+                     "dose_prolif_retention": _dose_retention_map().get(arm, (np.nan, np.nan))[1], # dose | proliferation
                      "retention": round(ret, 2) if ret == ret else np.nan,
                      "gene_iqr": round(gene_iqr, 2)})
     card = pd.DataFrame(rows)
@@ -374,6 +415,9 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
     _hi = _healthy_leg_map()[2]
     card["healthy_uninformative"] = (card["healthy_leg"].eq("collapse_blind") & (card["healthy_potential"] > _hi)
                                      & card["coupling_p_hly_surrogate"].isna())
+    # ⚠ dose is a COMPOSITION/PROLIFERATION artifact where either gated retention is low (dose | C ≪ raw dose). Measured:
+    # for real doses retention ≈ 1.00 on both ⇒ ~none flagged — the NAT→tumour dose-acquisitions are cell-intrinsic.
+    card["dose_confounded"] = ((card["dose_comp_retention"] < 0.4) | (card["dose_prolif_retention"] < 0.4))
     # QUANTIFIED companions (the class is categorical; these are the continuous axes)
     card["realization_score"] = -card["coupling_z_tum"]         # calibrated tumour repression strength (>0 = repressive)
     card["dose_class"] = card["arm_lfc_NAT_TUM"].apply(          # SAME-PLATFORM NAT→tumour dose direction
