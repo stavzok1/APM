@@ -248,6 +248,11 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
     bdf = ST.budget_shift(gene, alpha=alpha)                     # rank/share GTEx→NAT→tumour (cell-intrinsic M)
     if bdf.empty:
         return bdf
+    # within-gene DOSE rank per state = rank by RAW abundance alone (1 = most abundant regulator) — the pure-abundance
+    # complement to the budget rank (rank_*, which is by M·abundance = pressure). budget_shift emits abund_{HLY,NAT,TUM}.
+    for _st in ("HLY", "NAT", "TUM"):
+        if f"abund_{_st}" in bdf:
+            bdf[f"dose_rank_{_st}"] = bdf[f"abund_{_st}"].rank(ascending=False, method="min").astype(int)
     X = LD._load()["X"]; Y = LD._load()["Y"]
     yg = Y.loc[gene].dropna() if gene in Y.index else pd.Series(dtype=float)
     gene_iqr = float(yg.quantile(.75) - yg.quantile(.25)) if len(yg) else np.nan
@@ -356,15 +361,18 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
         grh = float(gr_hly.get(arm, np.nan)) if arm in getattr(gr_hly, "index", []) else np.nan
         # CALIBRATED coupling (site-free null p per state — replaces the −0.1 cut)
         cp_t, cz_t = _coupling_calibrated("tum", arm, ct)
-        cp_n, _ = _coupling_calibrated("nat", arm, cn)
-        cp_h, _ = _coupling_calibrated("hly", arm, ch)
+        cp_n, cz_n = _coupling_calibrated("nat", arm, cn)
+        cp_h, cz_h = _coupling_calibrated("hly", arm, ch)
         # SURROGATE healthy coupling for GTEx-collapsed arms via a same-seed MEASURED instrument (same seed ⇒ same
         # targets/sites ⇒ the mate's GTEx coupling estimates the seed's healthy repression) — RESOLVES the blind leg.
-        ch_sur = cp_h_sur = sur_corr = np.nan; sur_inst = ""
+        ch_sur = cp_h_sur = cz_h_sur = sur_corr = np.nan; sur_inst = ""
         if _healthy_leg_map()[0].get(arm, "true_absent") == "collapse_blind" and arm in _surrogate_map():
             sur_inst, sur_corr = _surrogate_map()[arm]
             ch_sur = _gtex_edge(sur_inst)
-            cp_h_sur, _ = _coupling_calibrated("hly", sur_inst, ch_sur)
+            cp_h_sur, cz_h_sur = _coupling_calibrated("hly", sur_inst, ch_sur)
+        cz_h_res = cz_h if cz_h == cz_h else cz_h_sur                   # resolved healthy z (direct | surrogate)
+        # ⭐ continuous ACQUISITION score = repression GAINED healthy→tumour (repr = −z; +ve ⇒ acquired, ≈0 ⇒ constitutive)
+        acq_score = round((cz_h_res - cz_t), 2) if (cz_t == cz_t and cz_h_res == cz_h_res) else np.nan
         # WIRING decomposition Δ(M·a) = M_NAT·Δa (DOSE) + a_NAT·ΔM (WIRING) + Δa·ΔM (INTERACT)  [SOFT]
         mt_w, mn_w = float(Mt_w.get(arm, np.nan)), float(Mn_w.get(arm, np.nan))
         if mt_w == mt_w and mn_w == mn_w and tm == tm and nm == nm:
@@ -373,11 +381,23 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
             wf = abs(t_wi) / (abs(t_ab) + abs(t_wi) + abs(t_in) + 1e-9)
         else:
             t_ab = t_wi = t_in = wf = np.nan
-        rows.append({"arm": arm, "share_TUM": r.share_TUM, "rank_TUM": r.rank_TUM,       # gene-centric budget
-                     "d_rank_HLY_TUM": getattr(r, "d_rank_HLY_TUM", np.nan),
-                     "grank_TUM": round(grt, 0) if grt == grt else np.nan,               # GLOBAL abundance %ile
+        _drnt = getattr(r, "d_rank_NAT_TUM", np.nan)
+        _rk_h, _rk_n = getattr(r, "rank_HLY", np.nan), getattr(r, "rank_NAT", np.nan)
+        rows.append({"arm": arm,                                                          # ── BUDGET (within-gene, M·abund)
+                     "share_HLY": getattr(r, "share_HLY", np.nan), "share_NAT": getattr(r, "share_NAT", np.nan),
+                     "share_TUM": r.share_TUM,                                             # share = fraction of gene's pressure
+                     "rank_HLY": _rk_h, "rank_NAT": _rk_n, "rank_TUM": r.rank_TUM,         # rank = rank of that share (1=top)
+                     "d_rank_HLY_NAT": (_rk_h - _rk_n) if (_rk_h == _rk_h and _rk_n == _rk_n) else np.nan,  # FIELD Δ
+                     "d_rank_NAT_TUM": _drnt,                                              # MALIGNANT Δ  (+ = rose NAT→tum)
+                     "d_rank_HLY_TUM": getattr(r, "d_rank_HLY_TUM", np.nan),               # total Δ (acquired axis)
+                     "dose_rank_HLY": getattr(r, "dose_rank_HLY", np.nan),                 # within-gene DOSE rank (abund only)
+                     "dose_rank_NAT": getattr(r, "dose_rank_NAT", np.nan),
+                     "dose_rank_TUM": getattr(r, "dose_rank_TUM", np.nan),
+                     "grank_TUM": round(grt, 0) if grt == grt else np.nan,                 # ── GLOBAL abundance %ile (dose rank)
                      "grank_NAT": round(grn, 0) if grn == grn else np.nan,
                      "grank_HLY": round(grh, 0) if grh == grh else np.nan,
+                     "dGlobal_HLY_NAT": round(grn - grh, 0) if (grn == grn and grh == grh) else np.nan,   # FIELD Δ
+                     "dGlobal_NAT_TUM": round(grt - grn, 0) if (grt == grt and grn == grn) else np.nan,   # MALIGNANT Δ
                      "dGlobal_HLY_TUM": round(grt - grh, 0) if (grt == grt and grh == grh) else np.nan,
                      "arm_lfc_NAT_TUM": lfc_nt, "arm_lfc_HLY_TUM_QN": lfc_ht,
                      "arm_lfc_HLY_TUM_raw": lfc_ht_raw, "arm_lfc_HLY_NAT_raw": lfc_hn_raw,
@@ -393,7 +413,10 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
                      "coupling_hly_surrogate": round(ch_sur, 3) if ch_sur == ch_sur else np.nan,  # same-seed instrument
                      "coupling_p_hly_surrogate": round(cp_h_sur, 4) if cp_h_sur == cp_h_sur else np.nan,
                      "surrogate_instrument": sur_inst, "surrogate_corr": sur_corr,
-                     "coupling_z_tum": round(cz_t, 2) if cz_t == cz_t else np.nan,
+                     "coupling_z_tum": round(cz_t, 2) if cz_t == cz_t else np.nan,   # calibrated effect-size (null-SDs)
+                     "coupling_z_nat": round(cz_n, 2) if cz_n == cz_n else np.nan,   # full calibrated coupling trajectory
+                     "coupling_z_hly": round(cz_h_res, 2) if cz_h_res == cz_h_res else np.nan,  # resolved (direct|surrogate)
+                     "acquisition_score": acq_score,                                 # ⭐ repression GAINED HLY→TUM (continuous)
                      "term_ABUND": round(t_ab, 3) if t_ab == t_ab else np.nan,       # dose-vs-wiring (SOFT)
                      "term_WIRING": round(t_wi, 3) if t_wi == t_wi else np.nan,
                      "term_INTERACT": round(t_in, 3) if t_in == t_in else np.nan,

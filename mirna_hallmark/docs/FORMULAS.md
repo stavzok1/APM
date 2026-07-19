@@ -569,6 +569,15 @@ share_X(m) = mass_X(m) / Σ_m' mass_X(m')
 rank_X(m)  = within-state percentile rank of mass_X(m)
 ```
 
+**Two rank axes, both per-state HLY/NAT/TUM with FIELD (`*_HLY_NAT`) + MALIGNANT (`*_NAT_TUM`) transition deltas
+(MH-166 follow-up).** ① **budget** `share_{state}` (= this arm's fraction of the *gene's* pressure, M·abundance) with
+`rank_{state}` = the rank of that share (1 = the gene's top pressure-regulator); ② **dose** `dose_rank_{state}` = the
+within-gene rank by *raw abundance alone* (1 = most abundant regulator) — the pure-dose complement (an arm can be a top
+*pressure* regulator via M yet a mid *abundance* one, or vice-versa; miR-21→PTEN climbs dose_rank 34→1 but budget rank
+6→1). Globally, `grank_{state}` is the *dose* rank (raw abundance %ile among ALL miRNAs; there is no global budget —
+budget is within-gene). ⭐ continuous progression companion `acquisition_score` = repression GAINED HLY→TUM (`coupling_z`
+trajectory: −z_hly − (−z_tum)); +ve ⇒ acquired (acquired_realized ≈ +2.9), ≈0 ⇒ constitutive (≈ +0.3).
+
 **Abundance ranks use RAW expression on the MEDIAN (MH-166 follow-up).** The card's global `grank_{HLY,NAT,TUM}` and
 the per-target budget `rank_*`/`share_*` (`states.budget_shift`) rank on **raw** abundance (residualization is for the
 COUPLING axis — removing composition from a *dose* would destroy the dose signal). They rank on the **MEDIAN**, not the
