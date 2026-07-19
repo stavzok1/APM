@@ -832,12 +832,20 @@ arm is functionally present in healthy (`healthy_potential > RPM≥10 floor`). T
 (acquired-class contamination 24%→13%) and MH-160 is robust to excluding it (−0.046→−0.047, p=0.001).
 
 **Semantics of the flag (MH-166 follow-up, measured):** a flagged edge is **dose-constitutive** (miTED-high) with
-**coupling history blind** — NOT "acquired." The blind healthy *coupling* is recoverable for the ~7–30 arms with a
-**same-seed co-transcription instrument** (a mappable cluster-mate, e.g. miR-20a-5p for miR-17-5p, tumour-validated
-corr 0.88): the instrument's GTEx coupling estimates the seed's healthy repression. Demonstrated: miR-17→{ERBB3,
-NCOA3, JAK1, MEF2D, ARID4B, TLR7} surrogate-GTEx ≈ −0.09 vs tumour ≈ −0.41 ⇒ **dose-constitutive but coupling-ACQUIRED**,
-per-target-graded (TLR7 fully de-novo −0.001, MEF2D partially pre-existing −0.168). The genome-wide surrogate node +
-per-target GTEx→NAT→TUM identity trajectory is a SCOPED follow-up (not yet built). Registry: **MH-166**.
+**coupling history blind** — NOT "acquired."
+
+**SURROGATE resolution (BUILT — `card.py::_surrogate_map` + `coupling_*_hly_surrogate`/`coupling_p_hly_resolved`).**
+The blind healthy *coupling* is recovered via a **same-seed co-transcription instrument**: the collapse hits
+multi-mapping paralogues whose cluster-mates ARE uniquely-mappable and share the SEED ⇒ same targets/sites ⇒ the
+mate's GTEx coupling estimates the seed's healthy repression (recovers the variance the collapse destroyed; the
+miTED-median cannot). Instrument = best same-seed mate MEASURED in GTEx, **validated** where both are measured
+(tumour corr ≥ `SURROGATE_MIN_CORR=0.5`; miR-20a→miR-17 0.88, miR-181b→miR-181a 0.89). The class's healthy `h` leg reads
+`coupling_p_hly_resolved` (direct where measured, surrogate where collapsed) so a recovered edge is classed on real
+evidence; `healthy_uninformative` fires only where collapse_blind + high-potential + **no** surrogate. Genome-wide: **202
+edges resolved** (7 instruments), flag **305→132**, and **190/202 (94%) confirm coupling-ACQUIRED** (surrogate uncoupled
+in healthy) vs 12 constitutive — per-target-graded (miR-17→PTEN surrogate p=0.59 ⇒ confirmed acquired; miR-17→MEF2D
+−0.168 partially pre-existing). MH-160 robust (−0.045, p=0.000). ⬜ still-blind arms (no instrument, 132) abstain; the
+**per-target GTEx→NAT→TUM identity trajectory** is the remaining scoped arc. Registry: **MH-166**.
 
 ---
 

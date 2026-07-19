@@ -94,6 +94,44 @@ def _healthy_leg_map():
     return _NULL_CACHE["hleg"]
 
 
+SURROGATE_MIN_CORR = 0.5   # a same-seed instrument must track the collapsed arm this well (tumour, where both measured)
+
+
+def _surrogate_map():
+    """arm → (instrument, tumour_corr) for arms COLLAPSED in GTEx that have a SAME-SEED mate MEASURED in GTEx. The
+    collapse hits multi-mapping paralogues, whose polycistronic/paralog cluster-mates ARE uniquely-mappable — and share
+    the SEED, hence the SAME targets with the SAME sites. So the mate's GTEx coupling directly estimates the seed's
+    healthy repression (recovers the variance the collapse destroyed; miTED-median cannot). VALIDATED where both are
+    measured (tumour corr ≥ SURROGATE_MIN_CORR) before transfer. Recovers the blind healthy-coupling node for the
+    ~7–30 well-instrumented flagged arms (miR-20a→miR-17, miR-181b→miR-181a). (MH-166 follow-up.)"""
+    if "surr" not in _NULL_CACHE:
+        from mirna_hallmark.learned import state as STA
+        from mirna_hallmark.learned import families as FAM
+        Xt = LD._load()["X"]
+        gmed = STA._gtex_mirna().median(axis=1)
+        fam = FAM.family_of(pd.Index(Xt.index))
+        collapsed = [a for a in Xt.index if gmed.get(a, 0.0) <= HA_FL() and Xt.loc[a].median() > 1]
+        smap = {}
+        for a in collapsed:
+            f = fam.get(a)
+            if f is None:
+                continue
+            mates = [m for m in Xt.index if m != a and fam.get(m) == f and gmed.get(m, 0.0) > HA_FL()]
+            if not mates:
+                continue
+            best = max(mates, key=lambda m: abs(spearmanr(Xt.loc[a], Xt.loc[m]).correlation))
+            r = float(spearmanr(Xt.loc[a], Xt.loc[best]).correlation)
+            if r >= SURROGATE_MIN_CORR:
+                smap[a] = (best, round(r, 3))
+        _NULL_CACHE["surr"] = smap
+    return _NULL_CACHE["surr"]
+
+
+def HA_FL():
+    from mirna_hallmark import healthy_anchor as HA
+    return HA.ABUND_FLOOR
+
+
 def _coupling_calibrated(state_key: str, arm: str, rho: float):
     """(one-sided repressive p, z) of a coupling ρ against the state's site-free null, abundance-matched.
     p < COUPLING_ALPHA ⇒ significantly repressive vs pairs that CANNOT repress (calibrated, not the −0.1 cut)."""
@@ -145,7 +183,8 @@ def _shift_class(row) -> str:
     `wiring_frac`. Supersedes the coupling-only −0.1 label."""
     ret, spk = row["retention"], row["spiker"]
     rep = lambda p: (p == p) and p < COUPLING_ALPHA              # CALIBRATED: significantly repressive vs site-free
-    h, n, t = rep(row.get("coupling_p_hly")), rep(row.get("coupling_p_nat")), rep(row.get("coupling_p_tum"))
+    h_p = row.get("coupling_p_hly_resolved", row.get("coupling_p_hly"))   # direct, else same-seed surrogate
+    h, n, t = rep(h_p), rep(row.get("coupling_p_nat")), rep(row.get("coupling_p_tum"))
     dose = row.get("arm_lfc_NAT_TUM", np.nan)                    # SAME-PLATFORM NAT→tumour level shift
     dose_gain = (dose == dose) and dose > 0.3
     if not t:                                                    # not calibrated-repressor in tumour
@@ -277,6 +316,13 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
         cp_t, cz_t = _coupling_calibrated("tum", arm, ct)
         cp_n, _ = _coupling_calibrated("nat", arm, cn)
         cp_h, _ = _coupling_calibrated("hly", arm, ch)
+        # SURROGATE healthy coupling for GTEx-collapsed arms via a same-seed MEASURED instrument (same seed ⇒ same
+        # targets/sites ⇒ the mate's GTEx coupling estimates the seed's healthy repression) — RESOLVES the blind leg.
+        ch_sur = cp_h_sur = sur_corr = np.nan; sur_inst = ""
+        if _healthy_leg_map()[0].get(arm, "true_absent") == "collapse_blind" and arm in _surrogate_map():
+            sur_inst, sur_corr = _surrogate_map()[arm]
+            ch_sur = _gtex_edge(sur_inst)
+            cp_h_sur, _ = _coupling_calibrated("hly", sur_inst, ch_sur)
         # WIRING decomposition Δ(M·a) = M_NAT·Δa (DOSE) + a_NAT·ΔM (WIRING) + Δa·ΔM (INTERACT)  [SOFT]
         mt_w, mn_w = float(Mt_w.get(arm, np.nan)), float(Mn_w.get(arm, np.nan))
         if mt_w == mt_w and mn_w == mn_w and tm == tm and nm == nm:
@@ -302,6 +348,9 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
                      "coupling_p_tum": round(cp_t, 4) if cp_t == cp_t else np.nan,   # CALIBRATED site-free-null p
                      "coupling_p_nat": round(cp_n, 4) if cp_n == cp_n else np.nan,
                      "coupling_p_hly": round(cp_h, 4) if cp_h == cp_h else np.nan,
+                     "coupling_hly_surrogate": round(ch_sur, 3) if ch_sur == ch_sur else np.nan,  # same-seed instrument
+                     "coupling_p_hly_surrogate": round(cp_h_sur, 4) if cp_h_sur == cp_h_sur else np.nan,
+                     "surrogate_instrument": sur_inst, "surrogate_corr": sur_corr,
                      "coupling_z_tum": round(cz_t, 2) if cz_t == cz_t else np.nan,
                      "term_ABUND": round(t_ab, 3) if t_ab == t_ab else np.nan,       # dose-vs-wiring (SOFT)
                      "term_WIRING": round(t_wi, 3) if t_wi == t_wi else np.nan,
@@ -312,12 +361,16 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
                      "retention": round(ret, 2) if ret == ret else np.nan,
                      "gene_iqr": round(gene_iqr, 2)})
     card = pd.DataFrame(rows)
+    # RESOLVED healthy coupling p: direct where measured; the same-seed surrogate where GTEx collapsed the arm. This is
+    # what the class's healthy (h) leg reads — so a surrogate-recovered edge is classed on real evidence, not a blind NaN.
+    card["coupling_p_hly_resolved"] = card["coupling_p_hly"].fillna(card["coupling_p_hly_surrogate"])
     card["shift_class"] = card.apply(_shift_class, axis=1)
-    # ⚠ the healthy (h) coupling leg is uninformative ONLY where GTEx collapsed the arm AND the arm is HIGHLY expressed
-    # in healthy (miTED): blindness threatens an 'acquired' call only when real repression potential existed. A LOW-
-    # abundance collapse_blind arm has abundance-bounded potential ⇒ acquisition still safe (MH-166 follow-up; graded).
+    # ⚠ the healthy (h) leg is uninformative ONLY where GTEx collapsed the arm, the arm is HIGHLY expressed in healthy
+    # (miTED, real repression potential), AND no same-seed surrogate recovered the coupling. A LOW-abundance collapse_blind
+    # arm has abundance-bounded potential ⇒ safe; a surrogate-RESOLVED arm is no longer blind (MH-166 follow-up; graded).
     _hi = _healthy_leg_map()[2]
-    card["healthy_uninformative"] = card["healthy_leg"].eq("collapse_blind") & (card["healthy_potential"] > _hi)
+    card["healthy_uninformative"] = (card["healthy_leg"].eq("collapse_blind") & (card["healthy_potential"] > _hi)
+                                     & card["coupling_p_hly_surrogate"].isna())
     # QUANTIFIED companions (the class is categorical; these are the continuous axes)
     card["realization_score"] = -card["coupling_z_tum"]         # calibrated tumour repression strength (>0 = repressive)
     card["dose_class"] = card["arm_lfc_NAT_TUM"].apply(          # SAME-PLATFORM NAT→tumour dose direction
