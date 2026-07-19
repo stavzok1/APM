@@ -1,14 +1,18 @@
 """Per-edge (and per-gene) attribution card — the taxonomy rendered per edge on the confounder-honest,
-cell-intrinsic foundation (docs/ATTRIBUTION_CONTEXT_AXIS.md). One row per regulator of a gene, joining the
-four layers we already compute:
+cell-intrinsic foundation. Column/estimator spec: docs/FORMULAS.md (§7 coupling ladder, §11f `shift_class`
+calibrated two-axis) + docs/LEARNED_MODEL_METHODS.md; findings: DISCOVERY_REGISTRY MH-158/160/166.
+One row per regulator of a gene, joining the four layers we already compute:
 
   1. REGIME (range stats) — arm median RPM, %>functional-floor (RPM≥10), IQR, SPIKER flag (low median +
      high IQR = subset-driven, e.g. miR-135b 28%>floor); target IQR (a strong coupling on a low-IQR gene =
      the miRNA explains most of its variance).
   2. BUDGET share (E7/G4) — the arm's rank + share of the gene's pressure, GTEx→NAT→tumour Δ (states.budget_shift).
   3. COMPOSITION tag — deconv retention: cell-intrinsic (≥0.7) / partial / composition-explained (<0.4).
-  4. SHIFT-CLASS — a learned-model class (level × realization × composition × detectability), compatible in
-     spirit with the precursor `mirna_state_class.joint_edge_class` {acquired_realized/lost/stable/…}.
+  4. SHIFT-CLASS — the calibrated two-axis progression class (MH-166): per-state CALIBRATED coupling
+     (site_free_null p<0.05, replaces the −0.1 cut) × same-platform `arm_lfc_NAT_TUM` dose. New class
+     `dose_acquired_uncoupled` (dose up, not calibrated-coupled) + quantified `realization_score`,
+     `coupling_p_*`, `wiring_frac`. Spec: docs/FORMULAS.md §11f. Learned successor to the §6b-RETIRED
+     `mirna_state_class.joint_edge_class` — do NOT read the two as the same object.
 
 CLI: `python -m mirna_hallmark.learned.card PTEN GATA3`
 """
@@ -32,6 +36,76 @@ _FLOOR = np.log2(11)   # RPM ≥ 10 functional floor on the log2(RPM+1) scale
 
 def _resid(v, C):
     return v - LinearRegression().fit(C, v).predict(C)
+
+
+# --------------------------------------------------------------------------------------------------------- #
+# CALIBRATED coupling null (MH-123/154) — replaces the hard −0.1 repressor cut. The theoretical null is 3–4×
+# too narrow; the site-free empirical null gives an honest per-state p. Fit ONCE per state (memoized + disk
+# cached); the parent warms it before forking so workers inherit via COW (axiom 3a).
+_NULL_CACHE: dict = {}
+COUPLING_ALPHA = 0.05          # calibrated per-state "repressor in this state" call (site-free null p < 0.05)
+
+
+def _null_scorers():
+    if "lad" not in _NULL_CACHE:
+        from mirna_hallmark.eval import site_free_null as SFN
+        from mirna_hallmark.learned import state as STA
+        _NULL_CACHE["lad"] = {"tum": SFN.fit_state("tumour"), "nat": SFN.fit_state("nat"),
+                              "hly": SFN.fit_state("gtex")}
+        _NULL_CACHE["ab"] = {"tum": LD._load()["X"].median(axis=1),
+                             "nat": ST.state_matrices("11")[0].median(axis=1),
+                             "hly": STA._gtex_mirna().median(axis=1)}
+    return _NULL_CACHE["lad"], _NULL_CACHE["ab"]
+
+
+def _healthy_leg_map():
+    """arm → (healthy-leg provenance, imputed healthy abundance = repression-POTENTIAL proxy), so the `h` (GTEx)
+    coupling flag is not read as evidence where the GTEx uniquely-mappable pipeline COLLAPSED the arm (raw GTEx
+    coupling matrix floored ⇒ ρ≈0 mechanically, NOT biology). Cross-references the DIANA-miTED healthy-breast cohort
+    (`healthy_anchor`): a floored-in-GTEx arm that miTED shows expressed is a COLLAPSE ARTIFACT, its 'uncoupled-in-
+    healthy' call blind not absent (`collapse_blind`). BUT blindness only THREATENS an 'acquired' call when the arm is
+    HIGHLY expressed in healthy: repression is abundance-gated (AGO/RISC loading saturates), so a LOW-abundance healthy
+    arm has low repression potential whether or not coupling is measurable ⇒ its acquisition is still safe. So we carry
+    a GRADED `healthy_potential` (imputed baseline, collapse-repaired) and reserve `healthy_uninformative` for
+    collapse_blind AND high potential. (MH-166 follow-up.)  provenance ∈ {measured, collapse_blind, true_absent}."""
+    if "hleg" not in _NULL_CACHE:
+        from mirna_hallmark.learned import state as STA
+        from mirna_hallmark import healthy_anchor as HA
+        Xg = STA._gtex_mirna()
+        gmed = Xg.median(axis=1)
+        gfloor = (Xg.eq(Xg.min(axis=1), axis=0)).mean(axis=1)          # frac samples at row-min (tie/floor)
+        mited = HA._mited_breast_median()
+        mited = HA._reconcile_to_tcga(mited, gmed.index) if not mited.empty else pd.Series(dtype=float)
+        FL = HA.ABUND_FLOOR
+        prov = {}
+        for a in gmed.index:
+            floored = (gmed.get(a, 0) <= FL) or (gfloor.get(a, 1.0) > 0.5)
+            if not floored:
+                prov[a] = "measured"
+            elif (mited.get(a, 0) > FL) or (gmed.get(a, 0) > FL):
+                prov[a] = "collapse_blind"                             # expressed somewhere, blind in GTEx coupling
+            else:
+                prov[a] = "true_absent"
+        pot = HA.gtex_qn_baseline()                                    # imputed healthy level (collapse-repaired)
+        # "high potential" = above the project's RPM≥10 FUNCTIONAL-PRESENCE floor (_FLOOR = log2(11)). A biological
+        # anchor, not a population tercile — avoids the axiom-5 pile-up a tercile cut would sit on. An arm functionally
+        # present in healthy has real repression potential ⇒ its blind coupling THREATENS an acquired call.
+        _NULL_CACHE["hleg"] = (prov, pot.to_dict(), float(_FLOOR))
+    return _NULL_CACHE["hleg"]
+
+
+def _coupling_calibrated(state_key: str, arm: str, rho: float):
+    """(one-sided repressive p, z) of a coupling ρ against the state's site-free null, abundance-matched.
+    p < COUPLING_ALPHA ⇒ significantly repressive vs pairs that CANNOT repress (calibrated, not the −0.1 cut)."""
+    if rho != rho:
+        return np.nan, np.nan
+    lad, ab = _null_scorers()
+    a = ab[state_key].get(arm, np.nan)
+    if a != a:
+        return np.nan, np.nan
+    p = float(lad[state_key].pvalues([rho], [a])[0])
+    z = float(lad[state_key].zscores([rho], [a])[0])
+    return p, z
 
 
 def _edge_coupling(gene: str, arm: str, *, deconv: bool):
@@ -62,23 +136,32 @@ def _gtex_coupling(gene: str, arm: str):
 
 
 def _shift_class(row) -> str:
-    """Full H→NAT→T annotation (level × 3-state realization × composition × detectability), compatible with
-    the precursor `mirna_state_class.joint_edge_class`."""
+    """⭐ TWO-AXIS progression class (2026-07-19 rebuild): the COUPLING trajectory (CALIBRATED per-state site-free
+    null p<COUPLING_ALPHA, NOT the −0.1 cut) × the SAME-PLATFORM DOSE trajectory (`arm_lfc_NAT_TUM`, NOT the soft QN
+    healthy leg). Separates *when repression engages* from *when the miRNA is dosed up* — the two the old label
+    conflated. NEW class `dose_acquired_uncoupled` = dose rises but no realized repression (potential w/o
+    realization; the exact case the old label mislabelled `constitutive`). Healthy leg (h) is calibrated but SOFT
+    (GTEx cross-platform, lowest-abundance bin unfit). Quantified companions: `realization_score`, `dose_class`,
+    `wiring_frac`. Supersedes the coupling-only −0.1 label."""
     ret, spk = row["retention"], row["spiker"]
-    rep = lambda c: (c == c) and c <= -0.1                       # "repressor in this state"
-    h, n, t = rep(row["coupling_hly"]), rep(row["coupling_nat"]), rep(row["coupling_tum"])
-    if not t:
-        return "undetectable" if (spk or (row["arm_pct_floor"] == row["arm_pct_floor"] and row["arm_pct_floor"] < 30)) \
-            else ("lost" if (h or n) else "uncoupled")
+    rep = lambda p: (p == p) and p < COUPLING_ALPHA              # CALIBRATED: significantly repressive vs site-free
+    h, n, t = rep(row.get("coupling_p_hly")), rep(row.get("coupling_p_nat")), rep(row.get("coupling_p_tum"))
+    dose = row.get("arm_lfc_NAT_TUM", np.nan)                    # SAME-PLATFORM NAT→tumour level shift
+    dose_gain = (dose == dose) and dose > 0.3
+    if not t:                                                    # not calibrated-repressor in tumour
+        if spk or (row["arm_pct_floor"] == row["arm_pct_floor"] and row["arm_pct_floor"] < 30):
+            return "undetectable"
+        if dose_gain and not (h or n):
+            return "dose_acquired_uncoupled"                    # ⭐ dose up, no realized repression (potential only)
+        return "lost" if (h or n) else "uncoupled"
     if ret == ret and ret < 0.4:
         return "composition_explained"
-    acq = (row.get("arm_lfc_HLY_TUM_QN", 0) or 0) > 0.3            # acquired elevation over healthy (dHT logFC)
     if h and n:
-        return "constitutive"                                   # present+realized in healthy already
+        return "constitutive"                                   # calibrated-repressor in healthy already
     if (not h) and n:
-        return "field_established_realized"                     # established in NAT (field effect, dHN)
+        return "field_established_realized"                     # established in NAT (field effect)
     if (not h) and (not n):
-        return "acquired_realized" if acq else "tumour_realized"  # tumour-specific (dNT)
+        return "acquired_realized" if dose_gain else "tumour_realized"  # tumour-specific; dose-gated by same-platform
     return "nat_decoupled" if (h and not n) else "stable"
 
 
@@ -159,6 +242,12 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
     except Exception:
         gmean, gr_hly = pd.Series(dtype=float), pd.Series(dtype=float)
 
+    # WIRING axis (SOFT — ΔM is n-limited at NAT): canonical bagged-family M per state → Δ(M·a) decomposition.
+    try:
+        Mt_w = ST.canonical_M(gene, "01", arm_level=True); Mn_w = ST.canonical_M(gene, "11", arm_level=True)
+    except Exception:
+        Mt_w = Mn_w = pd.Series(dtype=float)
+
     rows = []
     for r in bdf.itertuples():
         arm = r.arm
@@ -184,6 +273,18 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
         lfc_hn_raw = round(nm - gm, 2) if (nm == nm and gm == gm) else np.nan
         grt = float(gr_tum.get(arm, np.nan)); grn = float(gr_nat.get(arm, np.nan))
         grh = float(gr_hly.get(arm, np.nan)) if arm in getattr(gr_hly, "index", []) else np.nan
+        # CALIBRATED coupling (site-free null p per state — replaces the −0.1 cut)
+        cp_t, cz_t = _coupling_calibrated("tum", arm, ct)
+        cp_n, _ = _coupling_calibrated("nat", arm, cn)
+        cp_h, _ = _coupling_calibrated("hly", arm, ch)
+        # WIRING decomposition Δ(M·a) = M_NAT·Δa (DOSE) + a_NAT·ΔM (WIRING) + Δa·ΔM (INTERACT)  [SOFT]
+        mt_w, mn_w = float(Mt_w.get(arm, np.nan)), float(Mn_w.get(arm, np.nan))
+        if mt_w == mt_w and mn_w == mn_w and tm == tm and nm == nm:
+            da_w, dM_w = tm - nm, mt_w - mn_w
+            t_ab, t_wi, t_in = mn_w * da_w, nm * dM_w, da_w * dM_w
+            wf = abs(t_wi) / (abs(t_ab) + abs(t_wi) + abs(t_in) + 1e-9)
+        else:
+            t_ab = t_wi = t_in = wf = np.nan
         rows.append({"arm": arm, "share_TUM": r.share_TUM, "rank_TUM": r.rank_TUM,       # gene-centric budget
                      "d_rank_HLY_TUM": getattr(r, "d_rank_HLY_TUM", np.nan),
                      "grank_TUM": round(grt, 0) if grt == grt else np.nan,               # GLOBAL abundance %ile
@@ -198,10 +299,29 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
                      "arm_iqr": round(iqr, 1), "spiker": spiker,
                      "coupling_tum": round(ct, 3) if ct == ct else np.nan,
                      "coupling_nat": round(cn, 3) if cn == cn else np.nan,
+                     "coupling_p_tum": round(cp_t, 4) if cp_t == cp_t else np.nan,   # CALIBRATED site-free-null p
+                     "coupling_p_nat": round(cp_n, 4) if cp_n == cp_n else np.nan,
+                     "coupling_p_hly": round(cp_h, 4) if cp_h == cp_h else np.nan,
+                     "coupling_z_tum": round(cz_t, 2) if cz_t == cz_t else np.nan,
+                     "term_ABUND": round(t_ab, 3) if t_ab == t_ab else np.nan,       # dose-vs-wiring (SOFT)
+                     "term_WIRING": round(t_wi, 3) if t_wi == t_wi else np.nan,
+                     "term_INTERACT": round(t_in, 3) if t_in == t_in else np.nan,
+                     "wiring_frac": round(wf, 2) if wf == wf else np.nan,
+                     "healthy_leg": _healthy_leg_map()[0].get(arm, "true_absent"),  # GTEx-collapse provenance (miTED-aware)
+                     "healthy_potential": round(_healthy_leg_map()[1].get(arm, np.nan), 2),  # imputed healthy level (potential)
                      "retention": round(ret, 2) if ret == ret else np.nan,
                      "gene_iqr": round(gene_iqr, 2)})
     card = pd.DataFrame(rows)
     card["shift_class"] = card.apply(_shift_class, axis=1)
+    # ⚠ the healthy (h) coupling leg is uninformative ONLY where GTEx collapsed the arm AND the arm is HIGHLY expressed
+    # in healthy (miTED): blindness threatens an 'acquired' call only when real repression potential existed. A LOW-
+    # abundance collapse_blind arm has abundance-bounded potential ⇒ acquisition still safe (MH-166 follow-up; graded).
+    _hi = _healthy_leg_map()[2]
+    card["healthy_uninformative"] = card["healthy_leg"].eq("collapse_blind") & (card["healthy_potential"] > _hi)
+    # QUANTIFIED companions (the class is categorical; these are the continuous axes)
+    card["realization_score"] = -card["coupling_z_tum"]         # calibrated tumour repression strength (>0 = repressive)
+    card["dose_class"] = card["arm_lfc_NAT_TUM"].apply(          # SAME-PLATFORM NAT→tumour dose direction
+        lambda d: "gain" if (d == d and d > 0.3) else ("loss" if (d == d and d < -0.3) else "flat"))
     card = card.sort_values("share_TUM", ascending=False)
     with pd.option_context("display.width", 200, "display.max_colwidth", 30):
         print(f"\n=== {gene} — per-edge attribution card (cell-intrinsic, confounder-honest) ===")

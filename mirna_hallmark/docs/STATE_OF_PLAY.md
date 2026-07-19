@@ -387,6 +387,19 @@ realization, ordered by repression-LIVENESS not dose — live-in-NAT edges {cons
 realize more than acquired-only ones (Δ −0.039, gene-clustered) despite LOWER dose; anti-dose (dose+coupling_tum
 controlled −0.032), decoy-arbitrated (direct paired diff −0.024, p=0.01); partial circularity (ρ=0.234 with the
 defining coupling_nat) quantified + defused. Enabled by the integrated `progression_edge_card`.
+✅ **`shift_class` REBUILT → CALIBRATED TWO-AXIS (MH-166, 2026-07-19):** the old coupling-only −0.1 label is
+SUPERSEDED by a two-axis annotation = per-state **calibrated** coupling (`site_free_null` per state, replaces −0.1;
+tumour null 2.67× reproduces MH-123) × **same-platform** `arm_lfc_NAT_TUM` dose (replaces the soft QN healthy leg).
+New quantified cols (`coupling_p_*`, `coupling_z_tum`, `realization_score`, `dose_class`, `wiring_frac`) + NEW class
+`dose_acquired_uncoupled` (571 edges: dose up, no calibrated coupling). ⭐ **At EQUAL dose the calibrated coupling
+axis alone separates realization** — `dose_acquired_uncoupled` +0.002 vs `acquired_realized` −0.101 (dose 1.13 vs
+1.19). MH-160 RE-VALIDATED: core ordering holds/strengthens (−0.046) but the decoy-arbitrated increment is now
+MARGINAL (−0.026, p=0.098) as `constitutive` collapsed 127→6 under calibration. Home: `card.py::_shift_class`.
+⚠ **Healthy-leg fallacy (MH-166 follow-up, 2026-07-19):** the GTEx coupling leg is BLIND where the uniquely-mappable
+pipeline collapsed multi-mapping arms. Added `healthy_leg`/`healthy_potential`/graded `healthy_uninformative`
+(miTED-aware, 305 flagged; contamination 24%→13%; MH-160 robust). Flagged arms = dose-constitutive, coupling-blind;
+recoverable via same-seed co-transcription surrogate (miR-17 via miR-20a ⇒ coupling-ACQUIRED). Genome-wide surrogate
+node + per-target GTEx→NAT→TUM identity trajectory = NEXT ARC. See FORMULAS §11g + DISCOVERY_REGISTRY MH-166.
 
 ---
 

@@ -242,11 +242,41 @@ def _fit_bins(NUL: pd.DataFrame) -> Tuple[np.ndarray, Dict[int, Tuple[float, flo
 
 # ------------------------------------------------------------------------------------------------ API
 
-def fit(*, composition: bool = True, n_fake: int = N_FAKE, seed: int = 0) -> NullLadder:
-    """Fit the site-free null. ``composition=True`` uses the composition-adjusted C (the defensible default:
-    it shrinks both the shift and the width, though it does NOT close the gap)."""
-    X, Yg, parts, _HE, _ORPH, FAKE = _classes(n_fake=n_fake, seed=seed)
-    Cov = CF.build_C("tcga", parts, composition=composition)
+def _state_design(state: str, composition: bool):
+    """(X arm×sample, Y gene×sample, parts, Cov sample×cov) for a STATE — so the site-free null can be fit and
+    scored in GTEx / NAT / tumour with the SAME per-state C the card's coupling uses (calibrates each `coupling_*`).
+    `tumour` reproduces the historical tumour-only fit exactly."""
+    s = str(state).lower()
+    if s in ("tumour", "tumor", "01", "tcga"):
+        d = LD._load(); X, Y = d["X"], d["Y"]
+        parts = [p for p in X.columns if p in Y.columns and p in CF.deconv("tcga").index]
+        return X[parts], Y, parts, CF.build_C("tcga", parts, composition=composition)
+    from mirna_hallmark.learned import states as ST
+    if s in ("nat", "11"):
+        X, Y = ST.state_matrices("11")
+        parts = [p for p in X.columns if p in Y.columns]
+        Cov = ST._cibersortx_state_cov(parts, "11")
+        if Cov is None:
+            Cov = ST._state_metagene_cov(Y).reindex(parts)
+    elif s in ("gtex", "hly", "healthy"):
+        from mirna_hallmark.learned import state as STA
+        X, Y = STA._gtex_mirna(), STA._gtex_mrna()
+        parts = [p for p in X.columns if p in Y.columns]
+        Cov = ST._state_metagene_cov(Y).reindex(parts)
+    else:
+        raise ValueError(f"unknown state {state!r}")
+    Cov = Cov.apply(lambda c: c.fillna(c.median()) if c.notna().any() else c.fillna(0.0))
+    return X[parts], Y, parts, Cov
+
+
+def fit(*, state: str = "tumour", composition: bool = True, n_fake: int = N_FAKE, seed: int = 0) -> NullLadder:
+    """Fit the site-free null for a STATE (`tumour`|`nat`|`gtex`). ``composition=True`` uses the composition-adjusted
+    C (the defensible default). The FAKE (site-free) pair set is state-independent (which pairs CANNOT repress);
+    only the matrices/C/abundance it is SCORED against change per state. ⚠ the NAT state is n≈104 → its null is
+    itself lower-powered; the tumour null is the well-powered one."""
+    _X, _Y, _parts, _HE, _ORPH, FAKE = _classes(n_fake=n_fake, seed=seed)   # state-independent edge SETS
+    X, Yfull, parts, Cov = _state_design(state, composition)
+    Yg = Yfull.loc[[g for g in Yfull.index if g in set(FAKE.gene)], parts]
     XR, k = _rank_residualise(X, Cov)
     YR, _ = _rank_residualise(Yg, Cov)
     ab = X.median(axis=1)
@@ -260,6 +290,32 @@ def fit(*, composition: bool = True, n_fake: int = N_FAKE, seed: int = 0) -> Nul
     bins, params = _fit_bins(NUL)
     return NullLadder(bins=bins, params=params, composition=composition, n_fake=int(len(NUL)),
                       theoretical_sd=float(1.0 / np.sqrt(max(len(parts) - k - 1, 1))))
+
+
+_LADDER_CACHE: dict = {}
+
+
+def fit_state(state: str = "tumour", *, composition: bool = True) -> NullLadder:
+    """Memoized + DISK-cached per-state `fit` (fit once, persist `null_ladder_<state>.tsv`; parallel card workers
+    load it cheaply instead of re-running the heavy scanMiR read — axiom 3a)."""
+    key = (str(state).lower(), bool(composition))
+    if key in _LADDER_CACHE:
+        return _LADDER_CACHE[key]
+    path = OUT_DIR / f"null_ladder_{key[0]}_{'comp' if composition else 'core'}.tsv"
+    if path.exists():
+        df = pd.read_csv(path, sep="\t")
+        bins = np.append(df.ab_lo.to_numpy(float), float(df.ab_hi.iloc[-1]))
+        params = {int(r.bin): (float(r.mu0), float(r.sd0)) for r in df.itertuples()}
+        nl = NullLadder(bins=bins, params=params, composition=composition,
+                        n_fake=int(df.n_fake.iloc[0]) if "n_fake" in df else 0,
+                        theoretical_sd=float(df.theoretical_sd.iloc[0]))
+    else:
+        nl = fit(state=state, composition=composition)
+        OUT_DIR.mkdir(parents=True, exist_ok=True)
+        fr = nl.to_frame(); fr["n_fake"] = nl.n_fake
+        fr.to_csv(path, sep="\t", index=False)
+    _LADDER_CACHE[key] = nl
+    return nl
 
 
 def run(*, n_fake: int = N_FAKE, seed: int = 0) -> pd.DataFrame:

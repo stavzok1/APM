@@ -746,6 +746,99 @@ acquired_vs_gtex_corrected   = acquired_vs_gtex − Σ imputable gain
 true gain ≈ 0), removing the collapse inflation while keeping genuinely-acquired arms.
 Output: `gene_acquired_pressure.tsv` (sorted by `acquired_vs_gtex`).
 
+### 11f. Card `shift_class` — the CALIBRATED two-axis progression annotation (MH-166)
+
+The per-edge progression class emitted by `learned/card.py::_shift_class` (flows into
+`canonical_card.tsv` → `progression_edge_card`). This is the **learned successor** to the §11c
+heuristic `joint_edge_class` (which routes through the §6b-RETIRED pressure spine — do not read
+the two as the same object). It is built from **two orthogonal axes**, deliberately separating
+*when repression engages* from *when dose rises* (the old label thresholded coupling ONLY, at a
+−0.1 cut on a null 3-4× too narrow — MH-123):
+
+**Axis A — CALIBRATED coupling, per state.** For each state `X ∈ {hly, nat, tum}` the arm-level
+partial-Spearman `coupling_X` (§7, learned-model residuals) is scored against a **per-state
+site-free empirical null** (`eval/site_free_null.py::fit_state(X)`, Efron per-abundance-quintile
+on pairs that *cannot* repress — no 3'UTR site), yielding `coupling_p_X` and `coupling_z_tum`:
+
+```
+(coupling_p_X, coupling_z_X) = NullLadder(X).pvalues([coupling_X], [abund_arm_X])
+rep(X) := (coupling_p_X == coupling_p_X) and coupling_p_X < COUPLING_ALPHA   # COUPLING_ALPHA = 0.05
+```
+
+The null reproduces MH-123: tumour inflation **2.67×** (sd0 ≈ 0.08 vs theoretical 0.031), NAT 1.25×,
+GTEx ~1.5–2× (lowest GTEx abundance bin unfit → sd0=1.0 guard). ⚠ set-level, NOT per-edge FDR.
+
+**Axis B — SAME-PLATFORM dose (SOE).** The trusted paired NAT→tumour arm log-fold-change
+`arm_lfc_NAT_TUM` (never the soft cross-platform QN healthy leg):
+
+```
+dose_gain := arm_lfc_NAT_TUM > 0.3     # dose_class = gain / loss (<-0.3) / flat
+```
+
+**Composite class** (`h,n,t = rep(hly),rep(nat),rep(tum)`; evaluated top-down):
+
+```
+# --- NOT calibrated-repressor in tumour (not t) ---
+undetectable              spiker OR arm_pct_floor < 30
+dose_acquired_uncoupled   dose_gain and not (h or n)             (⭐ NEW: dose up, NOT calibrated-coupled)
+lost                      (h or n)                               (was coupled healthy/NAT, gone in tumour)
+uncoupled                 otherwise                              (never coupled, no dose gain)
+# --- calibrated-repressor in tumour (t) ---
+composition_explained     retention < 0.4                        (coupling is composition-driven)
+constitutive              h and n                                (calibrated-coupled healthy + NAT + tumour)
+field_established_realized (not h) and n                         (coupled from NAT onward — field effect)
+acquired_realized         (not h) and (not n) and dose_gain      (tumour-only coupling + dose acquired)
+tumour_realized           (not h) and (not n) and not dose_gain  (tumour-only coupling, dose flat)
+nat_decoupled             h and not n                            (coupled healthy, dropped by NAT, back in tumour)
+```
+
+Census (genome-wide `progression_edge_card`, MH-166): `undetectable` 1145 · `uncoupled` 1104 ·
+`dose_acquired_uncoupled` **571** · `acquired_realized` 484 · `tumour_realized` 183 · `lost` 162 ·
+`composition_explained` 161 · `field_established_realized` 77 · `nat_decoupled` 52 · `constitutive` **6**
+(collapsed from 127 under calibration).
+
+**Quantified companions** (emitted alongside the class, per the axiom-5 continuum rule — do not
+hard-bin as a headline count): `realization_score = −coupling_z_tum` (higher = stronger calibrated
+tumour repression); `dose_class`; the abundance-vs-wiring decomposition `Δ(M·a) = term_ABUND
+(M_NAT·Δa) + term_WIRING (a_NAT·ΔM) + term_INTERACT (Δa·ΔM)` with `wiring_frac = |term_WIRING|/Σ|terms|`
+(SOFT — per-family ΔM is n-limited at NAT; cross-check aggregate retention, `state.cross_state_transfer`).
+
+⭐ **Calibration separates realization at EQUAL dose** (MH-166): `dose_acquired_uncoupled` realizes
++0.002 (≈0) vs `acquired_realized` −0.101 at matched dose (1.13 vs 1.19) — the exact case the old
+−0.1 coupling-only label buried in `constitutive`/`tumour_realized`. MH-160 (class→within-patient
+realization) RE-VALIDATED on the new class: core live-vs-acquired ordering holds/strengthens (−0.046
+gene-clustered) but the decoy-arbitrated increment is now marginal (−0.026, p=0.098) as `constitutive`
+collapsed 127→6 under calibration. Registry: **MH-166**.
+
+### 11g. Healthy-leg provenance + the graded `healthy_uninformative` flag (MH-166 follow-up)
+
+The healthy (GTEx) coupling leg `coupling_hly`/`coupling_p_hly` is **mechanically blind** where the GTEx
+uniquely-mappable miRNA pipeline COLLAPSED the arm (multi-mapping paralogues → per-sample GTEx ≈ 0 → ρ≈0 by
+construction, not biology). `card.py::_healthy_leg_map` cross-references the DIANA-miTED healthy-breast cohort
+(`healthy_anchor`, n=12; positional rank stable — median rank_sd 2.8, the flag-driving oncomiRs rank_sd<1,
+detected 12/12) to assign per-arm provenance and a graded flag:
+
+```
+healthy_leg  ∈  measured        GTEx arm above ABUND_FLOOR and <50% floored → coupling_hly trustworthy
+                collapse_blind   GTEx floored BUT miTED shows expressed → coupling_hly BLIND (not absent)
+                true_absent      floored in GTEx AND miTED → genuinely absent in healthy
+healthy_potential = HA.gtex_qn_baseline()          # imputed (miTED/GTEx) healthy level = repression-POTENTIAL proxy
+healthy_uninformative = (healthy_leg == collapse_blind) AND (healthy_potential > _FLOOR=log2(11))   # GRADED
+```
+
+**GRADED, not binary.** Repression is abundance-gated (AGO/RISC saturates), so a LOW-abundance collapse_blind arm
+has abundance-bounded potential ⇒ its 'acquired' call is safe even blind; blindness only THREATENS the call when the
+arm is functionally present in healthy (`healthy_potential > RPM≥10 floor`). This cuts the flag **826→305** genome-wide
+(acquired-class contamination 24%→13%) and MH-160 is robust to excluding it (−0.046→−0.047, p=0.001).
+
+**Semantics of the flag (MH-166 follow-up, measured):** a flagged edge is **dose-constitutive** (miTED-high) with
+**coupling history blind** — NOT "acquired." The blind healthy *coupling* is recoverable for the ~7–30 arms with a
+**same-seed co-transcription instrument** (a mappable cluster-mate, e.g. miR-20a-5p for miR-17-5p, tumour-validated
+corr 0.88): the instrument's GTEx coupling estimates the seed's healthy repression. Demonstrated: miR-17→{ERBB3,
+NCOA3, JAK1, MEF2D, ARID4B, TLR7} surrogate-GTEx ≈ −0.09 vs tumour ≈ −0.41 ⇒ **dose-constitutive but coupling-ACQUIRED**,
+per-target-graded (TLR7 fully de-novo −0.001, MEF2D partially pre-existing −0.168). The genome-wide surrogate node +
+per-target GTEx→NAT→TUM identity trajectory is a SCOPED follow-up (not yet built). Registry: **MH-166**.
+
 ---
 
 ## 12. Gene-set architecture: topology propagation + tumor-direction prior (`geneset_architecture`)
