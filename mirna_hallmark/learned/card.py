@@ -171,6 +171,44 @@ def _dose_retention_map():
     return _NULL_CACHE["dret"]
 
 
+def _family_alloc_map():
+    """arm → (family_dose_share, family_role) for DEDUCIBLE within-family identity allocation. β/identity are
+    FAMILY-level (same seed ⇒ shared targetome) and broadcast EQUALLY to members — but where one arm carries ~all
+    the family DOSE (siblings below the RPM≥10 floor) the family's effect is deducibly THAT arm's (the others have
+    no variance to explain the target). Roles: sole (singleton) · dominant (>0.8 of family dose) · minor (phantom,
+    <0.2 with a dominant sibling) · co (dose-balanced — arm identity NOT dose-resolvable; UNVALIDATED, would need a
+    BREAST chimeric-eCLIP or per-arm knockdown, not more modelling — MH-118→122 audit). (MH-166 follow-up.)"""
+    if "falloc" not in _NULL_CACHE:
+        from mirna_hallmark.learned import families as FAM
+        Xt = LD._load()["X"]
+        fam = FAM.family_of(pd.Index(Xt.index))
+        med = Xt.median(axis=1)
+        lin = {a: max(2.0 ** float(med.get(a, 0.0)) - 1.0, 0.0) for a in Xt.index}
+        byfam: dict = {}
+        for a in Xt.index:
+            f = fam.get(a)
+            if f is not None:
+                byfam.setdefault(f, []).append(a)
+        out = {}
+        for f, arms in byfam.items():
+            expr = [a for a in arms if med.get(a, 0.0) > 1]
+            tot = sum(lin[a] for a in expr) or 1.0
+            has_dom = any(lin[b] / tot > 0.8 for b in expr)
+            for a in arms:
+                sh = lin[a] / tot if a in expr else 0.0
+                if len(expr) <= 1:
+                    role = "sole"
+                elif sh > 0.8:
+                    role = "dominant"
+                elif sh < 0.2 and has_dom:
+                    role = "minor"
+                else:
+                    role = "co"
+                out[a] = (round(sh, 2), role)
+        _NULL_CACHE["falloc"] = out
+    return _NULL_CACHE["falloc"]
+
+
 def _coupling_calibrated(state_key: str, arm: str, rho: float):
     """(one-sided repressive p, z) of a coupling ρ against the state's site-free null, abundance-matched.
     p < COUPLING_ALPHA ⇒ significantly repressive vs pairs that CANNOT repress (calibrated, not the −0.1 cut)."""
@@ -421,6 +459,8 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
                      "term_WIRING": round(t_wi, 3) if t_wi == t_wi else np.nan,
                      "term_INTERACT": round(t_in, 3) if t_in == t_in else np.nan,
                      "wiring_frac": round(wf, 2) if wf == wf else np.nan,
+                     "family_dose_share": _family_alloc_map().get(arm, (np.nan, "sole"))[0],  # within-family dose fraction
+                     "family_role": _family_alloc_map().get(arm, (np.nan, "sole"))[1],        # sole|dominant|minor|co
                      "healthy_leg": _healthy_leg_map()[0].get(arm, "true_absent"),  # GTEx-collapse provenance (miTED-aware)
                      "healthy_potential": round(_healthy_leg_map()[1].get(arm, np.nan), 2),  # imputed healthy level (potential)
                      "dose_comp_retention": _dose_retention_map().get(arm, (np.nan, np.nan))[0],   # dose | composition

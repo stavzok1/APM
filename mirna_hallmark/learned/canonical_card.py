@@ -47,6 +47,7 @@ import time
 from pathlib import Path
 from typing import List, Optional, Sequence
 
+import numpy as np
 import pandas as pd
 
 from mirna_hallmark import config as C
@@ -173,6 +174,15 @@ def _provenance(attr_cols, prog_cols) -> pd.DataFrame:
 
 def _join_and_write(attr: pd.DataFrame, prog: pd.DataFrame) -> pd.DataFrame:
     card = attr.merge(prog, on=["gene", "arm"], how="outer", suffixes=("", "_prog"))
+    # ⭐ DEDUCIBLE within-family identity allocation (MH-166 follow-up). β/identity are broadcast equally to same-seed
+    # members; where the family is dose-DOMINATED the credit is deducibly the dominant arm's, so null it on the phantom
+    # (below-floor) minor. `co` (dose-balanced) arms carry an UNVALIDATED arm split (needs breast chimeric/knockdown).
+    if "identity" in card and "family_role" in card:
+        _minor = card["family_role"].eq("minor")
+        card["identity_allocated"] = card["identity"].mask(_minor, 0.0)          # phantom minors → 0; else family identity
+        card["arm_id_status"] = np.select(
+            [card["family_role"].eq("co"), card["family_role"].eq("sole")],
+            ["unvalidated_balanced", "singleton"], default="resolved_by_dose")   # dominant/minor = dose-resolved
     card = card.sort_values(["gene", "beta"], ascending=[True, False], na_position="last")
     card.to_csv(OUT_CARD, sep="\t", index=False, float_format="%.5f")
     _provenance(list(attr.columns), list(prog.columns)).to_csv(OUT_PROV, sep="\t", index=False)
