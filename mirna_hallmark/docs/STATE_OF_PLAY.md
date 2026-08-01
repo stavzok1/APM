@@ -400,6 +400,25 @@ pipeline collapsed multi-mapping arms. Added `healthy_leg`/`healthy_potential`/g
 (miTED-aware, 305 flagged; contamination 24%→13%; MH-160 robust). Flagged arms = dose-constitutive, coupling-blind;
 recoverable via same-seed co-transcription surrogate (miR-17 via miR-20a ⇒ coupling-ACQUIRED). Genome-wide surrogate
 node + per-target GTEx→NAT→TUM identity trajectory = NEXT ARC. See FORMULAS §11g + DISCOVERY_REGISTRY MH-166.
+⭐⭐ **EXTERNAL VALIDATION ARC (MH-166, 2026-07-19) — the big current-state update:**
+• **PRECISION validated externally, TWO orthogonal axes:** McGeary&Bartel functional (19 arms, Fisher **p=7.96e-33**,
+  HE **5.6×** enriched vs null) + breast chimeric binding GSE263552 (**27×**). The edges we use are real.
+• **Family-collapse validated FUNCTIONALLY** (miR-29a≈29b, per-target ρ 0.87–0.95) — but only the seed-HOMOGENEOUS
+  case; within-family TCGA arm-corr is HETEROGENEOUS (med 0.47, 6 tight/6 loose; miR-29 raw 0.44 ≈ partial 0.43,
+  so co-expression ≠ the 0.87 seed-driven interchangeability). ≈25% seed-heterogeneous families still gated per-family.
+• **⭐ COUPLING IS REALIZATION, NOT EXISTENCE (supersedes the "weak set-level signal" framing above):** breast TCGA
+  coupling is INDEPENDENT of edge reality (Fisher OR=0.99 vs McGeary-functional) and ~13% SENSITIVE — it measures
+  realized DOMINANT regulation across patients (observational, variance-driven), a harder/different question than
+  existence. High-specificity (2.9–5× null) / low-sensitivity. ⇒ judge EXISTENCE on functional/binding; use coupling
+  as REALIZATION (presence = dominant realized regulator; absence ≠ not-real). Do NOT use coupling as an existence arbiter.
+• **RECALL → DISCOVERY (expansion pending):** HE captures ~6% of functional targets (precision-by-design). Built the
+  tiered candidacy + `model_expansion_list.tsv` (functional × seed-type/Kd × context × chimeric × family-mate) tied to
+  the project's coupling-discovery lane → **21 gold∩external crown jewels** (miR-17~92→TMBIM6/AHNAK/XIAP; miR-182→MET
+  is literature-VALIDATED in breast, the rest novel-but-assay-backed). ⚠ **abundance is NOT a "tilt"/artifact — abundant
+  arms being dominant realized regulators IS the biology; a "real edge" = structure(seed) + physical(binding) +
+  impact(coupling), all three. The abundance association only limits RECALL (the low-abundance tail), not precision —
+  do NOT down-weight coupling.** ⬜ **OPEN: MODEL EXPANSION + Gibbs REFIT (board item 0) — fold candidates in, re-fit,
+  read new β + gene pressure.** Files in `output/learned/realization/{model_expansion_list,missed_edges_*,breast_chimeric_*}.tsv`.
 
 ---
 
