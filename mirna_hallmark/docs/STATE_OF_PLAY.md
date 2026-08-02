@@ -636,6 +636,13 @@ COMPOSITION axes predict the SIGN (does β help or hurt), ENSEMBLE axes predict 
 the ensemble axis alone leaves harm FLAT (33.9%); **BOTH gates together → hurt 34.7% → 27.6%, β-sign-right
 58.5% → 69.3%, mean Δ −0.0468, on 19% of genes — and retains every showcase gene (MYC, CCND1, HIF1A,
 FOXC1, TXNIP, EGFR).** FN1 is not a surprise: 89th percentile on `comp_tcga_mrna_driver_share`.
+⭐ **BUT THE GATES REMOVE COIN-FLIPS, NOT DAMAGE.** At n=207, SE(ρ)=0.070; only **8 of the 35 post-gate
+hurt genes exceed 1 SE** ⇒ genuine harm is **6.3%**, not 27.6%. Down the gate ladder the **nominal** hurt
+falls 34.7 → 27.6 → 21.6 → **18.8%** while the **genuine-harm rate is PINNED at 6.8 / 6.3 / 6.8 / 6.2%**.
+An 81-axis FDR scan inside the gated set gives ONE hit (`median_retention` q=0.04 — a third
+composition-flavoured axis) **which does not separate the harmed genes** (p=0.80). ⇒ **the ~6–7% where β
+does real damage (MET, SMAD7, IL6, CDKN1A, ETS1, BCL2L2, XIAP, CDK4) is irreducible with the current
+axes.** ⚠ Always separate a nominal sign-flip rate from a magnitude-qualified one.
 
 **⚠ "METABRIC-full (EGA-pending)" is doing unearned work across five docs.** There is **no accession,
 no DAR id, no submission date, no owner** anywhere in the repo. The evidence supports *"never applied

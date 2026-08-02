@@ -315,6 +315,12 @@ These are completion gates, on the same footing as the documentation protocol:
      all.** Ask which question your candidate gate answers before concluding anything from it. Report a
      showcase gene (MYC: +0.099 → −0.340) only alongside its counterexample (FN1: −0.216 → +0.121) **and
      the gate that separates them.**
+   - ⭐ **AND SEPARATE A NOMINAL SIGN-FLIP RATE FROM A MAGNITUDE-QUALIFIED ONE — they behave differently.**
+     MH-201: the post-gate "hurt rate" of 27.6% was mostly **coin-flips** — at n=207, SE(ρ)=0.070 and only
+     8/35 hurt genes exceeded 1 SE, so genuine harm was **6.3%**. Down a 3-gate ladder the **nominal** rate
+     fell 34.7 → 18.8% while the **genuine** rate stayed pinned at **6.8 / 6.3 / 6.8 / 6.2%**. ⇒ **gates can
+     buy noise-removal and magnitude-enrichment while buying NO damage-avoidance at all, and reporting only
+     the nominal rate hides that completely.**
    ⇒ registry row MH-201; module `learned/gene_axes.py` (self-checked against every number above).
 
 ## Key docs (this folder only)
