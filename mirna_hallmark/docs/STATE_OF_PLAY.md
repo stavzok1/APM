@@ -625,6 +625,11 @@ not** (`buffa_sd` −0.144 q=0.0016, `buffa_iqr` −0.123 — but `buffa_mean` q
 couple however highly expressed); ③ **composition-driven genes transfer WORSE** (`comp_tcga_mrna_driver_share`
 +0.127); ④ ⭐ **CPTAC-transferable genes are Buffa-transferable** (`cptac_t105_agg_rho_rna_raw` → Buffa level
 +0.234, q=5e-06) — two independent target cohorts agreeing on which genes transport.
+⭐⭐ **THE STRONGEST MODIFIER OF ALL IS ON THE REGULATOR SIDE: `reg_dose_hhi` +0.186 (q=2.1e-05)** — when
+the regulators' ABUNDANCE is concentrated in one family, **β LOSES to unweighted abundance**, because the
+sum already IS that family. With `reg_frac_flat` +0.180 and `ident_n_def` −0.172. ⇒ **β earns its keep only
+where the regulator ensemble is SPREAD and MEASURABLE; what matters is how the DATA distributes, not how β
+does.** Shapley enters as COVERAGE (`ident_n_def`) — every distributional form of it is null.
 
 **⚠ "METABRIC-full (EGA-pending)" is doing unearned work across five docs.** There is **no accession,
 no DAR id, no submission date, no owner** anywhere in the repo. The evidence supports *"never applied
