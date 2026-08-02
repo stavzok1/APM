@@ -83,7 +83,19 @@ GAP_GATE = 0.005              # axiom 5: below this the retention ratio is a coi
 RHO_GATE = 0.05               # same, for the protein retention denominator
 CEILING_ROBUST = 0.02         # MH-144: NOT 0 — the mass piles up at 0
 # every prefix this module writes onto a card; used to strip-before-rejoin AND to select
-ANNOT_PREFIXES = ("ctx_", "cptac_", "tcga_", "comp_")
+ANNOT_PREFIXES = ("ctx_", "cptac_", "tcga_", "comp_", "cal_")
+
+# ⭐ POSTERIOR-WIDTH CALIBRATION CONSTANT (MH-185, 2026-08-01). `calibration.posterior_calibration`
+# compares the reported posterior SD against the TRUE sampling SD from INDEPENDENT half-cohorts.
+# MEASURED over 4 seeds (200 genes, 3 splits): Gibbs Gaussian ratio **0.815 ± 0.084** ⇒ the shipped
+# widths are ~1.23x too NARROW. ⚠⚠ THE CONSTANT IS ITSELF IMPRECISE — the seed SD is 0.084 (range
+# 0.74–0.93), so the inflation is 1.23 with a plausible range ~1.07–1.35. It is emitted WITH that
+# range rather than as a bare multiplier, per axiom 5.
+# ⛔ Do NOT swap in Student-t instead: ν=7 reaches only 0.849 ± 0.051 — better, still not calibrated.
+# ⛔ And do NOT model a subtype random effect for this: subtype-STRATIFIED half-splits were measured
+# and did NOT reduce the true sampling SD (Δ −0.026 ± 0.051, p=0.63) ⇒ the heterogeneity is finer
+# grained than PAM50, so the honest fix is REPORTING, which is what these columns are.
+WIDTH_RATIO, WIDTH_RATIO_SD = 0.815, 0.084
 
 
 def _read(p: Path, **kw):
@@ -188,6 +200,40 @@ def _annotate(card_path: Path, blocks: list, keys: list) -> None:
           f"(+{len(added)} annotated), {len(out):,} rows, pre-existing columns bit-identical")
 
 
+def _calibrate_widths(card_path: Path) -> None:
+    """Emit HONEST posterior widths next to the raw ones — the model is overconfident by a MEASURED factor.
+
+    `beta_sd` is ~1.23x too narrow (MH-185), so every `z = beta/sd` is ~1.23x too large and the
+    `identified` (|z|>2) count is inflated. Rather than silently rescale the shipped column, this adds a
+    parallel set so a reader can see both and the correction is auditable:
+        cal_beta_sd        beta_sd / WIDTH_RATIO                 the honest width
+        cal_z              beta / cal_beta_sd                    the honest z
+        cal_identified     |cal_z| > 2                           the honest identifiability call
+        cal_beta_sd_lo/hi  the width under the constant's OWN uncertainty (ratio +/- 1 seed SD)
+        cal_identified_lo/hi   identifiability at those two ends — the honest RANGE, not a point
+    ⚠ This does NOT make the model calibrated; it makes its overconfidence explicit and correctable.
+    """
+    if not card_path.exists():
+        return
+    d = pd.read_csv(card_path, sep="\t", low_memory=False)
+    if "beta_sd" not in d.columns or "beta" not in d.columns:
+        return
+    raw_ident = d["identified"].mean() if "identified" in d else np.nan
+    for tag, r in (("", WIDTH_RATIO), ("_lo", WIDTH_RATIO + WIDTH_RATIO_SD),
+                   ("_hi", WIDTH_RATIO - WIDTH_RATIO_SD)):     # lower ratio => WIDER sd => fewer identified
+        sd = d["beta_sd"] / r
+        z = d["beta"] / sd.replace(0, np.nan)
+        if tag == "":
+            d["cal_beta_sd"], d["cal_z"] = sd, z
+        else:
+            d[f"cal_beta_sd{tag}"] = sd
+        d[f"cal_identified{tag}"] = (z.abs() > 2)
+    d.to_csv(card_path, sep="\t", index=False)
+    print(f"     ↳ calibrated widths: identified {raw_ident:.1%} (raw) -> "
+          f"{d.cal_identified.mean():.1%} at ratio {WIDTH_RATIO:.3f} "
+          f"[{d.cal_identified_hi.mean():.1%}-{d.cal_identified_lo.mean():.1%}] over its +/-1SD range")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--annotate", action="store_true", help="join the context onto the cards in place")
@@ -216,6 +262,7 @@ def main() -> None:
           f"{' + CPTAC block' if cptac is not None else ''}):")
     for p in CARDS_EDGE:
         _annotate(p, blocks, keys)
+        _calibrate_widths(p)
     # ⭐ GENE-level CPTAC AGGREGATE (`cptac_card.build_gene`): the gene's whole miRNA budget —
     # SUM_a beta_a*X_a with beta the DENSE GIBBS mean fit on TCGA mRNA at n~1000 — scored against each
     # CPTAC layer, alongside an UNWEIGHTED sum-abundance reference and a TCGA reference built the same way.

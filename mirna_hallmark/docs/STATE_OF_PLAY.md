@@ -59,8 +59,27 @@ estimator**. **What it is NOT:** an attribution engine. *It must not be sold as 
 miRNA represses this gene".*
 
 **OPEN / known limits:**
-- **Posterior widths are ~25% too narrow** — bagged NNLS **1.37×**, Gibbs **1.29×**, Student-t ν=7
-  **1.13×** (`CPTAC_PROTEIN_CHANNEL_PLAN.md` §"CORRECTED 2026-07-12").
+- **Posterior widths are TOO NARROW — but only ONE of the three numbers is stable (RE-DERIVED with
+  error bars 2026-08-01, MH-185).** Measured over **4 seeds** (200 genes, 3 splits), ratio =
+  reported_se / true_sampling_SD from INDEPENDENT half-cohorts (CALIBRATED = 0.9–1.1):
+  **bagged NNLS 0.745 ± 0.009** (inflation 1.34 — confirms the recorded 1.37×) ·
+  **Gibbs Gaussian 0.815 ± 0.084** (1.23×; range 0.74–0.93) ·
+  **Student-t ν=7 0.849 ± 0.051** (1.18×).
+  ⚠ **The Gibbs figures are IMPRECISE, not just different** — the seed SD is 0.084, which is why two
+  runs of the same harness flipped the verdict OVERCONFIDENT↔CALIBRATED. Quote them with the spread;
+  the old point estimates (1.29× / 1.13×) were unstable statistics, not wrong readings.
+  ⛔ **"ν=7 substantially FIXES the calibration (0.77→0.89)" is TOO STRONG.** It improves the mean
+  (0.815→0.849) **and halves the seed variance** (0.084→0.051), so its direction is right — but it does
+  **not reach the calibrated band**, and 0.89 sits above the observed spread. Do not turn it on expecting
+  a fix.
+  ⛔ **A SUBTYPE RANDOM EFFECT WILL NOT FIX IT EITHER — tested, refuted (MH-185).** Subtype-STRATIFIED
+  half-splits did **not** shrink the true sampling SD (Δ ratio **−0.026 ± 0.051**, p=0.63; true SD rose
+  0.01742→0.01822) ⇒ the unmodelled heterogeneity is **finer-grained than PAM50**, so the fix is
+  **REPORTING, not modelling**.
+  ✅ **SHIPPED: honest widths are now ON THE EDGE CARD** — `cal_beta_sd` / `cal_z` / `cal_identified`
+  (+`_lo`/`_hi` spanning the constant's own ±1 SD). **Identifiability falls 24.8% → 19.9% [18.1–22.4%]**
+  on the 5,648 arm-edge card. ⚠ that is the ARM-EDGE rate; the **27.8% of 5,117 UNITS** quoted below is a
+  different universe — do not compare them directly.
   ⚠ **`LEARNED_MODEL_STATE_CHANNEL_PLAN.md` §11(a) still says "~40% (NNLS 28%, Gibbs 39%)" and "SBC
   promoted" — SUPERSEDED.** The earlier figure was measured on a biased gene subset (the
   scale-dependent sd-floor bug); **SBC is RETIRED as the wrong tool.**
