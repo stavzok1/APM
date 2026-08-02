@@ -21,14 +21,15 @@ GENE-level OOF statistic (MH-188). **Every one was a unit mismatch, i.e. axiom 6
 for the oldest and most-used columns. This module fixes that by RECORD rather than by renaming 160
 columns: renaming would break every consumer and every historical ledger/registry row.
 
-⚠⚠ **"FAMILY" DOES NOT MEAN "CONSTANT" — MEASURED, 2026-08-01.** The documented design is that β is
-estimated per SEED FAMILY and broadcast equally to member arms. **That is true for 90.6% of (gene,family)
-cells and FALSE for the other 9.4% (466/4,964), ALL of them multi-arm** — and the variation is UPSTREAM,
-present in `readouts_arm_edges.tsv` itself (the card is a byte-faithful copy: seed_family and beta both
-100% identical to source). So a `family` rung label means *"estimated on the family"*, NOT *"guaranteed
-identical across its arms"*. Any code that de-duplicates family columns by taking the FIRST arm of a cell
-will silently drop a real difference in 9.4% of cells. `verify()` reports this as an EXCEPTION RATE rather
-than a pass/fail, because a bare "mislabelled" verdict here would be wrong in both directions.
+⛔⛔ **THE BROADCAST STORY WAS WRONG — CORRECTED 2026-08-01 (MH-191).** I labelled the readouts block
+`family` believing β is fit per seed family and broadcast to member arms. **It is not.**
+`canonical_card.ATTR_SRC = readouts_arm_edges.tsv`, produced by `readouts.run(level="arm")`, where
+`members = {a: [a] for a in X.columns}` — **the §8 family collapse is REMOVED and each arm is its own
+unit.** The evidence that looked like broadcast was an artifact of the universe's shape: 4,499 of 4,966
+cells are SINGLE-arm and therefore constant with one row, while **466 of the 467 multi-arm cells (99.8%)
+carry DISTINCT βs**. ⇒ the readouts block is **EDGE rung**, fit per (gene, arm).
+⭐ **AND THE FAMILY GRAIN ALREADY EXISTS:** `readouts_edges.tsv`, keyed `(gene, family)` — the same
+estimator at `level="family"`. Both rungs are already produced; only the family one was never carded.
 
 THE FOUR RUNGS
     key      the join keys
@@ -59,12 +60,21 @@ DEST_GENE = OUT / "gene_card_rungs.tsv"
 EXPLICIT = {
     "gene": "key", "arm": "key", "seed_family": "key",
     # ── FAMILY rung: estimated on the seed family, BROADCAST to member arms
-    **{c: "family" for c in (
+    # ⛔⛔ CORRECTED 2026-08-01 (MH-191). These were labelled `family` on the belief that β is fit per
+    # seed family and broadcast. **IT IS NOT.** `canonical_card.ATTR_SRC = readouts_arm_edges.tsv`, which
+    # `readouts.run(level="arm")` produces with `members = {a: [a] for a in X.columns}` — **the §8 family
+    # collapse is REMOVED and every arm is its own unit.** Proof: 466 of 467 multi-arm cells (99.8%) carry
+    # DISTINCT βs; the 90.6% "constant" cells are simply the 4,499 SINGLE-arm cells, constant because they
+    # have one row. So the readouts block is fit per (gene, arm) ⇒ **EDGE rung.**
+    **{c: "edge" for c in (
         "beta", "beta_sd", "z", "identified", "identity", "identity_deconv", "identity_eq_magnitude",
         "beta_frac", "beta_frac_sd", "m_nnls", "pip_dense", "pip_discovery", "prior_pi",
-        "beta_deconv", "retention_beta", "composition_class", "net_pressure", "family_size",
-        "coupling_fam", "share_TUM", "rank_TUM", "share_HLY", "share_NAT", "rank_HLY", "rank_NAT",
-        "identity_allocated", "family_rho_adj", "realization_identity", "is_realization_owner")},
+        "beta_deconv", "retention_beta", "composition_class", "net_pressure",
+        "share_TUM", "rank_TUM", "share_HLY", "share_NAT", "rank_HLY", "rank_NAT",
+        "identity_allocated", "realization_identity", "is_realization_owner")},
+    # genuinely FAMILY attributes (a property of the seed family itself, shared by its arms)
+    **{c: "family" for c in ("family_size", "coupling_fam", "family_rho_adj", "family_role",
+                             "family_dose_share")},
     # ── ARM rung: a property of the arm alone
     **{c: "arm" for c in (
         "arm_med_rpm", "arm_pct_floor", "arm_iqr", "arm_id_status", "ago_loading", "detection",
@@ -81,11 +91,9 @@ EXPLICIT = {
     # what UNIT actually produced it. An unassigned column is where a unit mismatch hides, so this
     # list is kept exhaustive and `--check` fails the build if a new one appears.
     **{c: "gene" for c in ("n", "p_fam", "role")},
-    "family_role": "family",
-    **{c: "family" for c in (
+    **{c: "edge" for c in (
         "beta_sd_deconv", "beta_frac_deconv", "beta_frac_abs", "beta_frac_reliable",
-        "retention_reliable", "family_dose_share",
-        "d_rank_HLY_NAT", "d_rank_NAT_TUM", "d_rank_HLY_TUM")},
+        "retention_reliable", "d_rank_HLY_NAT", "d_rank_NAT_TUM", "d_rank_HLY_TUM")},
     # ⛔ dose_rank_* are WITHIN-GENE ranks of the arm's dose, not arm properties — caught empirically
     # (they varied within `arm` in 56% of groups). Same for family_role (varies within gene in 50%).
     **{c: "edge" for c in ("dose_rank_HLY", "dose_rank_NAT", "dose_rank_TUM")},
@@ -104,7 +112,7 @@ EXPLICIT = {
         "oof_rho_arm", "oof_rho_fam", "oof_drho")},
 }
 PREFIX = (("ctx_", "gene"), ("comp_", "gene"), ("cptac_", "edge"), ("tcga_", "gene"),
-          ("cal_", "family"), ("gene_", "gene"))   # cal_* derive from beta => family rung
+          ("cal_", "edge"), ("gene_", "gene"))   # cal_* derive from beta => family rung
 
 
 def rung_of(col: str) -> str:
