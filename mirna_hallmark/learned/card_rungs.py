@@ -114,6 +114,59 @@ AGG_OF = {"gene": {**{c: "arm" for c in ("cptac_prosp_agg_rho_rna", "cptac_prosp
                                             "identity_eq_magnitude")}}}
 
 
+# ── DOMAIN: the condition under which a column is DEFINED. A column NaN on 80% of rows is not
+# "missing data" if it is only defined on 20% of rows BY DESIGN — and the difference decides whether a
+# NaN is a warning or a fact. VERIFIED (2026-08-01): the stated domain matches the observed non-NaN
+# pattern at 98.6-100% for every entry below, so these NaNs are STRUCTURAL.
+DOMAIN = {
+    "multi-arm cells only (n_arm_in_cell > 1) — 20.3% of edges": (
+        "arm_dbeta", "arm_sep_z", "arm_resolvable", "n_arm_in_cell", "oof_rho_arm", "oof_rho_fam",
+        "oof_drho", "beta_arm", "sd_arm", "z_arm", "arm_credit_share"),
+    "arms with a same-seed SURROGATE (MH-166) — 3.6% of edges": (
+        "surrogate_instrument", "surrogate_corr", "coupling_hly_surrogate",
+        "coupling_p_hly_surrogate", "coupling_p_hly_resolved"),
+    "genes/edges present in the CPTAC cohort": ("cptac_",),          # prefix
+    "MULTI-FAMILY genes only (an owner needs >1 family to choose between)": (
+        "realization_owner", "static_owner_family", "owner_agrees"),
+    "genes with a family-level realization fit": ("family_rho_adj", "realization_identity",
+                                                  "is_realization_owner"),
+    # ── STATE AVAILABILITY. The progression block is defined only where a state was measured, so its
+    # NaN rate tracks cohort coverage, not data loss: GTEx-healthy is the thinnest leg (~38-46% absent),
+    # NAT next (~34-40%), the tumour/budget block ~30-34%.
+    "arms with a GTEx-HEALTHY leg (the thinnest state — many arms are multi-mapping-collapsed, MH-166)": (
+        "coupling_hly", "coupling_p_hly", "coupling_z_hly", "grank_HLY", "dGlobal_HLY_NAT",
+        "dGlobal_HLY_TUM", "arm_lfc_HLY_TUM_raw", "arm_lfc_HLY_NAT_raw", "arm_lfc_HLY_TUM_QN",
+        "healthy_potential", "healthy_leg", "healthy_uninformative", "share_HLY", "rank_HLY",
+        "dose_rank_HLY", "d_rank_HLY_NAT", "d_rank_HLY_TUM", "acquisition_score"),
+    "edges with a matched NAT leg (n~104 paired participants)": (
+        "coupling_nat", "coupling_p_nat", "coupling_z_nat", "grank_NAT", "dGlobal_NAT_TUM",
+        "arm_lfc_NAT_TUM", "share_NAT", "rank_NAT", "dose_rank_NAT", "d_rank_NAT_TUM",
+        "dose_comp_retention", "dose_prolif_retention", "dose_confounded"),
+    "edges present in the progression panel (arm expressed + state measured)": (
+        "grank_TUM", "share_TUM", "rank_TUM", "dose_rank_TUM", "arm_med_rpm", "arm_pct_floor",
+        "arm_iqr", "spiker", "arm_id_status", "family_dose_share", "family_role", "wiring_frac",
+        "term_ABUND", "term_WIRING", "term_INTERACT", "realization_score", "dose_class",
+        "shift_class", "coupling_tum", "coupling_p_tum", "coupling_z_tum", "retention_rho"),
+    "genes in the CPTAC-PROTEIN compartment analysis (protein layer, n~101)": ("comp_cptac_prot_",),
+    "genes with a gated compartment DRIVER (|rho_raw| >= 0.05 — axiom 5's denominator gate)": (
+        "comp_tcga_mrna_driver", "comp_tcga_mrna_driver_ret", "comp_tcga_mrna_driver_share"),
+    "genes with a NAT-TUM gene-level leg": ("gene_lfc_NAT_TUM", "gene_iqr", "gene_med_rpm",
+                                            "gene_pct_floor", "frac_gain_true_acquired"),
+    "genes with >=2 seed families (a collinearity measure needs 2 columns)": ("ctx_d_collin",),
+    "the WITHIN-PATIENT paired subset (n=103 matched tumour/NAT pairs, MH-158)": (
+        "edge_rho_adj", "dShare_M_own", "dShare_raw_own", "mean_own_shift", "mean_dGlobalRank",
+        "own_specific_frac"),
+}
+
+
+def domain_of(col: str) -> str:
+    for dom, cols in DOMAIN.items():
+        for c in cols:
+            if col == c or (c.endswith("_") and col.startswith(c)):
+                return dom
+    return ""
+
+
 def rung_of(card: str, col: str) -> str:
     spec = CARDS[card]
     if col in spec["explicit"]:
@@ -129,7 +182,8 @@ def build(card: str) -> pd.DataFrame:
     cols = pd.read_csv(spec["path"], sep="\t", low_memory=False, nrows=3).columns
     R = pd.DataFrame({"card": card, "column": cols,
                       "rung": [rung_of(card, c) for c in cols],
-                      "agg_of": [AGG_OF.get(card, {}).get(c, "") for c in cols]})
+                      "agg_of": [AGG_OF.get(card, {}).get(c, "") for c in cols],
+                      "domain": [domain_of(c) for c in cols]})
     R.to_csv(OUT / f"{card}_card_rungs.tsv", sep="\t", index=False)
     return R
 
@@ -180,11 +234,22 @@ def main() -> int:
               + (f" of {len(V)} checkable" if len(V) else " (none checkable on this grain)"))
         for _, b in V[V.rate > 0].sort_values("rate", ascending=False).head(8).iterrows():
             print(f"      X {b.column:26s} {b.rung:7s} varies in {b.rate:.0%} of groups")
-        if len(V):
-            thin = V[V.na_rate > 0.25]
-            if len(thin):
-                print(f"   (coverage note: {len(thin)} column(s) NaN on >25% of rows — not a rung"
-                      f" issue, but check before averaging)")
+        # ⚠ coverage is computed over EVERY column, not just the rung-checkable ones. It used to read
+        # off `V`, which only holds gene/family/arm rungs — so it reported 25 thin columns on the edge
+        # card where the true number is 89. A coverage report that silently skips two thirds of the
+        # table is worse than none.
+        _d = pd.read_csv(CARDS[card]["path"], sep="\t", low_memory=False)
+        _na = _d.isna().mean()
+        thin = [c for c in _d.columns if _na[c] > 0.25]
+        if thin:
+            R2 = R.set_index("column")
+            named = [c for c in thin if R2.loc[c, "domain"]]
+            print(f"   coverage: {len(thin)} of {len(R)} column(s) NaN on >25% of rows — "
+                  f"{len(named)} carry a DECLARED, VERIFIED DOMAIN (structural, not missing data), "
+                  f"{len(thin) - len(named)} do not")
+            for c in thin:
+                if not R2.loc[c, "domain"]:
+                    print(f"      ? {c:28s} {_na[c]:.0%} NaN — no domain declared")
         gaps += n_un + nv
     A = pd.concat(allR, ignore_index=True)
     A.to_csv(OUT / "card_registry.tsv", sep="\t", index=False)

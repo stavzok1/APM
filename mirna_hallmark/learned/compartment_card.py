@@ -70,8 +70,19 @@ def _resid1(v, x):
     return out
 
 
-def _budget(gene, card, Xmat, fam):
-    """β-weighted budget on z-scored SEED-FAMILY columns (the rung β was estimated on — MH-179)."""
+def _budget(gene, card, Xmat, fam, rung: str = "family"):
+    """β-weighted budget, at an EXPLICIT rung (MH-195). `rung` is now an argument rather than an
+    assumption, because the two answer different questions:
+
+      rung="family"  pool arms into seed families, z-score, weight by the FAMILY-rung β. The canonical
+                     choice: a family-pooled design column must carry a family-rung β (MH-193).
+      rung="arm"     keep each arm its own column, z-score, weight by the ARM-rung β from the card.
+                     The right choice when the question is about a SPECIFIC ARM rather than a seed.
+
+    ⚠ These are NOT interchangeable and neither is "more correct" in general — they are different
+    estimands (the standing both-rungs directive). What was wrong before was that the rung was IMPLIED
+    by which matrix happened to be passed in, so nobody could tell which question was being answered.
+    """
     s = card[card.gene == gene]
     arms = [a for a in s.arm if a in Xmat.index]
     if not arms:
@@ -89,6 +100,11 @@ def _budget(gene, card, Xmat, fam):
             acc[f] = np.zeros(lin.shape[1]); keys.append(f); seen[f] = []
         acc[f] = acc[f] + row
         seen[f].append(b)
+    if rung == "arm":
+        # ARM rung: no pooling. Each arm is its own z-scored column weighted by its OWN β.
+        A = Xmat.loc[arms].to_numpy(float)
+        Za = (A - np.nanmean(A, 1, keepdims=True)) / (np.nanstd(A, 1, keepdims=True) + 1e-9)
+        return np.nansum(bet[:, None] * Za, axis=0)
     fb = _family_beta()
     for f in keys:
         v = fb.get((gene, f))
