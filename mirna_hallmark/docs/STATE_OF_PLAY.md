@@ -9,7 +9,7 @@
 > or retracts something, update the matching block here **in the same pass**.
 > **Sync-partner:** `DISCOVERY_REGISTRY.md` (the record of record — this doc is its executive summary).
 
-**Last updated: 2026-07-18** · covering the registry through **MH-159**.
+**Last updated: 2026-08-02** · covering the registry through **MH-200**.
 
 ---
 

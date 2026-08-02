@@ -2,9 +2,10 @@
 
 > **Goal:** hand off the 2026-07-17 discovery-calibration arc — what was built, what was measured, what is
 > WRONG in the record, and what to do next.
-> **What belongs here:** the discovery lane's null/FDR/lane state and its open work. NOT a registry finding
-> (deferred by decision — no MH discovery *finding* row until the convergent-evidence framing is decided).
-> **Update trigger:** when the correlation-matched null, the size-routed test, or the A1∩chimeric table lands.
+> **What belongs here:** the discovery lane's null/FDR/lane state and its open work.
+> ✅ **The finding rows now EXIST — MH-199 (cluster rung) + MH-200 (edge rung), written 2026-08-02 once the user
+> decided the framing ("just write both"). The registry is the claim; this doc is the method/state record.**
+> **Update trigger:** when the size-routed test or a new lane lands. (Correlation-matched null: DONE, MH-197.)
 > **Sync-partner:** `PROGRAM_FORWARD_BOARD.md` (topic D Discovery) — keep the one-line status there in sync.
 
 Read first: `docs/STATE_OF_PLAY.md` (edge-existence + attribution axes), registry rows **MH-123, MH-154**,
@@ -18,8 +19,11 @@ Per-edge and per-family miRNA→target **discovery in bulk TCGA is empty under a
 right way now (empirical heavy-tailed null → Simes within family → BH across families), not via BY's misdirected
 worst-case. The real signal is **set-level** (candidate set shifted to median null_z ≈ −1.6; ⭐ the FAMILY lane is
 **−1.32** on the corrected co-expression-matched null, MH-197 — the ARM lane is unchanged) and **convergent-evidence** (coupling tracks independent chimeric/K_D evidence). The defensible
-deliverable is **A1∩chimeric**: 296 edges with bulk coupling + composition-robustness + orthogonal physical duplex,
-led by miR-18a→{STAM2, KIF3B, MAP3K1, NEDD4}. Two correctness fixes are owed (below).
+deliverable is **A1∩chimeric**: 296 edges (edge-level) sharpening to **157 at SITE level** — bulk coupling +
+composition-robustness + a site-coincident physical duplex — led by miR-18a→{STAM2, MAP3K1, NEDD4}
+(⛔ **KIF3B is edge-level only**, MH-198). ✅ **Both correctness fixes are now DONE** (MH-197 correlation-matched
+family null; MH-198 producer + provenance), and the claim is written at **both rungs: MH-199 / MH-200.**
+⚠ **Do NOT compress this lane to "discovery is empty"** — that holds only for the per-edge FDR.
 
 ---
 
