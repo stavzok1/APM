@@ -595,16 +595,37 @@ checked — every other `__file__`-relative path in the subproject is correct (`
 **0.593** · TCGA neg-sig same-sign **0.673** · neg-sig-in-Buffa **0.128**), so only the orphan lane
 moved. Pre-fix outputs preserved at `output/buffa_validation_PRE_MH114/`.
 
-**⚠ Buffa is NOT in the learned arc at all** — one docstring line in `learned/eval/__init__.py`
-(marked `STUB`); there is no `ood_cohort.py`. **β has never touched Buffa.** This is the most
-interesting gap in the program: MH-104 measured the model's loss as **~80% at the COHORT boundary
-and ~0% at the LAYER boundary**, and Buffa is the only independent-patient cohort in the repo with
-both miRNA and mRNA.
+✅ **CLOSED 2026-08-02 (MH-201) — ~~β has never touched Buffa~~.** `learned/eval/ood_cohort.py` built;
+1,364 genes, β FROZEN (zero params fit in Buffa), FAMILY rung. Stage-0 gate reproduced all six recorded
+HE-edge controls exactly before any β was involved.
+**⭐ THE RESULT IS A DISSOCIATION, AND IT INVERTS MH-174.** Against a **C-ABLATION ceiling** (the TCGA
+ceiling recomputed under the reduced C Buffa can support — without it, "cohort boundary" is confounded with
+"weaker confounder block"; dropping `target_cn`+CPE alone costs **33%** of TCGA |ρ|, −0.0781 → −0.0521):
+* **LEVEL transports** — β **−0.0186** (58.5% repression-directed, p=1.5e-05) vs unweighted abundance
+  −0.0022, **Δ −0.0072, p=6.2e-13**; vs a within-gene β-permutation **p=7.8e-17**; **retention +0.358**.
+  Restricted to genes with any identified (|z|>2) β mass: **−0.0297 vs −0.0091, p=3.9e-10.**
+* **RANK does NOT separate β from abundance** — +0.222 vs +0.183, increment **+0.040 [−0.013, +0.093],
+  p=0.13 n.s.** ⇒ **MH-174's "transport the RANK, never the LEVEL" is a TCGA→CPTAC statement, not a law.**
+* ✅ **Survives the pre-registered MH-114 null**: the orientation gradient is arithmetic (real −0.0181 vs
+  shuffled −0.0209) but the **compartment-blind contrast is −0.0204 / −0.0232, SAME SIGN in both
+  orientations** — genuine repression, ~2× CPTAC's ≈−0.011.
+⚠⚠ **43% of genes are SINGLE-family, where β is MATHEMATICALLY INERT** (`M = β·Z` vs `Z` ⇒ identical
+Spearman; verified max|Δ| = 0.00e+00 over 587 genes). That stratum alone gives rank +0.234 **from abundance**.
+Never pool it with multi-family genes.
+⚠ The in-cohort refit (−0.0099) is **NOT a ceiling** — transporting beats refitting at n=207.
 
 **⚠ "METABRIC-full (EGA-pending)" is doing unearned work across five docs.** There is **no accession,
 no DAR id, no submission date, no owner** anywhere in the repo. The evidence supports *"never applied
-for"*, not *"pending"*. It would also be a **power** upgrade, not an **independence** one — same
-platform, same consortium, Buffa is a subset of it.
+for"*, not *"pending"*.
+⛔ **CORRECTED 2026-08-02 (MH-201): the rest of this paragraph was WRONG — Buffa is NOT a METABRIC subset.**
+Verified three ways: **0/207** Buffa samples match any of the 1,980 METABRIC arrays at r>0.90 (best-match r
+median **0.270**, margin **0.0094**); **49%** have no clinical candidate on (age±1, nodes, ER, size±2mm,
+grade); and provenance disagrees outright — **Buffa = Oxford, Weatherall Institute, surgery 1989–1992**
+(GSE22220), METABRIC = Cambridge/Vancouver. ⇒ **METABRIC-full would be a DIFFERENT independent cohort, not
+merely a power upgrade**, and the request should be re-assessed on that basis. ⚠ But note METABRIC public
+has **no miRNA at all**, so it cannot run this test either — the EGA request is specifically for the miRNA
+layer. ⛔ Related: `target_cn` is **unobtainable** for Buffa (GSE22220 has exactly two subseries, miRNA +
+mRNA; Buffa 2011 generates no CNV; no later study profiles those tumours). Do not re-search it.
 
 ---
 

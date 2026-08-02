@@ -59,7 +59,15 @@ Highest value ÷ cost. ⚠ Two of the original four turned out to be claims that
    n=819; was 99.35% when "identity" was argmax β). `m_nnls`=0 in 31.7% of families vs `beta`=0 in 0/5,117.
    213 genes (13.8%) now honestly report identity = UNDEFINED. Change is purely additive (5 columns
    bit-identical); `shapley_identity` optimized 8.2–9.7× output-identical. **(→ MH-140, MH-138)**
-5. ⬜ **`β(TCGA) → Buffa mRNA`** — the learned model's **only untested boundary is the cohort boundary**
+5. ✅ **DONE 2026-08-02 (MH-201) — `β(TCGA) → Buffa mRNA`.** `learned/eval/ood_cohort.py`, 1,364 genes,
+   β frozen. **LEVEL transports** (β −0.0186 vs abundance −0.0022, p=6.2e-13; retention **+0.358** vs the
+   **C-ABLATION** ceiling, which is the only honest denominator — dropping `target_cn`+CPE costs 33% of
+   TCGA |ρ|). **RANK does NOT separate β from abundance** (+0.040 [−0.013,+0.093], p=0.13) ⇒ **inverts
+   MH-174 for this boundary.** Survives the pre-registered MH-114 null (compartment-blind Δ −0.020/−0.023,
+   same sign both orientations). ⚠ 43% of genes are single-family where β is **mathematically inert** —
+   never pool them. ⛔ Corrected en route: Buffa is **not** a METABRIC subset; `target_cn` unobtainable;
+   a plain symbol join drops 16.7% of β genes incl. **ZEB1** (=`TCF8`). — original item follows —
+   ⬜ ~~**`β(TCGA) → Buffa mRNA`**~~ — the learned model's **only untested boundary is the cohort boundary**
    (MH-104: **~80% loss at the cohort boundary, ~0% at the layer boundary**), and Buffa (n=207, miRNA+mRNA) is
    the only independent-patient cohort in the repo that can test it. **β has never touched Buffa** — one `STUB`
    docstring in `learned/eval/__init__.py`; no `ood_cohort.py`. Inputs are on disk.
