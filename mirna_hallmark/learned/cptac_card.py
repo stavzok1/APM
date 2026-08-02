@@ -62,6 +62,27 @@ LAYERS = {"rna_z": "rna", "protein_z": "prot", "protein_resid": "disc"}
 RHO_GATE = 0.05          # axiom 5: below this |RAW rho| the retention ratio is meaningless
 
 
+_FAMBETA: dict = {}
+
+
+def _family_beta() -> dict:
+    """(gene, family) -> the FAMILY-rung β, from `readouts.run(level="family")`. Memoised.
+
+    ⚠ This is a DIFFERENT number from the card's `beta`, which is the same estimator at `level="arm"`
+    (MH-191/192). A family-pooled design column must be weighted by the family-rung β; using an arm's β
+    there is a unit mismatch, and picking the FIRST arm's β is additionally arbitrary."""
+    if not _FAMBETA:
+        for f in ("family_card.tsv", "readouts_edges.tsv"):
+            p = OUT / f
+            if p.exists():
+                d = pd.read_csv(p, sep="\t", low_memory=False)
+                if {"gene", "family", "beta"} <= set(d.columns):
+                    _FAMBETA.update({(g, str(fm)): b for g, fm, b in
+                                     zip(d.gene, d.family, d.beta)})
+                    break
+    return _FAMBETA
+
+
 def _resid_rows(M: np.ndarray, D: np.ndarray) -> np.ndarray:
     """Residualise every ROW of M on the design D, NaN-safe. Done ONCE per matrix, not per edge."""
     out = np.full(M.shape, np.nan)
@@ -221,7 +242,8 @@ def build_gene() -> pd.DataFrame:
             Lraw[tag] = M.to_numpy(float)
             Lr[tag] = _resid_rows(Lraw[tag], Dcov)
             gi[tag] = {g: i for i, g in enumerate(M.index)}
-        for r, g in enumerate(genes):
+        for r, gene_name in enumerate(genes):
+            g = gene_name
             sub = card[card.gene == g]
             idx = [(ai[a], b) for a, b in zip(sub.arm, sub.beta) if a in ai]
             if not idx:
@@ -244,12 +266,23 @@ def build_gene() -> pd.DataFrame:
             # would return all-NaN for the prospective cohort, which carries its OWN CPTAC-2 miRNA-seq.
             # True RPM pool (log2(1 + Σ(2^x − 1))), never a mean — the canonical family collapse.
             lin = np.nan_to_num(np.power(2.0, Xmat.loc[arms_g].to_numpy(float)) - 1.0, nan=0.0)
-            fkeys, bfam, acc = [], {}, {}
+            # ⛔ WAS: `bfam[f] = b` — the FIRST arm's β used as the family's. Arbitrary, because β is fit
+            # PER ARM (`readouts.run(level="arm")`) and DIFFERS across arms in 99.8% of multi-arm cells
+            # (MH-191). Picking one arm silently chose a winner among near-collinear same-seed arms.
+            # ⭐ NOW: read the FAMILY-rung β from `family_card.tsv` — the same estimator at
+            # `level="family"`, i.e. the number that actually belongs on a family-pooled column
+            # (MH-193). Falls back to the arms' MEAN, which is at least symmetric, if a cell is absent.
+            fkeys, bfam, acc, seen = [], {}, {}, {}
             for a, b, row in zip(arms_g, bet, lin):
                 f = str(fam.get(a))
                 if f not in acc:
-                    acc[f] = np.zeros(lin.shape[1]); fkeys.append(f); bfam[f] = b
+                    acc[f] = np.zeros(lin.shape[1]); fkeys.append(f); seen[f] = []
                 acc[f] = acc[f] + row
+                seen[f].append(b)
+            fam_beta = _family_beta()
+            for f in fkeys:
+                bf = fam_beta.get((gene_name, f))
+                bfam[f] = float(bf) if bf is not None and bf == bf else float(np.mean(seen[f]))
             fcols = fkeys
             bvec = np.array([bfam[f] for f in fcols], float)
             Fn = np.log2(1.0 + np.vstack([acc[f] for f in fcols]))   # family x sample

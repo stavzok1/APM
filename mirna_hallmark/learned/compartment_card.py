@@ -78,12 +78,21 @@ def _budget(gene, card, Xmat, fam):
         return None
     bet = s.set_index("arm").loc[arms, "beta"].to_numpy(float)
     lin = np.nan_to_num(np.power(2.0, Xmat.loc[arms].to_numpy(float)) - 1.0, nan=0.0)
-    acc, bfam, keys = {}, {}, []
+    # ⛔ SAME DEFECT AS cptac_card, FIXED THE SAME WAY (MH-193): `bfam[f] = b` took the FIRST arm's β
+    # as the family's, which is arbitrary because β is fit PER ARM and differs across arms in 99.8% of
+    # multi-arm cells (MH-191). A family-POOLED design column must carry the FAMILY-rung β.
+    from mirna_hallmark.learned.cptac_card import _family_beta
+    acc, bfam, keys, seen = {}, {}, [], {}
     for a, b, row in zip(arms, bet, lin):
         f = str(fam.get(a))
         if f not in acc:
-            acc[f] = np.zeros(lin.shape[1]); keys.append(f); bfam[f] = b
+            acc[f] = np.zeros(lin.shape[1]); keys.append(f); seen[f] = []
         acc[f] = acc[f] + row
+        seen[f].append(b)
+    fb = _family_beta()
+    for f in keys:
+        v = fb.get((gene, f))
+        bfam[f] = float(v) if v is not None and v == v else float(np.mean(seen[f]))
     F = np.log2(1.0 + np.vstack([acc[f] for f in keys]))
     Z = (F - np.nanmean(F, 1, keepdims=True)) / (np.nanstd(F, 1, keepdims=True) + 1e-9)
     return np.nansum(np.array([bfam[f] for f in keys])[:, None] * Z, axis=0)
