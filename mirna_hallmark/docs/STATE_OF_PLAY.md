@@ -613,6 +613,12 @@ ceiling recomputed under the reduced C Buffa can support — without it, "cohort
 Spearman; verified max|Δ| = 0.00e+00 over 587 genes). That stratum alone gives rank +0.234 **from abundance**.
 Never pool it with multi-family genes.
 ⚠ The in-cohort refit (−0.0099) is **NOT a ceiling** — transporting beats refitting at n=207.
+⭐ **WHERE THE TRANSFER LIVES — the 2×2 gene profile (concentration × identifiability):**
+`peaked/determined` (n=244) is strongest on every axis (level **−0.0355**, rank **+0.238**, Δ vs abundance
+**+0.063**, p=1e-08); `peaked/UNDETERMINED` (n=87) has **no effect at all** (p=0.33). ⇒ **β concentration
+buys nothing until the peak sits on a family the model could determine.**
+⛔ Do NOT cite "corr(n_fam, HHI) = −0.667" as evidence that big designs are diffuse — **that is the HHI
+floor (1/k); floor-corrected it is −0.075.**
 
 **⚠ "METABRIC-full (EGA-pending)" is doing unearned work across five docs.** There is **no accession,
 no DAR id, no submission date, no owner** anywhere in the repo. The evidence supports *"never applied
