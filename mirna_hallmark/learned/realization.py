@@ -668,7 +668,22 @@ def gene_card() -> pd.DataFrame:
         bf = pd.read_csv(OUT / "realization_between_family.tsv", sep="\t")
         own = bf[bf.is_owner].drop_duplicates("gene").set_index("gene")["family"]
         G["realization_owner"] = G.gene.map(own)
-    if "identity" in card and "seed_family" in card:
+    # ⛔ `static_owner_family` is an ATTRIBUTION claim ("which FAMILY owns this gene"), so it must be an
+    # argmax over FAMILY-rung identity. It used to argmax the CARD's `identity`, which is EDGE rung
+    # (fit per (gene, arm) — MH-191), then read that row's `seed_family`: an arm-level winner relabelled
+    # as a family. MEASURED (MH-194): that changes the owner for 39/1,228 genes (3.2%) overall and
+    # **11.7% of genes that have a multi-arm family** (88.3% agreement vs 99.2% for single-arm genes) —
+    # concentrated exactly where the rung is a real question. Doctrine backs the fix: identity is a
+    # FAMILY quantity (MH-138; Design §F — same-seed arms are indistinguishable, so an arm argmax picks
+    # an arbitrary member). Now reads the family card, falling back to the old path only if absent.
+    _fam_card = _LEARNED / "family_card.tsv"
+    if _fam_card.exists():
+        _fc = pd.read_csv(_fam_card, sep="\t", low_memory=False)
+        if {"gene", "family", "identity"} <= set(_fc.columns):
+            _st = (_fc.dropna(subset=["identity"]).sort_values("identity")
+                      .drop_duplicates("gene", keep="last").set_index("gene")["family"].astype(str))
+            G["static_owner_family"] = G.gene.map(_st)
+    if "static_owner_family" not in G and "identity" in card and "seed_family" in card:
         st = card.dropna(subset=["identity"]).sort_values("identity").drop_duplicates("gene", keep="last").set_index("gene")
         G["static_owner_family"] = G.gene.map(st["seed_family"])
         if "realization_owner" in G:   # defined ONLY where a realization owner exists (multi-family genes); else NaN
