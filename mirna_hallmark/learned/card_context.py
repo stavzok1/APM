@@ -301,6 +301,15 @@ def main() -> None:
     cmp_ = _read(OUT / "compartment_summary.tsv")
     if cmp_ is not None:
         gblocks.append(cmp_); gkeys.append(["gene"])
+    # ⭐ FAMILY CARD (MH-191/192) — the family grain gets the SAME gene-level blocks as the others.
+    # ⛔ It must NOT receive the arm/edge blocks: `arm_*`, `cptac_*` (per-edge) and `cal_*` are defined
+    # on units this card does not have. Handing a family-grain table an arm column is the exact mistake
+    # the registry exists to prevent, so the block list here is deliberately shorter.
+    fam_card = OUT / "family_card.tsv"
+    if fam_card.exists():
+        print("[card_context] annotating the FAMILY card (gene-level blocks only):")
+        _fb = [g] + ([cmp_] if cmp_ is not None else [])
+        _annotate(fam_card, _fb, [["gene"]] * len(_fb))
     print(f"[card_context] annotating GENE cards"
           f"{' (design block + CPTAC aggregate block)' if gcp is not None else ''}:")
     for p in CARDS_GENE:
