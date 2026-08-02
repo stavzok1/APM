@@ -57,7 +57,21 @@ so CN-driven genes were the obvious suspects for the residual harm. **Null on ev
 per-gene C-ablation cost vs the outcome p=0.72; `cn_var` p=0.87, `cn_amp_frac` p=0.30, `cn_absdev` p=0.54;
 the harmed genes not CN-extreme (MWU p=0.998). Test the suspicion; do not assume the gap you know about is
 the gap that hurts.
+
+⛔ **SCAN THE CATEGORICAL CLASSES TOO — `scan()` IS NUMERIC-ONLY AND WILL SILENTLY SKIP THEM.** In MH-201
+that dropped **6 class columns**, and one of them turned out to carry the mechanism: `ctx_apriori_class`
+(Kruskal q=**0.0084**; every other categorical null at q≈0.97). Use `scan_categorical()`.
+
+⭐⭐ **THE DEEPEST LESSON OF THE ARC, and it only appeared once the classes were tested: SOME AXES PREDICT
+THE *MAGNITUDE OF ACTION* IN BOTH DIRECTIONS, OTHERS PREDICT ITS *SIGN*. DO NOT EXPECT THE FIRST KIND TO
+GATE HARM.** `ctx_apriori_class = A_COMPETENT` (`n_fam≥3 ∧ w_max>median`) marks where β **acts at all**:
+median Δ −0.0190 and genuine-harm **9.4%**, against **exactly +0.0000** and 3.0% for every other class —
+and all 8 genuinely-harmed genes are A_COMPETENT. So the competence/ensemble axes select genes where β does
+*more of everything*, help and harm alike; only the confounder/retention axes tell you which. That is why
+gating on `reg_dose_hhi` moved the margin 3.7× and the harm rate not at all.
 """
+
+
 from __future__ import annotations
 
 import numpy as np
@@ -211,3 +225,26 @@ def sign_analysis(reference: pd.Series, candidate: pd.Series, *, expect_negative
     if len(wrong) > 10:
         out["p_shift_where_ref_wrong"] = float(wilcoxon(wrong.cand - wrong.ref).pvalue)
     return out
+
+
+def scan_categorical(outcome: pd.Series, cats: pd.DataFrame, *, min_level_n: int = 25) -> pd.DataFrame:
+    """Kruskal-Wallis across the levels of each categorical class column, BH-FDR across columns.
+
+    ⛔ **EXISTS BECAUSE `scan()` IS NUMERIC-ONLY AND SILENTLY SKIPS CLASS COLUMNS.** In MH-201 that dropped
+    six of them, including `ctx_apriori_class` — the one that carried the mechanism (q=0.0084 while every
+    other categorical was null at q≈0.97). A scan that quietly ignores a column type is worse than no scan,
+    because its silence reads as coverage."""
+    from mirna_hallmark.stats import bh_fdr
+    from scipy.stats import kruskal
+    rows = []
+    for c in cats.columns:
+        m = pd.concat([outcome.rename("_y"), cats[c]], axis=1).dropna()
+        grps = [g["_y"].to_numpy(float) for _, g in m.groupby(c) if len(g) >= min_level_n]
+        if len(grps) < 2:
+            continue
+        rows.append({"axis": c, "n": len(m), "levels": len(grps), "p": float(kruskal(*grps).pvalue)})
+    S = pd.DataFrame(rows)
+    if len(S):
+        S["q"] = bh_fdr(S["p"].to_numpy())
+        S = S.sort_values("p").reset_index(drop=True)
+    return S
