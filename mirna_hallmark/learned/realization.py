@@ -686,9 +686,13 @@ def gene_card() -> pd.DataFrame:
     if "static_owner_family" not in G and "identity" in card and "seed_family" in card:
         st = card.dropna(subset=["identity"]).sort_values("identity").drop_duplicates("gene", keep="last").set_index("gene")
         G["static_owner_family"] = G.gene.map(st["seed_family"])
-        if "realization_owner" in G:   # defined ONLY where a realization owner exists (multi-family genes); else NaN
-            agree = (G["realization_owner"] == G["static_owner_family"])
-            G["owner_agrees"] = agree.where(G["realization_owner"].notna() & G["static_owner_family"].notna())
+    # ⚠ OUTSIDE the fallback branch on purpose. `owner_agrees` used to be nested inside it, so when the
+    # new family-card path (above) supplied `static_owner_family` the column was silently NOT emitted —
+    # caught 2026-08-01 by diffing the rebuilt card against its predecessor. A fix that drops a column
+    # is a regression even when the column it was fixing is right.
+    if "realization_owner" in G and "static_owner_family" in G:   # NaN unless a realization owner exists
+        agree = (G["realization_owner"].astype(str) == G["static_owner_family"].astype(str))
+        G["owner_agrees"] = agree.where(G["realization_owner"].notna() & G["static_owner_family"].notna())
     # REGULATORY HANDOFF across states
     domH, domN, domT = (_dominant_by_state(card, s) for s in ("grank_HLY", "grank_NAT", "grank_TUM"))
     G["dominant_HLY"] = G.gene.map(domH); G["dominant_NAT"] = G.gene.map(domN); G["dominant_TUM"] = G.gene.map(domT)

@@ -254,6 +254,29 @@ These are completion gates, on the same footing as the documentation protocol:
    - **If the check is cheap, run it before writing the fix.** All three collapsed to a single grep or a
      one-line set intersection. ⇒ registry rows MH-138, MH-142, MH-145; guard `eval/_e6_production_check.py`.
 
+7. **⭐ CLASSIFY THE QUANTITY, NOT ITS CONTAINER — a unit/estimator belongs to the CALL that produced it.**
+   *(Added 2026-08-01 after this fired **THREE times in one day**, each time producing a confident, wrong
+   statement about what a number IS.)*
+   - **The tell:** you are about to say what a number means, and your evidence is the **doc** that
+     describes it, the **module** it lives in, the **artifact** it sits on, or an **aggregate statistic**
+     computed over it. All four are containers. None carries the unit reliably.
+   - **The three instances.** ① **MH-191** — `beta`'s rung inferred from the docs (*"estimated per family,
+     broadcast to arms"*) and from an aggregate (*"one distinct β in 90.6% of cells"*). Both wrong:
+     `readouts.run(level="arm")` fits it **PER ARM**, and the 90.6% was simply the ~90% of cells that are
+     SINGLETONS. `readouts.py:185` settles it in ten seconds. ② **MH-192** — "these labels are wrong"
+     inferred from **my own verifier**, whose `nunique(dropna=False)` counted NaN as a value, so every
+     partially-covered column looked like a violation: **4 false positives, and the check was never
+     checked.** ③ **MH-194** — `static_owner_family` classified by the **MODULE** (`realization.py`,
+     "mostly per-arm") instead of the **COLUMN**; it is an attribution claim at the wrong rung, and the
+     fix moves the owner for **11.7%** of the genes where the rung can matter.
+   - **THE RULE.** Before asserting a quantity's unit, estimator or rung: **(a)** grep the CALL that
+     produces it — not the docstring, not the module name, not the column name (axiom 6's cousin);
+     **(b)** ask what the UNIVERSE'S SHAPE does to any statistic you use as evidence — a skewed universe
+     (90% singletons, 30% NaN) is happily consistent with the opposite fact (axiom 5's cousin);
+     **(c)** when a TOOL flags something, validate the tool on a case whose answer you already know.
+   - **A property is real; the container is just the wrong place to read it from.**
+     ⇒ registry rows MH-191, MH-192, MH-194; guard `learned/card_rungs.py` (`--check`).
+
 ## Key docs (this folder only)
 
 **Read in this order. Do not skip 1 — it exists so you do not have to reconstruct the state from 48 docs.**
