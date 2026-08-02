@@ -88,7 +88,10 @@ def run(universe: str = "he", folds: int = FOLDS, seed: int = 0) -> pd.DataFrame
         fold_edge = []                                     # (arm, beta_train, rho_test) per fold
         for tr, te in kf.split(np.arange(n)):
             try:
-                b = LR.fit_gene(Y.iloc[tr], X.iloc[tr], C.iloc[tr], w)
+                # ⭐ SWITCHED off the RETIRED adaptive lasso -> canonical Gibbs drop-in (MH-184, 2026-08-01).
+                # This call's M is the REPORTED quantity (ESTIMAND class in `eval/_retired_lasso_audit.py`),
+                # so the retired estimator was a real defect here. ⚠ Any persisted output is STALE until re-run.
+                b = LR.fit_gene_bayes(Y.iloc[tr], X.iloc[tr], C.iloc[tr], w)
             except Exception:
                 continue
             bv = b.reindex(X.columns).fillna(0.0).to_numpy(float)

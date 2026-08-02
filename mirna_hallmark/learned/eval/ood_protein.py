@@ -87,7 +87,10 @@ def _sp(a: np.ndarray, b: np.ndarray) -> float:
 def fit_M(gene: str, *, alpha: float = 0.005) -> pd.Series:
     """Per-arm M for a gene, fit on TCGA mRNA (ledger prior + deconvolution composition in C)."""
     Y, X, C, w = LD.assemble_gene(gene, w_prior_source="ledger", deconv=True)
-    return LR.fit_gene(Y, X, C, w, alpha=alpha)
+    # ⭐ SWITCHED off the RETIRED adaptive lasso -> canonical Gibbs drop-in (MH-184, 2026-08-01).
+    # This call's M is the REPORTED quantity (ESTIMAND class in `eval/_retired_lasso_audit.py`),
+    # so the retired estimator was a real defect here. ⚠ Any persisted output is STALE until re-run.
+    return LR.fit_gene_bayes(Y, X, C, w, alpha=alpha)
 
 
 def score(gene: str, M: pd.Series | None = None, *, cohort: str = "prospective", alpha: float = 0.005) -> dict:

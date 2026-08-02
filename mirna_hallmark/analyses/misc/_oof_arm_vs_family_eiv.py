@@ -55,8 +55,11 @@ def run_gene(gene: str, det: pd.Series, nmap: dict):
     pf = np.full(n, np.nan)
     kf = KFold(n_splits=NFOLD, shuffle=True, random_state=SEED)
     for tr, te in kf.split(np.arange(n)):
-        Ma = REG.fit_gene(Y.iloc[tr], X.iloc[tr], Cn.iloc[tr], w)
-        Mf = REG.fit_gene(Y.iloc[tr], Xf.iloc[tr], Cn.iloc[tr], wf)
+        # ⭐ SWITCHED off the RETIRED adaptive lasso -> canonical Gibbs drop-in (MH-184, 2026-08-01).
+        # This call's M is the REPORTED quantity (ESTIMAND class in `eval/_retired_lasso_audit.py`),
+        # so the retired estimator was a real defect here. ⚠ Any persisted output is STALE until re-run.
+        Ma = REG.fit_gene_bayes(Y.iloc[tr], X.iloc[tr], Cn.iloc[tr], w)
+        Mf = REG.fit_gene_bayes(Y.iloc[tr], Xf.iloc[tr], Cn.iloc[tr], wf)
         pa[te] = REG.aggregate(X.iloc[te], Ma)
         pf[te] = REG.aggregate(Xf.iloc[te], Mf)
     ra = partial_spearman(pa, yv, Cm)

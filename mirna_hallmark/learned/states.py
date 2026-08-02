@@ -274,7 +274,10 @@ def _aggregate_coupling(gene: str, sample_type: str, participants=None, *, alpha
     Y, X, C, w = a
     Cm = C.to_numpy(float)
     Xz = ((X - X.mean()) / (X.std(ddof=0) + 1e-9)).fillna(0.0)
-    M = LR.fit_gene(Y, Xz, C, w, alpha=alpha)
+    # ⭐ SWITCHED off the RETIRED adaptive lasso -> canonical Gibbs drop-in (MH-184, 2026-08-01).
+    # This call's M is the REPORTED quantity (ESTIMAND class in `eval/_retired_lasso_audit.py`),
+    # so the retired estimator was a real defect here. ⚠ Any persisted output is STALE until re-run.
+    M = LR.fit_gene_bayes(Y, Xz, C, w, alpha=alpha)
     agg = Xz.to_numpy(float) @ M.reindex(Xz.columns).fillna(0).to_numpy()
     return {"rho": spearmanr(_resid(agg, Cm), _resid(Y.to_numpy(float), Cm)).correlation, "n": len(Y),
             "top": ", ".join(f"{m}={v:.2f}" for m, v in M[M > 0].sort_values(ascending=False).head(3).items())}
@@ -323,7 +326,7 @@ def realization(genes, *, alpha: float = 0.005) -> pd.DataFrame:
     for g in genes:
         try:
             Yt, Xt, Ct, w = LD.assemble_gene(g, w_prior_source="ledger")
-            M = LR.fit_gene(Yt, Xt, Ct, w, alpha=alpha)
+            M = LR.fit_gene_bayes(Yt, Xt, Ct, w, alpha=alpha)
         except Exception:
             continue
         regs = [a for a in M[M > 0].index if a in dX.index]
@@ -367,7 +370,7 @@ def shift_vs_weight(genes, *, alpha: float = 0.005, deconv: bool = True) -> pd.D
     for g in genes:
         try:
             Yt, Xt, Ct, w = LD.assemble_gene(g, w_prior_source="ledger", deconv=deconv)
-            M = LR.fit_gene(Yt, Xt, Ct, w, alpha=alpha)
+            M = LR.fit_gene_bayes(Yt, Xt, Ct, w, alpha=alpha)
         except Exception:
             continue
         for m in M[M > 0].sort_values(ascending=False).index:
@@ -396,7 +399,7 @@ def realization_by_subtype(genes, *, alpha: float = 0.005, deconv: bool = True) 
     for g in genes:
         try:
             Yt, Xt, Ct, w = LD.assemble_gene(g, w_prior_source="ledger", deconv=deconv)
-            M = LR.fit_gene(Yt, Xt, Ct, w, alpha=alpha)
+            M = LR.fit_gene_bayes(Yt, Xt, Ct, w, alpha=alpha)
         except Exception:
             continue
         regs = [a for a in M[M > 0].index if a in dX.index]

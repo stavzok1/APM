@@ -67,7 +67,10 @@ def fit_beta(universe: str, genes: list[str]) -> pd.DataFrame:
         if X is None or X.shape[1] == 0:
             continue
         try:
-            b = LR.fit_gene(Y, X, C, w)
+            # ⭐ SWITCHED off the RETIRED adaptive lasso -> canonical Gibbs drop-in (MH-184, 2026-08-01).
+            # This call's M is the REPORTED quantity (ESTIMAND class in `eval/_retired_lasso_audit.py`),
+            # so the retired estimator was a real defect here. ⚠ Any persisted output is STALE until re-run.
+            b = LR.fit_gene_bayes(Y, X, C, w)
         except Exception:
             continue
         for arm, v in b.items():

@@ -62,9 +62,12 @@ def run(gene, det, nmap):
     n = len(Y)
     pa, pf, pd_ = (np.full(n, np.nan) for _ in range(3))
     for tr, te in KFold(n_splits=NFOLD, shuffle=True, random_state=SEED).split(np.arange(n)):
-        Ma = REG.fit_gene(Y.iloc[tr], X.iloc[tr], C.iloc[tr], w)
-        Mf = REG.fit_gene(Y.iloc[tr], Xf.iloc[tr], C.iloc[tr], wf)
-        Md = REG.fit_gene(Y.iloc[tr], Xd.iloc[tr], C.iloc[tr], wd)
+        # ⭐ SWITCHED off the RETIRED adaptive lasso -> canonical Gibbs drop-in (MH-184, 2026-08-01).
+        # This call's M is the REPORTED quantity (ESTIMAND class in `eval/_retired_lasso_audit.py`),
+        # so the retired estimator was a real defect here. ⚠ Any persisted output is STALE until re-run.
+        Ma = REG.fit_gene_bayes(Y.iloc[tr], X.iloc[tr], C.iloc[tr], w)
+        Mf = REG.fit_gene_bayes(Y.iloc[tr], Xf.iloc[tr], C.iloc[tr], wf)
+        Md = REG.fit_gene_bayes(Y.iloc[tr], Xd.iloc[tr], C.iloc[tr], wd)
         pa[te] = REG.aggregate(X.iloc[te], Ma)
         pf[te] = REG.aggregate(Xf.iloc[te], Mf)
         pd_[te] = REG.aggregate(Xd.iloc[te], Md)
@@ -75,7 +78,7 @@ def run(gene, det, nmap):
     rd = partial_spearman(pd_, yv, Cm)
 
     # full-data arm fit: does the model actually LOAD the minor member?
-    Ma_full = REG.fit_gene(Y, X, C, w)
+    Ma_full = REG.fit_gene_bayes(Y, X, C, w)
     mw = Ma_full.reindex([a for a in minors if a in Ma_full.index]).fillna(0.0)
     dw = Ma_full.reindex([dom[f] for f in multi]).fillna(0.0)
     minor_sel = float((mw > 0).mean()) if len(mw) else np.nan

@@ -101,7 +101,10 @@ def run(folds: int = FOLDS, seed: int = 0, limit: int | None = None) -> pd.DataF
                 if Xd is None or Xd.shape[1] == 0:
                     continue
                 try:
-                    b = LR.fit_gene(Y.iloc[tr], Xd.iloc[tr], C.iloc[tr], wd)
+                    # ⭐ SWITCHED off the RETIRED adaptive lasso -> canonical Gibbs drop-in (MH-184, 2026-08-01).
+                    # This call's M is the REPORTED quantity (ESTIMAND class in `eval/_retired_lasso_audit.py`),
+                    # so the retired estimator was a real defect here. ⚠ Any persisted output is STALE until re-run.
+                    b = LR.fit_gene_bayes(Y.iloc[tr], Xd.iloc[tr], C.iloc[tr], wd)
                 except Exception:
                     continue
                 bv = b.reindex(Xd.columns).fillna(0.0).to_numpy(float)

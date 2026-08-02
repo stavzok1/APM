@@ -27,8 +27,11 @@ def oof_delta(Y, X, Xf, C, w, wf):
     n = len(Y)
     pa, pf = np.full(n, np.nan), np.full(n, np.nan)
     for tr, te in KFold(n_splits=NFOLD, shuffle=True, random_state=SEED).split(np.arange(n)):
-        Ma = REG.fit_gene(Y.iloc[tr], X.iloc[tr], C.iloc[tr], w)
-        Mf = REG.fit_gene(Y.iloc[tr], Xf.iloc[tr], C.iloc[tr], wf)
+        # ⭐ SWITCHED off the RETIRED adaptive lasso -> canonical Gibbs drop-in (MH-184, 2026-08-01).
+        # This call's M is the REPORTED quantity (ESTIMAND class in `eval/_retired_lasso_audit.py`),
+        # so the retired estimator was a real defect here. ⚠ Any persisted output is STALE until re-run.
+        Ma = REG.fit_gene_bayes(Y.iloc[tr], X.iloc[tr], C.iloc[tr], w)
+        Mf = REG.fit_gene_bayes(Y.iloc[tr], Xf.iloc[tr], C.iloc[tr], wf)
         pa[te] = REG.aggregate(X.iloc[te], Ma)
         pf[te] = REG.aggregate(Xf.iloc[te], Mf)
     Cm = C.to_numpy(float)
@@ -71,7 +74,7 @@ def run(gene, det, nmap, rng):
     ra, rf = oof_delta(Y, X, Xf, C, w, wf)
 
     # ---- sim1: DGP = measured family pool (doctrine true, no EIV) ----------
-    Mf_full = REG.fit_gene(Y, Xf, C, wf)
+    Mf_full = REG.fit_gene_bayes(Y, Xf, C, wf)
     fit = -REG.aggregate(Xf, Mf_full)
     Cm = C.to_numpy(float)
     D = np.column_stack([np.ones(len(Y)), Cm])

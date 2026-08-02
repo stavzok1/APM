@@ -29,7 +29,10 @@ def subtype_coupling(genes, *, alpha: float = 0.005, deconv: bool = False) -> pd
     for g in genes:
         try:
             Y, X, C, w = LD.assemble_gene(g, w_prior_source="ledger", deconv=deconv)
-            M = LR.fit_gene(Y, X, C, w, alpha=alpha)
+            # ⭐ SWITCHED off the RETIRED adaptive lasso -> canonical Gibbs drop-in (MH-184, 2026-08-01).
+            # This call's M is the REPORTED quantity (ESTIMAND class in `eval/_retired_lasso_audit.py`),
+            # so the retired estimator was a real defect here. ⚠ Any persisted output is STALE until re-run.
+            M = LR.fit_gene_bayes(Y, X, C, w, alpha=alpha)
         except Exception:
             continue
         press = X.to_numpy(float) @ M.reindex(X.columns).fillna(0.0).to_numpy()

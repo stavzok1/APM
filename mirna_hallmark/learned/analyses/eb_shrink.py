@@ -98,7 +98,10 @@ def oof_gate_eb(gene, *, folds=5, seed=0, alpha=0.005, n_iter=1200, burn=400, w_
     kf = KFold(n_splits=folds, shuffle=True, random_state=seed)
     for fi, (tr, te) in enumerate(kf.split(X)):
         M_eb, _, _ = fit_gene_eb(Y.iloc[tr], X.iloc[tr], C.iloc[tr], w, seed=seed + fi, n_iter=n_iter, burn=burn)
-        M_l = LR.fit_gene(Y.iloc[tr], X.iloc[tr], C.iloc[tr], w, alpha=alpha)
+        # ⭐ SWITCHED off the RETIRED adaptive lasso -> canonical Gibbs drop-in (MH-184, 2026-08-01).
+        # This call's M is the REPORTED quantity (ESTIMAND class in `eval/_retired_lasso_audit.py`),
+        # so the retired estimator was a real defect here. ⚠ Any persisted output is STALE until re-run.
+        M_l = LR.fit_gene_bayes(Y.iloc[tr], X.iloc[tr], C.iloc[tr], w, alpha=alpha)
         oof_eb[te] = LR.aggregate(X.iloc[te], M_eb)
         oof_l[te] = LR.aggregate(X.iloc[te], M_l)
         oof_a[te] = X.iloc[te].to_numpy(dtype=float).mean(axis=1)

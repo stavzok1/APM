@@ -70,7 +70,10 @@ def oof_gate(gene: str, *, alpha: float = 0.005, folds: int = 5, seed: int = 0,
     sel_sets: list = []
     kf = KFold(n_splits=folds, shuffle=True, random_state=seed)
     for tr, te in kf.split(X):
-        M = LR.fit_gene(Y.iloc[tr], X.iloc[tr], C.iloc[tr], w, alpha=alpha)
+        # ⭐ SWITCHED off the RETIRED adaptive lasso -> canonical Gibbs drop-in (MH-184, 2026-08-01).
+        # This call's M is the REPORTED quantity (ESTIMAND class in `eval/_retired_lasso_audit.py`),
+        # so the retired estimator was a real defect here. ⚠ Any persisted output is STALE until re-run.
+        M = LR.fit_gene_bayes(Y.iloc[tr], X.iloc[tr], C.iloc[tr], w, alpha=alpha)
         sel_sets.append(frozenset(M[M > 0].index))            # which predictors survive this fold
         oof_model[te] = LR.aggregate(X.iloc[te], M)
         oof_abund[te] = X.iloc[te].to_numpy(dtype=float).mean(axis=1)  # raw mean abundance baseline
@@ -90,7 +93,7 @@ def oof_gate(gene: str, *, alpha: float = 0.005, folds: int = 5, seed: int = 0,
     w_vec = w.reindex(X.columns).fillna(0.0).to_numpy(dtype=float)
     rho_curated = spearmanr(_resid(X.to_numpy(dtype=float) @ w_vec, Cmat), yr).correlation
 
-    M_full = LR.fit_gene(Y, X, C, w, alpha=alpha)
+    M_full = LR.fit_gene_bayes(Y, X, C, w, alpha=alpha)
     top = M_full[M_full > 0].sort_values(ascending=False)
     # gauge metric (Design §C): share of the aggregate held by the single most-abundant arm. Linear a·w
     # lets the most-abundant arm dominate; the occupancy link saturates it → lower domination = D(m) retired.
