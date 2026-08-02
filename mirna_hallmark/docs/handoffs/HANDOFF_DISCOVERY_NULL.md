@@ -16,8 +16,8 @@ and `eval/site_free_null.py`. Code home: `learned/discovery.py`, `eval/site_free
 
 Per-edge and per-family miRNA→target **discovery in bulk TCGA is empty under an honest null** — computed the
 right way now (empirical heavy-tailed null → Simes within family → BH across families), not via BY's misdirected
-worst-case. The real signal is **set-level** (candidate set shifted to median null_z ≈ −1.6, stable across every
-lane and universe) and **convergent-evidence** (coupling tracks independent chimeric/K_D evidence). The defensible
+worst-case. The real signal is **set-level** (candidate set shifted to median null_z ≈ −1.6; ⭐ the FAMILY lane is
+**−1.32** on the corrected co-expression-matched null, MH-197 — the ARM lane is unchanged) and **convergent-evidence** (coupling tracks independent chimeric/K_D evidence). The defensible
 deliverable is **A1∩chimeric**: 296 edges with bulk coupling + composition-robustness + orthogonal physical duplex,
 led by miR-18a→{STAM2, KIF3B, MAP3K1, NEDD4}. Two correctness fixes are owed (below).
 
@@ -67,7 +67,9 @@ discovery_family_null.tsv, discovery_fall_diagnosis.tsv}`.
   just conservative ones.
 - **PRDS is plausible:** 74.4% of candidate-arm pairs are positively correlated (mean +0.117) — so BH is valid
   IF the null were Gaussian; it isn't, so the empirical FDR is the honest primary regardless.
-- **Set-level shift is stable and real:** median null_z ≈ −1.6 on every lane and universe.
+- **Set-level shift is stable and real:** median null_z ≈ −1.6 on every lane and universe. ⭐ **CORRECTED
+  2026-08-02 (MH-197): the FAMILY lane is −1.32** once the null's pseudo-families match the candidates'
+  internal co-expression; the ARM lane is untouched (single arms have no internal ρ̄).
 - **Independent evidence concentrates in stronger coupling** (the concept-level claim): chimeric-duplex-present
   edges couple stronger (MWU p=4.6e−8), ledger PMIDs (p=9e−5), scanMiR strength (ρ=−0.078, p=2.6e−5);
   TargetScan magnitude does NOT (p=0.27) — a real asymmetry (K_D tracks coupling, site-count doesn't).
@@ -81,6 +83,12 @@ discovery_family_null.tsv, discovery_fall_diagnosis.tsv}`.
   Wilcoxon **p=1.2e−6**, strongest in high-dosage families. ⇒ **the family-lane null IS mis-calibrated** (it sums
   ~independent arms; real families sum arms correlated at 0.42). The mis-calibration is anti-conservative (null
   too clean), so the family lane's 0 survivors understates how null it is — but it must be fixed.
+  ✅ **FIXED 2026-08-02 (MH-197).** Independently re-derived (0.421 vs 0.118, MWU p=5.6e−22) and then measured
+  **on the discovery lane's OWN candidate population, where it is WORSE than recorded here: real ρ̄ +0.488 mean
+  / +0.543 median vs random draw +0.118.** `_corr_matched_group` now draws each pseudo-family to match the ρ̄ of
+  the **specific candidate cell it stands in for** (not a global average). Paired A/B on identical genes, cells
+  and seed, multi-arm draws only (n=2,946): **null sd 0.1299 → 0.1554 (1.196×), robust-sd ×1.249, Levene
+  p=1.5e−21** ⇒ the old null was **20–25% too narrow**. Reversible via `scan_families(corr_matched=False)`.
 - **My within-family "refutation" was a false negative from a bad measurement.** The user caught it. Lesson:
   when comparing real vs a matched null, match on the confound axis (dosage) AND restrict to the relevant
   (detected, high-dosage) stratum — an unweighted mean over a diluted population hides a concentrated effect.
@@ -116,11 +124,21 @@ produce. **A1 sharpens 296 (edge-level) → 157 (predicted site coincides with a
 
 ## 7. OPEN WORK (suggested next steps, roughly ordered)
 
-1. **Correlation-matched family null (correctness fix).** The family-lane pseudo-families must match real families'
-   internal ρ̄ (≈0.42), not just size/abundance. Gold standard = **scrambled-seed decoy** (same arms, same
-   co-expression, seed dinucleotide-shuffled ⇒ cannot bind) — this also fixes MH-123's "site-free may be real
-   non-canonical targets" leak for the ARM lane. Lighter version: greedily sample co-expressed site-free arm
-   groups matching ρ̄.
+1. ✅ **DONE 2026-08-02 (MH-197) — ~~Correlation-matched family null~~.** Implemented as the "lighter version"
+   below (greedy co-expressed site-free groups), but matched **per candidate cell** rather than to a global ρ̄.
+   See §4. **The verdict did NOT change and could not have** — the old null was anti-conservative, so widening
+   it can only keep 0 survivors at 0 (confirmed: 0 → 0 under `q_family_emp`, `q_empirical` and `q_by_arm`).
+   ⭐ **What DID change is the headline robust readout: the set-level shift attenuates, median `null_z`
+   −1.6 → −1.32.** The lane's deliverable is now measured against a null that matches the candidates'
+   co-expression structure.
+   ⚠ **The `scrambled-seed` gold standard was scoped and NOT built, deliberately — it does not do what §7 said.**
+   Scrambling a seed changes which GENES an arm is predicted to hit, not the arm's expression; you still score a
+   REAL arm's expression against the gene, and that arm can still be a genuine non-canonical regulator. So it
+   matches SITE statistics but **does not remove MH-123's leak.** The arm-lane leak is a separate defect running
+   in the OPPOSITE direction (real signal inside the null ⇒ null too WIDE ⇒ conservative) and remains open; it
+   needs an object with real expression that provably cannot bind, which the scrambled seed is not.
+   ⚠ Also rejected on measurement: **real multi-arm families as donors** (structurally exact ρ̄) — only **68**
+   exist detected, **9 of size ≥4 and 1 of size ≥7**, against 177 candidate cells needing size 7.
 2. **Unify the two lanes by family size.** Route multi-arm families through the dose-aggregate (family lane),
    singletons through the arm test — because Simes underpowers the correlated multi-arm families (§5). One test,
    right unit per family.

@@ -132,7 +132,8 @@ def _rho_block(Vr: np.ndarray, yr: np.ndarray) -> np.ndarray:
 _SCAN: dict = {}
 
 
-def _prime_scan(*, min_partial, min_scanmir, alpha=0.01, batch, n_null_arms, with_null, permute, null_seed):
+def _prime_scan(*, min_partial, min_scanmir, alpha=0.01, batch, n_null_arms, with_null, permute, null_seed,
+                corr_matched: bool = True):
     """Populate the module-global `_SCAN` (read-only shared state forked workers inherit) — used by BOTH the
     arm lane (`scan_all`) and the family lane (`scan_families`). See `_scan_one_gene` for the DETECTED-pool /
     card rationale."""
@@ -145,13 +146,73 @@ def _prime_scan(*, min_partial, min_scanmir, alpha=0.01, batch, n_null_arms, wit
     except FileNotFoundError:
         print(f"[scan] ⚠ {C_CARD} absent — HE aggregate falls back to the RETIRED lasso (slow, non-canonical)")
         card = {}
+    # ⭐ CO-EXPRESSION MATRIX over the detected pool — for the FAMILY lane's correlation-matched null
+    # (MH-197). Computed ONCE here and inherited by forked workers (677² float64 ≈ 3.7 MB); recomputing it
+    # per gene would be the whole runtime. Rows are aligned to `DETECTED` order.
+    _Md = Xall.loc[DETECTED].astype(float)
+    CORR = np.corrcoef(np.nan_to_num(_Md.sub(_Md.mean(axis=1), axis=0).to_numpy()))
     _SCAN.clear()
     _SCAN.update(dict(
         hemap=_he_arms_map(), aff=KD.genome_affinity(), lw=LG.edge_weights(), Xall=Xall, card=card,
         fam=seed_family_map(list(Xall.index)),
         DETECTED=DETECTED, ab_all=Xall.loc[DETECTED].fillna(0.0).median(axis=1),
+        CORR=CORR, DPOS={a: i for i, a in enumerate(DETECTED)},
         min_partial=min_partial, min_scanmir=min_scanmir, alpha=alpha, batch=batch,
-        n_null_arms=n_null_arms, with_null=with_null, permute=permute, null_seed=null_seed))
+        n_null_arms=n_null_arms, with_null=with_null, permute=permute, null_seed=null_seed,
+        corr_matched=corr_matched))
+
+
+def _rbar(pos, CORR) -> float:
+    """Mean pairwise co-expression within a group, given DETECTED-row positions."""
+    if len(pos) < 2:
+        return np.nan
+    s = CORR[np.ix_(pos, pos)]
+    return float(s[np.triu_indices(len(pos), 1)].mean())
+
+
+def _corr_matched_group(pool_pos, size: int, target: float, CORR, rng, restarts: int = 5):
+    """⭐ Draw `size` site-free arms whose INTERNAL co-expression matches `target` (MH-197).
+
+    THE DEFECT THIS FIXES. `_scan_one_gene_fam` tests a seed family as a DOSE aggregate — `_fam_dose` sums
+    members in LINEAR RPM — so the aggregate's variance depends on how correlated the members are. The null
+    drew its pseudo-families **uniformly at random**, and random groups are nearly independent while real
+    seed families are strongly co-expressed. MEASURED on the discovery lane's own candidate population:
+    **real rho-bar +0.488 mean / +0.543 median vs random draw +0.118** (the global figure recorded in
+    HANDOFF §4 was 0.42 vs 0.11; on the candidate families it is worse). A random pseudo-family averages its
+    own noise away, so its partial correlation with Y is deflated ⇒ **the null is too narrow ⇒
+    ANTI-CONSERVATIVE.**
+
+    GREEDY, SEEDED AT RANDOM, BEST OF `restarts`. Adding element c to a selected set S of size k moves the
+    group to k+1 members and (k+1)k/2 pairs, so the mean correlation c must carry to S is
+    `[target·(k+1)k/2 − sum(S)] / k`. ⚠ Getting that pair count wrong (using S's OWN k(k−1)/2) makes the
+    matcher look infeasible — it produced median |error| 0.19–0.44 and "within 0.05 in 0% of draws", which I
+    briefly read as *the pool cannot supply correlated groups*. With the correct algebra the SAME pool hits
+    every needed size at **median |error| ≤ 0.001, within 0.05 on 100% of draws**. The pool was never the
+    problem.
+
+    (Real multi-arm seed families as donors — structurally exact — was measured and REJECTED: only 68 exist
+    detected, 9 of size ≥4 and 1 of size ≥7, against 177 candidate cells needing size 7.)
+    """
+    n = len(pool_pos)
+    if n < size:
+        return None
+    if size < 2 or not np.isfinite(target):
+        return list(rng.choice(pool_pos, size=min(size, n), replace=False))
+    sub = CORR[np.ix_(pool_pos, pool_pos)]
+    best, best_err = None, np.inf
+    for _ in range(restarts):
+        sel = [int(rng.integers(n))]
+        while len(sel) < size:
+            k = len(sel)
+            cur = sub[np.ix_(sel, sel)][np.triu_indices(k, 1)].sum() if k > 1 else 0.0
+            want = (target * (k + 1) * k / 2.0 - cur) / k
+            mc = sub[:, sel].mean(axis=1)
+            mc[sel] = -9.0                                   # never re-pick a member
+            sel.append(int(np.argmin(np.abs(mc - want))))
+        err = abs(_rbar([pool_pos[i] for i in sel], CORR) - target)
+        if err < best_err:
+            best, best_err = sel, err
+    return [pool_pos[i] for i in best]
 
 
 def _scan_one_gene(g: str):
@@ -327,11 +388,13 @@ def _scan_one_gene_fam(g: str):
     Cext = np.column_stack(blocks)
     Qc, _ = np.linalg.qr(np.column_stack([np.ones(len(Cext)), Cext]))
     yr = Y.to_numpy(float) - Qc @ (Qc.T @ Y.to_numpy(float)); yr_rank = rankdata(yr)
-    # candidate family doses
-    labels, sizes, aggs = [], [], []
+    # candidate family doses (+ each cell's own internal co-expression, the null's matching target)
+    CORR, DPOS = _SCAN["CORR"], _SCAN["DPOS"]
+    labels, sizes, aggs, rbars = [], [], [], []
     for f, members in groups.items():
         d = _fam_dose(Xo[members].to_numpy(float))
         labels.append(f); sizes.append(len(members)); aggs.append(d)
+        rbars.append(_rbar([DPOS[m] for m in members if m in DPOS], CORR))
     A = np.column_stack(aggs)
     Ar = rankdata(A - Qc @ (Qc.T @ A), axis=0)
     rho_f = _rho_block(Ar, yr_rank)
@@ -345,15 +408,25 @@ def _scan_one_gene_fam(g: str):
                          "arm_abundance": round(float(np.median(aggs[j])), 3),
                          "same_seed_he": False, "no_he_gene": len(he_arms) == 0, "_is_null": False})
     if with_null:
-        # site-free PSEUDO-families of matched size: for each candidate size s, draw groups of s site-free arms
+        # ⭐ site-free PSEUDO-families matched on BOTH size AND internal co-expression (MH-197). Matching size
+        # alone left the null summing ~independent arms (rho-bar 0.118) while the candidates it is scored
+        # against sum arms correlated at 0.488 — the aggregate's variance depends on that correlation, so the
+        # null ran too narrow (anti-conservative). Each draw now targets the rho-bar of the SPECIFIC candidate
+        # cell it stands in for, not a global average.
         sited = set(affg.index[affg < min_scanmir]) | set(Xo.columns)
         pool = [a for a in DETECTED if a not in sited]
-        if len(pool) >= 5:
+        pool_pos = [DPOS[a] for a in pool if a in DPOS]
+        if len(pool) >= 5 and pool_pos:
             rng = np.random.default_rng((_SCAN["null_seed"] + 1, abs(hash(g)) % (2**32)))
-            size_multiset = sizes if sizes else [1]
+            cells = list(zip(sizes, rbars)) if sizes else [(1, np.nan)]
             for k in range(n_null_arms):
-                s = size_multiset[k % len(size_multiset)]
-                take = [pool[j] for j in rng.choice(len(pool), size=min(s, len(pool)), replace=False)]
+                s, tgt = cells[k % len(cells)]
+                sel = _corr_matched_group(pool_pos, int(s),
+                                          float(tgt) if _SCAN.get("corr_matched", True) else np.nan,
+                                          CORR, rng)
+                if not sel:
+                    continue
+                take = [DETECTED[i] for i in sel]
                 V = Xall.loc[take, Y.index].T.astype(float).fillna(0.0).to_numpy()
                 d = _fam_dose(V)
                 if np.std(d) < 1e-9:
@@ -362,13 +435,17 @@ def _scan_one_gene_fam(g: str):
                 rr = _rho_block(dr[:, None], yr_rank)[0]
                 if np.isfinite(rr):
                     nulls.append({"gene": g, "arm": f"NULLFAM{k}", "partial_coupling": round(float(rr), 4),
-                                  "arm_abundance": round(float(np.median(d)), 3), "_is_null": True})
+                                  "arm_abundance": round(float(np.median(d)), 3),
+                                  "n_family_arms": int(s), "null_rbar_target": round(float(tgt), 3)
+                                  if np.isfinite(tgt) else np.nan,
+                                  "null_rbar_got": round(_rbar(sel, CORR), 3) if len(sel) > 1 else np.nan,
+                                  "_is_null": True})
     return rows, nulls
 
 
 def scan_families(genes=None, *, min_scanmir: float = -0.5, min_partial: float = -0.15, n_null_arms: int = 40,
                   null_seed: int = 0, workers: int | None = None, universe: str = "he",
-                  progress: int = 200) -> pd.DataFrame:
+                  progress: int = 200, corr_matched: bool = True) -> pd.DataFrame:
     """LANE 1 driver: family-as-discovery over the gene universe. Populates `_SCAN` like `scan_all`, then runs
     `_scan_one_gene_fam` per gene. Feed the result to `calibrate` (it fits the site-free null by the aggregate's
     abundance quintile) — each row is already one (gene, seed-family), so the Simes collapse is 1:1."""
@@ -379,7 +456,7 @@ def scan_families(genes=None, *, min_scanmir: float = -0.5, min_partial: float =
             he_genes = he_genes | ((set(hallmark_universe()) - he_genes) & set(LD._load()["Y"].index))
         genes = sorted(he_genes)
     _prime_scan(min_partial=min_partial, min_scanmir=min_scanmir, n_null_arms=n_null_arms, null_seed=null_seed,
-                batch=False, with_null=True, permute=None)
+                batch=False, with_null=True, permute=None, corr_matched=corr_matched)
     rows, nulls = [], []
     if workers is None:
         import os

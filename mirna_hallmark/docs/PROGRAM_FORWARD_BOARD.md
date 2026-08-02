@@ -175,8 +175,12 @@ anti-correlation ladder; **data/edges/harmonization** → `DATA_SOURCES §0/§1/
   via the ledger, `ts_mag`), flags `same_seed_he` / `he_max_corr` / `no_he_gene`. **Two new lanes:** LANE 2
   (`universe='hallmark'`) adds the ~2,792 Hallmark genes with no curated HE arm; LANE 1 (`scan_families`/`run_families`)
   tests whole seed families uncurated for the gene as a dose aggregate. **Honest state:** per-edge ~nothing survives
-  BY (2 arm / 1 family on the HE universe) — the signal is the SET-LEVEL shift (median null_z −1.6) and the
-  concordance of INDEPENDENT evidence with coupling (chimeric-present edges couple stronger, MWU p=4.6e−8). ⬜ **NEXT:**
+  BY (2 arm / 1 family on the HE universe) — the signal is the SET-LEVEL shift (median null_z −1.6 ⭐ **now
+  −1.32 on the corrected family null, MH-197**) and the
+  concordance of INDEPENDENT evidence with coupling (chimeric-present edges couple stronger, MWU p=4.6e−8).
+  ✅ **FAMILY-NULL CORRECTNESS FIX LANDED (MH-197):** pseudo-families are now co-expression-matched per
+  candidate cell; the old uniform draw was **20–25% too narrow**. Survivor count is unchanged at 0 (a wider
+  null cannot create one) — what moved is the set-level readout above. ⬜ **NEXT:**
   ① decide the set-level framing worth a registry finding; ② ⛔ **DONE/NEGATIVE 2026-07-18 (MH-165) — the HE surfacing hope is at chance** (337 vs 287±35 shuffle, z=+1.4;
    83% family-lone), so **non-HE orphan discovery per subtype is NOT worth running** (weaker/noisier at n=93–197
    than HE, which already failed). ⬛ ~~**SUBTYPE-STRATIFIED run (user-asked)**~~ — PAM50-stratified

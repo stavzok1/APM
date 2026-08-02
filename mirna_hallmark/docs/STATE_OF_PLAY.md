@@ -177,8 +177,14 @@ EXCLUSION** (cis-SNPs still hit host genes/clusters/paralogs) and the miRNA cis-
 aggregation doesn't rescue it. **Edge existence still rests on ONE observational line.** ⬜ Only untested
 extension: full genotype imputation (unlikely to change it — low OOF-F + specificity null). Home:
 `method_dev/cn_guide_passenger/GERMLINE_FINDINGS.md`.
-For the discovery lane specifically: correlation-matched/scrambled-seed
-family null · unify the two lanes by family size · subtype-stratified (PAM50) run.
+For the discovery lane specifically: ✅ ~~correlation-matched family null~~ **DONE (MH-197)** — pseudo-families
+now match the ρ̄ of the specific candidate cell they stand in for; the old uniform draw was **20–25% too
+narrow** (null sd ×1.196, robust-sd ×1.249, Levene p=1.5e−21 on a paired A/B). **Verdict unchanged at 0
+survivors — as it had to be, since widening an anti-conservative null cannot create one — but the headline
+set-level shift attenuates, median `null_z` −1.6 → −1.32.** ⚠ The `scrambled-seed` variant was scoped and
+NOT built: shuffling a seed changes which genes an arm is *predicted* to hit, not its expression, so it
+matches site statistics but does **not** remove MH-123's arm-lane leak (a separate defect, opposite
+direction — still open). Remaining: unify the two lanes by family size · subtype-stratified (PAM50) run.
 
 ---
 
