@@ -90,7 +90,7 @@ ANNOT_PREFIXES = ("ctx_", "cptac_", "tcga_", "comp_", "cal_")
 # catch it: it compares against `before`, which had already been stripped. A prefix is a blunt instrument
 # on a 140-column table; name what you own.
 ARM_RUNG_COLS = ("n_arm_in_cell", "beta_arm", "sd_arm", "z_arm", "arm_dbeta", "arm_sep_z",
-                 "oof_rho_arm", "oof_rho_fam", "oof_drho", "arm_resolvable")
+                 "oof_rho_arm", "oof_rho_fam", "oof_drho", "arm_resolvable", "coupling_fam")
 
 # ⭐ POSTERIOR-WIDTH CALIBRATION CONSTANT (MH-185, 2026-08-01). `calibration.posterior_calibration`
 # compares the reported posterior SD against the TRUE sampling SD from INDEPENDENT half-cohorts.
@@ -267,6 +267,14 @@ def main() -> None:
     # ⭐ ARM RUNG (MH-186): an arm-level β + an IDENTIFIABILITY verdict, on the 20% of edges where a
     # family contributes >1 arm. The family β stays the CANONICAL default — these columns say WHERE the
     # equal-β broadcast is an assumption you can check, and whether the arms are separable at all.
+    # ⭐ FAMILY-rung coupling (MH-187) — the card's `coupling_*` is single-ARM while `beta` is FAMILY.
+    # `coupling_fam` puts the family rung beside it. ⛔ `identity_arm` from the same module is
+    # DELIBERATELY NOT JOINED: it FAILED its pre-registered coherence check against `arm_resolvable`
+    # (concentration was HIGHER in non-resolvable cells, MWU p=1) and the failure is unexplained
+    # (abundance span does not account for it, ρ=+0.018 p=0.74). It stays in `rung_parity.tsv` only.
+    rp = _read(OUT / "rung_parity.tsv")
+    if rp is not None and "coupling_fam" in rp.columns:
+        blocks.append(rp[["gene", "arm", "coupling_fam"]]); keys.append(["gene", "arm"])
     armr = _read(OUT / "arm_rung.tsv")
     if armr is not None:
         armr = armr.drop(columns=[c for c in ("seed_family",) if c in armr.columns])
