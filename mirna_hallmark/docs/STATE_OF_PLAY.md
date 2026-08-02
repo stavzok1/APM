@@ -361,10 +361,10 @@ composition**; TCGA-105 (circular) 0.656, 7/7. ⭐ **ZEB1 retains WORST in both 
 different design than MH-114's shuffled null, agreeing on which gene. ESR1 / BCL2 / CDKN1B are
 cell-intrinsic in both. ⚠ 7 hub genes only; ⚠ GATA3 (`n_reg=1`) disagrees across cohorts — do not cite;
 ⛔ `model_beats_abund` is FITTED-vs-UNFITTED and is **not** a control.
-⛔ **`MH-83` / `MH-84` DO NOT EXIST** (ids 81–85 were never written) — yet they are cited as pending
-re-runs below and as fact in `ood_protein.py:41`. **That item is not actionable as written** (MH-171).
-🚫 `eval/cptac_validation.py` must **not** be re-run as a composition fix — it runs the **retired**
-`compute_gene_pressure` (MH-115). It needs a PORT to the learned posterior, not a re-run.
+✅ **`MH-83` / `MH-84` — RESOLVED 2026-08-01 (MH-182): a REGISTRY-FILING gap, not missing science.**
+The work is recorded in `LEARNED_MODEL_DISCOVERY_SYNTHESIS.md` (capstone of MH-82→MH-84) with numbers
+in `LEARNED_MODEL_VALIDATION.md` §1. Nothing to re-run; no rows to back-fill.
+
 
 ⚠ **MH-114's "34→3" was measured on the retired heuristic** (`compute_gene_pressure`), not the
 learned posterior (MH-115) — and its FDR counts rest on the uncalibrated null (MH-123). The

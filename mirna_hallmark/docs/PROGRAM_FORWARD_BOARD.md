@@ -354,10 +354,14 @@ MH-124 §4b (n=21). β is at chance (rank 0.518, p=0.66); `shapley_identity` 0.3
   per-gene, from a different design than MH-114's shuffled null. **(→ MH-171)**
   ⬜ **`dossier.tier3_protein` — code already runs BOTH blocks and emits `coupling_retention` /
   `composition_class`; still needs a RUN + a record.**
-  ⛔ **`MH-83` / `MH-84` DO NOT EXIST — ids 81–85 were never written to the registry.** They are nevertheless
-  cited here as pending re-runs and as *fact* in `learned/eval/ood_protein.py:41` ("the MH-84 gold edges:
-  27% … SIGN-FLIP"). **This sub-item is NOT ACTIONABLE as written** — no row, so no baseline for a re-run to
-  be compared against. Either reconstruct the claim from the code/outputs and give it a row, or drop it.
+  ✅ **`MH-83` / `MH-84` — RESOLVED 2026-08-01 (MH-182): a REGISTRY-FILING gap, not missing science.**
+  The ids were never written, but the work is fully recorded — `LEARNED_MODEL_DISCOVERY_SYNTHESIS.md`
+  declares itself the capstone of **MH-82→MH-84** and carries their provenance; numbers in
+  `LEARNED_MODEL_VALIDATION.md` §1, decisions in `LEARNED_MODEL_RATIONALE.md` §2a–§2g.
+  ⇒ **nothing to re-run and no rows to back-fill** (reconstructing them from a summary doc would be
+  arithmetic on someone else's numbers — axiom 1a). The one number that WAS docstring-only is homed
+  in **MH-172**.
+
   🚫 **DO NOT re-run `eval/cptac_validation.py` as a composition fix** — it imports `compute_gene_pressure`,
   the estimator **MH-115 RETIRED**; a re-run would mint citable-looking numbers from a dead estimator, which
   is exactly why STATE_OF_PLAY forbids reprinting MH-114's counts. It needs a **PORT to the learned
