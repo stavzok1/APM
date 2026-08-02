@@ -10,20 +10,42 @@ edge the card asserts a FAMILY coupling weight next to an ARM coupling correlati
 mismatch. This emits `coupling_fam` — the same partial Spearman on the family's **true RPM pool**
 (`log2(1+Σ(2^x−1))`, never a mean) — so both rungs of the coupling readout sit side by side.
 
-⭐ **(2) WITHIN-CELL ARM IDENTITY.** `identity` is Shapley/LMG credit per FAMILY. Nothing answers *within*
-a family: given that this seed matters, WHICH ARM carries it? `identity_arm` is an exact Shapley over the
+⭐ **(2) WITHIN-CELL ARM CREDIT SHARE.** ⚠ RENAMED from `identity_arm` (MH-188): calling it "identity"
+invited the reading *this arm is the true regulator*, which is NOT what it measures — see the corrected
+semantics below. `identity` is Shapley/LMG credit per FAMILY. Nothing answers *within*
+a family: given that this seed matters, WHICH ARM carries it? `arm_credit_share` is an exact Shapley over the
 cell's arm columns on R²(arms, y|C) — exact because cells are small (max 7 arms ⇒ ≤128 subsets).
 
-⚠⚠ **THE COHERENCE CHECK IS THE POINT, NOT THE SPLIT.** Same-seed arms share a binding site, so a
-within-cell split is the most collinear question in the whole program and a confident per-arm credit
-would be suspicious. MH-186 already produced an independent verdict on the same cells
-(`arm_resolvable`: separable AND pays out-of-fold, true for 28.7%). **If the two readouts are measuring
-anything real, identity concentration must be HIGHER where the arms are resolvable and near-EQUAL where
-they are not.** That is an internal-consistency test between two independently-computed quantities, and
-it is cheaper and sharper than inventing a permutation null for a collinear design.
+⭐⭐ **CORRECTED SEMANTICS (MH-188) — READ THIS BEFORE USING IT.** A HIGH within-cell share does NOT mean
+"this arm is the real regulator". It means **one arm carries the cell's signal and its partner is inert —
+in which case the family POOL is essentially that arm, so POOLING IS SAFE**. An EVEN split means the arms
+carry DIFFERENT signal, so pooling averages them away. ⇒ **concentration marks POOLING-SAFETY and is the
+OPPOSITE of resolvability.** Verified: spearman(max share, `oof_drho`) = **+0.133, p=0.027** (positive =
+concentration goes with NO out-of-fold payoff from splitting); pool-is-fine cells 0.777 vs split-pays
+0.731, MWU p=0.005.
 
-PRE-REGISTERED (axiom 1a): concentration (max within-cell share) is higher in `arm_resolvable` cells than
-in the rest. If it is NOT, at least one of the two readouts is noise and neither should be shipped.
+⚠⚠ **THE COHERENCE CHECK — AND HOW I GOT ITS DIRECTION WRONG (recorded, axiom 1a).** Same-seed arms
+share a binding site, so a within-cell split is the most collinear question in the program; rather than
+invent a permutation null for a collinear design, this was validated against MH-186's independently
+computed `arm_resolvable` (separable AND pays out-of-fold).
+  ⛔ **I PRE-REGISTERED THE WRONG SIGN.** I predicted concentration would be HIGHER in resolvable cells
+  ("both measure *arms differ*, so they should agree") and declared the readout dead when it came out
+  LOWER (0.693 vs 0.760, MWU p=1). **The measurement was right and the prediction was wrong**: the two
+  quantities respond to OPPOSITE features —
+      one arm carries the signal, partner inert  -> HIGH concentration, and the POOL ~= that arm -> NO payoff
+      both arms carry DIFFERENT signal           -> EVEN split,          and pooling averages them -> PAYOFF
+  ⇒ the correct expectation is a NEGATIVE relation between concentration and resolvability, which is
+  exactly what was observed. **CONFIRMED on re-test: spearman(max share, `oof_drho`) = +0.133, p=0.027;
+  pool-is-fine 0.777 vs split-pays 0.731, MWU p=0.005.**
+  ✅ And the OTHER leg is strongly validated by the same arbiter: **spearman(`arm_sep_z`, `oof_drho`) =
+  −0.475, p=6.1e-17**; above the sep_z>2 threshold the split pays in **71%** of cells vs **31%** below
+  (MWU p=1.5e-12). So `arm_resolvable`'s two conditions genuinely agree, and the AND is justified.
+  ⚠ `arm_credit_share` and `arm_sep_z` are ~orthogonal (spearman +0.039, p=0.52) — as they must be, since
+  they respond to opposite features. That is NOT incoherence; reading it as such is what cost a column.
+
+**THE KEEPER:** a coherence check between two independently-derived readouts is cheaper and sharper than
+a home-made null — but **you must derive the EXPECTED SIGN from the mechanism, not from a hunch that two
+things "both measure the same idea".** A mis-signed pre-registration fails a good readout.
 
 ⛔ Family β and the arm-level `coupling_*` both remain the CANONICAL card defaults. These columns exist so
 the rung is VISIBLE and checkable, not to replace either.
@@ -110,7 +132,7 @@ def _one(gene: str):
         for m in members:
             rows.append({"gene": gene, "arm": m, "n_arm_cell": len(members),
                          "coupling_fam": float(cf) if cf == cf else np.nan,
-                         "identity_arm": share.get(m, np.nan)})
+                         "arm_credit_share": share.get(m, np.nan)})
     return rows
 
 
@@ -145,13 +167,13 @@ def report(R: pd.DataFrame) -> None:
     print("  ⇒ where they diverge, the card was asserting a FAMILY weight beside an ARM correlation.")
 
     print("\n=== (2) WITHIN-CELL ARM IDENTITY — the pre-registered coherence check ===")
-    q = d.dropna(subset=["identity_arm"])
+    q = d.dropna(subset=["arm_credit_share"])
     cell = q.groupby(["gene", "arm"]).first().reset_index()
-    top = q.groupby(["gene"]).identity_arm.max()
+    top = q.groupby(["gene"]).arm_credit_share.max()
     res = q.dropna(subset=["arm_resolvable"])
     if len(res):
-        a = res[res.arm_resolvable == True].groupby("gene").identity_arm.max()
-        b = res[res.arm_resolvable == False].groupby("gene").identity_arm.max()
+        a = res[res.arm_resolvable == True].groupby("gene").arm_credit_share.max()
+        b = res[res.arm_resolvable == False].groupby("gene").arm_credit_share.max()
         if len(a) > 5 and len(b) > 5:
             u = stats.mannwhitneyu(a, b, alternative="greater")
             print(f"  max within-cell share — RESOLVABLE cells {a.mean():.3f} (n={len(a)})  "
