@@ -619,6 +619,12 @@ Never pool it with multi-family genes.
 buys nothing until the peak sits on a family the model could determine.**
 ⛔ Do NOT cite "corr(n_fam, HHI) = −0.667" as evidence that big designs are diffuse — **that is the HHI
 floor (1/k); floor-corrected it is −0.075.**
+⭐ **WHERE IT WORKS (82-modifier FDR scan on Δ = ρ_β − ρ_abund):** ① **more regulators ⇒ bigger β advantage**
+(`ctx_ceiling` −0.185, `n_fam` −0.162, `n_arms` −0.156); ② ⭐ **Buffa DYNAMIC RANGE matters, mean level does
+not** (`buffa_sd` −0.144 q=0.0016, `buffa_iqr` −0.123 — but `buffa_mean` q=0.45 n.s.: a flat gene cannot
+couple however highly expressed); ③ **composition-driven genes transfer WORSE** (`comp_tcga_mrna_driver_share`
++0.127); ④ ⭐ **CPTAC-transferable genes are Buffa-transferable** (`cptac_t105_agg_rho_rna_raw` → Buffa level
++0.234, q=5e-06) — two independent target cohorts agreeing on which genes transport.
 
 **⚠ "METABRIC-full (EGA-pending)" is doing unearned work across five docs.** There is **no accession,
 no DAR id, no submission date, no owner** anywhere in the repo. The evidence supports *"never applied
