@@ -84,6 +84,13 @@ RHO_GATE = 0.05               # same, for the protein retention denominator
 CEILING_ROBUST = 0.02         # MH-144: NOT 0 — the mass piles up at 0
 # every prefix this module writes onto a card; used to strip-before-rejoin AND to select
 ANNOT_PREFIXES = ("ctx_", "cptac_", "tcga_", "comp_", "cal_")
+# ⛔ EXPLICIT NAMES, NOT A PREFIX, for the arm-rung block. Adding `"arm_"` to ANNOT_PREFIXES on
+# 2026-08-01 silently STRIPPED 8 pre-existing card columns (`arm_lfc_*`, `arm_med_rpm`, `arm_pct_floor`,
+# `arm_iqr`, `arm_id_status`, …) — the card went 104 -> 96 base columns. The additivity check could NOT
+# catch it: it compares against `before`, which had already been stripped. A prefix is a blunt instrument
+# on a 140-column table; name what you own.
+ARM_RUNG_COLS = ("n_arm_in_cell", "beta_arm", "sd_arm", "z_arm", "arm_dbeta", "arm_sep_z",
+                 "oof_rho_arm", "oof_rho_fam", "oof_drho", "arm_resolvable")
 
 # ⭐ POSTERIOR-WIDTH CALIBRATION CONSTANT (MH-185, 2026-08-01). `calibration.posterior_calibration`
 # compares the reported posterior SD against the TRUE sampling SD from INDEPENDENT half-cohorts.
@@ -182,10 +189,12 @@ def _annotate(card_path: Path, blocks: list, keys: list) -> None:
     card = pd.read_csv(card_path, sep="\t")
     # ⚠ strip EVERY annotated prefix, not just ctx_ — otherwise a re-run appends `_x`/`_y` duplicates
     # of the CPTAC block instead of replacing it, and the additivity control below would pass anyway.
-    before = card.drop(columns=[c for c in card.columns if c.startswith(ANNOT_PREFIXES)], errors="ignore")
+    _owned = set(ARM_RUNG_COLS)
+    before = card.drop(columns=[c for c in card.columns
+                                if c.startswith(ANNOT_PREFIXES) or c in _owned], errors="ignore")
     out = before.copy()
     for blk, key in zip(blocks, keys):
-        cols = [c for c in blk.columns if c.startswith(ANNOT_PREFIXES) or c in key]
+        cols = [c for c in blk.columns if c.startswith(ANNOT_PREFIXES) or c in _owned or c in key]
         out = out.merge(blk[cols].drop_duplicates(subset=key), on=key, how="left")
     # ⭐ THE CONTROL: every pre-existing column must be bit-identical, in the same order
     chk = out[before.columns]
@@ -195,7 +204,7 @@ def _annotate(card_path: Path, blocks: list, keys: list) -> None:
     if len(out) != len(before):
         raise SystemExit(f"⛔ ABORT — row count changed for {card_path.name}: {len(before)} -> {len(out)}")
     out.to_csv(card_path, sep="\t", index=False)
-    added = [c for c in out.columns if c.startswith(ANNOT_PREFIXES)]
+    added = [c for c in out.columns if c.startswith(ANNOT_PREFIXES) or c in _owned]
     print(f"  ✅ {card_path.name}: {len(before.columns)} -> {out.shape[1]} cols "
           f"(+{len(added)} annotated), {len(out):,} rows, pre-existing columns bit-identical")
 
@@ -255,6 +264,13 @@ def main() -> None:
     # the gold-protein block above this one IS in the HE universe, so it actually populates (79% / 70%).
     cptac = _read(OUT / "edge_cptac_card.tsv")
     blocks, keys = [g, arm], [["gene"], ["arm"]]
+    # ⭐ ARM RUNG (MH-186): an arm-level β + an IDENTIFIABILITY verdict, on the 20% of edges where a
+    # family contributes >1 arm. The family β stays the CANONICAL default — these columns say WHERE the
+    # equal-β broadcast is an assumption you can check, and whether the arms are separable at all.
+    armr = _read(OUT / "arm_rung.tsv")
+    if armr is not None:
+        armr = armr.drop(columns=[c for c in ("seed_family",) if c in armr.columns])
+        blocks.append(armr); keys.append(["gene", "arm"])
     if cptac is not None:
         cptac = cptac.rename(columns={c: c for c in cptac.columns})
         blocks.append(cptac); keys.append(["gene", "arm"])
