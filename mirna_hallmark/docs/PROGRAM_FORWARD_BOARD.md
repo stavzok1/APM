@@ -11,7 +11,9 @@
 > **Sync-partner:** `docs/STATE_OF_PLAY.md` (the current-state verdicts this board plans against; if the two
 > disagree, STATE_OF_PLAY wins, and the registry wins over both).
 
-**Last updated: 2026-07-17** · planning against the registry through **MH-148**.
+**Last updated: 2026-08-01** · planning against the registry through **MH-181**.
+⚠ Several 2026-07-17 items were found STALE on 2026-08-01 (already done) and are now marked ✅ —
+verify a 🔨 before building against it.
 *Supersedes and replaces `WHATS_NEXT.md` and `LEARNED_MODEL_WHATS_NEXT.md` (both archived; both predated MH-133…137).*
 
 Status: ✅ done (anchor only) · 🔨 immediate/flagged · ⬜ open · 🔬 investigate · ⛔ blocked/dead · 🚫 deliberate skip.
@@ -40,7 +42,8 @@ Highest value ÷ cost. ⚠ Two of the original four turned out to be claims that
    the module had been DEAD since the `eval/` reorg** (`GEO_DIR` was a `__file__`-relative hop pointing at a
    non-existent `mirna_hallmark/data/`; the cache was at the repo root). **That is why it was never re-run.**
    HE legs reproduce exactly (+0.319 / 0.593 / 0.673) = the control. `talk.qmd` updated. **(→ MH-38)**
-2. 🔨 **Annotate MH-38 / MH-55 / MH-73 / MH-74** — all four still carry **S/R** strength tags with **no stale
+2. ✅ **DONE 2026-07-17 (verified 2026-08-01) — MH-38 / MH-55 / MH-73 / MH-74 ALL carry their staleness banners.**
+   ~~all four still carry **S/R** strength tags with **no stale~~
    marker**. MH-38/55: input collapsed 594→23. MH-73/74: superseded by MH-76's frozen-panel test. Per the
    one-home rule, the retraction banner goes in *their* rows. **(→ CLAUDE.md doc protocol §4)**
 3. ✅ **NOT A BUG — E6's `(live)` tag RETRACTED 2026-07-17 (MH-142).** Verified in code and data: every call
@@ -302,7 +305,7 @@ retention 0.76, 1,322 genes.** ⚠ **The magnitude has SHRUNK at every control f
   data.** What remains of this item is acquiring POSTAR3, not re-running an exclusion. **(→ `decoy_bench._site_maps`)**
 - ⬜ **~~The next control fix: Manakov chimeric eCLIP + POSTAR3 are still uncovered by the evidence exclusion.~~**
   Whether closing that hole takes the gap to zero is **genuinely open** — it is the arc's decisive remaining test.
-- ⬜ **The evidence axis (`w_max > median`) has NEVER been tested on a clean control.** Its only support fails
+- ✅ **DONE 2026-08-01 (MH-169) — tested on the restored canonical decoy: A_COMPETENT −0.0335 (n=392) vs C_WEAK −0.0073 (n=69), MWU p=0.0618.** Same verdict (does not clear the bar) but far closer than MH-147's recorded p=0.293, on a 69-gene arm ⇒ **underpowered, not "adds nothing"**. ~~Its only support fails~~
   the arc's own both-fake-sets rule (q=0.006 FAKE1, q=0.20 FAKE2). ⇒ carry MH-130's **"27% domain" as a live
   hypothesis, not an established partition**. The **width axis (`n_fam ≥ 3`) is CONFIRMED** and sharpened
   (3–4 families −0.0314, p=0.0006) — ⚠ but **not monotone under MH-137: it peaks at 3–4 and falls at 5+**.
@@ -328,7 +331,7 @@ MH-124 §4b (n=21). β is at chance (rank 0.518, p=0.66); `shapley_identity` 0.3
   Until then: *"β does not attribute" is MEASURED; "the CN instrument cannot attribute" is UNDERPOWERED, not refuted.*
 - ⬜ **One canonical rerun of the persisted attribution outputs** (`output/learned/programs/*`, cards) now the
   estimator is settled. Optional: canonicalize the `shift_vs_weight` per-edge weight diagnostic.
-- 🔨 **See DO-FIRST #4** — the `share` mislabel is an attribution-doctrine violation shipped in the genome-wide table.
+- ✅ **DONE (DO-FIRST #4, MH-140)** — `share`→`beta_frac`, true `identity` column shipped.
 - ⚠ **Do not build a "do canonical regulators score higher?" test on `pip_discovery` or `prior_pi`** — both are
   **w-contaminated by construction**; the test is circular. (β itself passes the w-circularity gate
   bit-identically: max|Δβ| = 0.0 under shuffled *and* constant w.)
@@ -449,7 +452,7 @@ MH-124 §4b (n=21). β is at chance (rank 0.518, p=0.66); `shapley_identity` 0.3
   **(→ MH-102d, `LEARNED_MODEL_STATE_CHANNEL_PLAN.md §10`)**
 - ✅ **The abundance-level cross-state LANDSCAPE is built and run** (GTEx-healthy → TCGA-NAT → tumour, 721 arms
   / 5,108 edges; acquired_realized 640 · lost 209 · stable 2,141 · acquired_unrealized 1,775).
-- 🔨 **`LANDSCAPE_REPORT.md` needs a banner** — its per-edge FDR class labels rest on the null MH-124 measured
+- ✅ **DONE (verified 2026-08-01) — `docs/reports/LANDSCAPE_REPORT.md` carries the banner.** ~~needs a banner — its per-edge FDR class labels rest on the null MH-124 measured~~
   as **3–4× too narrow**, and it carries no warning. ⚠ NAT is structurally underpowered (n≈104):
   `nat_decoupled` = **1 edge**.
 - ⬜ **Abundance-vs-wiring decomposition** (Δx·M vs x·ΔM) as a posterior readout + **subtype interaction tests
@@ -460,7 +463,7 @@ MH-124 §4b (n=21). β is at chance (rank 0.518, p=0.66); `shapley_identity` 0.3
 
 ## G. Correctness debt, docs, figures, infra
 
-- 🔨 **Fix `LEARNED_MODEL_METHODS §1`'s rationale** (and its `_FORMAL` twin — always edit both). It justifies
+- ✅ **DONE (verified 2026-08-01) — the simplex-illusion correction is in `METHODS §1` and its twin.** ~~Fix the rationale. It justifies~~
   the C block by *"Cancer-Epithelial is deliberately EXCLUDED — conditioning on the compartment the target is
   expressed in over-controls the signal"*. **That is VOID:** the 9 Wu-major fractions sum to exactly 1.000000
   and **R²(Cancer-Epithelial ~ the 8 held-out) = 1.0000 in both cohorts** ⇒ the hold-out is a **simplex
@@ -503,7 +506,7 @@ MH-124 §4b (n=21). β is at chance (rank 0.518, p=0.66); `shapley_identity` 0.3
   Dirichlet-shrinks low-read cells toward the **cohort** family-distribution — a cross-sample X-leak (no
   Y-leak). Confined to low-read cells and the path is default-OFF, so nothing shipped is affected.
   **(→ MH-153, MH-152)**
-- ⬜ **Infra:** `git add` the untracked `learned/` tree (a provenance hole, flagged repeatedly) · fold
+- ⬜ **Infra:** ✅ the `learned/` tree IS tracked (verified 2026-08-01; the 2026-08-01 commit added the rest) · fold
   ENCORI/POSTAR3/Manakov into the ledger (**union, not summed**) · `baselines/` re-export shims · vectorize the
   per-sample segment×locus overlap in `mirna_locus_cnv` (interval join per chromosome — the main slow step in
   `run_all`) · covariate-protected ComBat batch **only if** a channel reintroduces batch (never naive dummies).
