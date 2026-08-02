@@ -253,9 +253,29 @@ def tier3_protein(*, cohort: str = "prospective",
           f"| mean ρ_protein {ok['protein_coupling'].mean():+.3f}")
     print(f"  discordance-coupled (ρ<0): {int((ok['discord_coupling']<0).sum())}/{len(ok)} "
           f"({100*(ok['discord_coupling']<0).mean():.0f}%) — beyond-mRNA translational signal")
-    # triple validation: mRNA coupling (dossier) + protein + literature
-    tri = ok[(ok["realized_coupling"] < -0.1) & (ok["protein_coupling"] < 0) & (ok["sub_he_evidence"] > 0)]
-    print(f"  ★ TRIPLE-VALIDATED (mRNA-couples + protein-couples + PMIDs): {len(tri)} edges")
+    # ── TRIPLE VALIDATION — ⚠ HARDENED 2026-08-01 (MH-183). The single printed count was a SOFT one and
+    # is now reported as a SWEEP plus a gated variant, per axiom 5 (never headline a threshold count
+    # without showing where the mass sits). Three defects in the original rule:
+    #   (1) `realized_coupling < −0.1` is the PRE-CALIBRATION cut that MH-166 superseded with a per-state
+    #       `site_free_null`-calibrated coupling — an arbitrary boundary on a continuous quantity;
+    #   (2) `protein_coupling < 0` is a bare SIGN test on a quantity whose gated composition retention is
+    #       median 0.414 with 241/495 `composition_explained` (MH-172) — half of these "protein-couples"
+    #       calls are compartment arithmetic, not repression;
+    #   (3) ⚠⚠ the label COLLIDES with MH-38's "108 triple-validated orphans", which collapsed to **3**.
+    #       DIFFERENT UNIVERSE (dossier GOLD vs the Buffa ORPHAN screen) and DIFFERENT RULE. Nobody should
+    #       be able to read one as the other — this is axiom 6's naming collision, pre-empted.
+    ret = ok["protein_coupling"] / ok["protein_coupling_RAW"].where(ok["protein_coupling_RAW"].abs() >= 0.05)
+    lit = ok["sub_he_evidence"] > 0
+    print("  ★ TRIPLE-VALIDATED (mRNA-couples ∧ protein-couples ∧ PMIDs) — SWEPT, not a single count:")
+    print(f"      {'coupling cut':>14s} {'raw':>6s}   {'+composition-gated (retention>=0.4)':>36s}")
+    for cut in (-0.05, -0.10, -0.15, -0.20, -0.30):
+        base = ok[(ok["realized_coupling"] < cut) & (ok["protein_coupling"] < 0) & lit]
+        gated = base[ret.reindex(base.index) >= 0.4]
+        print(f"      {cut:>14.2f} {len(base):>6d}   {len(gated):>36d}")
+    tri = ok[(ok["realized_coupling"] < -0.1) & (ok["protein_coupling"] < 0) & lit]
+    tri_gated = tri[ret.reindex(tri.index) >= 0.4]
+    print(f"  ⚠ the historical single figure (cut −0.1, UNGATED) = {len(tri)}; composition-gated = {len(tri_gated)}.")
+    print("  ⚠ NOT comparable to MH-38's '108 triple-validated orphans' (→3): different universe AND rule.")
     print(tri.sort_values("protein_coupling").head(10)[
         ["gene", "arm", "realized_coupling", "protein_coupling", "sub_he_evidence"]].to_string(index=False))
     return m
