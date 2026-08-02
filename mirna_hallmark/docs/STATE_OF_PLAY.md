@@ -185,18 +185,62 @@ family null · unify the two lanes by family size · subtype-stratified (PAM50) 
 ## Axis 3 — Attribution / Shapley
 
 **STANDS: the model RANKS the canonical family high; it does NOT NAME it.**
+**⭐ UPDATED 2026-08-02 (MH-196) — on a VERSIONED ground truth 10× larger, β is NO LONGER at chance, and
+abundance's apparent superiority does NOT survive a fame control. Cite MH-196, not MH-126 Test 1.**
 
-Cite **MH-126 Test 1** (n=32, 2026-07-13), not MH-124 §4b (n=21) — same result, better powered,
-correctly clustered. Mean normalised rank (0 = top, 0.5 = chance):
+⛔ **First, why MH-126's numbers cannot be re-checked.** Its n=32 set **is not on disk**, and the four
+neighbouring literature sets that are (n=16/19/21/23, plus a 173-row power test) **all have zero producers
+in the repo** — every one was written 2026-07-13 by a `/tmp` scratchpad since deleted. Five mutually
+inconsistent hand-curated lists, no definition, no version. The old row is kept below for history only.
 
-| readout | rank | verdict |
-|---|---|---|
-| **abundance** | **0.240** | p<1e-4 ✅ |
-| **`shapley_identity`** | **0.370** | p=0.018 ✅ (cluster p=0.023–0.047) |
-| **β** | **0.518** | p=0.66 — **chance** |
+**THE SET IS NOW MECHANICAL AND AUDIT-STAMPED** (`eval/lit_ground_truth.py`): canonical family = argmax of
+**distinct low-throughput functional PMIDs** (reporter/western/proteomics, weak excluded) from the
+PMID-deduped ledger, admitted only when the gene is in the design, the family is in that gene's design, ≥2
+families compete, and the top is unambiguous. **tier2 329 genes / 92 families · tier3 200/63 · tier4 132/48**,
+with a sha256 + source-file stamp in `lit_ground_truth_provenance.json`. Positive control: it recovers
+PTEN→miR-21, ZEB1→miR-200, BCL2→miR-15/16, CDKN1A→miR-17/20/93 with no hand curation.
 
-The 32 genes hold only **13 distinct families**, and abundance is family-constant ⇒ the independent
-unit is the **family**. Cluster-bootstrapped, shapley survives. **Argmax is at chance at every k.**
+**RAW RANK** (0 = top, 0.5 = chance; cluster-bootstrapped on the 92 families):
+
+| readout | MH-126 (n=32, unreproducible) | **MH-196 (n=329 / 92 fams)** | 95% CI | p |
+|---|---|---|---|---|
+| **abundance** | 0.240 | **0.359** | [0.291, 0.437] | 8e-4 |
+| **`identity`** | 0.370 | **0.416** | [0.361, 0.473] | 0.004 |
+| **β** | 0.518 — *chance* | **0.436** | [0.382, 0.491] | **0.021** |
+| **β_deconv** | — | 0.453 | [0.393, 0.510] | 0.11 n.s. |
+
+⇒ **β is significantly better than chance, and MH-126's 0.518 falls OUTSIDE the new CI.** Raw ordering is
+still abundance > identity > β (paired β−abundance +0.077, p=0.005).
+
+**⭐⭐ BUT THE RAW ORDERING IS A STUDY-BIAS ARTEFACT, AND THE FAME NULL SHOWS IT.** The ground truth is
+*defined* by PMID depth and abundant miRNAs get studied more — measured here at the family level, within
+gene: **spearman(abundance, LT-func depth) = +0.187 mean / +0.244 median, positive in 67.3% of genes,
+p=3.2e-10**. Substituting **another gene's canonical family that also sits in this gene's design** holds
+fame constant and varies only gene-specificity:
+
+| readout | real | fame-null | **Δ gene-specific** | 95% CI | p |
+|---|---|---|---|---|---|
+| **β** | 0.439 | 0.525 | **−0.085** | [−0.164, −0.005] | **0.038** ✅ |
+| **`identity`** | 0.424 | 0.501 | −0.077 | [−0.156, +0.005] | 0.066 |
+| **abundance** | 0.377 | **0.429** | −0.052 | [−0.165, +0.066] | **0.40 ✗** |
+
+⇒ **abundance ranks ANY famous family at 0.429 — its raw win is largely publication bias, and its
+gene-specific component is not distinguishable from zero.** β and identity sit at chance on the null
+(0.50–0.53), so what they have is gene-specific. Controls fire hard (`lit_depth` Δ=−0.647, `w_ledger`
+−0.540), so the null has ample power.
+
+**⚠ THE HEAD-TO-HEAD IS TIED, AND IS UNRESOLVABLE IN PRINCIPLE.** Δ(β)−Δ(abundance) = **−0.033, 95% CI
+[−0.165, +0.085]**. ⭐ **This CLOSES the board's "scale the ground-truth set" item with arithmetic rather
+than a deferral:** the cluster unit is the canonical family, only **~330 families are the top-cited
+regulator of any gene in the entire curated literature**, and exhausting all of them still leaves a
+half-width of 0.065 > |−0.033|. Resolving it needs **~1,241 clusters = 3.8× every canonical family ever
+published.** ⇒ **the ground truth is NOT the binding constraint; scaling genes cannot fix this.**
+(Recoverable headroom does exist — the 480 ambiguous ties would add 262 families — but 426 of them rest on
+a single paper, and even taking all of them the contrast stays inside the CI.)
+
+— *historical, MH-126 Test 1, kept because the numbers are cited elsewhere; the set is unreproducible* —
+The 32 genes held only **13 distinct families**, and abundance is family-constant ⇒ the independent
+unit is the **family**. Cluster-bootstrapped, shapley survived. **Argmax is at chance at every k.**
 
 **MH-124 §4b and MH-126 do NOT conflict** — both say β is at chance; §4b's positive claim was about
 `shapley_identity` and dose, which MH-126 reproduces. §4b survives as the **estimand argument**: the

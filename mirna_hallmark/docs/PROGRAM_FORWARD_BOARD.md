@@ -322,13 +322,27 @@ retention 0.76, 1,322 genes.** ⚠ **The magnitude has SHRUNK at every control f
 
 ## C. Attribution / Shapley
 
-**STANDS: the model RANKS the canonical family high; it does NOT NAME it.** Cite **MH-126 Test 1** (n=32), not
-MH-124 §4b (n=21). β is at chance (rank 0.518, p=0.66); `shapley_identity` 0.370 (p=0.018); abundance 0.240.
-**Argmax is at chance at every k.** **(→ STATE_OF_PLAY Axis 3)**
+**STANDS: the model RANKS the canonical family high; it does NOT NAME it.** ⭐ **Cite MH-196** (n=329 / 92
+families, versioned + stamped) — **not** MH-126 Test 1 (n=32) or MH-124 §4b (n=21), whose sets are
+**unreproducible** (no producer in the repo; MH-126c's is not on disk at all). β **0.436, p=0.021 — no longer
+at chance**; `identity` 0.416 (p=0.004); abundance 0.359. Under the **family-fame null** only β's
+gene-specific component is significant (Δ=−0.085, p=0.038) while abundance's is not (Δ=−0.052, p=0.40).
+**Argmax is still at chance at every k.** **(→ STATE_OF_PLAY Axis 3)**
 
-- ⬜ **Scale the literature ground-truth set — this, not the estimator, gates attribution.** n went 16→21→32 and
-  the rank test became decisive while argmax stayed at chance. Needs a **versioned, auditable ground-truth pull**.
-  Until then: *"β does not attribute" is MEASURED; "the CN instrument cannot attribute" is UNDERPOWERED, not refuted.*
+- ✅ **DONE + CLOSED (MH-196, 2026-08-02) — ~~Scale the literature ground-truth set~~.** The versioned pull
+  exists (`eval/lit_ground_truth.py`, **329 genes / 92 families**, sha256-stamped) and replaces five
+  producer-less lists plus MH-126c's n=32, **which was never on disk**. Two results and a closure:
+  **(1) β is NO LONGER at chance** — 0.436 [0.382, 0.491], p=0.021; MH-126c's 0.518 is outside the CI.
+  **(2) Abundance's win is largely PUBLICATION BIAS** — under a family-fame null its gene-specific component
+  is Δ=−0.052, **p=0.40 (n.s.)**, while β's is Δ=−0.085, **p=0.038**. The study-bias channel is +0.187 within
+  gene (p=3.2e-10).
+  **(3) ⭐ THE ITEM IS CLOSED BY ARITHMETIC, NOT BY DOING IT AGAIN.** The head-to-head is TIED
+  (−0.033 [−0.165, +0.085]) and **unresolvable in principle**: the cluster unit is the canonical family,
+  only **~330 exist in the whole curated literature**, and exhausting them leaves half-width 0.065 > 0.033
+  — resolving it needs ~1,241 clusters, **3.8× every canonical family ever published.**
+  ⇒ **the ground truth is NOT the binding constraint and scaling genes cannot fix this.** Do not re-open
+  this as a scaling task. Revised standing sentence: *"β carries a MEASURED, gene-specific gradient toward the
+  canonical family; whether it beats abundance is beyond what curated literature can ever resolve."*
 - ⬜ **One canonical rerun of the persisted attribution outputs** (`output/learned/programs/*`, cards) now the
   estimator is settled. Optional: canonicalize the `shift_vs_weight` per-edge weight diagnostic.
 - ✅ **DONE (DO-FIRST #4, MH-140)** — `share`→`beta_frac`, true `identity` column shipped.
