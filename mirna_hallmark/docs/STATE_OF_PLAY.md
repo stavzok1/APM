@@ -316,10 +316,13 @@ whereas NNLS returns exact zeros. The built `bayes_shapley_identity` already doe
 **NNLS fixes support+signs, Gibbs draws supply the width.** Rule of thumb elsewhere: ***bagged NNLS
 for the GAUGE, Gibbs for the MODEL.***
 
-**OPEN:** **scale the literature set** — this, not the estimator, gates attribution. n went 16→21→32;
-the rank test became decisive while argmax stayed at chance. Needs a versioned, auditable ground-truth
-pull. Until then: *"β does not attribute" is MEASURED; "the CN instrument cannot attribute" is
-UNDERPOWERED, not refuted.*
+✅ **CLOSED 2026-08-02 (MH-196) — ~~scale the literature set~~.** The versioned pull exists
+(`eval/lit_ground_truth.py`, **329 genes / 92 families**, sha256-stamped) and replaced five producer-less
+lists. **β is no longer at chance (0.436, p=0.021)** and abundance's apparent superiority does not survive
+a fame control (Δ=−0.052, p=0.40 vs β's −0.085, p=0.038). ⭐ **And the item is CLOSED BY ARITHMETIC, not by
+doing it again: only ~330 canonical families exist in the whole curated literature, and exhausting them
+still leaves a CI half-width of 0.065 > the 0.033 effect — resolving β-vs-abundance needs ~1,241 clusters,
+3.8× every canonical family ever published.** Do NOT re-open this as a scaling task.
 
 ---
 
