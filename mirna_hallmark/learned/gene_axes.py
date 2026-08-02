@@ -42,6 +42,21 @@ THE AXIS FAMILIES (all optional; build what the cohort supports)
               what matters is how the DATA distributes, not how the weights do.
   `ident_*`   attribution/Shapley — ⚠ entered as **COVERAGE** (`ident_n_def`, q=4e-05) and NOT as shape
               (`ident_hhi` q=0.23, `ident_top1` q=0.44, agreement-with-β q=0.82).
+
+⚠⚠ **THE LOADING-vs-DRIVER DISTINCTION — the subtlest trap here, and it looks like a refutation when it is
+not.** A gene's own **expression loading** on a compartment (`spearman(gene, CAF_fraction)`) and that
+compartment's **share of the gene's COUPLING** (`comp_*_driver_share`) are DIFFERENT QUANTITIES, and in
+MH-201 **only the second predicted anything**. Driver-share separates the harm tails at **p=0.00999** and
+gates real damage; **all 11 loading axes were null under FDR** (best q=0.18 — and CAFs themselves p=0.59,
+with the sign running the *opposite* way). *"Is this gene expressed by stroma"* is not *"is this gene's
+miRNA-target relationship an artifact of stroma"*. **Build the driver-share axis, not just the loading
+axis — and never report a loading null as if it refuted a composition effect.**
+
+⚠ **A STRUCTURALLY MISSING COVARIATE IS NOT AUTOMATICALLY THE CULPRIT.** Buffa cannot supply `target_cn`,
+so CN-driven genes were the obvious suspects for the residual harm. **Null on every measure** — the
+per-gene C-ablation cost vs the outcome p=0.72; `cn_var` p=0.87, `cn_amp_frac` p=0.30, `cn_absdev` p=0.54;
+the harmed genes not CN-extreme (MWU p=0.998). Test the suspicion; do not assume the gap you know about is
+the gap that hurts.
 """
 from __future__ import annotations
 
