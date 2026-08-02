@@ -643,6 +643,12 @@ An 81-axis FDR scan inside the gated set gives ONE hit (`median_retention` q=0.0
 composition-flavoured axis) **which does not separate the harmed genes** (p=0.80). ⇒ **the ~6–7% where β
 does real damage (MET, SMAD7, IL6, CDKN1A, ETS1, BCL2L2, XIAP, CDK4) is irreducible with the current
 axes.** ⚠ Always separate a nominal sign-flip rate from a magnitude-qualified one.
+⛔ **The intuitive "they're immune genes" explanation is REFUTED** — immune-hallmark membership (p=0.78)
+and the gene's own immune-compartment loading (ρ=−0.023, p=0.56) both null, though IL6 really is the most
+immune-loaded of the eight (+0.32). ⭐ **The composition axis that predicts harm is STROMAL/VASCULAR**
+(driver = CAFs 178 · Endothelial 67 · PVL 58, vs 81 for all immune compartments combined) ⇒ **mesenchymal
+content is what fails to transport between two bulk breast cohorts; say WHICH compartment, never just
+"composition".**
 
 **⚠ "METABRIC-full (EGA-pending)" is doing unearned work across five docs.** There is **no accession,
 no DAR id, no submission date, no owner** anywhere in the repo. The evidence supports *"never applied
