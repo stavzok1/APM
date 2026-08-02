@@ -290,10 +290,17 @@ anti-correlate more than abundance-matched site-free ones). The "three independe
 retention 0.76, 1,322 genes.** ⚠ **The magnitude has SHRUNK at every control fix:**
 **−0.045 → −0.0306 → −0.0147 → −0.0119.** The honest statement is a **BOUND, not a win**.
 
-- ⬜ **Re-run the competence map's gap columns through `eval/decoy_bench.py`** (2:22, full universe). Every
-  real-vs-fake number in `gene_competence_map.tsv` sits on a **discredited decoy**; the `gene_atlas.tsv` half is
-  fine. **(→ MH-130a, MH-137)**
-- ⬜ **The next control fix: Manakov chimeric eCLIP + POSTAR3 are still uncovered by the evidence exclusion.**
+- ✅ **DONE 2026-08-01 (MH-168/169) — competence map rebuilt on the canonical decoy.** ⚠ **It was BLOCKED, not
+  neglected:** `gene_atlas.py` had been **dead for 15 days** (the MH-38 `__file__`-hop-after-a-move bug, from
+  commit `e5d5d84`; it ran the full compute then died on the write), and fixing it exposed a **self-destroying
+  CNV cache** that was making `assemble_gene` fail for **every** gene. Both fixed (MH-168). Atlas reproduces
+  MH-144 structurally (47.1% / 27.6% / +0.551). Strata: **MH-169** — width reproduces MH-147 (−0.0295 vs
+  −0.0105) but **width and abundance are inseparable** (ρ=+0.780; both partials vanish). **(→ MH-168, MH-169)**
+- ⚠ **STALE AS WRITTEN — Manakov chimeric eCLIP IS ALREADY IN the evidence exclusion** (verified 2026-08-01:
+  2,242,630 pairs = TarBase_v9 1,281,063 · mirTarBase_ALL 509,376 · **Manakov_chimeric 448,330** · ENCORI 3,861).
+  ⛔ **POSTAR3 miRNA-target is NOT in this repo** (only its lncRNA/RBP parquets) ⇒ **cannot be closed with local
+  data.** What remains of this item is acquiring POSTAR3, not re-running an exclusion. **(→ `decoy_bench._site_maps`)**
+- ⬜ **~~The next control fix: Manakov chimeric eCLIP + POSTAR3 are still uncovered by the evidence exclusion.~~**
   Whether closing that hole takes the gap to zero is **genuinely open** — it is the arc's decisive remaining test.
 - ⬜ **The evidence axis (`w_max > median`) has NEVER been tested on a clean control.** Its only support fails
   the arc's own both-fake-sets rule (q=0.006 FAKE1, q=0.20 FAKE2). ⇒ carry MH-130's **"27% domain" as a live
@@ -337,11 +344,23 @@ MH-124 §4b (n=21). β is at chance (rank 0.518, p=0.66); `shapley_identity` 0.3
   accession, no DAR id, no submission date, no owner** anywhere in the repo. The evidence supports *"never
   applied for"*, not *"pending"*. ⚠ It would also be a **power** upgrade, not an **independence** one — same
   platform, same consortium; Buffa is a subset of it.
-- ⬜ **CPTAC composition re-runs still pending (MH-107):** **MH-34/35/36/39/40 · MH-83 · MH-84 tier-3.** The
-  code is fixed (`cptac_validation._covariates` 2→11 covariates, now RAISES rather than running confounded);
-  the persisted outputs are not. ⚠ MH-114 supersedes MH-107's magnitudes — re-run against MH-114's framing
-  (~57% of the protein validation is compartment arithmetic; true compartment-blind effect ≈−0.011, surviving
-  adjustment at ≈−0.0065, p=2.0e-03).
+- 🔨 **CPTAC composition re-runs (MH-107) — PARTLY DONE, and the item needed re-scoping (2026-08-01, MH-171).**
+  ✅ **`ood_protein` DONE:** its code fix had landed but had **never been run or recorded**. Prospective
+  (independent, n=101) **median retention 0.797, 7/7 still protein-coupled**; TCGA-105 (circular) 0.656, 7/7.
+  **ZEB1 worst in both (0.246/0.308 ⇒ `composition_explained`)** — confirms the compartment-arithmetic claim
+  per-gene, from a different design than MH-114's shuffled null. **(→ MH-171)**
+  ⬜ **`dossier.tier3_protein` — code already runs BOTH blocks and emits `coupling_retention` /
+  `composition_class`; still needs a RUN + a record.**
+  ⛔ **`MH-83` / `MH-84` DO NOT EXIST — ids 81–85 were never written to the registry.** They are nevertheless
+  cited here as pending re-runs and as *fact* in `learned/eval/ood_protein.py:41` ("the MH-84 gold edges:
+  27% … SIGN-FLIP"). **This sub-item is NOT ACTIONABLE as written** — no row, so no baseline for a re-run to
+  be compared against. Either reconstruct the claim from the code/outputs and give it a row, or drop it.
+  🚫 **DO NOT re-run `eval/cptac_validation.py` as a composition fix** — it imports `compute_gene_pressure`,
+  the estimator **MH-115 RETIRED**; a re-run would mint citable-looking numbers from a dead estimator, which
+  is exactly why STATE_OF_PLAY forbids reprinting MH-114's counts. It needs a **PORT to the learned
+  posterior**, not a re-run. That port is the real open work here (MH-34/35/36/39/40).
+  ⚠ MH-114 still supersedes MH-107's magnitudes (~57% compartment arithmetic; compartment-blind effect
+  ≈−0.011, surviving adjustment at ≈−0.0065, p=2.0e-03).
 - ⬜ **The CPTAC protein transfer is NOT decoy-controlled** — a site-free fitted fake reaches **99%** of it
   (MH-130d). It is real arithmetic but **not evidence the curated edge set is right**. *"The protein channel has
   never faced a decoy that could lose"* — the arc's own words. The only decoy-controlled transfer is the

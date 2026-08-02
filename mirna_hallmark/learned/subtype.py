@@ -171,9 +171,96 @@ def subtype_wiring_pooled(gene, *, lam: float = 10.0, min_n: int = 60, n_boot: i
     return pd.DataFrame(summ)
 
 
+def _pcor(a, b, Cm):
+    """partial corr of ranks a,b | C."""
+    D = np.column_stack([np.ones(len(a)), Cm])
+    ar = a - D @ np.linalg.lstsq(D, a, rcond=None)[0]; br = b - D @ np.linalg.lstsq(D, b, rcond=None)[0]
+    return float(np.corrcoef(ar, br)[0, 1]) if ar.std() > 1e-9 and br.std() > 1e-9 else np.nan
+
+
+def _het_ftest_p(rx, ry, Cm, Dm):
+    """confound-mod-adjusted subtype-interaction F-test p: rank(y) ~ rx*subtype + C + rx×C (base) vs
+    +rx×subtype (full) — the subtype slope-heterogeneity NET of pressure×C composition slope-modification."""
+    n = len(ry); prC = rx[:, None] * Cm
+    base = np.column_stack([np.ones(n), Cm, rx[:, None], Dm, prC]); full = np.column_stack([base, rx[:, None] * Dm])
+    q = Dm.shape[1]; dfe = n - full.shape[1]
+    if q <= 0 or dfe <= 0:
+        return np.nan
+    def rss(Xd):
+        b, *_ = np.linalg.lstsq(Xd, ry, rcond=None); return float(((ry - Xd @ b) ** 2).sum())
+    F = ((rss(base) - rss(full)) / q) / (rss(full) / dfe)
+    return float(sst.f.sf(F, q, dfe)) if F == F and F > 0 else np.nan
+
+
+def genomewide_edge_heterogeneity(*, n_null: int = 20, seed: int = 0):
+    """PER-EDGE (arm→gene) HE coupling heterogeneity across PAM50 subtypes, genome-wide (MH-165).
+    Estimand (apm-edge-question E2, realized coupling): RAW single-arm abundance predictor, partial
+    Spearman(x_arm, target | C); repression = NEGATIVE ρ. F-test nets pressure×C slope-modification.
+    ⭐ Calibrated against the MARGINAL-PRESERVING null (within-subtype y-permutation — preserves each
+    subtype's variance/range, breaks only coupling; the honest floor. A label-shuffle is anti-conservative,
+    MH-154 pattern). VERDICT (MH-165): heterogeneity REAL (16.1% vs 5.2% floor, 3.1×; best_sub does NOT
+    track n → not a detectability artifact; ~half the edges sign-flip) — a DISTRIBUTIONAL shift, tag P,
+    NOT validated per-edge lists (Her2/Basal n small). Surfacing (ρ_pool≈0 & subtype ρ<−0.15) is at chance
+    (337 vs 287±35, z=+1.4) and family-incoherent; wiring (subtype_wiring_pooled) weak (~12% over placebo)."""
+    from mirna_hallmark import config as CFG
+    from mirna_hallmark.learned import families as FAM
+    card = pd.read_csv(CFG.OUTPUT_ROOT / "learned" / "readouts_arm_edges.tsv", sep="\t")
+    HE = {g: list(s["arm"]) for g, s in card.groupby("gene")}
+    famof = FAM.family_of(pd.Index(card["arm"].unique()))
+    pam = ST._pam50(); rng = np.random.default_rng(seed)
+    genes, rows = [], []
+    for g in sorted(HE):
+        try:
+            Y, X, C, _ = LD.assemble_gene(g, w_prior_source="ledger", deconv=True)
+        except Exception:
+            continue
+        if X is None or X.shape[1] == 0:
+            continue
+        idx = list(Y.index); st = np.array([pam.get(p) for p in idx], dtype=object)
+        present = [s for s in SUBS if (st == s).sum() >= 25]
+        if np.isin(st, SUBS).sum() < 120 or len(present) < 2:
+            continue
+        Cm = C.to_numpy(float); y = Y.to_numpy(float); ry = sst.rankdata(y)
+        Dm = np.column_stack([(st == s).astype(float) for s in present[1:]])
+        sub_idx = {s: np.where(st == s)[0] for s in present}
+        arms = [(a, sst.rankdata(X[a].to_numpy(float))) for a in HE[g]
+                if a in X.columns and np.std(X[a].to_numpy(float)) > 1e-9]
+        for a, rx in arms:
+            rho_s = {s: _pcor(rx[st == s], ry[st == s], Cm[st == s]) for s in present}
+            best = min(rho_s, key=lambda s: (rho_s[s] if rho_s[s] == rho_s[s] else 9))
+            rows.append({"gene": g, "arm": a, "family": famof.get(a), "rho_pool": _pcor(rx, ry, Cm),
+                         **{f"rho_{s}": rho_s.get(s, np.nan) for s in SUBS}, "best_sub": best,
+                         "rho_best": rho_s[best], "p_adj": _het_ftest_p(rx, ry, Cm, Dm)})
+        genes.append((y, Cm, Dm, sub_idx, arms))
+    R = pd.DataFrame(rows); R["q_adj"] = S.bh_fdr(R.p_adj.values)
+    obs = float((R.p_adj < 0.05).mean())
+    floor = []
+    for _ in range(n_null):                                    # marginal-preserving null
+        sig = tot = 0
+        for y, Cm, Dm, sub_idx, arms in genes:
+            yp = y.copy()
+            for s, ii in sub_idx.items():
+                yp[ii] = y[ii][rng.permutation(len(ii))]
+            ryp = sst.rankdata(yp)
+            for a, rx in arms:
+                p = _het_ftest_p(rx, ryp, Cm, Dm)
+                if p == p:
+                    tot += 1; sig += (p < 0.05)
+        floor.append(sig / tot)
+    floor = np.array(floor)
+    out = CFG.OUTPUT_ROOT / "learned" / "subtype_edge_heterogeneity.tsv"; R.to_csv(out, sep="\t", index=False)
+    nflip = int(((R[[f"rho_{s}" for s in SUBS]].min(axis=1) < -0.05) & (R[[f"rho_{s}" for s in SUBS]].max(axis=1) > 0.05)).sum())
+    print(f"HETEROGENEITY (marginal-preserving null): obs p<0.05 {obs:.1%} ({(R.p_adj<0.05).sum()}/{len(R)}) "
+          f"vs floor {floor.mean():.1%}±{floor.std():.1%} = {obs/floor.mean():.1f}×  |  q_adj<0.1 {int((R.q_adj<0.1).sum())}  "
+          f"|  sign-flip edges {nflip}  |  best_sub(sig) {R[R.q_adj<0.1].best_sub.value_counts().to_dict()}  ->  {out}")
+    return R, obs, floor
+
+
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("-")]
-    if "--pooled" in sys.argv:
+    if "--genomewide" in sys.argv:
+        genomewide_edge_heterogeneity()
+    elif "--pooled" in sys.argv:
         for g in (args or ["PTEN", "RB1", "ZEB1", "CDKN1A"]):
             subtype_wiring_pooled(g)
     elif "--wiring" in sys.argv:

@@ -46,7 +46,17 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold
 
-ROOT = Path(__file__).resolve().parents[2]
+# ⛔ DO NOT go back to a `__file__` HOP COUNT. This module was written at `learned/gene_atlas.py`, where
+# `parents[2]` WAS the repo root; commit e5d5d84 ("de-sprawl learned/ — relocate 12 analyses to
+# learned/analyses/") added a directory level, so `parents[2]` became `mirna_hallmark/` and every output
+# path resolved to the non-existent `mirna_hallmark/mirna_hallmark/output/learned/`. The module then ran
+# its FULL compute and died on the final `to_csv` — so `gene_competence_map.tsv` could not be refreshed
+# and silently went stale (found 2026-08-01 while re-running it against the canonical decoy).
+# ⭐ THIS IS THE SAME BUG AS MH-38's `buffa_validation` GEO_DIR — a `__file__`-relative hop that was
+# correct until its module MOVED. Same fix: anchor on `config.REPO_ROOT`, which is move-invariant.
+from mirna_hallmark import config as C  # noqa: E402
+
+ROOT = C.REPO_ROOT
 OUT_ATLAS = ROOT / "mirna_hallmark/output/learned/gene_atlas.tsv"
 OUT_MAP = ROOT / "mirna_hallmark/output/learned/gene_competence_map.tsv"
 DECOY_BENCH = ROOT / "mirna_hallmark/output/learned/decoy_bench.tsv"

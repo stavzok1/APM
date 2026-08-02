@@ -199,10 +199,20 @@ def tier3_protein(*, cohort: str = "prospective",
     the TCGA model these edges come from already conditions on the 8 Wu-major lineages. Bulk protein is heavily
     compartment-loaded (EMT proteins ↔ CAF fraction r=+0.509; ZEB1 protein +0.768) and epithelial miRNAs (miR-200)
     anti-correlate with stroma — which MANUFACTURES protein "coupling" out of compartment arithmetic.
-    **Measured on these very gold edges: of 353 called protein-coupled by the RAW test, 259 (73%) keep their sign
-    under composition but 94 (27%) SIGN-FLIP, and the mean |ρ| falls 60% (−0.190 → −0.075).** So ~1/4 of the
-    "268 TRIPLE-VALIDATED" edges (MH-84) were composition artifacts. `protein_coupling_RAW` keeps the historical
-    value for provenance."""
+    **Measured on these very gold edges (RE-DERIVED from the persisted artifact 2026-08-01, MH-172): of 402
+    called protein-coupled by the RAW test, 291 (72.4%) keep their sign under composition but 111 (27.6%)
+    SIGN-FLIP, and the mean |ρ| falls 39% (0.184 → 0.113).** So ~1/4 of the "268 TRIPLE-VALIDATED" edges were
+    composition artifacts. `protein_coupling_RAW` keeps the historical value for provenance.
+
+    ⚠⚠ **NUMBERS CORRECTED — the previous text said "of 353 … 259 (73%) … 94 (27%) … mean |ρ| falls 60%
+    (−0.190 → −0.075)", and TWO of those do not reproduce from this function's own output file.**
+    The **27% SIGN-FLIP IS ROBUST** — re-derived at 27.6%, and the keep-rate is 71.9–72.8% under EVERY
+    subset tried (xcandidacy / dossier_pass / couples / arm_expressed / ts_nmethods==5 / prot_n>=90), so
+    the headline stands. But **no subset reproduces the 353/259/94 counts**, and the **"60% fall" is 36–41%
+    in every subset** — the artifact gives 0.184 → 0.113. Cite 27.6% and 39%, not 60%.
+    ⛔ **AND `MH-84` HAS NO REGISTRY ROW** (ids 81–85 were never written), so this docstring — plus
+    `ood_protein.py`'s copy of the same claim — was the *de facto* record of record for a headline number.
+    That is the one-home rule failing from the other end. Home is now **MH-172**."""
     from mirna_hallmark.learned.eval import ood_protein as OP
     d = pd.read_csv(OUT, sep="\t")
     d["edge"] = list(zip(d.gene, d.arm))

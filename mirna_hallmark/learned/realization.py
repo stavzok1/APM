@@ -569,7 +569,7 @@ _COREP = Path(C.OUTPUT_ROOT) / "tissue_reference" / "mirna_comovement" / "gene_c
 _ACQ = Path(C.OUTPUT_ROOT) / "tissue_reference" / "mirna_state_class" / "gene_acquired_pressure.tsv"
 
 
-def progression_edge_card() -> pd.DataFrame:
+def edge_card() -> pd.DataFrame:
     """⭐ THE INTEGRATED PROGRESSION EDGE CARD — one row per (gene, arm), folding BOTH progression objects onto
     the attribution card so every cross-resolution question is a column read, not a multi-file join:
       • CROSS-STATE (cohort, `canonical_card`): `shift_class`, `coupling_{hly,nat,tum}`, `grank_*`,
@@ -577,9 +577,9 @@ def progression_edge_card() -> pd.DataFrame:
       • WITHIN-PATIENT PAIRED (MH-158): `edge_rho_adj`, `own_specific_frac`, `mean_own_shift`, `dShare_M_own`,
         `family_rho_adj` (Res-3), `realization_identity`/`is_realization_owner` (Res-4, family→arm via seed_family);
       • gene role + net-repression.
-    -> progression_edge_card.tsv. (Supersedes `master_edge_patterns.tsv`: same key, + the Phase-2 columns.)"""
+    -> edge_card.tsv. (Supersedes `master_edge_patterns.tsv`: same key, + the Phase-2 columns.)"""
     from mirna_hallmark import gene_roles as GR
-    card = pd.read_csv(_LEARNED / "canonical_card.tsv", sep="\t")
+    card = pd.read_csv(_LEARNED / "edge_card_base.tsv", sep="\t")
     de = pd.read_csv(OUT / "dose_shift_edge.tsv", sep="\t")
     da = pd.read_csv(OUT / "dose_shift_arm.tsv", sep="\t")
     lad = pd.read_csv(OUT / "realization_ladder.tsv", sep="\t")
@@ -607,13 +607,13 @@ def progression_edge_card() -> pd.DataFrame:
     m["gene_repr_class"] = m.gene.map(cp["gene_repression_class"])
     m["gene_net_repr"] = m.gene.map(cp["gene_net_repressed_tumor"])
     m["gene_dominated"] = m.groupby("gene").share_TUM.transform("max") > 0.6
-    m.to_csv(OUT / "progression_edge_card.tsv", sep="\t", index=False)
+    m.to_csv(OUT / "edge_card.tsv", sep="\t", index=False)
     return m
 
 
 def edge_pattern_table() -> pd.DataFrame:
-    """Backward-compat alias → `progression_edge_card` (renamed 2026-07-18: master_edge_patterns IS the edge card)."""
-    return progression_edge_card()
+    """Backward-compat alias → `edge_card` (master_edge_patterns → progression_edge_card 2026-07-18 → edge_card 2026-08-01)."""
+    return edge_card()
 
 
 def _dominant_by_state(card: pd.DataFrame, state_col: str) -> pd.Series:
@@ -625,7 +625,7 @@ def _dominant_by_state(card: pd.DataFrame, state_col: str) -> pd.Series:
     return c.loc[c.groupby("gene")[state_col].idxmax()].set_index("gene")["arm"]
 
 
-def progression_gene_card() -> pd.DataFrame:
+def gene_card() -> pd.DataFrame:
     """⭐ THE INTEGRATED PROGRESSION GENE CARD — one row per gene:
       • tumour attribution summary (`readouts_genes`: n_fam, total_pressure, top_identity, concentration, retention);
       • WITHIN-PATIENT paired realization — gene aggregate (`realized_rho_{raw,adj}`, retention, comp_explained) +
@@ -635,10 +635,10 @@ def progression_gene_card() -> pd.DataFrame:
       • OWNER — `realization_owner` (Res-4 is_owner) vs `static_owner_family` (max canonical identity) + `owner_agrees`;
       • REGULATORY HANDOFF — dominant regulator per state (HLY/NAT/TUM) + `regulatory_handoff` (does it switch);
       • `dominant_edge_shift_class` (the top-share edge's cross-state class).
-    -> progression_gene_card.tsv."""
+    -> gene_card.tsv."""
     rg = pd.read_csv(_LEARNED / "readouts_genes.tsv", sep="\t")
     lad = pd.read_csv(OUT / "realization_ladder.tsv", sep="\t")
-    card = pd.read_csv(_LEARNED / "canonical_card.tsv", sep="\t")
+    card = pd.read_csv(_LEARNED / "edge_card_base.tsv", sep="\t")
     G = rg.copy()
     gr = lad[lad.resolution == "gene"][["gene", "rho_raw", "rho_adj", "retention", "composition_explained",
                                         "n_reg", "mean_dTarget"]].rename(
@@ -684,7 +684,7 @@ def progression_gene_card() -> pd.DataFrame:
     if "share_TUM" in sc:
         dom = sc.loc[sc.groupby("gene")["share_TUM"].idxmax()].set_index("gene")["shift_class"]
         G["dominant_edge_shift_class"] = G.gene.map(dom)
-    G.to_csv(OUT / "progression_gene_card.tsv", sep="\t", index=False)
+    G.to_csv(OUT / "gene_card.tsv", sep="\t", index=False)
     return G
 
 
@@ -747,7 +747,7 @@ def decoy_stratify() -> pd.DataFrame:
     Requires nat_decoy_control.tsv (run `realize_null`/`nat_decoy_control` first). -> nat_decoy_stratified{,_summary}.tsv."""
     from mirna_hallmark.eval import decoy_bench as DB
     dc = pd.read_csv(OUT / "nat_decoy_control.tsv", sep="\t")
-    card = pd.read_csv(_LEARNED / "canonical_card.tsv", sep="\t")
+    card = pd.read_csv(_LEARNED / "edge_card_base.tsv", sep="\t")
     pair = DB.build_decoys(sorted(set(LD.D.high_evidence_edges()["gene"].unique())))
     rg = dc[dc.group == "REAL"].set_index(["gene", "arm"])["gap_own_minus_cohort"]
     dg = dc[dc.group == "DECOY"].set_index(["gene", "arm"])["gap_own_minus_cohort"]
@@ -786,7 +786,7 @@ def _owner_table() -> pd.DataFrame:
     realization = Shapley on paired Δ · static = canonical_card identity · dose = acquired own-shift ·
     budget = within-gene M-weighted Δshare. Families mapped from arms via card `seed_family`."""
     bf = pd.read_csv(OUT / "realization_between_family.tsv", sep="\t")
-    card = pd.read_csv(_LEARNED / "canonical_card.tsv", sep="\t")
+    card = pd.read_csv(_LEARNED / "edge_card_base.tsv", sep="\t")
     da = pd.read_csv(OUT / "dose_shift_arm.tsv", sep="\t")
     de = pd.read_csv(OUT / "dose_shift_edge.tsv", sep="\t")
     a2f = card.dropna(subset=["seed_family"]).drop_duplicates("arm").set_index("arm")["seed_family"]
@@ -1051,7 +1051,7 @@ def _gene_boot(gene_arr: np.ndarray, stat, n: int = 2000, seed: int = 0):
 def class_realization() -> pd.DataFrame:
     """Does the cross-state `shift_class` predict within-patient paired realization ρ_adj? (gene-clustered,
     dose-controlled, decoy-arbitrated; set-level, n=103). -> class_realization{,_contrast}.tsv."""
-    ec = pd.read_csv(OUT / "progression_edge_card.tsv", sep="\t").dropna(subset=["shift_class", "edge_rho_adj"])
+    ec = pd.read_csv(OUT / "edge_card.tsv", sep="\t").dropna(subset=["shift_class", "edge_rho_adj"])
     # (1) gene-clustered mean ρ_adj + acquired dose per class
     rows = []
     for cls, s in ec.groupby("shift_class"):
@@ -1158,7 +1158,7 @@ def patient_realization_efficiency(*, n_perm: int = 500, n_split: int = 50, seed
     """FU-1. -> patient_realization_efficiency.tsv + prints pop-mean vs permutation null, split-half reliability,
     clinical association. Pre-reg (measured-only): pop mean >0 but weak; split-half reliability LOW (per-patient
     efficiency mostly noise at n=103); clinical null."""
-    card = pd.read_csv(_LEARNED / "canonical_card.tsv", sep="\t")[["gene", "arm", "m_nnls"]].dropna()
+    card = pd.read_csv(_LEARNED / "edge_card_base.tsv", sep="\t")[["gene", "arm", "m_nnls"]].dropna()
     card = card[card.m_nnls > 0]
     dX, dY, pts_l = ST.paired_delta_matrices()
     pts = list(pts_l)
@@ -1276,7 +1276,7 @@ def acquired_unrealized_buffers() -> pd.DataFrame:
     threshold sweep (axiom 5). -> acquired_unrealized_buffers.tsv. Pre-reg: n_regulators + net-repression separate;
     CN weak; multi-factor modest."""
     from scipy.stats import mannwhitneyu
-    gc = pd.read_csv(OUT / "progression_gene_card.tsv", sep="\t")
+    gc = pd.read_csv(OUT / "gene_card.tsv", sep="\t")
     # target CN (dosage compensation): mean tumour CN per target gene
     try:
         from mirna_hallmark import data_loaders as DL
@@ -1356,7 +1356,7 @@ def hallmark_realization(*, n_perm: int = 3000, seed: int = 0) -> pd.DataFrame:
     across programs. Continuous ρ_adj (axiom 5). -> hallmark_realization.tsv."""
     from mirna_hallmark.hallmark_sets import gene_to_hallmarks
     from mirna_hallmark.stats import bh_fdr
-    gc = pd.read_csv(OUT / "progression_gene_card.tsv", sep="\t").dropna(subset=["realized_rho_adj"]).copy()
+    gc = pd.read_csv(OUT / "gene_card.tsv", sep="\t").dropna(subset=["realized_rho_adj"]).copy()
     # residual controls: dominant-edge shift-CLASS (MH-160 confound) and POWER (n_reg+total_pressure, FU-2 confound),
     # each alone AND together — the decomposition shows the collapse is class-dominated, not a double-control artifact.
     d = gc.dropna(subset=["dominant_edge_shift_class", "n_regulators", "total_pressure"]).copy()

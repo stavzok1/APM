@@ -1,7 +1,7 @@
 """THE DECOY BENCH — the canonical, reusable implementation of the site-free negative-control benchmark.
 
     .venv/bin/python3 -m mirna_hallmark.eval.decoy_bench                 # full universe, both C blocks
-    .venv/bin/python3 -m mirna_hallmark.eval.decoy_bench --seeds 5       # + seed stability
+    .venv/bin/python3 -m mirna_hallmark.eval.decoy_bench --seeds 5       # ⚠ ORDER-ONLY, not stability (MH-161)
     .venv/bin/python3 -m mirna_hallmark.eval.decoy_bench --genes PTEN,ZEB1
 
 WHY THIS EXISTS (2026-07-16, user-demanded). The decoy arc was run as ~40 one-off scratchpad scripts, each
@@ -261,6 +261,10 @@ def build_decoys(genes=None, seed: int = 0) -> pd.DataFrame:
     MC = [c for c in ctx["propz"].columns]
     w = np.array([AXIS_WEIGHT.get(c, 1.0) for c in MC])
     genes = genes or sorted({g for g in ctx["he"].gene.unique() if g in ctx["Y"].index})
+    # ⚠ `seed` ONLY reshuffles gene order — the eligible set, the metric and linear_sum_assignment are
+    # deterministic per gene, so decoys are IDENTICAL across seeds (verified, MH-161). `--seeds` is NOT a
+    # stability knob: the real MC noise is `oof_budget`'s FOLD seed (hardcoded 0 in `_one`). To average it,
+    # vary that fold seed (see `eval/admissibility_bench._one_firm`), not this one.
     rng = np.random.default_rng(seed)
     out = []
     for g in rng.permutation(list(genes)):
@@ -328,7 +332,16 @@ def oof_budget(Yv: pd.Series, Xf: pd.DataFrame, C: pd.DataFrame, seed: int = 0) 
                                           n_iter=GIBBS_ITER, burn=GIBBS_BURN, seed=0)
         except Exception:
             return np.nan
-        Mt.append(Zte @ b); Yt.append(y[te] - lc.predict(Cm[te]))
+        # ⭐ STANDARDISE EACH FOLD'S BUDGET BEFORE POOLING (2026-08-01, MH-181). `b` is REFIT PER FOLD and
+        # `Zte @ b` is an ARBITRARY-SCALE index, so concatenating raw folds glues differently-scaled
+        # pieces together and the pooled Spearman is NOT invariant to that. (`Yt` needs no such fix — it
+        # is a residual in y units with a per-fold intercept, so its folds are already commensurate.)
+        # Found in `weight_gain_oof`, where it broke an EXACT null: one-family genes must give gain 0 and
+        # gave up to 9.2e-02 until each fold was z-scored. This is the same estimator, same defect.
+        m_ = Zte @ b
+        s_ = np.std(m_)
+        Mt.append((m_ - np.mean(m_)) / s_ if s_ > 1e-12 else m_ * 0.0)
+        Yt.append(y[te] - lc.predict(Cm[te]))
     if not Mt:
         return np.nan
     M, Yo = np.concatenate(Mt), np.concatenate(Yt)
@@ -352,6 +365,16 @@ def _C_blocks(gene):
     return Y, out
 
 
+def _collin(P: pd.DataFrame) -> float:
+    """Mean |pairwise Spearman| among a design's family columns — NaN below 2 columns."""
+    if P.shape[1] < 2:
+        return np.nan
+    R = P.corr(method="spearman").to_numpy(float)
+    v = np.abs(R[np.triu_indices(R.shape[0], k=1)])
+    v = v[np.isfinite(v)]
+    return float(v.mean()) if v.size else np.nan
+
+
 def _one(args):
     gene, pairs = args
     try:
@@ -360,7 +383,14 @@ def _one(args):
         return None
     ra, fa = list(pairs.real_arm), list(pairs.fake_arm)
     Xr, Xf = pool_family(ra, Yv.index), pool_family(fa, Yv.index)
-    o = {"gene": gene, "n_arm": len(ra), "n_fam": Xr.shape[1]}
+    # ⭐ n_fam_fake + collinearity EMITTED (2026-08-01). The matcher works on ARMS and the family collapse
+    # happens HERE, afterward — so neither design WIDTH nor within-design COLLINEARITY is matched, and until
+    # now only the REAL side's width was recorded, making the asymmetry unmeasurable from the artifact.
+    # It is real (width real 3.096 vs fake 3.510, p=4.6e-42; collin 0.1663 vs 0.1547, p=6.7e-03) but INERT:
+    # b(Δn_fam)=−0.0009 p=0.72, b(Δcollin)=−0.024 p=0.62 ⇒ contamination of the gap ≤~0.0025 at the CI edge.
+    # Keep emitting them so the control stays auditable. Full analysis: `eval/decoy_design_match.py`.
+    o = {"gene": gene, "n_arm": len(ra), "n_fam": Xr.shape[1], "n_fam_fake": Xf.shape[1],
+         "collin_real": _collin(Xr), "collin_fake": _collin(Xf)}
     # ⭐ Δdose per gene (fake − real, log2 units). REQUIRED by the caliper-OFF design: with DOSE_CALIPER=0
     # every pair is kept, so the dose residual is removed POST HOC by regressing gap on Δdose (the b·Δ
     # correction) — but that is impossible unless Δdose is emitted, and it was not. Without this column the
@@ -394,7 +424,16 @@ def run(genes=None, seeds: int = 1, workers: int = 8) -> pd.DataFrame:
         R["seed"] = s
         allr.append(R)
     G = pd.concat(allr, ignore_index=True).dropna(subset=["real_core", "dec_core"])
-    G.to_csv(OUT / "decoy_bench.tsv", sep="\t", index=False)
+    # ⛔ NEVER let a SUBSET run clobber the canonical full-universe artifact (fixed 2026-08-01, MH-139).
+    # `decoy_bench.tsv` is MH-137/139's cited evidence, and this line used to write it unconditionally —
+    # so a `--genes` run, or an aborted one, silently replaced 1,349 genes with whatever it had. It
+    # happened: the file was found holding the alphabetically-first 38 genes, i.e. the row's evidence
+    # column no longer pointed at its evidence, with nothing in the file to reveal it.
+    dest = OUT / ("decoy_bench.tsv" if genes is None else "decoy_bench_subset.tsv")
+    G.to_csv(dest, sep="\t", index=False)
+    if genes is not None:
+        print(f"  ⚠ SUBSET run ({G.gene.nunique():,} genes) -> {dest.name}; "
+              f"canonical decoy_bench.tsv left untouched")
 
     print(f"\n=== THE DECOY BENCH — {G.gene.nunique():,} genes, {seeds} seed(s) ===")
     print("    [TCGA · family · β · 5-fold OOF over patients · RPM-pool design]\n")

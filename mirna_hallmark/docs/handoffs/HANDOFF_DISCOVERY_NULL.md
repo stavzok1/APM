@@ -37,7 +37,7 @@ led by miR-18a→{STAM2, KIF3B, MAP3K1, NEDD4}. Two correctness fixes are owed (
 
 - **Site-free null fitted IN-LOOP per gene** on that gene's exact `Cext` (so the null's estimand = the
   candidates': same C, same he_agg, same sample support). Verified bit-equal to the real per-arm path (5.7e-12).
-- **he_agg = canonical Gibbs β** (`arm_attribution_card.tsv` `beta`/`beta_deconv`), applied on β's z-scored
+- **he_agg = canonical Gibbs β** (`readouts_arm_edges.tsv` `beta`/`beta_deconv` — the ATTRIBUTION block of `canonical_card`; was the orphan `arm_attribution_card.tsv`, deleted 2026-07-18), applied on β's z-scored
   `_prep` scale — NOT the §6b-retired adaptive lasso (user-caught). A stronger, canonical control.
 - **batch OFF** in `Cext` (user-asked ×2): canonical C = [CPE, target_cn, mal_prolif] carries no batch, and
   batch is shared structure already IN the site-free null (σ₀ 0.094→0.087, ~7%, no calibration gain).
@@ -139,7 +139,7 @@ produce. **A1 sharpens 296 (edge-level) → 157 (predicted site coincides with a
 
 ## 8. Data / infra notes for the next session
 
-- **Canonical Gibbs β lives in `output/learned/arm_attribution_card.tsv`** (`beta` core, `beta_deconv`);
+- **Canonical Gibbs β lives in `output/learned/readouts_arm_edges.tsv`** (`beta` core, `beta_deconv`; = the ATTRIBUTION block of `canonical_card.tsv`. Was the orphan `arm_attribution_card.tsv`, deleted 2026-07-18 — no writer, superseded by `readouts.run(level="arm")`);
   100% HE coverage on the discovery universe. Apply on the `attribution_eb._prep` scale (z-scored, C-residualised).
 - **`OMP_NUM_THREADS=1` for every parallel discovery run** — workers were BLAS-oversubscribing (~130% CPU each).
 - **Smoke tests are broken on a pre-existing dead GENCODE path** (memory `smoke-test-stale-paths`), unrelated to

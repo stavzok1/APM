@@ -29,7 +29,7 @@ from mirna_hallmark.learned import regression as LR
 from mirna_hallmark.learned.evidence import ledger as LG
 
 PANEL = ["PTEN", "ESR1", "ZEB1", "CDKN1A", "GATA3", "BCL2", "MYC", "CDKN1B", "RB1", "SMAD4"]
-C_CARD = CFG.OUTPUT_ROOT / "learned" / "arm_attribution_card.tsv"   # canonical Gibbs β per (gene, arm)
+C_CARD = CFG.OUTPUT_ROOT / "learned" / "readouts_arm_edges.tsv"   # canonical Gibbs β per (gene, arm) = ATTRIBUTION block of canonical_card (readouts.py). Was the orphan arm_attribution_card.tsv (deleted 2026-07-18).
 
 
 def _resid(v, Cmat):
@@ -191,7 +191,7 @@ def _scan_one_gene(g: str):
     # what curation already explains. It must be the CANONICAL Gibbs estimate, NOT `LR.fit_gene` — that is the
     # §6b-RETIRED adaptive lasso (memory: Lasso RETIRED; MH-145 flagged this exact pattern) and was also the
     # ~12 s/gene bottleneck.
-    #   `_SCAN["card"]` = dense posterior mean β per (gene, arm) from arm_attribution_card.tsv (100% HE coverage
+    #   `_SCAN["card"]` = dense posterior mean β per (gene, arm) from readouts_arm_edges.tsv (100% HE coverage
     #   on the discovery universe). ⚠ SCALE: that β is the coefficient on the model's `_prep` design — X
     #   **z-scored** and C-residualised (attribution_eb._prep) — so β must be applied to a z-scored Xhe, not raw
     #   log2RPM. We z-score Xhe here on the SAME convention; the curated β was fit WITHOUT the orphans present,

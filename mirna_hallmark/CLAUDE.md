@@ -172,6 +172,23 @@ These are completion gates, on the same footing as the documentation protocol:
    timeout or a user request. The win is usually redundant data loading, not the numerics; cache DERIVED objects,
    not just raw reads. Verify optimizations are output-identical (a control run). (memory `profile-before-batch-loops`)
 
+   **3a. PARALLELIZING A BATCH ON THIS NFS BOX — READ THIS BEFORE YOU WRITE A `Pool` (learned the hard way,
+   2026-07-18; the genome-wide card took a full session of dead ends).** In order:
+   1. **Memoize EVERY static-file read at module level FIRST.** A `pd.read_csv` that is negligible for one item
+      is *fatal* at N_items × N_workers on NFS (thrash). Audit the whole per-item call path — `cProfile` on one
+      item HIDES this (each read looks small; only N×workers makes it dominate). This is the load-bearing fix.
+   2. **Single-thread BLAS BEFORE `import numpy`** (`OMP_NUM_THREADS=OPENBLAS_NUM_THREADS=MKL_NUM_THREADS=1`) —
+      else a fork after a BLAS-heavy step inherits a locked OpenMP threadpool → **futex DEADLOCK** at ~2% CPU,
+      and 7 workers × unbounded threads oversubscribe 8 cores.
+   3. **Prefer INDEPENDENT SUBPROCESS SHARDS over in-process `multiprocessing.Pool`.** The Pool deadlocked/hung
+      **three different ways** here (fork-after-threadpool; spawn NFS thundering-herd → dead worker → `map`
+      hang; COW-growth stall). Independent shards + concat have nothing shared to deadlock. Isolate a native
+      crasher (`double free` on a degenerate design, e.g. GAPDH) by running the shard's items one-per-subprocess.
+   4. **A small-scale test gives FALSE confidence** — NFS contention is *nonlinear* (40 genes passed, 1,436
+      thrashed on identical code). **Verify the MECHANISM at FULL scale:** workers must be COMPUTE-BOUND
+      (`ps STAT R`, ~90% CPU) — not wall-time on a subset. Diagnose stalls via `/proc/<pid>/wchan`
+      (`futex_wait`=lock/threadpool; `pipe_read`=blocked on a worker), never guess. (memory `batch-nfs-per-unit-reads`)
+
 4. **A NULL MUST BE ABLE TO CARRY THE ARTIFACT — AND "IT REPLICATES" IS NOT EVIDENCE OF BIOLOGY.**
    (Added 2026-07-12 after MH-114, where BOTH of these gave a confidently wrong verdict before the right test
    overturned it. They are the default way a confounded result survives scrutiny.)

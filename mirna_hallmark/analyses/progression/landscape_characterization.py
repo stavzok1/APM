@@ -40,7 +40,7 @@ _GAINED = ("acquired_realized", "tumour_realized", "field_established_realized")
 
 
 def _load():
-    ec = pd.read_csv(OUT / "progression_edge_card.tsv", sep="\t")
+    ec = pd.read_csv(OUT / "edge_card.tsv", sep="\t")
     gx = pd.read_csv(_GX, sep="\t")[["arm", "mir_class", "host", "clustered", "promoter_gene"]]
     ec = ec.merge(gx, on="arm", how="left")
     sc = pd.read_csv(_SC / "mirna_state_class.tsv", sep="\t").rename(columns={"miRNA": "arm"})
@@ -463,7 +463,7 @@ def hardening_audit(ec: pd.DataFrame, gc: pd.DataFrame) -> pd.DataFrame:
 
 def characterize():
     ec, sc = _load()
-    gc = pd.read_csv(OUT / "progression_gene_card.tsv", sep="\t")
+    gc = pd.read_csv(OUT / "gene_card.tsv", sep="\t")
     hard = hardening_audit(ec, gc)
     print("=" * 100 + "\n⭐ HARDENING AUDIT of the soft threads:\n" + hard.to_string(index=False) + "\n" + "=" * 100)
     ctx = genomic_context_census(ec); pad = program_acquired_dose(gc)

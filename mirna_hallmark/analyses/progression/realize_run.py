@@ -70,14 +70,14 @@ def finalize_phase2() -> None:
         R.owner_convergence()
     R.retention_realization()
     # ⭐ integrated progression cards (edge + gene) — now with the Phase-2 realization/owner columns
-    ec = R.progression_edge_card(); gc = R.progression_gene_card()
+    ec = R.edge_card(); gc = R.gene_card()
     print(f"\n[progression cards] edge {ec.shape} · gene {gc.shape}")
     R.class_realization()   # cross-state class -> within-patient realization (gene-clustered, dose-ctrl, decoy-arbitrated)
     R.patient_realization_efficiency()   # FU-1: within-sample per-patient efficiency (decoy-controlled)
     R.acquired_unrealized_buffers()      # FU-2: acquired-but-unrealized gene buffers (power-controlled)
     R.hallmark_realization()             # rigorous per-program realization (class+power adjusted, decoy-arbitrated)
     print(f"-> {OUT}/ : realization_family · realization_between_family · owner_convergence · retention_realization "
-          f"· progression_edge_card · progression_gene_card")
+          f"· edge_card · gene_card")
 
 
 def drive_phase2(nshards: int = 8, m_ref: str = "complement") -> None:

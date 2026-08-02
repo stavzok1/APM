@@ -131,6 +131,10 @@ def _reconcile_to_tcga(named: pd.Series, target_arms) -> pd.Series:
     return pd.Series(out, dtype=float)
 
 
+_BASELINE_MEMO: dict = {}   # cache the QN-baseline read; was re-read from NFS on every load_baseline() call
+                            # (i.e. once per gene in a batch) — see memory `batch-nfs-per-unit-reads`.
+
+
 def gtex_qn_baseline(*, out_dir: Path = OUT_DIR, fallback: str = "gtex_family", force: bool = False) -> pd.Series:
     """Per-arm true-healthy baseline on the TCGA scale, anchored on **GTEx breast only**
     (346 samples, correct tissue). GTEx per-arm medians are quantile-normalised onto the
@@ -155,8 +159,10 @@ def gtex_qn_baseline(*, out_dir: Path = OUT_DIR, fallback: str = "gtex_family", 
     out_dir.mkdir(parents=True, exist_ok=True)
     cache = out_dir / "gtex_qn_baseline.tsv"
     if cache.is_file() and not force:
-        df = pd.read_csv(cache, sep="\t", index_col=0)
-        return df["healthy_baseline_tcga"].dropna()
+        _mk = str(cache)
+        if _mk not in _BASELINE_MEMO:
+            _BASELINE_MEMO[_mk] = pd.read_csv(cache, sep="\t", index_col=0)["healthy_baseline_tcga"].dropna()
+        return _BASELINE_MEMO[_mk].copy()          # copy → callers cannot mutate the shared memo
 
     split = _split_types(_load_full_mirna())
     tumor, nat = split["tumor"], split["nat"]

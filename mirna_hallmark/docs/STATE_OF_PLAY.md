@@ -239,6 +239,23 @@ residual removed post hoc by regressing gap on Δdose with **b re-derived on thi
 that CI** ⇒ the caliper's 14.4% universe restriction (which drops precisely the HIGH-DOSE regulators,
 1,164 vs 31 RPM median, p=2e-179) **cost nothing material.** Two designs, one answer: **≈−0.012 to −0.013.**
 
+**✅ OOF POOLING DEFECT — MEASURED, 4%, MH-137/139 STAND (MH-181, 2026-08-01).** `oof_budget` pooled an
+arbitrary-scale budget across folds with a per-fold-refit β (scale-non-invariant; it broke an exact null
+elsewhere). Fixed and re-run: each ARM moved appreciably (real −0.0860→−0.0901, decoy −0.0690→−0.0737)
+but they moved TOGETHER, so the **gap shifted only +0.0007** — dose-corrected **−0.0129 → −0.0124
+[−0.0200,−0.0048]**, inside MH-139's own CI. ⚠ single-arm users (not the gap) were off by ~0.004–0.005 ρ.
+Blast radius audited to ONE live site: the defect needs an arbitrary-scale index, so `gene_atlas`'s
+y-unit OOF ceiling is unaffected.
+
+**✅ DESIGN-MATCH CONTROL PASSES (MH-167, 2026-08-01).** The decoy matches ARMS and collapses to families
+only afterward, so it is **not** matched on design **width** or within-design **collinearity** — both
+asymmetries are real (p=4.6e-42 / p=6.7e-03; curation bundles same-seed mates, fakes do not) — but
+**neither moves the gap**: contamination bounded at **≤~0.0025 ρ** (point estimate ~3%). **Δdose remains the
+only design axis with a detectable effect, and it is already corrected.** ⚠ The pre-registered prediction
+(that these make −0.0129 *conservative*) was **wrong** — the effect is undetected, not directional; carry the
+**bound**, not a conservative framing. ⚠ MH-139's evidence artifact had been clobbered by a truncated
+38-gene run and was **regenerated + verified identical** on the same date (see its row).
+
 ⚠ **The trajectory runs DOWN as controls improve** — this is the single most important thing to
 internalise on this axis:
 
@@ -271,14 +288,24 @@ control. Benchmark any aggregator against a fitted matched decoy.**
 **Domain of validity — ⛔ THE "27% DOMAIN" IS RETIRED AS STATED (MH-147, 2026-07-17).** Re-tested on the
 canonical decoy (1,349 genes):
 - ✅ **Width axis (`n_fam ≥ 3`) HOLDS** — n=519, gap **−0.0264, p=4.2e-06**.
-- ⛔ **Evidence axis (`w_max > median`) ADDS NOTHING GIVEN WIDTH** — within `n_fam ≥ 3`, high (−0.0298)
-  vs low (−0.0130): **MWU p=0.293**. It separates alone only because it correlates with width.
-  **The rule reduces to `n_fam ≥ 3`.**
+- ⚠ **Evidence axis (`w_max > median`) — "ADDS NOTHING GIVEN WIDTH" is TOO STRONG; it is UNDERPOWERED
+  (softened MH-169, 2026-08-01).** MH-147 measured, within `n_fam ≥ 3`, high (−0.0298) vs low (−0.0130),
+  **MWU p=0.293**. Re-measured on the restored canonical decoy: **A_COMPETENT −0.0335 (n=392) vs C_WEAK
+  −0.0073 (n=69), MWU p=0.0618** — same VERDICT (does not clear the bar) but far closer than recorded,
+  on a **69-gene** low arm. Per MH-157's language rule: **can't-tell, not "adds nothing".**
+  **The operating rule still reduces to `n_fam ≥ 3`.**
 - ⛔ **The complement is NOT zero** — MH-130's load-bearing "outside: +0.0002, p=0.72" becomes
   **−0.0114, p=6.3e-03 (n=936)**. The model works outside its claimed domain, just weaker.
 - ⇒ **There is no partition. Competence is a GRADIENT in design width** — consistent with
   `spearman(ceiling, n_fam)=+0.551`. **The defensible claim:** the gap SCALES WITH REGULATOR-DESIGN
   WIDTH, is ~2.3× larger at `n_fam ≥ 3` than in the complement, and is **nowhere exactly zero**.
+  ✅ **Reproduced 2026-08-01 (MH-169): −0.0295 vs −0.0105 (p=3.6e-03), ~2.8×; internal null holds
+  (`n_fam==1` → adj −0.0033).** ⛔ **But WIDTH CANNOT BE SEPARATED FROM ABUNDANCE** — `spearman(n_fam,
+  n_abund)=+0.780`, only **20** genes are narrow-but-abundant, and **both partials vanish**
+  (width|abundance +0.005 p=0.85; abundance|width −0.016 p=0.55). ⇒ they are ONE axis here; the gap
+  tracks whichever you measure and is **not attributable to either**. The sharpest separator is
+  MEASURABILITY (ceiling ≤0 → +0.0094, a clean zero; >0.05 → −0.0621) — but that is **partly
+  definitional** (ceiling≤0 forces ρ_real≈0). Home: **MH-169**, `eval/decoy_by_gene_strata.py`.
 
 **The gene lens — ✅ REPRODUCIBLE 2026-07-17 (MH-144), and one headline RETIRED:**
 - ⛔ **"17.6% NOT MEASURABLE" is FRAGILE — do not cite it.** It is a threshold count evaluated exactly
@@ -325,6 +352,19 @@ EMT **−0.330 → +0.162 (sign flip)**, orphan candidates **594→23**.
 ⚠ **The protein transfer is NOT decoy-controlled** — a site-free fitted fake reaches **99%** of it
 (MH-130d). It is real arithmetic, but **not evidence the curated edge set is right.** The only
 decoy-controlled transfer in the arc is the **CPTAC mRNA** cell inside class A.
+
+✅ **RETENTION MEASURED 2026-08-01 (MH-171) — the channel is ATTENUATED, not erased.** MH-107's open
+item is closed for `ood_protein` (its code fix had landed but was never run/recorded): **prospective —
+the INDEPENDENT cohort, n=101 — median retention 0.797, 7/7 genes still protein-coupled after
+composition**; TCGA-105 (circular) 0.656, 7/7. ⭐ **ZEB1 retains WORST in both (0.246 / 0.308 ⇒
+`composition_explained`)** — a per-gene confirmation of the compartment-arithmetic claim above, from a
+different design than MH-114's shuffled null, agreeing on which gene. ESR1 / BCL2 / CDKN1B are
+cell-intrinsic in both. ⚠ 7 hub genes only; ⚠ GATA3 (`n_reg=1`) disagrees across cohorts — do not cite;
+⛔ `model_beats_abund` is FITTED-vs-UNFITTED and is **not** a control.
+⛔ **`MH-83` / `MH-84` DO NOT EXIST** (ids 81–85 were never written) — yet they are cited as pending
+re-runs below and as fact in `ood_protein.py:41`. **That item is not actionable as written** (MH-171).
+🚫 `eval/cptac_validation.py` must **not** be re-run as a composition fix — it runs the **retired**
+`compute_gene_pressure` (MH-115). It needs a PORT to the learned posterior, not a re-run.
 
 ⚠ **MH-114's "34→3" was measured on the retired heuristic** (`compute_gene_pressure`), not the
 learned posterior (MH-115) — and its FDR counts rest on the uncalibrated null (MH-123). The
@@ -479,11 +519,14 @@ platform, same consortium, Buffa is a subset of it.
    only cohort that can test it; the inputs are already on disk. ⚠ **Pre-register MH-114's
    compartment-orientation stratification** — both cohorts are bulk breast and share the CAF confound,
    so a clean replication proves nothing on its own.
-2. **Re-run `buffa_validation` (~90 s) and annotate MH-38 / MH-55 / MH-73 / MH-74.** Correctness debt:
-   a dead claim is live in the talk.
-3. **Re-run the competence map's gap columns through `eval/decoy_bench.py`** (2:22 full universe).
-   Every real-vs-fake number in `gene_competence_map.tsv` sits on a discredited control; the atlas
-   half is fine.
+2. ✅ **DONE 2026-07-17 — `buffa_validation` re-run; MH-38 / MH-55 / MH-73 / MH-74 all annotated.**
+3. ✅ **DONE 2026-08-01 (MH-168/169) — competence map rebuilt against the canonical decoy.**
+   ⚠ **It was BLOCKED, not neglected:** `gene_atlas.py` had been **dead for 15 days** — the same
+   `__file__`-hop-after-a-move bug as MH-38, introduced by commit `e5d5d84` relocating it one level
+   deeper; it ran its full compute and died on the final write. Fixing it exposed a **second** bug:
+   `load_cnv_target_genes` clobbered its own cache with each single-gene request and, under 8 workers,
+   corrupted the gzip — making **`assemble_gene` fail for every gene**. Both fixed (MH-168).
+   Strata result in **MH-169**; the atlas reproduces MH-144's structural numbers exactly.
 4. **Restore an exogenous existence validation** — both `CN_INSTRUMENT.md` and MH-126 name this as the
    highest-value open item, and nothing else changes the program's standing as much.
 

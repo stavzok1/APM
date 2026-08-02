@@ -10,7 +10,7 @@ arm become a DOMINANT realized repressor of THAT gene, and in which step (FIELD 
   • dose-budget rank is deliberately NOT the dominance axis here (fixed_M×level is a dose placement, not fitted
     dominance; imputing a constant kills the variance a re-fit needs) — see FORMULAS §11g.
 
-Reads `output/learned/realization/progression_edge_card.tsv`; writes `dominance_trajectory.tsv` + prints the summary.
+Reads `output/learned/realization/edge_card.tsv`; writes `dominance_trajectory.tsv` + prints the summary.
 Run:  .venv/bin/python3 -m mirna_hallmark.analyses.progression.dominance_trajectory
 """
 from __future__ import annotations
@@ -32,7 +32,7 @@ def _state_rho_p(ec: pd.DataFrame):
 
 
 def dominance_trajectory() -> pd.DataFrame:
-    ec = pd.read_csv(OUT / "progression_edge_card.tsv", sep="\t")
+    ec = pd.read_csv(OUT / "edge_card.tsv", sep="\t")
     sr = _state_rho_p(ec)
     for st, (rho, p, _leg) in sr.items():
         # realized-repressor score: -log10(p) where the arm is a calibrated repressor (rho<0), else NaN

@@ -396,11 +396,15 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--level", choices=["family", "arm"], default="family",
+                    help="family = one row per (gene, seed-family); arm = per (gene, arm) [§8 collapse removed]")
     a = ap.parse_args()
     t0 = time.time()
-    E, G = run(workers=a.workers, limit=a.limit)
+    E, G = run(workers=a.workers, limit=a.limit, level=a.level)
+    grain = "family" if a.level == "family" else "arm"
+    arm_slots = f" | {int(E.n_arms.sum())} arm-slots" if "n_arms" in E else ""
     print(f"\n=== THE FOUR READOUTS — genome-wide (core C canonical; +deconv retention reported) ===")
-    print(f"  {len(G)} genes × {len(E)} (gene,family) rows | {int(E.n_arms.sum())} arm-slots | {(time.time()-t0)/60:.1f} min")
+    print(f"  {len(G)} genes × {len(E)} (gene,{grain}) rows{arm_slots} | {(time.time()-t0)/60:.1f} min")
     print(f"\n  COUPLING       : median |beta| {E.beta.abs().median():.4f} | beta>0 {100*(E.beta>0).mean():.1f}%")
     print(f"  IDENTIFIABILITY: |z|>2 in {int(E.identified.sum())}/{len(E)} families ({100*E.identified.mean():.1f}%)")
     print(f"                   median beta_frac_sd {E.beta_frac_sd.median():.3f} (wide = genuine non-identifiability)")

@@ -1,0 +1,6 @@
+# large regenerable intermediates (rebuild via extract_geno.py / cn_falsify_repro.py) — do not commit
+geno_cis.npy
+within_arm_iv_nogate.tsv
+_cis_idx.npy
+_cis_snp_ids.txt
+*.log

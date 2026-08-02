@@ -253,3 +253,6 @@ stratum_characterization.py	subtype	auto
 subtype_contrasts.py	subtype	auto
 tcga_batch.py	shared	curated
 visibility_archetype_contrasts.py	subtype	auto
+learned/canonical_card.py	progression	curated
+learned/realization.py	progression	curated
+analyses/progression/realize_run.py	progression	curated

@@ -16,6 +16,7 @@ tumors upstream; multi-vial collapse uses mean (expression) / median (CNV).
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Iterable, List, Optional, Sequence
 
@@ -208,8 +209,33 @@ def load_cnv_target_genes(
     mat = long.groupby(["gene_name", "participant"])["copy_number"].median().unstack()
 
     if cache:
+        # ⛔ WAS: `mat.to_csv(cache_path)` — a SELF-DESTROYING CACHE, fixed 2026-08-01.
+        # Two defects, both live since the cache was introduced:
+        #   (1) CLOBBERING. This wrote only the REQUESTED subset over the whole cache. `learned/data.py::
+        #       _target_cn` calls this with a SINGLE gene on any miss, so one absent gene collapsed a
+        #       1,500-gene cache to 1 gene — after which every later gene missed, re-parsed the full
+        #       ASCAT3 table, and clobbered it again. A cache that guarantees its own next miss.
+        #   (2) NON-ATOMIC WRITE. With N parallel workers (gene_atlas runs 8) those clobbering writes
+        #       interleave on one path and produce a CORRUPT gzip — measured: a 3 KB file holding one
+        #       gene plus trailing garbage, which then made `assemble_gene` raise BadGzipFile for EVERY
+        #       gene, i.e. a silent total failure of the learned path.
+        # ⇒ merge with whatever is already cached, and swap the file in atomically.
         cache_path.parent.mkdir(parents=True, exist_ok=True)
-        mat.to_csv(cache_path, sep="\t")
+        out = mat
+        if cache_path.exists():
+            try:
+                prev = pd.read_csv(cache_path, sep="\t", index_col=0)
+                keep = prev.index.difference(out.index)
+                if len(keep):
+                    out = pd.concat([prev.loc[keep], out.reindex(columns=prev.columns)])
+                    out = out.sort_index()
+            except Exception:
+                pass                      # unreadable/corrupt cache -> just replace it with the fresh one
+        tmp = cache_path.with_suffix(cache_path.suffix + f".tmp{os.getpid()}")
+        # ⚠ compression MUST be explicit: the ".tmp<pid>" suffix defeats pandas' extension-based
+        # inference, which would silently write PLAIN TEXT under a .gz name (caught 2026-08-01).
+        out.to_csv(tmp, sep="\t", compression="gzip")
+        os.replace(tmp, cache_path)       # atomic within a filesystem: readers never see a partial file
     return mat
 
 

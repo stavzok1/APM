@@ -38,7 +38,10 @@ def _cov(cohort: str, samples):
     NO covariates at all — while the TCGA model being scored already conditions on the 8 Wu-major lineages.
     Bulk protein is heavily compartment-loaded (EMT proteins ↔ CAF fraction r=+0.509; ZEB1 protein +0.768) and
     epithelial miRNAs (miR-200) anti-correlate with stroma, which MANUFACTURES protein 'coupling'. Measured on
-    the MH-84 gold edges: 27% of raw protein-coupled edges SIGN-FLIP under composition and the mean |ρ| falls 60%.
+    the gold edges: **27.6% of raw protein-coupled edges SIGN-FLIP under composition and the mean |ρ| falls 39%**
+    (re-derived 2026-08-01, MH-172). ⚠ this line previously read "27% … falls 60%" and cited "MH-84" — the
+    **27% reproduces (71.9–72.8% keep-rate under every subset), the 60% does NOT (36–41%), and MH-84 has no
+    registry row** (ids 81–85 were never written). Home for this number: **MH-172**, not a docstring.
     Returns a design matrix [1 | C] aligned to `samples`, or an intercept-only column if C is unavailable."""
     import numpy as _np
     key = f"cov_{cohort}"
