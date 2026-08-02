@@ -181,7 +181,15 @@ anti-correlation ladder; **data/edges/harmonization** → `DATA_SOURCES §0/§1/
   ✅ **FAMILY-NULL CORRECTNESS FIX LANDED (MH-197):** pseudo-families are now co-expression-matched per
   candidate cell; the old uniform draw was **20–25% too narrow**. Survivor count is unchanged at 0 (a wider
   null cannot create one) — what moved is the set-level readout above. ⬜ **NEXT:**
-  ① decide the set-level framing worth a registry finding; ② ⛔ **DONE/NEGATIVE 2026-07-18 (MH-165) — the HE surfacing hope is at chance** (337 vs 287±35 shuffle, z=+1.4;
+  ① ⭐⭐ **THE ONE ITEM ACTUALLY BLOCKED ON THE USER, OPEN SINCE 2026-07-17 — decide the framing, then the MH
+  finding row gets written.** The table is BUILT and now has a producer + provenance
+  (`eval/discovery_gold_set.py` → `discovery_gold_set.tsv`, MH-198): **157 edges · 90 genes · 11 seed
+  families**, each clearing bulk coupling + composition-robustness + a **site-coincident** Manakov duplex.
+  **The framing choice is real because the set is 88% ONE co-transcribed cluster** (miR-17~92 + miR-106b~25 +
+  miR-106a~363) — headline it as *the miR-17~92 cluster's realized target set in breast* (honest about the
+  concentration, a biological claim) **or** as *a 157-edge convergent-evidence candidate table* (honest about
+  the method, quieter about the biology). ⚠ **Do not compress this lane to "discovery is empty"** — that holds
+  only for the per-edge FDR; ② ⛔ **DONE/NEGATIVE 2026-07-18 (MH-165) — the HE surfacing hope is at chance** (337 vs 287±35 shuffle, z=+1.4;
    83% family-lone), so **non-HE orphan discovery per subtype is NOT worth running** (weaker/noisier at n=93–197
    than HE, which already failed). ⬛ ~~**SUBTYPE-STRATIFIED run (user-asked)**~~ — PAM50-stratified
   discovery, since coupling washed out in the pooled cohort can surface within a subtype; ③ family-lane evidence-attach

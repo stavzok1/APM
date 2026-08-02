@@ -113,6 +113,11 @@ triply-convergent support — bulk coupling + composition-robustness + orthogona
 the null by concept*, since the honest per-edge FDR is unreachable. Flagship: **miR-18a→{STAM2, KIF3B, MAP3K1,
 NEDD4}**, all with Manakov duplexes; **NEDD4 confirmed by three chimeric sources** (Manakov + TarBase chimeric +
 qCLASH).
+> ⛔ **CORRECTION 2026-08-02 (MH-198): the flagship quartet is EDGE-level and one member does NOT survive the
+> site-level sharpening below. `KIF3B` has `site_manakov = False`** (edge-level CLIP only — `site_clip_any=True`,
+> `best_type=7mer-A1`, `partial_coupling=−0.588`), so it is in the 296-edge edge-level set and **NOT in the
+> 157-edge site-level gold set.** STAM2, MAP3K1 and NEDD4 hold. Quote the quartet only at edge level; at site
+> level it is a **trio**.
 
 **⭐ SHARPENED TO SITE-LEVEL (MH-155, `discovery_site_evidence.py`).** The site ladder now runs on the discovery
 orphans: each candidate carries whether its *predicted 3'UTR site* physically coincides with a chimeric duplex,
@@ -121,6 +126,36 @@ p=1.9e−20** (vs edge-level 4.6e−8 — 12 orders sharper), and the coincidenc
 site-confidence ladder (7mer-A1 Manakov 9% → 8mer+conserved+3'-supp 27%) — a gradient a site-free arm cannot
 produce. **A1 sharpens 296 (edge-level) → 157 (predicted site coincides with a duplex)** — the gold set. Output:
 `output/learned/discoveries_sitelevel.tsv` (`site_manakov`, `site_clip_any`, `best_type`, `n_sites`).
+
+### 6b. ⭐ THE GOLD SET NOW HAS A PRODUCER, AND TWO CAVEATS THAT MUST TRAVEL WITH IT (MH-198, 2026-08-02)
+
+Until now the 157 existed **only as a hand-merge** of `discovery_fall_diagnosis.tsv` × `discoveries_sitelevel.tsv`
+— no producer, no provenance, no attached caveats. *That is precisely how the five literature ground-truth sets
+rotted (MH-196).* Built now by **`eval/discovery_gold_set.py`** → `output/learned/discovery_gold_set.tsv`
+(+ sha256/provenance JSON). Shape: **157 edges · 90 genes · 18 arms · ⭐ 11 SEED FAMILIES.**
+
+⚠ **(1) IT IS NOT 157 INDEPENDENT FINDINGS — the set is one cluster.**
+
+| edges | seed family |
+|---|---|
+| **96 (61%)** | miR-17-5p/20-5p/93-5p/106-5p/519-3p |
+| 24 | miR-19-3p |
+| 10 | miR-25-3p/32-5p/92-3p/363-3p/367-3p |
+| 9 | miR-18-5p |
+| 9 | miR-130-3p/301-3p/454-3p |
+| ≤3 each | 6 further families |
+
+**139/157 = 88% belong to the miR-17~92 polycistron and its paralogue clusters** (miR-106b~25, miR-106a~363),
+which are **co-transcribed** — their doses are not independent draws. ⇒ **the honest unit is ~one oncogenic
+cluster's realized target set, not 157 discoveries. Always quote the 11 families beside the 157 edges.**
+
+✅ **(2) WHAT IS GENUINELY STRONG:** **94/157 sit on genes with NO curated regulator at all** (`no_he_gene`) —
+novel gene territory, not curation re-derived. And only **3/157** are same-seed paralogues of a regulator already
+curated for that gene, so the set is not curation leaking back in via family membership.
+
+⚠ **Re-derived the concept-level statistic:** site-coincident edges couple **−0.2619 (n=1,409) vs −0.2358
+(n=5,408), MWU p=2.28e−27** over the full site-level table. §6's **1.9e−20 was a narrower scope** — both are
+real; cite the scope with the number.
 
 ## 7. OPEN WORK (suggested next steps, roughly ordered)
 

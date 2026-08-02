@@ -164,6 +164,22 @@ coincidence climbs the site-confidence ladder monotonically (9%→27%). Delivera
 157 edges** (miR-18a/miR-17~92 cluster). Effects are SMALL by construction (bulk is weak per-edge); the strength
 is the convergence. **⚠ NOT a per-edge licence.** Home: `learned/discovery.py`, `method_dev/site_ladder/`.
 
+⭐ **QUANTIFIED + GIVEN A PRODUCER 2026-08-02 (MH-198)** — `eval/discovery_gold_set.py` →
+`output/learned/discovery_gold_set.tsv` (sha256-stamped). It had existed only as a hand-merge of two files,
+the same shape that rotted the literature sets (MH-196). **157 edges · 90 genes · 18 arms · ⭐ 11 SEED
+FAMILIES**, and the concentration is now measured rather than gestured at: **96/157 (61%) are ONE family
+(miR-17/20/93/106/519) and 139/157 (88%) are the miR-17~92 polycistron + its paralogue clusters
+(miR-106b~25, miR-106a~363), which are CO-TRANSCRIBED.** ⇒ **the honest unit is ~one oncogenic cluster's
+realized target set, not 157 independent findings — always quote the 11 families beside the 157 edges.**
+✅ What is strong: **94/157 sit on genes with NO curated regulator at all**, and only **3/157** are same-seed
+paralogues of a regulator already curated for that gene ⇒ not curation leaking back in.
+⛔ **`KIF3B` is NOT in the site-level gold set** (edge-level CLIP only) — the handoff's
+miR-18a→{STAM2, KIF3B, MAP3K1, NEDD4} quartet is **edge-level; at site level it is a TRIO.**
+⚠ **DO NOT compress this axis to "discovery is empty"** — that is true ONLY of the per-edge FDR and
+misstates the lane's actual deliverable.
+⬜ **PENDING THE USER: the framing decision** (HANDOFF §7.3) — cluster-level vs edge-level headline —
+before any MH *finding* row is written. Open since 2026-07-17.
+
 **OPEN:** restoring an exogenous existence validation is, by both docs' own assessment, **the single
 highest-value open item in the program** — and it is now **TESTED, not aspirational (MH-159, 2026-07-18).**
 **⛔ GERMLINE cis-eQTL MR built + run + refuted.** Germline genotype is genuinely exogenous (randomized at
