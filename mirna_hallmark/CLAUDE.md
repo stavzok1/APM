@@ -27,6 +27,7 @@ targeted by high-evidence miRNAs; does evidence-weighted miRNA pressure anti-cor
 | miRNA pressure | `mirna_hallmark.pressure_build` / `pressure_engine` (spine `softmax_z_logrpm + evidence_mass`) — ⚠ the pressure heuristic is **§6b-RETIRED** (MH-115); the canonical estimator is the learned Gibbs (`learned/`) |
 | miRNA-universe CNV | `analysis.cohort_landscapes.cnv.dosage_landscape_cnv` |
 | clinical / RNA / partial Spearman | `analysis.utils.common.loaders` |
+| ⭐ **ANY per-gene question** ("where does X help / which genes / what predicts it") | **`learned/gene_axes.py`** — build the axes, `scan` them under FDR, `contrast` the extremes, `sign_analysis` the gain. **Consult it BEFORE hand-rolling a stratification; it encodes two traps that have already cost errors** (see axiom 8) |
 
 *(Confounder-block `C` policy, module spine, and design decisions are NOT restated here — they have homes:
 axiom 2a below, `docs/ARCHITECTURE.md` + `docs/ANALYSES_CATALOG.md`, and `docs/MODELING_FRAMEWORK.md`.)*
@@ -276,6 +277,40 @@ These are completion gates, on the same footing as the documentation protocol:
      **(c)** when a TOOL flags something, validate the tool on a case whose answer you already know.
    - **A property is real; the container is just the wrong place to read it from.**
      ⇒ registry rows MH-191, MH-192, MH-194; guard `learned/card_rungs.py` (`--check`).
+
+8. **A PER-GENE QUESTION IS A MULTI-AXIS QUESTION — AND AN AGGREGATE WIN IS NOT PER-GENE ACTIONABLE UNTIL
+   YOU SHOW THE HARM IS GATEABLE.** (MH-201, 2026-08-02.) ⇒ **use `learned/gene_axes.py`; do not hand-roll
+   a stratification.** A single number for "does X help?" is close to uninterpretable: in MH-201 the headline
+   margin (β −0.0186 vs abundance −0.0022) only became a finding once asked along many gene axes, and **three
+   of the four things that came out were on axes I had not thought to build.**
+   - **BUILD ALL FOUR AXIS FAMILIES, not just the gene's own.** ⭐ **The REGULATOR-ENSEMBLE axes are usually
+     the strongest and are the ones most often forgotten** — `reg_dose_hhi` was the largest effect in the
+     whole test (q=2e-05). The mechanism generalises: **a weighted estimator cannot beat an unweighted sum
+     when one member dominates the ensemble's abundance, because the sum already IS that member.**
+   - **DISPERSION, NOT LEVEL.** A gene's / regulator's **dynamic range** predicts (`self_sd`, `buffa_sd`
+     q≈0.001); its **MEAN expression is nothing** (q=0.45). A flat feature cannot correlate however high it
+     sits. Always carry a dispersion term or you will conclude expression doesn't matter.
+   - ⛔ **THE DEGENERACY TRAP — always ask where your candidate is MATHEMATICALLY INERT and SPLIT on it.**
+     With ONE unit, `Σw·Z = w·Z` and the unweighted reference is `Z`; Spearman is scale-invariant, so they
+     are **IDENTICAL BY CONSTRUCTION** (verified max|Δ| = 0.0). That was **43%** of MH-201's universe, and
+     pooling it produced an incoherent *"median Δ = +0.0000 with Wilcoxon p = 1.3e-27"* and made an
+     ABUNDANCE effect read as a β effect. `gene_axes.mask_degenerate()`.
+   - ⛔ **THE MOVING-SUPPORT TRAP (axiom 5's cousin).** Raw HHI is bounded below by `1/k`, so `corr(k, HHI)`
+     is strongly negative **whatever the biology does** — I reported **−0.667** as evidence that big designs
+     are diffuse; floor-corrected it is **−0.075**. `gene_axes.hhi()` normalises by default.
+   - ⭐ **ASK WHETHER THE GAIN IS SIGN CORRECTION, NOT SHARPENING.** They mean different things and a mean
+     hides it. MH-201: the unweighted reference had the right sign in **51.1% — chance** — vs β's 58.5%;
+     net **+49** rescued; and the correction was **ASYMMETRIC** — it moved wrong answers (p=1.5e-16) and
+     moved right ones by **exactly 0.0000**. `gene_axes.sign_analysis()`.
+   - ⭐⭐ **THEN ACCOUNT FOR THE HARM SYMMETRICALLY, AND TEST WHETHER IT IS GATEABLE. THIS IS THE PART THAT
+     IS EASY TO SKIP AFTER A GOOD RESULT.** MH-201: β helped 55.7% of genes but **HURT 34.7%** — gains beat
+     losses only **1.55×** (tails better: 26 vs 4 at |Δ|>0.15). **And the harm was NOT gateable: tightening
+     `reg_dose_hhi` from ∞ to 0.10 left the hurt-rate FLAT at 34.0/33.9/34.8/35.7% vs 34.7% overall**, while
+     the strong-hurt tail was statistically indistinguishable from the strong-help tail on every axis
+     (p=0.10–0.23). ⇒ **the axes predicted the AVERAGE margin but never the PER-GENE SIGN.** Report a
+     showcase gene (MYC: abundance +0.099 → β −0.340) only alongside its counterexample (FN1: −0.216 →
+     +0.121) and the statement that nothing distinguished them in advance.
+   ⇒ registry row MH-201; module `learned/gene_axes.py` (self-checked against every number above).
 
 ## Key docs (this folder only)
 

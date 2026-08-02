@@ -630,6 +630,11 @@ the regulators' ABUNDANCE is concentrated in one family, **β LOSES to unweighte
 sum already IS that family. With `reg_frac_flat` +0.180 and `ident_n_def` −0.172. ⇒ **β earns its keep only
 where the regulator ensemble is SPREAD and MEASURABLE; what matters is how the DATA distributes, not how β
 does.** Shapley enters as COVERAGE (`ident_n_def`) — every distributional form of it is null.
+⚠⚠ **AND THE HARM: β helps 55.7% of genes but HURTS 34.7%** (mean gain −0.0614 vs loss +0.0397, only
+1.55×; tails 26 vs 4 at |Δ|>0.15). ⛔ **NOT GATEABLE — the hurt-rate is FLAT (34–36%) at every
+`reg_dose_hhi` threshold**, and the strong-hurt tail is indistinguishable from the strong-help tail on
+every axis. ⇒ **the axes predict the AVERAGE margin, never the PER-GENE SIGN; β is an aggregate bet, NOT
+per-gene actionable.** Always quote MYC (abundance +0.099 → β −0.340) alongside FN1 (−0.216 → +0.121).
 
 **⚠ "METABRIC-full (EGA-pending)" is doing unearned work across five docs.** There is **no accession,
 no DAR id, no submission date, no owner** anywhere in the repo. The evidence supports *"never applied
