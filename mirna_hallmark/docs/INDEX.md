@@ -33,6 +33,7 @@
 | [METHODS.md](METHODS.md) | active | Methods narrative — data → pressure → gate → coupling. |
 | [DATA_SOURCES.md](DATA_SOURCES.md) | active | Every dataset read, and its preprocessing basis. |
 | [ANALYSES_CATALOG.md](ANALYSES_CATALOG.md) | living | **What code exists + how to run it.** Opens with an orientation section (the code tree, the dotted-path run rule, the 35 top-level modules classified spine/baseline/pipeline), then one row per component. ✅ Absorbed `MODULE_MAP.md` 2026-07-17. |
+| [DECOY_PREMISE_REGISTER.md](DECOY_PREMISE_REGISTER.md) | active | ⭐ **Is the decoy control sound?** One table of every ASSUMPTION the site-free negative control rests on (fake validity · matching · scoring · what the result may be used for), each with a verdict (HOLDS / INERT / BOUND / OPEN / CLOSED-BY-DATA) and a pointer to the `MH-##` row that tested it. **A map, not a source — it deliberately carries no numbers**; construction lives in the `eval/decoy_bench.py` docstring, the headline in `STATE_OF_PLAY` Axis 4. |
 | [EDGE_QUESTION_TAXONOMY.md](EDGE_QUESTION_TAXONOMY.md) | active | What a single miRNA→target edge can be asked. Backs `apm-edge-question`. |
 | [GENE_QUESTION_TAXONOMY.md](GENE_QUESTION_TAXONOMY.md) | active | A gene's total incoming regulation. Backs `apm-gene-question`. |
 | [MIRNA_GENOMIC_CONTEXT_AXIS.md](MIRNA_GENOMIC_CONTEXT_AXIS.md) | active | Strand-aware host classification; the per-edge host-gene lens. |
