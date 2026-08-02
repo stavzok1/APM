@@ -181,8 +181,9 @@ anti-correlation ladder; **data/edges/harmonization** → `DATA_SOURCES §0/§1/
   ✅ **FAMILY-NULL CORRECTNESS FIX LANDED (MH-197):** pseudo-families are now co-expression-matched per
   candidate cell; the old uniform draw was **20–25% too narrow**. Survivor count is unchanged at 0 (a wider
   null cannot create one) — what moved is the set-level readout above. ⬜ **NEXT:**
-  ① ⭐⭐ **THE ONE ITEM ACTUALLY BLOCKED ON THE USER, OPEN SINCE 2026-07-17 — decide the framing, then the MH
-  finding row gets written.** The table is BUILT and now has a producer + provenance
+  ① ✅ **CLOSED 2026-08-02 — framing decided by the user ("just write both"): BOTH rungs written, MH-199
+  (cluster, biological) + MH-200 (edge, candidate queue).** ⚠ Quote MH-199's assay/abundance-controlled OR
+  (≈7–10), **never the 88% share** — that figure carries a HEK293T detection bias. — original item follows — The table is BUILT and now has a producer + provenance
   (`eval/discovery_gold_set.py` → `discovery_gold_set.tsv`, MH-198): **157 edges · 90 genes · 11 seed
   families**, each clearing bulk coupling + composition-robustness + a **site-coincident** Manakov duplex.
   **The framing choice is real because the set is 88% ONE co-transcribed cluster** (miR-17~92 + miR-106b~25 +

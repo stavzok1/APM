@@ -177,8 +177,11 @@ real; cite the scope with the number.
 2. **Unify the two lanes by family size.** Route multi-arm families through the dose-aggregate (family lane),
    singletons through the arm test — because Simes underpowers the correlated multi-arm families (§5). One test,
    right unit per family.
-3. **A1∩chimeric convergent-evidence table** → the candidate registry finding (framed as convergent evidence,
-   NOT per-edge significance). Decide the framing with the user before writing an MH row.
+3. ✅ **DONE 2026-08-02 — ~~A1∩chimeric convergent-evidence table~~.** Framing decided by the user (*"just write
+   both"*): **MH-199** (cluster rung — enrichment survives assay-conditioning OR=9.76 p=3.5e−28 and a 5-quintile
+   abundance match 54.5% vs 13.2%; ⚠ quote the OR, NOT the 88%, which carries HEK293T detection bias) and
+   **MH-200** (edge rung — a 157-edge ranked VALIDATION QUEUE, explicitly not per-edge significance and not 157
+   independent units). Producer + provenance: `eval/discovery_gold_set.py` (MH-198).
 4. **⭐ Subtype-stratified (PAM50) run (user-asked).** Pooled-cohort washout can hide subtype-specific coupling;
    `scan_all`/`scan_families` accept a gene list but need a subtype sample mask threaded through `assemble_gene`.
 5. **Family-lane evidence attach** — pool members' chimeric/ledger (currently arm-only).

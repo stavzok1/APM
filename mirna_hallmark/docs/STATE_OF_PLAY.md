@@ -177,8 +177,18 @@ paralogues of a regulator already curated for that gene ⇒ not curation leaking
 miR-18a→{STAM2, KIF3B, MAP3K1, NEDD4} quartet is **edge-level; at site level it is a TRIO.**
 ⚠ **DO NOT compress this axis to "discovery is empty"** — that is true ONLY of the per-edge FDR and
 misstates the lane's actual deliverable.
-⬜ **PENDING THE USER: the framing decision** (HANDOFF §7.3) — cluster-level vs edge-level headline —
-before any MH *finding* row is written. Open since 2026-07-17.
+✅ **FRAMING DECIDED 2026-08-02 (user: "just write both") — BOTH RUNGS WRITTEN, MH-199 + MH-200.**
+**MH-199 (cluster rung, BIOLOGICAL):** the cluster's share climbs 25.3% → 66.4% → 88.5% through the filters,
+and ⭐ **the enrichment SURVIVES both confounds I expected to kill it** — conditioned on Manakov detection
+cluster A1-rate **20.1% vs 2.5% (OR=9.76, p=3.5e−28)**; abundance-quintile matched **54.5% vs 13.2%**, gap in
+all 5 quintiles. ⚠⚠ **BUT QUOTE THE OR, NEVER THE 88%** — the `site_manakov` rate is 40.1% vs 14.1% and stays
+elevated at every abundance quintile ⇒ the final share is enrichment **plus HEK293T assay-coverage bias.**
+Biological reading is *"a canonical oncomiR polycistron is UNDER-CURATED relative to its realized activity"*,
+**not** a novel regulator.
+**MH-200 (edge rung, CANDIDATE QUEUE):** the 157 edges are a **ranked validation queue**, not 157 claims —
+per-edge FDR is empty by construction, and the set is 11 families. ⚠ **No breast chimeric exists in any
+source** (Manakov=HEK293T, TarBase CLASH=other tissues) ⇒ hurdle 3 is cross-tissue corroboration, never
+breast-context validation.
 
 **OPEN:** restoring an exogenous existence validation is, by both docs' own assessment, **the single
 highest-value open item in the program** — and it is now **TESTED, not aspirational (MH-159, 2026-07-18).**
