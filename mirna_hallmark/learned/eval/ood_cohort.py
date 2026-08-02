@@ -714,6 +714,74 @@ def compartment_null(R: pd.DataFrame, n_shuffle: int = 3, seed: int = 0) -> dict
     return res
 
 
+def edge_leg(n_boot: int = 5000) -> dict:
+    """STAGE 3b — the existing per-EDGE lane, re-run under the COMPOSITION-AWARE C blocks.
+
+    ⭐ WHY. `eval/buffa_validation.py` conditions its per-edge partial Spearman on **[prolif, ER] only** —
+    it predates the Buffa composition block, and MH-114 is unambiguous that a bulk-vs-bulk replication with
+    no composition term is exactly the setup that produced a **90% artifact gradient** in CPTAC. The lane's
+    headline replication numbers (`+0.319` Buffa↔TCGA concordance, `0.593` sign-concordance, `0.673` TCGA
+    neg-sig same-sign, `0.128` neg-sig-in-Buffa) are therefore **under-controlled**, and were carried as
+    settled for a year. Now that `c_blocks()` exists the re-run is nearly free.
+
+    ⚠ **`raw` here is IDENTICAL to what `buffa_validation` uses**, so it doubles as a reproduction gate: if
+    the `raw` column does not return the four recorded numbers, the comparison is invalid before it starts.
+
+    Reports every metric under all three blocks plus **retention = adjusted/raw**, the axiom-2a idiom — a
+    replication that survives composition adjustment means something a raw one does not.
+    """
+    from scipy.stats import spearmanr as _sp
+
+    from mirna_hallmark import data_loaders as DL
+    from mirna_hallmark.eval import buffa_validation as BV
+
+    B, CB = buffa(), c_blocks()
+    he = DL.high_evidence_edges(DL.load_hallmark_edges())[["miRNA", "gene"]].drop_duplicates()
+    tcga = pd.read_csv(BV.TCGA_CORR, sep="\t")[["miRNA", "gene", "rho_adj", "q_adj"]].dropna(subset=["rho_adj"])
+    out: dict = {}
+    tabs: dict = {}
+    for blk in _BLOCKS:
+        print(f"[edge_leg] {blk}: scoring {len(he):,} HE edges …", flush=True)
+        eb = BV.edge_coupling(he, B["mirna"], B["rna"], CB[blk])
+        tabs[blk] = eb
+        cmp = eb.merge(tcga, on=["miRNA", "gene"], how="inner").rename(
+            columns={"rho_adj": "tcga_rho_adj", "q_adj": "tcga_q_adj"})
+        both = cmp.dropna(subset=["partial_rho", "tcga_rho_adj"])
+        ns = both[(both.tcga_rho_adj < 0) & (both.tcga_q_adj < 0.05)]
+        out[blk] = {
+            "n_with_coupling": int(len(eb)), "n_vs_tcga": int(len(cmp)),
+            "concordance": float(_sp(both.partial_rho, both.tcga_rho_adj)[0]),
+            "sign_concordance": float((np.sign(both.partial_rho) == np.sign(both.tcga_rho_adj)).mean()),
+            "tcga_negsig_same_sign": float((ns.partial_rho < 0).mean()) if len(ns) else np.nan,
+            "tcga_negsig_sig": float(((ns.partial_rho < 0) & (ns.partial_q < 0.05)).mean()) if len(ns) else np.nan,
+            "buffa_neg_sig_frac": float(((eb.partial_rho < 0) & (eb.partial_q < 0.05)).mean()),
+            "median_rho": float(eb.partial_rho.median()),
+        }
+    REC = {"concordance": 0.319, "sign_concordance": 0.593,
+           "tcga_negsig_same_sign": 0.673, "tcga_negsig_sig": 0.128}
+    print(f"\n{'='*96}\nSTAGE 3b — the per-EDGE lane under composition-aware C\n{'='*96}")
+    print(f"  {'metric':26s} {'RECORDED':>9s} {'raw':>9s} {'metagene':>10s} {'nnls':>9s} {'retention':>10s}")
+    for k, rec in REC.items():
+        r, m_, n_ = out["raw"][k], out["metagene"][k], out["nnls"][k]
+        ret = m_ / r if abs(r) > 1e-9 else np.nan
+        gate = "" if abs(r - rec) <= 0.002 else "  ⛔ raw≠recorded"
+        print(f"  {k:26s} {rec:9.3f} {r:9.3f} {m_:10.3f} {n_:9.3f} {ret:10.3f}{gate}")
+    print(f"  {'buffa_neg_sig_frac':26s} {'—':>9s} {out['raw']['buffa_neg_sig_frac']:9.3f} "
+          f"{out['metagene']['buffa_neg_sig_frac']:10.3f} {out['nnls']['buffa_neg_sig_frac']:9.3f}")
+    ok = all(abs(out["raw"][k] - v) <= 0.002 for k, v in REC.items())
+    print(f"\n  reproduction gate on `raw`: {'✅ PASS' if ok else '⛔ FAIL — comparison invalid'}")
+    print("  ⇒ retention = metagene/raw. A replication that survives composition adjustment means")
+    print("    something a raw one does not (axiom 2a); MH-114 measured 90% of a CPTAC gradient as artifact.")
+    DEST.mkdir(parents=True, exist_ok=True)
+    for blk, t in tabs.items():
+        t.to_csv(DEST / f"edge_leg_{blk}.tsv", sep="\t", index=False)
+    (DEST / "edge_leg_summary.json").write_text(json.dumps(
+        {"recorded_baselines_prolif_ER_only": REC, "reproduction_gate_passed": bool(ok),
+         "by_block": out}, indent=2) + "\n")
+    print(f"-> {DEST / 'edge_leg_summary.json'}")
+    return out
+
+
 def write_manifest(R: pd.DataFrame, res: dict) -> None:
     DEST.mkdir(parents=True, exist_ok=True)
     man = {
@@ -757,8 +825,11 @@ if __name__ == "__main__":
     ap.add_argument("--block", default="metagene")
     ap.add_argument("--report", action="store_true")
     ap.add_argument("--reuse", action="store_true", help="report from the persisted table")
+    ap.add_argument("--edge-leg", action="store_true", help="stage 3b: per-edge lane under composition C")
     a = ap.parse_args()
-    if a.stage == 1:
+    if a.edge_leg:
+        edge_leg()
+    elif a.stage == 1:
         c_blocks(); buffa_family_matrix()
     else:
         R = (pd.read_csv(DEST / "ood_cohort_genes.tsv", sep="\t") if a.reuse

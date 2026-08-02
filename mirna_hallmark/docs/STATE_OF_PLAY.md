@@ -594,6 +594,22 @@ checked — every other `__file__`-relative path in the subproject is correct (`
 ✅ **CONTROL — the HE-edge legs reproduce EXACTLY** (concordance **+0.319** · sign-concordance
 **0.593** · TCGA neg-sig same-sign **0.673** · neg-sig-in-Buffa **0.128**), so only the orphan lane
 moved. Pre-fix outputs preserved at `output/buffa_validation_PRE_MH114/`.
+⚠⚠ **THOSE FOUR NUMBERS ARE UNDER-CONTROLLED — RE-RUN 2026-08-02 (MH-201 stage 3b).** They condition on
+**[prolif, ER] only**; the lane predates any Buffa composition block, which is exactly the setup MH-114
+showed produces a 90% artifact gradient. Re-scored under the composition-aware C (reproduction gate on the
+`raw` block returns all four to the digit, so the comparison is valid):
+
+| metric | recorded (raw) | +ESTIMATE/CAF | +NNLS lineages | retention |
+|---|---|---|---|---|
+| Buffa↔TCGA concordance | 0.319 | **0.215** | 0.217 | **0.672** |
+| sign-concordance | 0.593 | 0.567 | 0.572 | 0.956 |
+| TCGA neg-sig same-sign | 0.673 | 0.643 | 0.597 | 0.955 |
+| **TCGA neg-sig SIGNIFICANT** | **0.128** | **0.052** | **0.038** | **0.402** |
+| Buffa neg-sig fraction | 0.052 | 0.026 | 0.016 | — |
+
+⇒ **~⅓ of the headline concordance and ~60% of the significance-based replication is composition.** ⭐ **But
+the DIRECTION metrics barely move (retention 0.955–0.956) — the same dissociation as the gene-level transfer:
+direction/level survives adjustment, significance/magnitude does not.** Quote the adjusted column.
 
 ✅ **CLOSED 2026-08-02 (MH-201) — ~~β has never touched Buffa~~.** `learned/eval/ood_cohort.py` built;
 1,364 genes, β FROZEN (zero params fit in Buffa), FAMILY rung. Stage-0 gate reproduced all six recorded
