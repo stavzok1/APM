@@ -302,14 +302,19 @@ These are completion gates, on the same footing as the documentation protocol:
      hides it. MH-201: the unweighted reference had the right sign in **51.1% — chance** — vs β's 58.5%;
      net **+49** rescued; and the correction was **ASYMMETRIC** — it moved wrong answers (p=1.5e-16) and
      moved right ones by **exactly 0.0000**. `gene_axes.sign_analysis()`.
-   - ⭐⭐ **THEN ACCOUNT FOR THE HARM SYMMETRICALLY, AND TEST WHETHER IT IS GATEABLE. THIS IS THE PART THAT
-     IS EASY TO SKIP AFTER A GOOD RESULT.** MH-201: β helped 55.7% of genes but **HURT 34.7%** — gains beat
-     losses only **1.55×** (tails better: 26 vs 4 at |Δ|>0.15). **And the harm was NOT gateable: tightening
-     `reg_dose_hhi` from ∞ to 0.10 left the hurt-rate FLAT at 34.0/33.9/34.8/35.7% vs 34.7% overall**, while
-     the strong-hurt tail was statistically indistinguishable from the strong-help tail on every axis
-     (p=0.10–0.23). ⇒ **the axes predicted the AVERAGE margin but never the PER-GENE SIGN.** Report a
-     showcase gene (MYC: abundance +0.099 → β −0.340) only alongside its counterexample (FN1: −0.216 →
-     +0.121) and the statement that nothing distinguished them in advance.
+   - ⭐⭐ **THEN ACCOUNT FOR THE HARM SYMMETRICALLY AND TEST WHETHER IT IS GATEABLE — AND TEST THE GATE ON
+     THE AXIS FAMILY THAT PREDICTS THE *SIGN*, NOT THE ONE THAT PREDICTS THE *MAGNITUDE*. THEY ARE
+     DIFFERENT FAMILIES, AND CONFLATING THEM COST ME A WRONG CONCLUSION.** MH-201: β helped 55.7% of genes
+     but **HURT 34.7%** (gains beat losses only **1.55×**). I gated on the ENSEMBLE axis (`reg_dose_hhi`),
+     found the hurt-rate flat at 34–36%, and concluded *"not gateable, β is an aggregate bet only"*.
+     **WRONG.** The **COMPOSITION** axes are the ones that predict the SIGN — the flagship failure FN1 sits
+     at the **89th percentile** of `comp_tcga_mrna_driver_share` and was fully predictable, and that axis
+     separates the tails at **p=0.00999** where the ensemble axis gives p=0.10. **Both gates together:
+     hurt 34.7% → 27.6%, sign-correct 58.5% → 69.3%, mean margin 2.3×, while retaining EVERY showcase gene.**
+     ⇒ **ensemble axes = how much it gains where it gains; confounder/retention axes = whether it gains at
+     all.** Ask which question your candidate gate answers before concluding anything from it. Report a
+     showcase gene (MYC: +0.099 → −0.340) only alongside its counterexample (FN1: −0.216 → +0.121) **and
+     the gate that separates them.**
    ⇒ registry row MH-201; module `learned/gene_axes.py` (self-checked against every number above).
 
 ## Key docs (this folder only)
