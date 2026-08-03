@@ -9,7 +9,7 @@
 > or retracts something, update the matching block here **in the same pass**.
 > **Sync-partner:** `DISCOVERY_REGISTRY.md` (the record of record — this doc is its executive summary).
 
-**Last updated: 2026-08-02** · covering the registry through **MH-200**.
+**Last updated: 2026-08-03** · covering the registry through **MH-204**.
 
 ---
 
@@ -424,6 +424,36 @@ canonical decoy (1,349 genes):
 
 ---
 
+⭐⭐ **2026-08-03 (MH-203/204) — THE FITTED-FAKE QUESTION IS NOW ANSWERED ON THREE LAYERS, AND THE
+ANSWER SPLITS BY LAYER, NOT BY COHORT.** Everything above compares β against an *unweighted* reference. The
+harder test — a **FITTED** fake (β refit on the site-free decoy design, identical folds/C/estimator) —
+now exists in all three places:
+
+| test | real | decoy | gap | p |
+|---|---|---|---|---|
+| **mRNA, TCGA** (n=1,354) | −0.0807 | −0.0579 | **−0.0189** | **6.69e-09** |
+| **mRNA, transported to BUFFA** (multi-family, n=243) | −0.0334 | +0.0035 | **−0.0374** | **3.54e-06** |
+| protein, RPPA (n=180) | −0.0186 | −0.0264 | −0.0086 | 0.554 |
+
+⇒ **β beats a fitted, matched, site-free fake on mRNA in BOTH cohorts, and fails only on protein.** That is
+a **layer boundary, not a general negative** — and it retires the standing caveat *"every win is fitted β vs
+UNFITTED abundance"*. ⚠ **It also survives the subtype control:** within-PAM50 gap **−0.0154 (p=4.2e-08)**,
+**retention 0.81** (real −0.0528 vs decoy −0.0363, n=1,354) ⇒ the mRNA effect is **not** lineage-scale.
+
+✅ **AND IT CARRIES A ZERO-CROSSING INTERNAL CONTROL — the strongest this arc has produced.** Stratifying the
+gap by `gene_repression_class` crosses zero exactly where repression stops: constitutive_repressed −0.1464
+(n=115) · gained −0.0881 (n=165) · lost −0.0126 (n=250) · **never_repressed +0.0034 (n=814)**. The
+specificity signal is **absent exactly where the biology says it should be**.
+
+⚠⚠ **STALE-ARTIFACT WARNING, and it inverted a verdict.** `decoy_family_betas.tsv` / `decoy_betas.tsv`
+(2026-07-13) overlap the CURRENT matched pairs by **1.8%** and predate MH-137's three fixes ⇒ their decoys
+are **too weak and flatter real**. Reading them made MH-201's Buffa decoy control read *"n=120, p=0.335,
+underpowered"* when the true answer is **n=243, p=3.5e-06**. Both files are now **archived** at
+`output/learned/ARCHIVE_PRE_MH204/`; the live artifacts are `decoy_oof_budgets.parquet` +
+`decoy_family_betas_oof.tsv` (**4,889 cells / 1,395 genes**). **Zero live consumers of the stale tables.**
+
+---
+
 ## Axis 5 — CPTAC / protein
 
 **⛔ DEAD — do not rebuild:** `βᵗ` (the translational-repression latent, the plan's centrepiece) is
@@ -472,6 +502,23 @@ learned posterior (MH-115) — and its FDR counts rest on the uncalibrated null 
 and host localise to an **ARM** (LOCUS properties); composition localises to the **FAMILY** (an
 EXPRESSION property, because same-seed members sit at different loci but are co-expressed).
 **The unit at which a confound acts predicts which tool can fix it.**
+
+---
+
+⭐⭐ **2026-08-03 (MH-203) — THE RPPA CHANNEL IS OPEN AT n=866, AND IT IS NOT A REPEAT OF THE CPTAC
+ARC.** `data/rppa/` was never touched by this subproject: **881 × 461 participant×antibody, 866 with
+miRNA — the SAME patients, so there is no cohort boundary.** The power argument is the whole point:
+detectable |ρ| at 80% power is **0.276 at CPTAC's n=101** vs **0.095 at n=866**, against a typical
+gene-level coupling of **0.07–0.12** ⇒ **CPTAC's detection floor was ~3× the effect it was asked to
+measure.** ⚠ This does **not** rescue MH-103 — that died of a **mediator leak**, a design flaw, and
+`protein-βᵗ` stays dead.
+
+**⭐ THE RESULT — DESTABILISATION, NOT TRANSLATION.** Residualising protein on its own mRNA isolates the
+translational channel, which the project has never had the n to separate: **`rho_mrna` carries the signal;
+`rho_disc` (protein-beyond-mRNA) does not.** ⇒ what the model measures is transcript destabilisation.
+⛔ **And the fitted-decoy control is NEGATIVE on protein (gap −0.0086, p=0.554, n=180)** — see Axis 4. The
+honest reading is a **layer split**: the targeting-specific component is demonstrable on mRNA in two
+cohorts and **not** demonstrable on protein even at 8× the n.
 
 ---
 
@@ -564,8 +611,11 @@ node + per-target GTEx→NAT→TUM identity trajectory = NEXT ARC. See FORMULAS 
 
 **⚠ "METABRIC" in MH-73/74/75/76 means Buffa, n=207 — verified in code**
 (`pressure_prognostic_signature.py:166`, `pressure_prognostic_gene_centric.py:97` both import
-`load_buffa`). Buffa's miRNA arm **is** the METABRIC invasive miRNA subset (GSE22216 miRNA +
-GSE22219 mRNA, 207 paired tumours, **DRFS only, 77 events**, no TCGA overlap). ⇒ the
+`load_buffa`). ⛔ **BUT "Buffa's miRNA arm IS the METABRIC invasive miRNA subset" — WRITTEN HERE UNTIL
+2026-08-03 — IS WRONG (MH-201; the full disproof is in the METABRIC block below).** Buffa = **Oxford**,
+surgery **1989–92**; METABRIC = Cambridge/Vancouver; **0/207** arrays match at r>0.90. Buffa is GSE22216
+miRNA + GSE22219 mRNA, **207 paired tumours** (not 210), **DRFS only, 77 events**, no TCGA overlap — a
+**genuinely independent cohort**, which is what makes MH-201/202/204 worth anything. ⇒ the
 +0.056 / +0.060 / +0.028 / +0.019 are **four views of ONE 207-patient result**, not four validations.
 
 **STANDS (the well-earned negatives):**
@@ -686,10 +736,11 @@ mRNA; Buffa 2011 generates no CNV; no later study profiles those tumours). Do no
 
 ## The four things worth doing next
 
-1. **`β(TCGA) → Buffa mRNA`** — the model's only untested boundary is the cohort boundary; this is the
-   only cohort that can test it; the inputs are already on disk. ⚠ **Pre-register MH-114's
-   compartment-orientation stratification** — both cohorts are bulk breast and share the CAF confound,
-   so a clean replication proves nothing on its own.
+1. ✅ **DONE 2026-08-02/03 (MH-201 + MH-204) — `β(TCGA) → Buffa mRNA`.** `learned/eval/ood_cohort.py`;
+   **LEVEL transports (−0.0186, retention +0.358), RANK does not separate β from abundance**, and — after
+   the stale-decoy fix — **the transported β beats a FITTED fake, −0.0374, p=3.5e-06.** The pre-registered
+   MH-114 compartment stratification ran: the gradient is near-identical real-vs-shuffled, as predicted, so
+   the compartment-blind contrast is the readout.
 2. ✅ **DONE 2026-07-17 — `buffa_validation` re-run; MH-38 / MH-55 / MH-73 / MH-74 all annotated.**
 3. ✅ **DONE 2026-08-01 (MH-168/169) — competence map rebuilt against the canonical decoy.**
    ⚠ **It was BLOCKED, not neglected:** `gene_atlas.py` had been **dead for 15 days** — the same

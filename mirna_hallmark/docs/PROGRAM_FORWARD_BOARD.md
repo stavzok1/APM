@@ -650,3 +650,25 @@ One line each. The detail is in the registry row named.
   ≈0.086 / 0.30** ⇒ the IRF1 grant route should use `curated_plus_targetscan` (combined Basal ΔR²≈0.10 / 0.32).
   ⚠ The IRF1 route **failed proliferation adjustment within Basal** (MH-19) and is exploratory until this
   resolves it.
+
+---
+
+## ✅ Closed 2026-08-03 (MH-202 / MH-203 / MH-204) — three board items, and one caveat retired
+
+- ✅ **`β(TCGA) → Buffa`** (was the #1 next-thing on `STATE_OF_PLAY`). Dissociation: **LEVEL transports,
+  RANK does not separate β from abundance.** After the MH-204 stale-decoy fix it also **beats a fitted
+  fake, −0.0374, p=3.5e-06.** → `learned/eval/ood_cohort.py`.
+- ✅ **The learned-β OUTCOME arm** — per-gene yes, **aggregate no, and the weights earn nothing.**
+  Positive-control gated on miR-210→DRFS. TCGA is the weaker cohort (OS only). → `beta_prognostic.py`.
+- ✅ **The PROTEIN layer, properly powered** — RPPA at **n=866**, same patients, no cohort boundary.
+  **Destabilisation, not translation.** → `rppa_protein.py`.
+- ⭐⭐ **RETIRED CAVEAT: *"every win is FITTED β vs UNFITTED abundance"*.** A fitted, matched, site-free
+  decoy now exists on all three layers. **β wins on mRNA in TCGA (−0.0189, p=6.7e-09) and in Buffa
+  (−0.0374, p=3.5e-06); it does NOT win on protein (p=0.554).** ⇒ **a LAYER split, not a general
+  negative** — and the mRNA win survives the subtype control (within-PAM50 gap −0.0154, retention 0.81).
+
+**⬜ What that opens next.** The layer split is now the sharpest open question on the board: is the
+protein null **biology** (repression is transcript-level, so protein adds nothing beyond mRNA) or
+**instrument** (RPPA's ~200-antibody signalling-biased panel, phospho contamination, n=180 after the
+antibody join)? **These are separable** — a total-protein-only re-run at matched n, and the same test on
+CPTAC's proteome-scale panel *with* the composition block MH-83/84 lacked, would decide it.
