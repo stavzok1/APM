@@ -315,6 +315,29 @@ These are completion gates, on the same footing as the documentation protocol:
      all.** Ask which question your candidate gate answers before concluding anything from it. Report a
      showcase gene (MYC: +0.099 → −0.340) only alongside its counterexample (FN1: −0.216 → +0.121) **and
      the gate that separates them.**
+   - ⛔⛔ **A STRATIFIED-RETENTION TEST IS NOT A SPECIFICITY TEST, AND USED AS A FILTER IT DISCARDS EVERY
+     MECHANISM WHOSE SCALE *IS* THE STRATUM.** (MH-203, user-caught.) Conditioning on subtype/composition
+     removes a CONFOUND only if the mechanism does not operate at that scale. Measured: subtype explains
+     **62.5% of ESR1's protein variance AND 56.8% of its miRNA-budget variance**, so within-subtype coupling
+     collapses −0.452 → −0.026 — yet a site-free control reaches only −0.121, i.e. **the pooled effect is
+     TARGETING-SPECIFIC and simply lives at the lineage scale.** FN1 (eta²=0.01) retains 98%, ESR1
+     (eta²=0.63) retains 6%, and **both are targeting-specific** — filtering on retention keeps the
+     stratum-independent biology and throws the stratum-scale biology away.
+     ⚠ **THIS IS NOT A NICHE CASE — it is the shape of `retention = ρ_deconv/ρ_core` and the
+     `composition_class` filter.** A miRNA acting in CAFs on a CAF gene is *removed* by conditioning on CAF
+     fraction and then labelled `composition_explained`. **MH-114 did it right** by scoring the
+     compartment-BLIND real-minus-shuffled contrast; bare retention does not.
+     - **THE RULE:** pair every stratified/adjusted retention number with a **SPECIFICITY control**
+       (site-free / decoy / shuffled), and report **eta² for BOTH sides** so a reader can see whether the
+       stratum is the mechanism's scale. Never report retention alone as robustness.
+     - ⚠ **AND THE DECOY BASELINE IS NOT ZERO** — measured at **−0.12 to −0.16** on protein. Reference a
+       pooled coupling to the DECOY, not to 0, and compute retention on decoy-corrected values.
+     - ⛔ **THE DECOY ITSELF MUST BE FITTED AND MATCHED** (`eval/decoy_bench.py`): site-free by TargetScan
+       context++ **and** scanMiR **and** a Poisson-gated 6mer **and** the evidence union; Hungarian-matched
+       on signed loadings + dose + variance; **β REFIT on the decoy design**. An unfitted random-family draw
+       is a much weaker control — memory `pressure-heuristic-retired`: *"benchmark a fitted model against a
+       FITTED FAKE"*, and MH-130d measured a fitted fake reaching **99%** of the protein transfer.
+
    - ⭐ **AND SEPARATE A NOMINAL SIGN-FLIP RATE FROM A MAGNITUDE-QUALIFIED ONE — they behave differently.**
      MH-201: the post-gate "hurt rate" of 27.6% was mostly **coin-flips** — at n=207, SE(ρ)=0.070 and only
      8/35 hurt genes exceeded 1 SE, so genuine harm was **6.3%**. Down a 3-gate ladder the **nominal** rate

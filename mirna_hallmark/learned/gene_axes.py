@@ -58,6 +58,15 @@ per-gene C-ablation cost vs the outcome p=0.72; `cn_var` p=0.87, `cn_amp_frac` p
 the harmed genes not CN-extreme (MWU p=0.998). Test the suspicion; do not assume the gap you know about is
 the gap that hurts.
 
+⛔⛔ **A STRATIFIED-RETENTION TEST IS NOT A SPECIFICITY TEST (MH-203).** Splitting by subtype/composition
+and reporting "how much survives" removes a CONFOUND only if the mechanism does not operate at that scale.
+ESR1: subtype explains **62.5% of the protein variance and 56.8% of the miRNA-budget variance**, coupling
+collapses −0.452 → −0.026 within subtype — but a site-free control reaches only −0.121, so the effect is
+**targeting-specific and lives at the lineage scale**. FN1 (eta²=0.01) retains 98%; both are real.
+⇒ **pair retention with a SPECIFICITY control and report eta² for BOTH sides.** ⚠ The decoy baseline is
+**not zero** (−0.12 to −0.16 on protein) — reference to the decoy, not to 0. ⚠ And the decoy must be
+**fitted + matched** (`eval/decoy_bench.py`); an unfitted random-family draw is a weak control.
+
 ⛔ **SCAN THE CATEGORICAL CLASSES TOO — `scan()` IS NUMERIC-ONLY AND WILL SILENTLY SKIP THEM.** In MH-201
 that dropped **6 class columns**, and one of them turned out to carry the mechanism: `ctx_apriori_class`
 (Kruskal q=**0.0084**; every other categorical null at q≈0.97). Use `scan_categorical()`.
