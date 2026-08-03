@@ -292,5 +292,18 @@ The rest, each with `DESIGN → BUILT → the GAP → APPLY (concrete build/test
 - **D — subsumed** — discovery's permutation-FDR *is* the inclusion inference; spike-slab wouldn't change the
   FDR-0.001 edge set. **F — subsumed** — the co-driver-aware nomination already resolves members.
 - **H ✅** (subtype flavour) — see above; **B** data-blocked (intronic reads).
-**Remaining real work:** H **state** flavour (needs GTEx CIBERSORTx), and the **CPTAC-protein Bar-5** validation.
+⛔⛔ **STALE — DO NOT ACT ON THIS LINE (annotated 2026-08-03).** It read *"Remaining real work: H **state**
+flavour (needs GTEx CIBERSORTx), and the CPTAC-protein Bar-5 validation."* **Both halves are superseded, and
+the H half is stale TWICE OVER:**
+* **The named blocker was removed** — `gtex_wu_major` exists and covers **327/327** paired donors; β is
+  ρ=0.94 panel-invariant ⇒ **ZERO new CIBERSORTx runs are needed** (MH-102).
+* **Then the item itself was KILLED ON MEASUREMENT** — the state channel is **CANCELLED**: τ (the
+  acquired-vs-constitutive payload, the axis's whole deliverable) is indistinguishable from zero and the
+  channel adds **0.6–0.7%** information; precision ∝ a² with a≈0.11, so *unlimited* GTEx donors add ~1%.
+  **`channel_state.py` was never built and must not be.** The additive `M_T = M_H + Δ` form **would have
+  faked the headline** (Δ>0 nearly everywhere, manufactured out of composition attenuation) — MH-102d.
+* **Bar-5 / CPTAC protein** ran and its centrepiece `βᵗ` is **falsified** at n=101 (a mediator leak) — MH-103.
+⇒ **Current state lives in `docs/STATE_OF_PLAY.md` Axis 6, not here.** What replaced Decision H's state
+flavour is the **WITHIN-PATIENT PAIRED** axis (MH-158/160/166), which works precisely because differencing
+tumour − own-NAT removes the patient baseline that killed the cross-cohort channel.
 None of the partials beat their stand-ins; the design is robust to them.
