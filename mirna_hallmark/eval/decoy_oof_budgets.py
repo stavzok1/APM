@@ -48,6 +48,8 @@ from mirna_hallmark import config as C
 
 OUT = C.REPO_ROOT / "mirna_hallmark/output/learned"
 DEST = OUT / "decoy_oof_budgets.parquet"
+#: ⭐ drop-in replacement for the STALE `decoy_family_betas.tsv` (2026-07-13) — same schema, current pairs.
+BETA_DEST = OUT / "decoy_family_betas_oof.tsv"
 PAIRS = OUT / "decoy_full_pairs.tsv"
 N_FOLDS = 5
 GIBBS_ITER, GIBBS_BURN = 200, 80
@@ -119,9 +121,23 @@ def _one(gene: str):
             out[lab][te] = (m - np.mean(m)) / s if s > 1e-12 else 0.0   # ⚠ per-fold z (MH-181)
     if not np.isfinite(out["real"]).any() or not np.isfinite(out["decoy"]).any():
         return None
-    return pd.DataFrame({"gene": gene, "participant": list(Y.index),
-                         "budget_real": out["real"], "budget_decoy": out["decoy"],
-                         "n_fam_real": Xr.shape[1], "n_fam_decoy": Xd.shape[1]})
+    # ⭐ ALSO emit a FULL-DATA decoy β per family — the drop-in replacement for the stale
+    # `decoy_family_betas.tsv`. Full-data (not per-fold) because a TRANSPORTED decoy must be a frozen
+    # weight vector applied in another cohort, exactly like the real family-card β it is compared against.
+    yr_all = -(y - LinearRegression().fit(Cmat, y).predict(Cmat))
+    v = Xd.to_numpy(float)
+    mu, sd = v.mean(0), v.std(0)
+    Z = (v - mu) / (sd + 1e-9); Z[:, sd < 0.1] = 0.0
+    try:
+        bfull, sfull, _ = SS._gibbs_posterior(Z, yr_all, np.ones(Z.shape[1]),
+                                              n_iter=GIBBS_ITER, burn=GIBBS_BURN, seed=0)
+    except Exception:
+        bfull = sfull = np.full(Xd.shape[1], np.nan)
+    betas = pd.DataFrame({"gene": gene, "unit": [str(c) for c in Xd.columns], "decoy": True,
+                          "beta": bfull, "beta_sd": sfull})
+    return (pd.DataFrame({"gene": gene, "participant": list(Y.index),
+                          "budget_real": out["real"], "budget_decoy": out["decoy"],
+                          "n_fam_real": Xr.shape[1], "n_fam_decoy": Xd.shape[1]}), betas)
 
 
 def run(workers: int = 6, genes=None) -> pd.DataFrame:
@@ -139,9 +155,13 @@ def run(workers: int = 6, genes=None) -> pd.DataFrame:
     print(f"[decoy_oof] {len(genes):,} genes on the CURRENT pairs · {workers} workers", flush=True)
     with get_context("fork").Pool(workers) as p:
         res = [r for r in p.imap_unordered(_one, genes, chunksize=4) if r is not None]
-    T = pd.concat(res, ignore_index=True)
+    T = pd.concat([r[0] for r in res], ignore_index=True)
+    Bt = pd.concat([r[1] for r in res], ignore_index=True)
     T.to_parquet(DEST)
+    Bt.to_csv(BETA_DEST, sep="\t", index=False)
     print(f"-> {DEST}   {T.gene.nunique():,} genes × {T.participant.nunique():,} participants")
+    print(f"-> {BETA_DEST}   {len(Bt):,} decoy (gene,family) cells over {Bt.gene.nunique():,} genes"
+          f"   [replaces the STALE decoy_family_betas.tsv: 3,558 cells / 516 genes]")
     return T
 
 

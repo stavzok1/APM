@@ -65,14 +65,12 @@ from mirna_hallmark import config as C
 OUT = C.REPO_ROOT / "mirna_hallmark/output/learned"
 DEST = OUT / "ood_cohort"
 FAMILY_CARD = OUT / "family_card.tsv"
-#: ⛔ STALE (MH-204). Dated 2026-07-13; overlaps the CURRENT `decoy_full_pairs.tsv` (07-16) by only
-#: **63 / 3,558 cells = 1.8%** and covers 516 of 1,395 genes, and it predates MH-137's fixes (evidence
-#: hole · Poisson-gated 6mer · dose caliper) so its decoys are TOO WEAK and flatter the real arm.
-#: ⚠ R2a below therefore carries TWO caveats, not one: already underpowered (n=120, p=0.34) AND
-#: stale-input. The clean artifact is `output/learned/decoy_oof_budgets.parquet`
-#: (`eval/decoy_oof_budgets.py`) — but it is TCGA-sample-indexed, so transporting a decoy to Buffa needs
-#: the decoy FAMILY LIST + its fitted β re-emitted from that run, which is not yet done.
-DECOY_FAMILY_BETA = OUT / "decoy_family_betas.tsv"
+#: ⭐ MIGRATED (MH-204) — was `decoy_family_betas.tsv` (2026-07-13), which overlapped the CURRENT
+#: `decoy_full_pairs.tsv` by only **63/3,558 cells = 1.8%**, covered 516 of 1,395 genes, and predated
+#: MH-137's fixes (evidence hole · Poisson-gated 6mer · dose caliper) so its decoys were TOO WEAK and
+#: flattered the real arm. Now `eval/decoy_oof_budgets.py`'s full-data decoy β on the CURRENT matched
+#: pairs: **4,889 cells over 1,395 genes.** The old file is archived, not read.
+DECOY_FAMILY_BETA = OUT / "decoy_family_betas_oof.tsv"
 
 #: CAF/myofibroblast markers — same set `learned/data.py::_mycaf` uses.
 CAF_MARKERS = ("ACTA2", "TAGLN", "POSTN", "FAP", "COL11A1", "THBS2", "MYH11", "CNN1")
@@ -298,7 +296,9 @@ def family_beta(decoy: bool = False) -> dict:
     Real β is `readouts.run(level="family")` (the §8 collapse APPLIED) as carried by `family_card.tsv`.
     ⛔ NOT the edge card's `beta`, which is `level="arm"` — same name, different unit (MH-191/192), and
     Buffa's array cannot resolve arms anyway.
-    Decoy β is the site-free fitted fake from `decoy_family_betas.tsv` (`decoy == True`).
+    Decoy β is the site-free fitted fake from **`decoy_family_betas_oof.tsv`** (MH-204) — full-data β on
+    the CURRENT Hungarian-matched pairs, 4,889 cells / 1,395 genes. ⛔ The old `decoy_family_betas.tsv`
+    (2026-07-13, 1.8% pair overlap, 516 genes) is ARCHIVED and must not be read.
     """
     key = f"beta_{decoy}"
     if key in _MEM:
