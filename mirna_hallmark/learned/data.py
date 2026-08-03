@@ -307,8 +307,15 @@ def _mal_emt(parts) -> Optional[pd.Series]:
 
 def _load() -> dict:
     if "X" not in _CACHE:                                       # robust to other loaders sharing _CACHE
-        X = D.load_mirna_arms()                                 # arm × participant
-        Y = D.load_rna()                                        # gene × participant
+        # ⭐ TUMOUR-ONLY (MH-222). These used to call the loaders bare, which collapse a participant's
+        # barcodes by MEAN over ALL sample types — so for the 103 of 1,079 participants with both a tumour
+        # and a NAT sample the model was fit on `(tumour + NAT)/2`, not on a tumour measurement (MH-219).
+        # ⚠ Measured consequence on β (MH-221): coupling ρ is untouched (scale-free, Δρ −0.0004) but the
+        # NEAR-ZERO β mass moves — |β|<0.01 falls 58.2% → 24.6% — with an OLS slope of only k=1.117 and
+        # 83% of the change a uniform rescale. The identified coefficients are stable (corr 0.912,
+        # top-family identity 94.2%); it is the identifiability layer that shifts.
+        X = D.load_mirna_arms("01")                             # arm × participant, PRIMARY TUMOUR only
+        Y = D.load_rna("01")                                    # gene × participant, PRIMARY TUMOUR only
         _CACHE["X"] = X[~X.index.duplicated(keep="first")]
         _CACHE["Y"] = Y[~Y.index.duplicated(keep="first")]      # dedupe repeated gene symbols
         _CACHE["C"] = D.load_clinical_strata().drop_duplicates("participant").set_index("participant")

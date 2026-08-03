@@ -74,6 +74,29 @@ EDGE_CTX = OUT / "edge_design_context.tsv"
 # names that mislabelled the complete card as progression-specific and the intermediate as "canonical".
 # ⚠ The old names REMAIN in `ANALYSIS_RUN_LEDGER` / `DISCOVERY_REGISTRY` rows ON PURPOSE: those are
 # HISTORICAL records of what ran under what name, and rewriting them would falsify the record.
+# ⭐⭐ THE CARD STRUCTURE IS FIVE RUNGS, NOT TWO (updated 2026-08-03, MH-222 — this block used to open
+# "THERE IS EXACTLY ONE EDGE CARD" and named only edge+gene, which is no longer the shape of the system).
+# The **canonical, machine-readable structure is `learned/card_rungs.py::CARDS`**, which emits
+# `output/learned/card_registry.tsv` — 699 columns mapped to (card, rung, agg_of, domain). Read that,
+# not this comment, when you need to know where a column lives:
+#
+#   card          artifact                                   rows are        registry cols
+#   edge          realization/edge_card.tsv                  (gene, arm)          185
+#   gene          realization/gene_card.tsv                  gene                 123
+#   family        family_card.tsv                            (gene, seed-family)   61
+#   arm           arm_card.tsv                               arm                  297
+#   seed_family   seed_family_card.tsv                       seed-family           33
+#
+# ⚠ `edge_card_base.tsv` is NOT a deliverable — it is the BUILD INTERMEDIATE `realization.py` reads.
+# ⚠ `edge_cptac_card.tsv` / `gene_cptac_card.tsv` are BLOCKS joined onto the cards, not cards themselves.
+# ⚠ **THIS MODULE ANNOTATES ONLY edge + gene + family.** `arm_card` and `seed_family_card` are built
+#   complete by their own modules (`learned/arm_card.py`, `learned/seed_family_card.py`) and are NOT
+#   annotated here — do not assume a missing `ctx_`/`cptac_` column on them is a bug.
+# ⚠ **A CARD REBUILT BY `realization.edge_card()`/`gene_card()` IS INCOMPLETE UNTIL `--annotate` RUNS.**
+#   Those functions rebuild from the build inputs, which carry no annotation block, so overwriting drops
+#   it — measured once at **161 → 108 columns, 57 lost, silently**. Both now warn
+#   (`realization._warn_if_annotations_dropped`), but the ORDER is still on you:
+#   `canonical_card` → `realization.edge_card()/gene_card()` → **`card_context --annotate`**.
 CARDS_EDGE = [OUT / "realization/edge_card.tsv"]
 CARDS_GENE = [OUT / "realization/gene_card.tsv"]
 INTERMEDIATE = OUT / "edge_card_base.tsv"

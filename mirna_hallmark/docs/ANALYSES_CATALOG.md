@@ -9,6 +9,36 @@ independent of `analysis/` catalogs. CLI is always
 > [`docs/FORMULAS.md`](FORMULAS.md). Read it before interpreting any pressure or
 > share number.
 
+## ⭐ THE CARD SYSTEM IS **FIVE RUNGS** (structure re-verified 2026-08-03, MH-222)
+
+**The canonical, machine-readable structure is `learned/card_rungs.py::CARDS` → `output/learned/card_registry.tsv`**
+(699 columns mapped to card × rung × agg_of × domain). Read the registry, not prose, to find where a column lives.
+
+| card | artifact | one row per | registry cols | built by |
+|---|---|---|---|---|
+| **edge** | `realization/edge_card.tsv` | (gene, arm) | 185 | `canonical_card` → `realization.edge_card()` |
+| **gene** | `realization/gene_card.tsv` | gene | 123 | `realization.gene_card()` |
+| **family** | `family_card.tsv` | (gene, seed-family) | 61 | `learned/readouts.py --level family` |
+| **arm** | `arm_card.tsv` | arm | 297 | `learned/arm_card.py` |
+| **seed_family** | `seed_family_card.tsv` | seed-family | 33 | `learned/seed_family_card.py` |
+
+⚠ `edge_card_base.tsv` is a **BUILD INTERMEDIATE**, not a deliverable. `edge_cptac_card.tsv` /
+`gene_cptac_card.tsv` are **BLOCKS joined onto** cards, not cards. `*_card_rungs.tsv` are the per-card rung
+audits emitted by `card_rungs.py --check`.
+
+⚠⚠ **BUILD ORDER MATTERS AND USED TO FAIL SILENTLY.** `realization.edge_card()`/`gene_card()` rebuild from
+the build inputs, which carry **no** `card_context` annotation block — so overwriting **drops it**. Measured
+once for real: the edge card went **161 → 108 columns, 57 lost, with no error**. Both now warn
+(`realization._warn_if_annotations_dropped`), but the order is still yours to get right:
+
+```
+canonical_card --reuse-attribution   →   realization.edge_card()/gene_card()   →   card_context --annotate
+```
+
+⚠ `card_context --annotate` covers **edge + gene + family only**. `arm_card` and `seed_family_card` are built
+complete by their own modules — a missing `ctx_`/`cptac_` column on those is **not** a bug.
+
+
 ## Orientation — where the code lives (read this before scanning the table)
 
 *(Folded in from the former `MODULE_MAP.md`. Tree + module lists **re-verified 2026-07-17**;

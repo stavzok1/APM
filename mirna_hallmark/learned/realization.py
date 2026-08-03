@@ -801,6 +801,25 @@ _COREP = Path(C.OUTPUT_ROOT) / "tissue_reference" / "mirna_comovement" / "gene_c
 _ACQ = Path(C.OUTPUT_ROOT) / "tissue_reference" / "mirna_state_class" / "gene_acquired_pressure.tsv"
 
 
+def _warn_if_annotations_dropped(path, built: pd.DataFrame) -> None:
+    """⚠ LOUD GUARD (MH-222). `edge_card()`/`gene_card()` rebuild a card from its BUILD INPUTS, which do
+    NOT carry the `card_context` annotation block (`ctx_`/`cptac_`/`tcga_`/`comp_`/`cal_` + the arm-rung
+    columns). Overwriting therefore SILENTLY DROPS them — measured once for real: the edge card went
+    **161 -> 108 columns, losing 57**, and nothing said so. A downstream reader then sees `ctx_gap_core`
+    missing and concludes "no context for this edge" when the truth is "the annotation step has not run
+    yet". Compare against what was on disk and say so."""
+    try:
+        prev = pd.read_csv(path, sep="\t", nrows=0)
+    except Exception:
+        return
+    lost = [c for c in prev.columns if c not in built.columns]
+    if lost:
+        print(f"  ⚠⚠ {path.name}: {len(lost)} columns present on disk are NOT in the rebuild "
+              f"(e.g. {', '.join(lost[:5])}{'…' if len(lost) > 5 else ''}).")
+        print(f"     These are the `card_context` annotations. THE CARD IS INCOMPLETE UNTIL YOU RUN:")
+        print(f"     .venv/bin/python3 -m mirna_hallmark.learned.card_context --annotate")
+
+
 def edge_card() -> pd.DataFrame:
     """⭐ THE INTEGRATED PROGRESSION EDGE CARD — one row per (gene, arm), folding BOTH progression objects onto
     the attribution card so every cross-resolution question is a column read, not a multi-file join:
@@ -839,6 +858,7 @@ def edge_card() -> pd.DataFrame:
     m["gene_repr_class"] = m.gene.map(cp["gene_repression_class"])
     m["gene_net_repr"] = m.gene.map(cp["gene_net_repressed_tumor"])
     m["gene_dominated"] = m.groupby("gene").share_TUM.transform("max") > 0.6
+    _warn_if_annotations_dropped(OUT / "edge_card.tsv", m)
     m.to_csv(OUT / "edge_card.tsv", sep="\t", index=False)
     return m
 
@@ -935,6 +955,7 @@ def gene_card() -> pd.DataFrame:
     if "share_TUM" in sc:
         dom = sc.loc[sc.groupby("gene")["share_TUM"].idxmax()].set_index("gene")["shift_class"]
         G["dominant_edge_shift_class"] = G.gene.map(dom)
+    _warn_if_annotations_dropped(OUT / "gene_card.tsv", G)
     G.to_csv(OUT / "gene_card.tsv", sep="\t", index=False)
     return G
 

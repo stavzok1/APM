@@ -27,6 +27,7 @@ targeted by high-evidence miRNAs; does evidence-weighted miRNA pressure anti-cor
 | miRNA pressure | `mirna_hallmark.pressure_build` / `pressure_engine` (spine `softmax_z_logrpm + evidence_mass`) — ⚠ the pressure heuristic is **§6b-RETIRED** (MH-115); the canonical estimator is the learned Gibbs (`learned/`) |
 | miRNA-universe CNV | `analysis.cohort_landscapes.cnv.dosage_landscape_cnv` |
 | clinical / RNA / partial Spearman | `analysis.utils.common.loaders` |
+| ⭐ **WHERE A CARD COLUMN LIVES** (edge/gene/family/arm/seed_family) | **`learned/card_rungs.py::CARDS` → `output/learned/card_registry.tsv`** (699 cols). **The card system is FIVE rungs** — see `docs/ANALYSES_CATALOG.md` "THE CARD SYSTEM IS FIVE RUNGS" for the build ORDER, which used to drop 57 annotation columns silently |
 | ⭐ **ANY per-gene question** ("where does X help / which genes / what predicts it") | **`learned/gene_axes.py`** — build the axes, `scan` them under FDR, `contrast` the extremes, `sign_analysis` the gain. **Consult it BEFORE hand-rolling a stratification; it encodes two traps that have already cost errors** (see axiom 8) |
 
 *(Confounder-block `C` policy, module spine, and design decisions are NOT restated here — they have homes:
