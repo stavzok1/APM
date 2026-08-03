@@ -431,12 +431,24 @@ retention 0.76, 1,322 genes.** ⚠ **The magnitude has SHRUNK at every control f
 - ✅✅ **AND THE ROOT CAUSE IS FIXED — THE ARM CARD EXISTS (MH-209, user-diagnosed).** The user's read of
   MH-208 — *"we don't have a miRNA card"* — was the correct structural diagnosis: `card_rungs` knew only
   `edge`/`family`/`gene`, so per-arm facts had **no rung to live on** and six modules each re-derived their
-  own. `learned/arm_card.py` → `output/learned/arm_card.tsv`, **3,241 arms × 47 cols**, registered as the
-  4th card (`--check` CLEAN; registry 328 → **375** rows).
+  own. `learned/arm_card.py` → `output/learned/arm_card.tsv`, registered as the 4th card.
+  ⭐⭐ **v2 SHIPPED 2026-08-03 (MH-211): 2,450 arms × 227 cols across 25 blocks** (`--check` CLEAN on all
+  four cards; registry 328 → **559** rows). ⛔ **v1's "3,241 × 47" is RETRACTED** — its locus block was
+  keyed by `MI*` locus id, so 506 non-arm rows inflated the denominator and `clustered`/`mirgenedb` were
+  100% NaN. Corrected universe **2,450**, of which **2,236 = the entire TCGA matrix** (no expressed arm lost).
   * ⭐ **Provenance-prefixed by design**, because the targetome universes are NOT interchangeable:
-    `seq_` genome-wide (746 arms) · `site_` ⚠ **Hallmark-scoped, 1,432 genes** (771) · `ts_` TargetScan
-    per-site (⚠ 321) · `cur_`/`fame_` ⛔ fame, for CONTROL only · `cov_*` flags — **missing = UNSCANNED**.
-  * ✅ **Definitional control exact**: re-derives all five MH-208 correlations to the digit.
+    `seq_` genome-wide (746) · `site_` ⚠ **Hallmark-scoped, 1,432 genes** (771) · `ts_` TargetScan
+    per-site (⚠ 321) · ⭐ `sdsz_` a **FOURTH** universe (MANE 3′UTR seed scan, 2,370) · `cur_`/`fame_`
+    ⛔ fame, for CONTROL only · `cov_*` — **missing = UNSCANNED, never zero**.
+    Taxonomy now has **three facets**: provenance · `bc_` (broadcast DOWN from a coarser unit — the
+    opposite relation to `AGG_OF`) · `hx_` (heuristic / retired-estimator provenance).
+  * ⚠ **The definitional control was REFUTED IN THE LETTER and is reported, not buried:** four of five
+    MH-208 correlations reproduce to the digit, but curated↔fame moved **+0.736 → +0.752** because v1's
+    universe held 76 non-arm bare stems (which alone carry only +0.370) ⇒ **MH-208 is STRENGTHENED**.
+  * ✅ Other controls: no-impute 0 leaks · key-join cross-check `foc` vs `cnvc` **ρ=+0.982** ·
+    broadcast constancy exact. ⛔ Excluded by audit: the whole §6b-retired `mirna_state_class` table,
+    `comovement.dHT` (MH-210's fabricated quantity), `arm_survival.gse_*` (bare-stem matched),
+    `gtex floor0`, and `ago_loading.loading()`'s `.fillna(1.0)`.
   * ⚠ Two of my own design assumptions died on contact: **sites-vs-genes is not an independent axis**
     (ρ=+0.927) and the **8mer share is TOOL-DEPENDENT** (ρ=+0.620, medians 2.2× apart) — never compare it
     across sources.

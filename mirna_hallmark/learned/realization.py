@@ -26,7 +26,7 @@ from typing import Optional, Sequence
 
 import numpy as np
 import pandas as pd
-from scipy.stats import mannwhitneyu, rankdata, spearmanr
+from scipy.stats import mannwhitneyu, rankdata, spearmanr, wilcoxon
 
 from mirna_hallmark import config as C
 from mirna_hallmark.learned import data as LD
@@ -357,6 +357,11 @@ def realize_null(genes: Sequence[str], *, m_ref: str = "complement") -> pd.DataF
                         continue
                     ori = orientation(_corr(dX.loc[arm, pts].to_numpy(float), dCAF), tgt_L)
                     rows.append({"gene": g, "group": grp_lbl, "arm": arm, "orientation": ori,
+                                 # ⭐ pair id (MH-212): the REAL row and its matched DECOY row share it.
+                                 # Needed because `orientation` is computed PER ARM, so a real arm and its
+                                 # decoy can land in DIFFERENT strata — without this the two are
+                                 # indistinguishable in the persisted table and no paired test is possible.
+                                 "pair_id": f"{g}|{r.real_arm}",
                                  "m_ref": m_ref, "rho_raw": res["rho_raw"], "rho_adj": res["rho_adj"]})
         except Exception:
             continue
@@ -410,6 +415,88 @@ def null_summary(nd: pd.DataFrame) -> pd.DataFrame:
             out.append({"group": grp, "orientation": ori, "C": c.split("_")[1],
                         "n_edges": len(s), "mean_rho": _r3(s[c].mean())})
     return pd.DataFrame(out).sort_values(["orientation", "C", "group"])
+
+
+def realize_null_test(nd: Optional[pd.DataFrame] = None, *, n_boot: int = 2000) -> pd.DataFrame:
+    """⭐ THE LANE'S HEADLINE TEST — and until MH-212 it had NO CODE HOME.
+
+    `realize_null` computes the REAL/DECOY rows and `null_summary` reports their MEANS; **neither runs a
+    test of any kind**. The published headline — *"real edges beat matched site-free decoys by ~0.017 ρ in
+    the OPPOSITE-compartment stratum, gene-clustered p=2.7e-4; SAME stratum n.s."* (MH-158, and the
+    load-bearing sentence of `STATE_OF_PLAY` Axis 6) — was therefore **not reproducible from this module**.
+    This function is that test.
+
+    ⭐ **THE PRIMARY LEG REPRODUCES THE RECORD EXACTLY.** The estimator behind MH-158's numbers is:
+    collapse to GENE level (mean ρ over that gene's REAL rows and over its DECOY rows, within the stratum),
+    then a **paired Wilcoxon across genes** — which is what "gene-clustered" meant. Re-derived here:
+    **OPPOSITE ρ_adj p=0.000273 (recorded 2.7e-4) · SAME ρ_adj p=0.426 (recorded n.s. 0.43).**
+    Genes are the cluster because edges within a gene share the target's Δy and are not independent.
+
+    ⚠ **AN EDGE-LEVEL UNPAIRED TEST IS NOT THE SAME TEST AND DOES NOT AGREE.** Comparing stratum means
+    edge-wise under a gene-cluster bootstrap gives OPPOSITE −0.016 [−0.024,−0.008] (agrees) but
+    **SAME −0.009 [−0.017,−0.000], p=0.044 — nominally significant where the paired gene-level test says
+    0.43.** The difference is real and structural: `realize_null` computes `orientation` **per arm**
+    (`:358`), so a real arm and its matched decoy routinely land in DIFFERENT strata; an edge-level stratum
+    contrast therefore compares non-matched sets and inherits their composition imbalance. **The paired
+    gene-level leg is the headline; the bootstrap leg is reported beside it as the sensitivity it is.**
+
+    ⚠ Bootstrap p is floored at ~2/n_boot (0.001 at the default) — it CANNOT express 2.7e-4. Read the
+    Wilcoxon p for significance and the bootstrap for the interval.
+
+    ⚠ Neither leg gives PATIENT-level uncertainty: every ρ here is computed on the same 103 patients, so the
+    CIs describe edge-universe stability only (the MH-160 caveat, stated again because it is easy to lose).
+    """
+    if nd is None:
+        nd = pd.read_csv(OUT / "realization_null_edges.tsv", sep="\t")
+    rows = []
+    for ori in sorted(nd["orientation"].dropna().unique()):
+        for col in ("rho_raw", "rho_adj"):
+            s = nd[(nd.orientation == ori) & nd[col].notna()]
+            if s.empty:
+                continue
+            v = s[col].to_numpy(float)
+            is_real = (s.group == "REAL").to_numpy()
+            gene_arr = s.gene.to_numpy()
+
+            def _gap(idx, _v=v, _r=is_real):
+                r, d = _v[idx][_r[idx]], _v[idx][~_r[idx]]
+                return float(np.nanmean(r) - np.nanmean(d)) if len(r) and len(d) else np.nan
+
+            _, blo, bhi, bp = _gene_boot(gene_arr, _gap, n=n_boot)
+
+            # ⭐ PRIMARY — gene-level paired Wilcoxon (THE recorded estimator)
+            gl = s.pivot_table(index="gene", columns="group", values=col, aggfunc="mean")
+            d = ((gl["REAL"] - gl["DECOY"]).dropna() if {"REAL", "DECOY"}.issubset(gl.columns)
+                 else pd.Series(dtype=float))
+            # a CI for the SAME estimand: bootstrap the gene-level paired difference over genes
+            dv = d.to_numpy(float)
+            plo = phi = np.nan
+            if len(dv) >= 20:
+                rng = np.random.default_rng(0)
+                bs = np.array([np.nanmean(rng.choice(dv, size=len(dv), replace=True)) for _ in range(n_boot)])
+                plo, phi = np.percentile(bs, [2.5, 97.5])
+
+            rows.append({
+                "orientation": ori, "C": col.split("_")[1],
+                "n_genes_paired": int(len(dv)), "n_real_edges": int(is_real.sum()),
+                "n_decoy_edges": int((~is_real).sum()),
+                "mean_real": _r3(np.nanmean(v[is_real])), "mean_decoy": _r3(np.nanmean(v[~is_real])),
+                # primary
+                "gap_median": _r3(float(np.median(dv))) if len(dv) else np.nan,
+                "gap_mean": _r3(float(np.nanmean(dv))) if len(dv) else np.nan,
+                "lo95": _r3(plo), "hi95": _r3(phi),
+                "wilcoxon_p": float(wilcoxon(dv).pvalue) if len(dv) >= 20 else np.nan,
+                # sensitivity (edge-level unpaired; see docstring — it does NOT agree on SAME)
+                "edge_gap": _r3(_gap(np.arange(len(v)))), "edge_lo95": _r3(blo), "edge_hi95": _r3(bhi),
+                "edge_boot_p": float(bp)})
+    out = pd.DataFrame(rows).sort_values(["C", "orientation"])
+    OUT.mkdir(parents=True, exist_ok=True)
+    out.to_csv(OUT / "realization_null_test.tsv", sep="\t", index=False)
+    print("[realize_null_test] PRIMARY = gene-level paired Wilcoxon (the recorded estimator); "
+          "edge_* = unpaired sensitivity.")
+    print("  ⚠ CIs are edge-universe stability, NOT patient-level (same 103 patients in every rho).")
+    print(out.to_string(index=False))
+    return out
 
 
 # --------------------------------------------------------------------------- #
@@ -936,7 +1023,11 @@ def context_hallmark_rollup() -> tuple:
     gene_r = lad[lad.resolution == "gene"][["gene", "rho_adj"]].set_index("gene")["rho_adj"]
     da = pd.read_csv(OUT / "dose_shift_edge.tsv", sep="\t")
     gene_dose = da.groupby("gene")["dShare_M_own"].apply(lambda s: s.abs().mean())     # within-gene dose activity
-    mep = pd.read_csv(OUT / "master_edge_patterns.tsv", sep="\t")
+    # ⛔ WAS `master_edge_patterns.tsv` — DELETED in the MH-176/181 card consolidation+rename
+    # (`master_edge_patterns` → `progression_edge_card` → `edge_card`). This line was never updated, so
+    # the function raised FileNotFoundError from 2026-08-01 until this fix. `edge_card` is a strict
+    # superset and carries `mean_own_shift` unchanged.
+    mep = pd.read_csv(OUT / "edge_card.tsv", sep="\t", low_memory=False)
     gene_acq = mep.groupby("gene")["mean_own_shift"].max()                             # gene's top acquired dose
     hrows = []
     for prog in sorted(set(h for hs in g2h.values() for h in hs)):

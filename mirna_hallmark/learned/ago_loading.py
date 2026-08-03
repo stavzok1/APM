@@ -131,9 +131,39 @@ def _gtex_engagement() -> pd.Series:
     return s
 
 
+def measured(arms) -> pd.Series:
+    """⭐ WHICH arms `loading()` actually MEASURED, vs which it defaulted to 1.0 (MH-214).
+
+    `loading()` ends `.fillna(1.0)` — correct for its role as a soft MULTIPLIER (do not penalise an arm
+    for an unmeasured gate), but it makes a measured guide (1.0) indistinguishable from an unmeasured arm
+    (also 1.0). Measured on the edge card: **~53% of its arms carry the defaulted value**, so more than
+    half of a column read as "the independent biological guide label" is a fill.
+
+    ⇒ **Any caller that PERSISTS or INTERPRETS `loading()` must carry this beside it.** Callers that only
+    multiply by it (`analyses/attribution_identity`) are unaffected and need no change.
+    """
+    ago = _dominance(_manakov_engagement())
+    gtex = _dominance(_gtex_engagement())
+
+    def _seen(name):
+        for m in str(name).split("/"):
+            k = m if str(m).startswith("hsa-") else "hsa-" + str(m)
+            if k in ago.index or k in gtex.index:
+                return True
+        return False
+
+    return pd.Series({a: _seen(a) for a in arms}, name="loading_measured", dtype=bool)
+
+
 def loading(arms, *, floor: float = 0.0) -> pd.Series:
     """Per-arm loading ∈[floor,1] — Manakov AGO-dominance, GTEx abundance-dominance fallback, else 1.0 (no
-    discount). `arms` may be family labels (a/b) — resolved per member, family value = the loaded member's max."""
+    discount). `arms` may be family labels (a/b) — resolved per member, family value = the loaded member's max.
+
+    ⚠⚠ **THE 1.0 IS AMBIGUOUS: it means "measured, fully guide" OR "never measured" (MH-214).** That is
+    safe where this is used as a multiplier, and information-destroying where it is persisted as a label.
+    **Pair it with `measured()` whenever you write it to an artifact** — `arm_card.ago_dom` instead keeps
+    NaN, and the edge card carries `ago_loading_measured` for exactly this reason.
+    """
     ago = _dominance(_manakov_engagement())
     gtex = _dominance(_gtex_engagement())
 

@@ -57,7 +57,12 @@ _ARM_DESC = ("arm_med_rpm", "arm_pct_floor", "arm_iqr", "arm_id_status", "ago_lo
              "grank_HLY", "grank_NAT", "grank_TUM", "dGlobal_HLY_NAT", "dGlobal_NAT_TUM",
              "dGlobal_HLY_TUM", "mean_own_shift", "mean_dGlobalRank", "own_specific_frac",
              "ctx_arm_dose", "ctx_arm_abundant")
-_EDGE_ONLY = ("coupling_hly", "coupling_nat", "coupling_tum", "retention_rho", "shift_class",
+_EDGE_ONLY = (# ⭐ MH-210's un-imputed healthy leg. EDGE rung, NOT arm: `states.budget_shift` is per-gene
+              # and these are WITHIN-GENE shares/ranks, so they cannot be read as arm properties.
+              # ⚠ NaN here means "GTEx cannot see this arm" (abstention, excluded from the
+              # denominator), NOT "owns none of the healthy budget" — confusing the two WAS the bug.
+              "share_HLY_meas", "rank_HLY_meas", "d_rank_HLY_TUM_meas", "n_HLY_meas",
+              "coupling_hly", "coupling_nat", "coupling_tum", "retention_rho", "shift_class",
               "edge_rho_adj", "dShare_M_own", "dShare_raw_own", "realization_score", "dose_class",
               "coupling_p_tum", "coupling_p_nat", "coupling_z_tum", "coupling_z_hly", "coupling_z_nat",
               "coupling_p_hly", "coupling_p_hly_resolved", "coupling_p_hly_surrogate",
@@ -86,7 +91,10 @@ CARDS = {
                   **{c: "arm-in-family" for c in _ARM_IN_FAM},
                   **{c: "gene" for c in _GENE_DESC + _GENE_ROLLUP},
                   "gene": "key", "arm": "key"},
-        prefix=(("ctx_", "gene"), ("comp_", "gene"), ("cptac_", "edge"), ("tcga_", "gene"),
+        # `esub_` = the per-(gene,arm) PAM50 block annotated by `card_ladders` — EDGE rung: it is fit
+        # per edge, and the arm card's `sub_` aggregate of the same source lives at arm rung.
+        prefix=(("esub_", "edge"),
+                ("ctx_", "gene"), ("comp_", "gene"), ("cptac_", "edge"), ("tcga_", "gene"),
                 ("cal_", "edge"))),
     "family": dict(
         path=OUT / "family_card.tsv", key=["gene", "family"],
@@ -109,6 +117,14 @@ CARDS = {
         path=OUT / "arm_card.tsv", key=["arm"],
         explicit={"arm": "key"},
         prefix=(("", "arm"),)),           # one row per arm => everything is arm rung by construction
+    # ⭐ THE FIFTH RUNG (MH-212, user-identified). The card registered above as "family" is keyed
+    # ['gene','family'] — a GENE×FAMILY card, which cannot express a property of the family ITSELF.
+    # This one is one row per SEED FAMILY. ⛔ Its artifact is `seed_family_card.tsv`, NOT
+    # `family_card.tsv`: two rungs must never share a filename (axiom 6's collision class).
+    "seed_family": dict(
+        path=OUT / "seed_family_card.tsv", key=["seed_family"],
+        explicit={"seed_family": "key"},
+        prefix=(("", "family"),)),        # one row per family => everything is family rung
 }
 AGG_OF = {"gene": {**{c: "arm" for c in ("cptac_prosp_agg_rho_rna", "cptac_prosp_agg_rho_prot",
                                          "cptac_prosp_agg_rho_disc", "cptac_t105_agg_rho_rna",
@@ -118,7 +134,28 @@ AGG_OF = {"gene": {**{c: "arm" for c in ("cptac_prosp_agg_rho_rna", "cptac_prosp
                                          "tcga_abund_rho_rna", "n_arms")},
                    **{c: "family" for c in ("top_family_magnitude", "top_family_identity", "top_beta",
                                             "top_identity", "top_beta_frac", "n_fam",
-                                            "identity_eq_magnitude")}}}
+                                            "identity_eq_magnitude")}},
+          # ── ARM CARD (MH-211). v1 shipped NO agg_of, so the card silently claimed that nothing on it
+          # summarises a lower unit. It does: every count/rollup below is an aggregate over the arm's
+          # EDGES (or, for aid_*, over the multi-arm cells it sits in). `bc_*` is the OPPOSITE relation
+          # — inherited from a HIGHER unit — and is carried by the prefix, not here.
+          "arm": {**{c: "edge" for c in (
+                        "model_n_genes", "model_n_edges",
+                        "cur_he_degree", "cur_he_degree_expr", "fame_npmid", "fame_n_genes_curated",
+                        "fame_led_n_pmid", "fame_led_n_ltfunc_pmid", "fame_led_n_classes",
+                        "fame_led_frac_ltfunc", "fame_led_n_weak",
+                        "arb_n_edges", "arb_n_genes", "arb_mean_abs_beta", "arb_max_abs_beta",
+                        "arb_n_identified", "arb_frac_identified", "arb_n_comp_explained",
+                        "arb_max_identity", "arb_n_identity_reliable",
+                        "chim_manakov_n_genes", "chim_manakov_weight",
+                        "chim_tarbase_n_genes", "chim_tarbase_weight", "chim_n_sources",
+                        "seq_n_genes_strong", "seq_n_genes_any",
+                        "site_n_genes_canonical", "site_n_canonical", "site_n_total",
+                        "site_n_8mer", "site_n_7mer", "site_n_6mer", "site_n_noncanon",
+                        "site_repression_med", "site_repression_min",
+                        "ts_n_sites", "ts_n_genes", "sdsz_N_7mer_plus", "sdsz_N_8mer", "sdsz_N_eff")},
+                  **{c: "arm-in-family" for c in ("aid_n_cells", "aid_frac_resolvable",
+                                                  "aid_med_arm_sep_z", "aid_med_oof_drho")}}}
 
 
 # ── DOMAIN: the condition under which a column is DEFINED. A column NaN on 80% of rows is not
@@ -163,18 +200,66 @@ DOMAIN = {
     "the WITHIN-PATIENT paired subset (n=103 matched tumour/NAT pairs, MH-158)": (
         "edge_rho_adj", "dShare_M_own", "dShare_raw_own", "mean_own_shift", "mean_dGlobalRank",
         "own_specific_frac"),
-    # ── ARM CARD (MH-209). Each block covers a DIFFERENT scan, so its NaNs mean UNSCANNED, never zero.
-    # Measured on the denominator that matters (803 model arms, ≥1 HE edge): seq 65.8% · site 96.0% ·
-    # ts 33.7% · cur 99.0%. On the union of all 3,241 arms the same numbers read 23.0/23.8/9.9/29.7%.
-    "arms in the scanMiR GENOME-WIDE K_D scan (746 arms; breast-expressed genes)": ("seq_",),
-    "arms in the scanMiR site-type table (771 arms) — ⚠ HALLMARK-SCOPED, 1,432 genes only": ("site_",),
-    "arms in TargetScan's human default predictions (⚠ only 321 arms)": ("ts_",),
+    # ── ARM CARD (MH-209, corrected + enriched MH-211). Each block covers a DIFFERENT scan, so its
+    # NaNs mean UNSCANNED, never zero — nothing is imputed.
+    # ⚠ v1 quoted coverage on an inflated 3,241-row denominator that included 506 `MI0*` locus ids and
+    # 5 unicode rows. Corrected universe = 2,450 arms (EXPRESSED = 2,236 = the full TCGA matrix).
+    # Coverage on the denominator that matters (741 MODEL arms, ≥1 HE edge): site 96.9% · cur 99.1% ·
+    # sdsz 98.7% · beta 98.2% · cptac 91.2% · gctx 72.7% · seq 69.9% · cnv 67.6% · foc 61.5% ·
+    # ago_dom 46.8% · ts 38.5% · meth 32.1%.
+    "arms in the scanMiR GENOME-WIDE K_D scan (746; breast-expressed genes)": ("seq_",),
+    "arms in the scanMiR site-type table (771) — ⚠ HALLMARK-SCOPED, 1,432 genes only": ("site_",),
+    "arms in TargetScan's human default predictions (⚠ only 321)": ("ts_",),
+    "arms in the MANE 3'UTR seed scan — ⚠ a FOURTH targetome universe, never blend (2,370)": ("sdsz_",),
     "arms with miRTarBase curation / ledger PMIDs — ⛔ FAME axes, not targetome (MH-208)": (
         "cur_", "fame_"),
-    "arms detected in the TCGA miRNA matrix (2,236 of 3,241)": ("abund_",),
-    "arms carrying >=1 curated HE edge in the model design (803 arms)": ("model_",),
-    "arms with a resolvable precursor locus / RISC-loading measurement": (
-        "host_class", "clustered", "mirgenedb", "ago_reads"),
+    "arms detected in the TCGA miRNA matrix (2,236 of 2,450)": ("abund_", "tier_"),
+    "arms carrying >=1 curated HE edge in the model design (741)": ("model_",),
+    "arms with a classified precursor locus (genomic_context.classify_he_arms — 714)": ("gctx_",),
+    "arms in the WITHIN-PATIENT paired subset (n≈103 matched tumour/NAT pairs; 2,236 arms)": ("wshift_",),
+    "arms with a 5'-isomiR seed-shift measurement (687) — ⚠ gate on iso_n_samples, the median is n-DEPENDENT": ("iso_",),
+    "arms in the isomiR seed-COMPOSITION table — where the reads go; ⭐ isoc_orphan_frac flags MH-153 mass loss": ("isoc_",),
+    "arms with a mapped CN locus in the cohort stratum (856) — ⚠ multi-locus arms are DILUTED here": ("cnv_",),
+    "arms with a CN↔expression concordance fit (756)": ("cnvc_",),
+    "arms with a paralog-decontaminated FOCAL-locus concordance (733) — ⛔ DESCRIPTIVE, not an instrument": ("foc_",),
+    "arms with a GTEx healthy anchor — ⚠ MEASURED leg only; floor0 is NEVER emitted as a value": ("hly_",),
+    "⛔ IMPUTED healthy baseline (miTED rank-transfer / seed-mate) — labelled, not a measurement": ("hx_hly_",),
+    "arms in the TCGA outcome panel (145) — ⛔ TCGA legs only; the GSE leg is bare-stem matched": ("surv_",),
+    "arms in a co-expression module (371) — pure co-expression; the state-class columns are excluded": ("comv_",),
+    "arms with a learned-β edge rollup (728)": ("arb_",),
+    "arms inside ≥1 MULTI-ARM (gene,family) cell — the arm rung's 20.3%-of-edges footprint (142)": ("aid_",),
+    "arms with chimeric ligation evidence (1,538) — ⚠ ~90% Manakov/HEK293T, per-source, NEVER pooled": ("chim_",),
+    "arms with a Manakov AGO-dominance measurement — ⛔ NOT loading(), which fabricates 1.0": (
+        "ago_", "ago_reads"),
+    "⚠ BROADCAST from the pri-miRNA HAIRPIN — 5p and 3p share one promoter and one Δβ (354 arms)": ("bc_meth_",),
+    "⚠ BROADCAST from the seed FAMILY (genomic_context.family_context)": ("bc_fam_",),
+    "arms measurable in CPTAC (2,095)": ("cov_cptac",),
+    # ── v3 blocks (MH-212)
+    "arms with a Shapley/attribution decomposition over their edges (728)": ("attr_",),
+    "arms with a per-PAM50 edge-heterogeneity fit (728) — ⚠ DISTRIBUTIONAL (MH-165), not a validated label": ("sub_",),
+    "arms with a within-patient NAT field-effect fit (571)": ("field_",),
+    "arms with a compartment-loading row (1,473) — ⚠⚠ its source has NO PRODUCER (MH-111 ad-hoc)": ("comp_",),
+    "arms with ≥1 calibrated-coupling-scored edge (593) — the realization LADDER; rates are gated at n≥5": ("real_",),
+    "arms with a seed family — the arm's ROLE inside it; ⛔ DEGENERATE at famrole_n_members==1": ("famrole_",),
+    "arms with a categorical guide/passenger call — ⚠ defined ONLY where AGO dominance was MEASURED": ("ago_guide_class",),
+    # ── SEED-FAMILY CARD (the 5th rung, MH-212). One row per family; ⛔ degenerate at 1 member (83.7%).
+    "seed families in the arm-card universe (1,959; ⛔ 83.7% single-member ⇒ shares/HHI are 1 or NaN)": ("fam_",),
+    # ── CROSS-CARD LADDERS (MH-212, `learned/card_ladders.py --annotate`). ⚠ These are POST-BUILD
+    # annotations: a gene_card/edge_card rebuild drops them and card_ladders must be re-run.
+    "genes with ≥1 calibrated-coupling-scored regulator (1,260) — the GENE-side ladder; rates gated n≥3": ("greal_",),
+    "edges with a per-PAM50 heterogeneity fit — ⚠ DISTRIBUTIONAL (MH-165), not a per-edge subtype label": ("esub_",),
+    # ⭐ MH-214: makes `ago_loading`'s `.fillna(1.0)` visible. Measured 3,820/5,648 edges (67.6%) ⇒ 32.4%
+    # of that column is the default, and of the 2,803 edges reading exactly 1.0, 1,786 (64%) are fills.
+    "every edge — TRUE iff `ago_loading` was MEASURED rather than defaulted to 1.0": ("ago_loading_measured",),
+    # the un-prefixed columns lifted from the edge card keep their original names deliberately, so the
+    # cross-card report shows SAME rung on both cards — but that leaves them without a prefix rule.
+    "arms present on the EDGE card (729 of 2,450) — lifted arm-rung columns, names preserved": (
+        "detection", "ctx_arm_dose", "ctx_arm_abundant", "spiker", "healthy_leg", "healthy_potential",
+        "healthy_uninformative", "surrogate_instrument", "surrogate_corr", "arm_med_rpm",
+        "arm_pct_floor", "arm_iqr", "dose_comp_retention", "dose_prolif_retention", "dose_confounded"),
+    # ⭐ MH-210's un-imputed healthy leg on the EDGE card (its own rung — see _EDGE_ONLY).
+    "edges whose gene has ≥1 GTEx-MEASURED regulator — ⚠ NaN = GTEx cannot see it (abstention), NOT 0": (
+        "share_HLY_meas", "rank_HLY_meas", "d_rank_HLY_TUM_meas", "n_HLY_meas"),
 }
 
 
