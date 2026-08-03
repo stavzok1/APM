@@ -882,8 +882,35 @@ miTED-median cannot). Instrument = best same-seed mate MEASURED in GTEx, **valid
 evidence; `healthy_uninformative` fires only where collapse_blind + high-potential + **no** surrogate. Genome-wide: **202
 edges resolved** (7 instruments), flag **305→132**, and **190/202 (94%) confirm coupling-ACQUIRED** (surrogate uncoupled
 in healthy) vs 12 constitutive — per-target-graded (miR-17→PTEN surrogate p=0.59 ⇒ confirmed acquired; miR-17→MEF2D
-−0.168 partially pre-existing). MH-160 robust (−0.045, p=0.000). ⬜ still-blind arms (no instrument, 132) abstain; the
-**per-target GTEx→NAT→TUM identity trajectory** is the remaining scoped arc. Registry: **MH-166**.
+−0.168 partially pre-existing). MH-160 robust (−0.045, p=0.000). ⬜ still-blind arms (no instrument, 132) abstain — **and they are NOT a
+random slice: 73/132 = 55% sit in an acquired-family class vs a 23% cohort-wide base rate (2.4×)**, the
+direction blindness predicts since every such class is reached through `not h` (measured 2026-08-03).
+
+⛔ **"the per-target GTEx→NAT→TUM identity trajectory is the remaining scoped arc" — THAT LINE WAS WRONG
+(user-caught, corrected 2026-08-03). IT IS BUILT.** `states.budget_shift` emits per-target
+`share_{HLY,NAT,TUM}` / `rank_{HLY,NAT,TUM}` + `d_rank_{HLY_NAT,HLY_TUM,NAT_TUM}`, persisted on the edge
+card at **69.8% (3,945 edges)**, consumed by **8 modules**, and `dHT` is documented **~200 lines above this
+line** as *"the ACQUIRED axis = headline"*.
+
+⚠⚠ **WHAT IS ACTUALLY OPEN IS DIFFERENT AND NEWLY MEASURED: the GTEx collapse blinds the IDENTITY leg too,
+and there it MANUFACTURES acquisition instead of merely abstaining.** `budget_shift` fills a missing GTEx
+abundance with `0.0` ⇒ share 0 ⇒ within-gene rank last ⇒ `dHT` maximally positive. Measured on the card:
+
+| `healthy_leg` | n | median `dHT` | % `dHT`>0 | % `rank_HLY`==last | `share_HLY`==0 |
+|---|---|---|---|---|---|
+| measured | 2,475 | 0.00 | 9.4% | 20.6% | — |
+| **collapse_blind** | **826** (115 arms) | **+1.00** | **50.4%** | **100.0%** | **100.0%** |
+| true_absent | 644 | 0.00 | 27.2% | 100.0% | 100% *(correct — genuinely absent)* |
+
+MWU collapse_blind vs measured **p=4.1e-121**. `true_absent` ranking last is RIGHT; `collapse_blind` is not —
+miTED shows those arms ARE expressed in healthy. ✅ **BOUNDED, NOT FATAL:** the QN'd magnitude axis
+(`arm_lfc_HLY_TUM_QN`, p=0.627) and the composite `acquisition_score` (p=0.448) are **NOT** distinguishable
+between the two classes, so only the **within-state rank/share axis** is corrupted — but that axis is
+exactly `dHT`, the documented headline. ⚠ Note this cuts *against* the usual rank-over-QN preference **on
+this specific axis**: here the within-state rank is the broken one and QN is clean.
+⇒ **FIX AVAILABLE AND CHEAP: the `healthy_leg` provenance flag already exists on the card and already gates
+the COUPLING leg — it is simply not applied to `share_HLY`/`rank_HLY`/`d_rank_HLY_*`.** Gate or NaN those
+for `collapse_blind` arms rather than letting `fillna(0.0)` speak. Registry: **MH-166**.
 
 ---
 
