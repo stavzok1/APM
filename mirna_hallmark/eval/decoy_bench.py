@@ -169,9 +169,28 @@ def _site_maps() -> dict:
           (+448,330 new). MEASURED: **133/4,937 (2.7%) of the previous decoys carried a chimeric read.**
           ⚠ my first parser MISSED this file entirely — it searched for a column containing "mir"; Manakov's
             miRNA column is `noncodingRNA`.
-      ⚠ STILL NOT COVERED: POSTAR3 miRNA-target — **not present in this repo** (only its lncRNA/RBP tables
-        are: data/lncRNA_interactions/postar3_*.parquet). Cannot be closed with local data.
-      TOTAL evidence-excluded: 2,238,769 pairs."""
+      ⭐ (5) POSTAR3 + ENCORI — **MEASURED 2026-08-03, and the exclusion is materially CLOSED. The previous
+          note here ("POSTAR3 not present in this repo ⇒ cannot be closed with local data") was WRONG on the
+          fact and, more importantly, wrong on the MECHANISM.**
+          * **POSTAR3 IS on disk** — `data/external/POSTAR/human (1).txt.gz`, 676 MB, 2026-06-30. But it is
+            the **RBP binding-site table**: 221 distinct RBPs, **2,360,006 AGO2 records**, TNRC6A/B/C ~3k,
+            DICER1 8.5k — and **ZERO miRNA-named entries**. It therefore yields NO pair-level (arm, gene)
+            call, only miRNA-ANONYMOUS occupancy intervals.
+          * ⭐ **And an AGO-peak ∩ seed-site layer would be a NO-OP BY CONSTRUCTION.** `build_decoys` already
+            requires `(a, g) not in ctx["sites"]`, and layers (1)+(2) exclude EVERY arm with a strong site or
+            a Poisson-significant 6mer in that gene. An arm whose seed sits under an AGO peak is thus
+            *already* ineligible. Only a source that resolves the **mature arm** on a **SEEDLESS** pair can
+            add anything here — which is exactly what Manakov chimeric (layer 4) is, and it moved 2.7%.
+          * **ENCORI is 5.3× under-ingested as a LABELLED layer but 97.0% redundant as a SET.** The local
+            cache `data/external_cache/encori/miRNATarget/` (8,647 per-gene files, 6,431 non-empty) holds
+            **20,404 distinct (arm,gene) pairs**; the shipped `ENCORI_starBase` layer carries only 3,861.
+            But **19,799 / 20,404 (97.0%)** are already in the union via TarBase v9 / miRTarBase / Manakov,
+            leaving **605 new**; of those **578 are already in the full site map** via layers (1)/(2), and
+            ⭐ **0 of the 4,937 assigned decoys carry one (0.000%)**.
+          ⇒ **Neither source can move the gap.** Closing the evidence hole further requires a pair-level,
+            arm-resolving, SEEDLESS-capable source (POSTAR3's separate miRNA-target/degradome module, which
+            is NOT what is on disk) — and layer (4) bounds the plausible scale of that at a few percent.
+      TOTAL evidence-excluded: 2,242,630 pairs (verified 2026-08-03; the log below derives the breakdown)."""
     ts = pd.read_csv("data/miRNA/Predicted_Targets_Context_Scores.default_predictions.txt", sep="\t",
                      usecols=["Gene Symbol", "miRNA"], low_memory=False)
     S = set(map(tuple, ts.rename(columns={"Gene Symbol": "gene", "miRNA": "arm"})[["arm", "gene"]].values))

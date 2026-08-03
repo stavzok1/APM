@@ -9,7 +9,9 @@
 > or retracts something, update the matching block here **in the same pass**.
 > **Sync-partner:** `DISCOVERY_REGISTRY.md` (the record of record — this doc is its executive summary).
 
-**Last updated: 2026-08-03** · covering the registry through **MH-204**.
+**Last updated: 2026-08-03** · covering the registry through **MH-207**.
+⚠ This header read *"through MH-204"* while the registry already carried **MH-205** — the same
+registry-runs-ahead lag the "How to read this" section warns about, caught 2026-08-03.
 
 ---
 
@@ -210,7 +212,31 @@ survivors — as it had to be, since widening an anti-conservative null cannot c
 set-level shift attenuates, median `null_z` −1.6 → −1.32.** ⚠ The `scrambled-seed` variant was scoped and
 NOT built: shuffling a seed changes which genes an arm is *predicted* to hit, not its expression, so it
 matches site statistics but does **not** remove MH-123's arm-lane leak (a separate defect, opposite
-direction — still open). Remaining: unify the two lanes by family size · subtype-stratified (PAM50) run.
+direction — still open). ⚠ Verified 2026-08-03: the scrambled-seed null is **still unbuilt** (no code).
+⭐ **NEW 2026-08-03 (MH-207) — THE FAMILY LANE NOW CARRIES EVIDENCE, AND THE ARM LANE'S CONVERGENCE DOES
+NOT TRANSFER TO IT.** `discovery.attach_evidence_family` pools each family's member arms (chimeric / ledger /
+context++) — coverage on 3,119 families: ledger 76.5%, chimeric 45.3%.
+- ⭐ **PMIDs are UNION-DEDUPED, never summed — summing inflates depth 2.55×** (33,012 → 12,935; worst row
+  NFAT5/miR-17~92 **159 → 34 = 4.7×**), because same-seed members are routinely assayed in one paper.
+- ⚠⚠ **Every pooled statistic is MONOTONE IN FAMILY SIZE** (chimeric support **25.2% at 1 arm → 89.1% at
+  7+**), and **42.2% of rows are single-arm families where the family lane IS the arm lane** by construction.
+- ⛔ **So the naive result is an artifact.** Pooled MWU p=0.0074 on a **Δ of 0.017** in null_z; conditioned,
+  the **size-stratified Stouffer is Z=−0.31, p=0.76 with incoherent signs (4/7; the two largest strata point
+  OPPOSITE ways)** and the rank-partial on (size, abundance) is **ρ=−0.0101, p=0.571**. ⇒ **MH-155's
+  "chimeric-present edges couple stronger, p=4.6e−8" is an ARM-RUNG claim — do not broadcast it to families**
+  (MH-111: the unit at which a property acts predicts which tool can see it).
+- ⛔⛔ **AND LEDGER PMID DEPTH IS DEAD TOO — rigor-gated the same session.** The pooled ρ=−0.0578
+  (p=0.00124) was **entirely BETWEEN-gene**: the **within-gene** contrast (2,566 families / 663 genes,
+  gene-demeaned, size+abundance-controlled) gives **ρ=+0.0032, p=0.889** — zero and nominally the wrong
+  sign; the within-gene fame null centres at −0.0010 ± 0.0331 (**empirical p=0.55**); the study-bias channel
+  is **larger here than MH-196 measured** (+0.330 mean / +0.500 median, 70.7% of 604 genes); and the internal
+  null control **fires the wrong way** (`ev_n_arms_supported` +0.0607, p=0.0081).
+⇒ ⭐ **NET: NEITHER evidence axis carries convergence at the FAMILY rung, while the ARM rung does
+  (MH-155, p=4.6e−8). The lane's deliverable is the ATTACH + its two design rules, not a finding — and the
+  general lesson is to run an evidence-vs-coupling test at the rung the evidence is RECORDED at** (MH-111).
+Remaining: unify the two lanes by family size (`family_size_degenerate` now marks the degenerate half) ·
+subtype-stratified (PAM50) run — ⚠ but note **the board records MH-165 as having closed the subtype-discovery
+hope at chance** (337 vs 287±35, z=+1.4); reconcile before spending on it.
 
 ---
 
@@ -366,8 +392,22 @@ CLIP/CLASH-supported *real* edges served as "decoys"; now 1,790,439 pairs exclud
 caliper** (Δdose −3.05 → −0.105).
 
 **The honest statement is a BOUND, not a win:** *real beats fake by ≤0.012 ρ, and every control
-improvement so far has shrunk it.* Whether the next fix (Manakov chimeric eCLIP + POSTAR3, still
-uncovered) takes it to zero is **genuinely open**.
+improvement so far has shrunk it.*
+⭐⭐ **BUT THE "NEXT CONTROL FIX" IS NO LONGER OPEN — MEASURED AND CLOSED 2026-08-03 (MH-206).** This block
+used to end *"whether the next fix (Manakov chimeric eCLIP + POSTAR3, still uncovered) takes it to zero is
+genuinely open."* Manakov has been **in** the exclusion since MH-137 (448,330 pairs), and the POSTAR3 leg is
+now settled on both the fact and the mechanism:
+- **POSTAR3 IS on disk** (`data/external/POSTAR/human (1).txt.gz`, 676 MB, 2026-06-30) — but it is the **RBP
+  binding-site table**: 221 RBPs, **2,360,006 AGO2 records, ZERO miRNA-named entries** ⇒ **no pair-level
+  `(arm,gene)` call is derivable from it.**
+- ⭐ **An AGO-peak ∩ seed-site layer is a NO-OP BY CONSTRUCTION** — `build_decoys` already requires
+  `(a,g) ∉ sites`, and the strong-site + Poisson-6mer layers exclude every seeded arm. Only an **arm-resolving
+  source on SEEDLESS pairs** can add anything; that is what Manakov is, and it moved **2.7%**.
+- **ENCORI is 97.0% union-redundant**: 20,404 local pairs vs 3,861 in the labelled layer, but 19,799 already
+  covered; of the 605 new, 578 are in the site map anyway and **0 of the 4,937 assigned decoys carry one.**
+⇒ **the residual ≈−0.012 is NOT an evidence-hole artifact.** ⚠ Quote "97% covered / 0 decoys affected", not
+"5.3× under-ingested" (axiom 5). Genuinely closing further needs POSTAR3's **separate miRNA-target/degradome
+module** — not what is on disk — and layer (4) bounds its scale at a few percent.
 
 **⭐ STANDS — MH-136, the arc's first real positive control, and its strongest result:** using the
 genome-wide 6mer map, **187 genes whose curated edges are ALL seedless show gap +0.0006 — exactly

@@ -11,9 +11,14 @@
 > **Sync-partner:** `docs/STATE_OF_PLAY.md` (the current-state verdicts this board plans against; if the two
 > disagree, STATE_OF_PLAY wins, and the registry wins over both).
 
-**Last updated: 2026-08-01** · planning against the registry through **MH-181**.
+**Last updated: 2026-08-03** · planning against the registry through **MH-207**.
 ⚠ Several 2026-07-17 items were found STALE on 2026-08-01 (already done) and are now marked ✅ —
 verify a 🔨 before building against it.
+⚠⚠ **AND AGAIN ON 2026-08-03: a sweep of §B + the discovery lane found FIVE more stale entries** — three
+already DONE (`site_free_null` wiring · the per-GENE roll-up, hidden by MH-181's **rename** · the ENCORI/
+POSTAR3 hole, closed by measurement) and two mis-stated in a way that would have sent work in the wrong
+direction (POSTAR3 "not in this repo" — it is; "acquire it" — acquiring it would not have helped).
+**The base rate of stale entries on this board is high. Verify before building, always.**
 *Supersedes and replaces `WHATS_NEXT.md` and `LEARNED_MODEL_WHATS_NEXT.md` (both archived; both predated MH-133…137).*
 
 Status: ✅ done (anchor only) · 🔨 immediate/flagged · ⬜ open · 🔬 investigate · ⛔ blocked/dead · 🚫 deliberate skip.
@@ -172,9 +177,14 @@ anti-correlation ladder; **data/edges/harmonization** → `DATA_SOURCES §0/§1/
     MH-123 to the digit). Efron form (**fit** location+scale per arm-abundance quintile, score N(μ₀,σ₀));
     exceedance counting is resolution-limited and can never fire BH. ⚠ It is **conservative** (the site-free
     class holds some real non-canonical targets) — the truth lies between it and the theoretical null.
-  - ⬜ **REMAINING WORK:** wire `site_free_null` into `discovery`/`dossier` as the gate. `discovery.scan_all`
-    currently uses a bare ρ<−0.15 threshold with a **single** permuted draw (`permute=101`, raw-Y shuffle,
-    per-gene seed) — which inherits exactly this defect. **Reserve "discovery" language for the AGGREGATE lane.**
+  - ✅ **DONE — VERIFIED IN CODE 2026-08-03; this item was STALE.** ~~wire `site_free_null` into
+    `discovery`/`dossier` as the gate~~. It is wired in **three** places: `learned/discovery.py` fits the null
+    **IN-LOOP per gene** (`calibrate` imports `site_free_null._fit_bins`; its docstring explains *why* in-loop
+    rather than calling `site_free_null.fit()` — that module residualises on **C only**), `learned/card.py`
+    uses `SFN.fit_state()` for the per-state **calibrated** coupling that replaced the −0.1 cut (MH-166), and
+    `learned/eval/dossier.py` replaced its `realized_coupling < −0.1` rule with a **sweep** on the calibrated
+    quantity. ⚠ The `permute` path the item describes is still present but is **explicitly marked DEPRECATED
+    in the source** (`discovery.py:497`), not the live gate. **Reserve "discovery" language for the AGGREGATE lane.**
   **(→ MH-123, MH-154; `eval/site_free_null.py`, `output/site_free_null/`)**
 
 - ⬜ **DISCOVERY LANE — calibrated + expanded (MH-155), finding still DEFERRED.** `learned/discovery.py` now: fits
@@ -201,8 +211,41 @@ anti-correlation ladder; **data/edges/harmonization** → `DATA_SOURCES §0/§1/
   only for the per-edge FDR; ② ⛔ **DONE/NEGATIVE 2026-07-18 (MH-165) — the HE surfacing hope is at chance** (337 vs 287±35 shuffle, z=+1.4;
    83% family-lone), so **non-HE orphan discovery per subtype is NOT worth running** (weaker/noisier at n=93–197
    than HE, which already failed). ⬛ ~~**SUBTYPE-STRATIFIED run (user-asked)**~~ — PAM50-stratified
-  discovery, since coupling washed out in the pooled cohort can surface within a subtype; ③ family-lane evidence-attach
-  (pool members' chimeric/ledger). **(→ MH-155; `output/learned/{discoveries,discoveries_family}.tsv`)**
+  discovery, since coupling washed out in the pooled cohort can surface within a subtype;
+  ③ ✅ **DONE 2026-08-03 (MH-207) — family-lane evidence-attach BUILT, and it delivers a NEGATIVE that
+  matters.** `discovery.attach_evidence_family` (wired into `run_families`) pools each family's member arms:
+  `ev_npmid_fam` / `ev_classes_fam` / `ev_n_arms_supported` · `chimeric_wt_max` / `chimeric_n_arms` /
+  `chimeric_src_fam` · `ts_mag_max` / `ts_n_arms` · `family_size_degenerate`. Purely additive (all 21
+  pre-existing columns bit-identical). Coverage on 3,119 families: ledger **76.5%**, chimeric **45.3%**,
+  context++ 98.9%, none-at-all 19.
+  * ⭐ **PMIDs are UNION-DEDUPED, NEVER SUMMED — and it matters: summing inflates depth 2.55×**
+    (33,012 → 12,935 over 1,590 multi-arm families; **20,077 double-counted PMID-slots**). Worst single row:
+    NFAT5 / miR-17-5p/20-5p/93-5p/106-5p/519-3p, **sum 159 vs union 34 = 4.7×**. Same-seed members are
+    routinely assayed in the SAME paper, so a summed depth is largely a family-SIZE proxy.
+  * ⚠⚠ **EVERY pooled statistic is MONOTONE IN FAMILY SIZE** — chimeric support climbs **25.2% (1 arm) →
+    89.1% (7+ arms)**, ledger **60.5% → 99.5%**. Condition on `n_family_arms` or the comparison is circular.
+  * ⛔ **AND THE ARM LANE'S CHIMERIC CONVERGENCE DOES *NOT* TRANSFER TO THE FAMILY RUNG.** Naive pooled MWU
+    looks real (**p=0.0074**) but is a size artifact and a trivial effect anyway (median null_z −1.329 vs
+    −1.312, **Δ=−0.017**). Conditioned: **size-stratified Stouffer Z=−0.31, p=0.76** with **incoherent signs
+    (4/7 strata negative; the two LARGEST strata point OPPOSITE ways)**, and the rank-partial on
+    (family size, arm abundance) gives **ρ=−0.0101, p=0.571**. Two independent methods agree. ⇒ **MH-155's
+    "chimeric-present edges couple stronger (p=4.6e-8)" is an ARM-rung result; do NOT broadcast it to families**
+    (MH-111's confounder-architecture principle: the unit predicts the tool).
+  * ⛔⛔ **AND THE LEDGER-DEPTH SIGNAL IS DEAD TOO — RIGOR-GATED SAME SESSION.** It briefly read *"what
+    survives conditioning: partial ρ=−0.0578, p=0.00124"*. **The decisive control is WITHIN-GENE** (depth is
+    (arm,gene)-specific, so a within-gene contrast removes gene-level study intensity, expression level,
+    dynamic range and composition at once): on **2,566 families / 663 genes**, gene-demeaned and
+    size+abundance-controlled, **ρ = +0.0032, p = 0.889 — zero, and nominally the wrong sign.** The pooled
+    effect was **entirely BETWEEN-gene.** Fame null (depth shuffled within gene, 500 draws) centres at
+    −0.0010 ± 0.0331 with the observation at **empirical p=0.55**; the study-bias channel is **larger here
+    than MH-196 measured** (within-gene spearman(depth, abundance) **+0.330 mean / +0.500 median, 70.7% of
+    604 genes** vs +0.187/+0.244/67.3%); and an **internal null control fires the WRONG way**
+    (`ev_n_arms_supported` ρ=+0.0607, p=0.0081). ⚠ The degeneracy split is **incoherent, not a rescue**
+    (multi-arm −0.0636 p=0.059 vs single-arm +0.0651 p=0.133 — opposite signs, neither significant).
+  ⇒ ⭐ **NET: the family lane's deliverable is the ATTACH and its two design rules — NOT a finding. Neither
+    evidence axis carries convergence at the family rung, while the ARM rung does (MH-155, p=4.6e−8) ⇒ run an
+    evidence-vs-coupling test at the rung the evidence is RECORDED at** (generalises MH-111).
+  **(→ MH-155, MH-207; `output/learned/{discoveries,discoveries_family}.tsv`)**
 
 - 🚫 **Do NOT merge `METHODS.md` into `FORMULAS.md`.** ~87 KB of spec for an estimator MH-115 **retired**;
   consolidating it buys tidiness on a baseline. Both keep a retired-estimator banner and stay. The value in
@@ -320,12 +363,29 @@ retention 0.76, 1,322 genes.** ⚠ **The magnitude has SHRUNK at every control f
   CNV cache** that was making `assemble_gene` fail for **every** gene. Both fixed (MH-168). Atlas reproduces
   MH-144 structurally (47.1% / 27.6% / +0.551). Strata: **MH-169** — width reproduces MH-147 (−0.0295 vs
   −0.0105) but **width and abundance are inseparable** (ρ=+0.780; both partials vanish). **(→ MH-168, MH-169)**
-- ⚠ **STALE AS WRITTEN — Manakov chimeric eCLIP IS ALREADY IN the evidence exclusion** (verified 2026-08-01:
-  2,242,630 pairs = TarBase_v9 1,281,063 · mirTarBase_ALL 509,376 · **Manakov_chimeric 448,330** · ENCORI 3,861).
-  ⛔ **POSTAR3 miRNA-target is NOT in this repo** (only its lncRNA/RBP parquets) ⇒ **cannot be closed with local
-  data.** What remains of this item is acquiring POSTAR3, not re-running an exclusion. **(→ `decoy_bench._site_maps`)**
-- ⬜ **~~The next control fix: Manakov chimeric eCLIP + POSTAR3 are still uncovered by the evidence exclusion.~~**
-  Whether closing that hole takes the gap to zero is **genuinely open** — it is the arc's decisive remaining test.
+- ✅✅ **CLOSED BY MEASUREMENT 2026-08-03 (MH-206) — THE EVIDENCE HOLE CANNOT MOVE THE GAP, AND BOTH PRIOR
+  STATEMENTS OF THIS ITEM WERE WRONG.** The board and `decoy_bench._site_maps`'s own docstring said *"POSTAR3
+  miRNA-target is NOT in this repo ⇒ cannot be closed with local data; what remains is ACQUIRING POSTAR3"*.
+  Wrong on the fact **and** on the mechanism:
+  * ⭐ **POSTAR3 IS on disk** — `data/external/POSTAR/human (1).txt.gz`, **676 MB, downloaded 2026-06-30**,
+    one directory from where the docstring looked. But it is the **RBP binding-site table**: **221 distinct
+    RBPs, 2,360,006 AGO2 records**, TNRC6A/B/C ~3k, DICER1 8.5k — and **ZERO miRNA-named entries** ⇒ it
+    yields no pair-level `(arm, gene)` call, only **miRNA-ANONYMOUS occupancy intervals**.
+  * ⭐⭐ **AND AN AGO-PEAK ∩ SEED-SITE LAYER IS A NO-OP BY CONSTRUCTION** — the structural point neither
+    doc had: `build_decoys` (`decoy_bench.py:280`) already requires `(a,g) ∉ ctx["sites"]`, and layers
+    (1)+(2) exclude **every** arm with a strong site or a Poisson-significant 6mer in that gene. An arm whose
+    seed sits under an AGO peak is **already ineligible**. Only an **arm-resolving source on SEEDLESS pairs**
+    can add anything — which is precisely what Manakov chimeric is, and it moved **2.7%**.
+  * **ENCORI: 5.3× under-ingested as a LABELLED layer, 97.0% redundant as a SET.** `data/external_cache/
+    encori/miRNATarget/` (8,647 per-gene files, 6,431 non-empty) holds **20,404 distinct (arm,gene) pairs**
+    vs the shipped `ENCORI_starBase` **3,861** — but **19,799/20,404 (97.0%)** are already in the union via
+    TarBase v9 / miRTarBase / Manakov. Of the **605 new**, **578 are already in the full site map** via
+    layers (1)/(2), and ⭐ **0 of the 4,937 assigned decoys carry one (0.000%)**.
+  ⇒ **The arc's "decisive remaining test" is answered: it is not a live test.** ⚠ Read the pair of numbers
+  together per axiom 5 — "5.3× under-ingested" is the fragile framing, "97% union-covered, 0 decoys affected"
+  is the robust one. What would still be needed is POSTAR3's **separate miRNA-target/degradome module**
+  (not what is on disk), and layer (4) bounds its plausible scale at a few percent.
+  **(→ MH-206; `eval/decoy_bench._site_maps` docstring corrected in code)**
 - ✅ **DONE 2026-08-01 (MH-169) — tested on the restored canonical decoy: A_COMPETENT −0.0335 (n=392) vs C_WEAK −0.0073 (n=69), MWU p=0.0618.** Same verdict (does not clear the bar) but far closer than MH-147's recorded p=0.293, on a 69-gene arm ⇒ **underpowered, not "adds nothing"**. ~~Its only support fails~~
   the arc's own both-fake-sets rule (q=0.006 FAKE1, q=0.20 FAKE2). ⇒ carry MH-130's **"27% domain" as a live
   hypothesis, not an established partition**. The **width axis (`n_fam ≥ 3`) is CONFIRMED** and sharpened
@@ -335,11 +395,24 @@ retention 0.76, 1,322 genes.** ⚠ **The magnitude has SHRUNK at every control f
   the **1-family internal null is back** (−0.0007, p=0.15 on the clean control; MH-135's retraction of it was an
   artifact of the broken decoy) · **an abundance baseline is NOT a control — benchmark any aggregator against a
   fitted matched decoy** (MH-115/127) · MH-130b's whole **SNR-strata arc is dead** (double-log bug);
-  `mh127_snr_strata.tsv` is poisoned — delete or re-derive.
-- 🔬 **Aggregate "raw force" vs abundance-sum, tumour↔GTEx Δρ.** Gene-rung design in
-  `method_dev/aggregate_pressure/AGGREGATE_FORCE_VS_ABUNDANCE_DESIGN.md`. **Two gates before any run:** it sits
-  on the **retired pressure heuristic**, and its comparator is an **abundance baseline, which the rule above
-  says is not a control**. Re-scope against a fitted matched decoy or drop it.
+  ✅ `mh127_snr_strata.tsv` **ARCHIVED OUT OF THE LIVE TREE 2026-08-03** →
+  `output/learned/ARCHIVE_POISONED_MH130b/` with the bug and the corrected re-run in its README.
+  Zero code consumers at archive time (verified: only doc references).
+- 🚫 **DROPPED 2026-08-03 — Aggregate "raw force" vs abundance-sum.** Design in
+  `method_dev/aggregate_pressure/AGGREGATE_FORCE_VS_ABUNDANCE_DESIGN.md` (design-only; **no module was ever
+  built** — verified, `grep aggregate_force|raw_force` returns no code). It fails **both** of its own gates
+  and is now superseded twice over: its `w_eff` **IS the evidence-weighted pressure heuristic MH-115 RETIRED**
+  (*"adds nothing over raw abundance, ever"*), and its actual question — the doc's own words, *"regulators
+  weighted by strength/promiscuity vs weighted equally"* — **has been answered in a strictly better frame by
+  MH-201/204**: learned β vs unweighted abundance-sum (Δ −0.0072, p=6.2e-13 on Buffa) and vs a **fitted
+  matched decoy** on three layers. Tuning a retired estimator against a non-control comparator is a category
+  error (cf. the §Z ruling on PRESSURE_FUTURE_OPTIONS).
+  ⭐ **ONE COMPONENT SURVIVES AND IS WORTH SALVAGING: `D(m)`, miRNA PROMISCUITY** (targetome breadth as a
+  budget split). **No promiscuity / target-count axis exists in `learned/gene_axes.py`** (verified) — its
+  regulator-ensemble family covers dose level, dynamic range and concentration (`reg_dose_hhi`, `reg_var_hhi`,
+  `reg_frac_flat`) but **not how broadly each regulator is spread across other genes**. Per axiom 8 the
+  regulator-ensemble axes are the strongest and most-forgotten family ⇒ add `reg_promiscuity_*` there rather
+  than reviving the heuristic aggregate.
 
 ## C. Attribution / Shapley
 
@@ -426,9 +499,18 @@ gene-specific component is significant (Δ=−0.085, p=0.038) while abundance's 
   partial-ρ), **NOT** `mirna_state_class.joint_edge_class` (retired-pressure) — same names, different label
   system; never map one onto the other. Companion `canonical_card_provenance.tsv` maps every column→estimator.
   Also consolidated the card DUPLICATION (deleted 3 orphans, repointed `discovery.py`). Ledger 2026-07-18.
-  ⬜ **REMAINING: the per-GENE roll-up** (G-series: net repression, coherence+role, budget concentration,
-  composition fraction, shift-class) — the (gene,arm) card is the input; the gene-level aggregation is not yet built.
-  **(→ ledger 2026-07-18; `canonical_card.py` docstring; `ATTRIBUTION_CONTEXT_AXIS.md`)**
+  ✅ **DONE — VERIFIED 2026-08-03; this item was STALE, and a RENAME is why.** ~~REMAINING: the per-GENE
+  roll-up (G-series…)~~ — `output/learned/realization/gene_card.tsv` is built: **1,549 genes × 106 columns**
+  (2026-08-02), and **all five named G-series items are present and populated**: net repression
+  (`gene_repression_class`, `gene_net_repressed_tumor`, 1,409 non-null) · coherence+role (`realization_owner`,
+  `static_owner_family`, `owner_agrees`, `regulatory_handoff`) · budget concentration (`concentration`,
+  `top_beta_frac`, 1,549) · composition fraction (`median_retention`, `n_composition_explained`,
+  `n_cell_intrinsic`) · shift-class (`dominant_edge_shift_class`, 1,260). Registered in
+  `output/learned/card_registry.tsv` (edge 161 / gene 106 / family 61 columns).
+  ⚠ **Why the board missed it — axiom 6, a naming collision:** the artifacts were **RENAMED on 2026-08-01
+  (MH-181)** — `progression_gene_card` → `gene_card`, `progression_edge_card` → `edge_card`,
+  `canonical_card` → `edge_card_base` (`learned/card_context.py:72`). This item was written against the old
+  name and became invisible. **(→ MH-181; `card_context.py`, `card_rungs.py`)**
 - 🔬 **Top-discovery deep-dives.** (a) the **miR-17~92 / miR-106b-25 target cluster** (miR-106b/93/17/19a →
   RABEP1, AHNAK, TGFBRAP1, IL6ST, AFF1, WWP1, M6PR — ubiquitous arms, cell-intrinsic, strong, weakly-curated):
   lit scan each, then CPTAC protein + Manakov binding + within-patient realization; is it a coordinated

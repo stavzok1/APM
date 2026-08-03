@@ -788,7 +788,23 @@ rep(X) := (coupling_p_X == coupling_p_X) and coupling_p_X < COUPLING_ALPHA   # C
 ```
 
 The null reproduces MH-123: tumour inflation **2.67×** (sd0 ≈ 0.08 vs theoretical 0.031), NAT 1.25×,
-GTEx ~1.5–2× (lowest GTEx abundance bin unfit → sd0=1.0 guard). ⚠ set-level, NOT per-edge FDR.
+GTEx ~1.5–2× (bins 1–4 width-ratio 1.17→1.77). ⚠ set-level, NOT per-edge FDR.
+
+⚠ **THE `sd0=1.0` GUARD IS INERT — MEASURED 2026-08-03, and this line previously overstated it.** GTEx bin 0
+spans `[-1e-06, 0.0)`; abundance is never negative and `np.digitize` sends everything at exactly 0.0 into
+bin 1, so **the guarded bin is UNREACHABLE: 0 of 3,041 healthy-scored edges land in it** (forensic check —
+under `mu0=0, sd0=1` the one-sided p is exactly `Φ(ρ)`; no edge matches). ⇒ the degenerate lowest GTEx
+quintile is a **phantom bin** produced by the zero-mass in GTEx abundance, not an active hazard. The real
+lowest FITTED bin is bin 1, `[0, 1.71)`, sd0=0.065. **Do not "fix" the guard — fix nothing; it never fires.**
+
+⬜⬜ **WHAT *IS* STILL OPEN ON THE `h` LEG, AND IT IS NOT COSMETIC.** After the surrogate rescue (202 edges),
+**132 edges still ABSTAIN** — `collapse_blind` + high healthy-potential + no same-seed instrument. They are
+**not a random slice**: **73/132 = 55% sit in an acquired-family class** (`acquired_realized` ·
+`tumour_realized` · `field_established_realized` · `dose_acquired_uncoupled`) against a **23% cohort-wide
+base rate — a 2.4× enrichment**, which is exactly the direction blindness predicts, because every one of
+those classes is reached through `not h`. Concentrations: **16.1%** of all `composition_explained` and
+**8.8%** of all `dose_acquired_uncoupled` edges are h-blind. ⇒ **for these 132, "acquired" rests on an h leg
+that is BLIND, not measured** — they should be read as abstentions, never as evidence of acquisition.
 
 **Axis B — SAME-PLATFORM dose (SOE).** The trusted paired NAT→tumour arm log-fold-change
 `arm_lfc_NAT_TUM` (never the soft cross-platform QN healthy leg):

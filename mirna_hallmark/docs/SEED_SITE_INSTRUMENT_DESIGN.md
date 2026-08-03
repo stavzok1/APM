@@ -153,7 +153,7 @@ data readiness** (verified against disk, §4.1):
 2. **A-to-I editing** — recurrent ADAR editing at/near seed sites; site-loss/gain. Per-sample and recurrent →
    *would* carry more power than SNVs. **Data: BLOCKED** — no REDIportal/DARNED/editing-site table on disk;
    must be sourced fresh. **Deferred pending acquisition.**
-3. **APA / 3′UTR shortening** — proximal-polyA deletes distal sites. **Data: PARTIAL** — the on-disk APAatlas
+3. **APA / 3′UTR shortening** — proximal-polyA deletes distal sites. ⛔ **Data: GENE-LEVEL ONLY (settled 2026-08-03) — the per-sample route is CLOSED from APAatlas; its PDUI matrix is GTEx-only (0 TCGA columns).** The on-disk APAatlas
    table (`breast_pdui_per_gene.tsv`) is **per-gene breast-cohort static** (already folded into the site map as
    `apa_shortened`/`breast_pdui`), **not** per-TCGA-sample. A per-sample `ΔPDUI × arm_dose` interaction needs the
    full `PDUI.txt.zip` (177 MB, APAatlas pan-cancer) unpacked and checked for per-sample TCGA-BRCA columns first.
@@ -178,7 +178,7 @@ never had. **But the SNV leg stands or falls on its own first** — triangulatio
 | **seed-disruption call** (loss/gain/neutral) — re-score the 6–8mer with `alt` vs `ref` | **NET-NEW** (sequence logic) | site map + reference 3′UTR seq |
 | **barcode↔UUID join** (SNVs are UUID-keyed; expression is barcode-keyed) | **NET-NEW** (construct from sample sheet) | `annotations/SNV/samples.tsv` (`Case ID`↔`File ID`) |
 | A-to-I editing sites | **ABSENT** | — (source REDIportal/DARNED) |
-| per-sample APA/PDUI | **UNVERIFIED** | `data/external_cache/apaatlas/PDUI.txt.zip` (inspect) |
+| per-sample APA/PDUI | ⛔ **UNOBTAINABLE FROM THIS FILE — VERIFIED 2026-08-03, do not re-inspect** | `data/external_cache/apaatlas/PDUI.txt.zip` header read (805 MB uncompressed, streamed): **9,478 columns, ALL `GTEX-*` donors — ZERO TCGA and ZERO BRCA columns.** APAatlas's per-sample PDUI matrix is **GTEx-only**, so the `ΔPDUI × arm_dose` interaction is not runnable from it. The per-GENE breast static table (`breast_pdui_per_gene.tsv`) remains the only APA input and is already folded in as `apa_shortened`/`breast_pdui`. A per-sample TCGA-BRCA leg needs a DIFFERENT source (e.g. TCGA-derived DaPars). |
 
 **VEP is NOT on the critical path** (user-caught, 2026-07-18). The SNV↔site link is a pure **coordinate overlap**
 (`pos ∈ [g_start,g_end]`) against `utr_site_ladder_genomic.tsv.gz`, which is **3′UTR-by-construction** (lifted

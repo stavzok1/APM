@@ -725,6 +725,92 @@ def attach_evidence(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def attach_evidence_family(df: pd.DataFrame) -> pd.DataFrame:
+    """LANE-1 (family) counterpart of `attach_evidence` — pool each seed family's MEMBER arms' evidence.
+
+    The family lane's row is a (gene, seed_family) aggregate, so its evidence must be pooled over
+    `family_members`, not looked up per arm. Three rules, each of which is a decision and not a default:
+
+      1. ⭐ **PMIDs are UNION-DEDUPED ACROSS MEMBERS, NEVER SUMMED.** Same-seed members are frequently
+         reported in the SAME paper (a study that assays miR-17-5p usually assays miR-20a-5p alongside),
+         so summing per-arm `ev_npmid` double-counts one experiment once per member and manufactures
+         depth out of family size. `ev_npmid_fam` is `|⋃ members PMIDs|`; `ev_npmid_sum` is kept ONLY as
+         the naive comparator so the inflation is visible rather than assumed.
+      2. **max + count, not mean.** A family is chimerically supported if ANY member carries a duplex
+         (`chimeric_wt_max`), and `chimeric_n_arms` says how many do. A mean would dilute a real duplex
+         by the family's silent members — the wrong direction for an evidence flag.
+      3. ⚠⚠ **EVERY pooled statistic is MONOTONE IN FAMILY SIZE** (more members = more chances to carry
+         any evidence), so `n_family_arms` is carried on every row and **must condition any comparison**.
+         ⛔ And `family_size_degenerate` flags the **n_family_arms == 1** rows where the family lane is
+         IDENTICAL to the arm lane by construction — pooling them into a "family evidence" statistic
+         reports an ARM result under a FAMILY label (CLAUDE.md axiom 8's degeneracy trap; axiom 7's
+         classify-the-quantity-not-its-container). Measured on the current artifact: **1,315 / 3,119
+         rows (42.2%) are single-arm.** Split on it; never pool it.
+
+    Attached, NOT gated (same policy as the arm lane).
+    """
+    from mirna_hallmark.learned import chimeric_evidence as CE
+    from mirna_hallmark.learned.evidence import ledger as _LG
+    df = df.copy()
+    members = [[m for m in str(s).split(",") if m and m != "nan"] for s in df["family_members"]]
+
+    # --- ledger: union-dedupe PMIDs and classes over the family's members ---
+    L = _LG.build_ledger()
+    Lg = {k: v for k, v in L.groupby(["arm", "gene"])}
+    cls, npm_u, npm_s, n_sup = [], [], [], []
+    for g, mem in zip(df["gene"], members):
+        pm, cl, k = set(), set(), 0
+        for a in mem:
+            sub = Lg.get((a, g))
+            if sub is None or not len(sub):
+                continue
+            k += 1
+            pm |= set(sub["pmid"].dropna().astype("int64").tolist())
+            cl |= set(sub["assay_class"].dropna().unique())
+        cls.append(",".join(sorted(cl)))
+        npm_u.append(len(pm))
+        npm_s.append(sum(len(set(Lg[(a, g)]["pmid"].dropna())) for a in mem if (a, g) in Lg))
+        n_sup.append(k)
+    df["ev_classes_fam"], df["ev_npmid_fam"] = cls, npm_u
+    df["ev_npmid_sum"], df["ev_n_arms_supported"] = npm_s, n_sup
+
+    # --- chimeric duplex: max over members, with the supporting-member count ---
+    cwm, cnm, csm = [], [], []
+    for g, grp in df.groupby("gene", sort=False):
+        allm = sorted({m for mem in (members[i] for i in grp.index) for m in mem})
+        try:
+            ev = CE.evidence(g, allm)
+            mat = CE.evidence_matrix(g, allm)
+        except Exception:
+            ev, mat = None, None
+        for i in grp.index:
+            mem = members[i]
+            wts = [float(ev.get(a, 0.0)) for a in mem] if ev is not None else [0.0]
+            srcs = set()
+            if mat is not None:
+                for a in mem:
+                    if a in getattr(mat, "index", []):
+                        srcs |= {c for c in mat.columns if float(mat.loc[a, c]) > 0}
+            cwm.append((i, round(max(wts) if wts else 0.0, 3)))
+            cnm.append((i, sum(1 for w in wts if w > 0)))
+            csm.append((i, ",".join(sorted(srcs))))
+    for col, vals in (("chimeric_wt_max", cwm), ("chimeric_n_arms", cnm), ("chimeric_src_fam", csm)):
+        s = pd.Series({i: v for i, v in vals})
+        df[col] = s.reindex(df.index)
+
+    # --- TargetScan context++ magnitude: max over members ---
+    ts = LD._targetscan_context()
+    if ts is not None:
+        tsm = ts.set_index(["arm", "gene"])["ts_mag"]
+        df["ts_mag_max"] = [round(max([float(tsm.get((a, g), 0.0)) for a in mem] or [0.0]), 3)
+                            for g, mem in zip(df["gene"], members)]
+        df["ts_n_arms"] = [sum(1 for a in mem if float(tsm.get((a, g), 0.0)) > 0)
+                           for g, mem in zip(df["gene"], members)]
+
+    df["family_size_degenerate"] = df["n_family_arms"].astype(float) <= 1
+    return df
+
+
 def run_all(*, min_partial: float = -0.15, min_scanmir: float = -0.5, top: int | None = None,
             n_null_arms: int = 40, universe: str = "he",
             out="mirna_hallmark/output/learned/discoveries.tsv") -> pd.DataFrame:
@@ -769,7 +855,9 @@ def run_all(*, min_partial: float = -0.15, min_scanmir: float = -0.5, top: int |
 def run_families(*, min_partial: float = -0.15, n_null_arms: int = 40, universe: str = "he",
                  out="mirna_hallmark/output/learned/discoveries_family.tsv") -> pd.DataFrame:
     """LANE 1 genome-wide: family-as-discovery, calibrated against the size-matched site-free family null.
-    (Evidence attach per family — pooling members' chimeric/ledger — is a follow-up; the members are listed.)"""
+    ✅ Evidence attach per family (pooling members' chimeric/ledger) is now wired — `attach_evidence_family`.
+    ⚠ Its pooled columns are MONOTONE IN FAMILY SIZE and degenerate at `n_family_arms == 1`; read that
+    function's docstring before using them in any comparison."""
     from pathlib import Path
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     scan = scan_families(min_partial=min_partial, n_null_arms=n_null_arms, universe=universe)
@@ -781,6 +869,7 @@ def run_families(*, min_partial: float = -0.15, n_null_arms: int = 40, universe:
               f"(σ₀ {par.sd0.min():.4f}–{par.sd0.max():.4f})")
         print(f"[run_families] {len(real)} whole-family-novel candidates | {n_prim} at q_family_emp<0.05 "
               f"(PRIMARY; each row is its own family so Simes is 1:1) | median null_z {real['null_z'].median():+.2f}")
+    real = attach_evidence_family(real)
     real.sort_values("null_z").to_csv(out, sep="\t", index=False)
     print(f"[run_families] wrote {out}")
     return real
