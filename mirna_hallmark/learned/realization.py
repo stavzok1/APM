@@ -608,12 +608,21 @@ def host_confound_summary(T: Optional[pd.DataFrame] = None) -> pd.DataFrame:
     MH-158's headline (`realize_null_test`) — so the numbers are comparable to the record by construction."""
     if T is None:
         T = pd.read_csv(OUT / "host_confound.tsv", sep="\t")
+    # ⚠ STRATIFY BY THE PAIR'S *REAL* ARM, NOT BY EACH ROW'S OWN ARM. `mir_class` is a property of the arm
+    # in that row, so a REAL intragenic arm can be matched to an INTERGENIC decoy. Filtering rows by their
+    # own class therefore leaves a scope whose REAL and DECOY sets are not the same genes — and the paired
+    # gene-level test then silently drops almost everything (`intergenic` had 156 genes of REAL rows and
+    # still fell under the n>=20 floor). The pair's identity is its REAL arm, so that is the class.
+    real_cls = (T[T.group == "REAL"].drop_duplicates("pair_id").set_index("pair_id")["mir_class"]
+                if "pair_id" in T.columns else None)
+    T = T.copy()
+    T["pair_class"] = T.pair_id.map(real_cls) if real_cls is not None else T.mir_class
     rows = []
     for variant in ("raw", "host_resid"):
-        for scope, sel in ([("ALL", T.mir_class.notna())]
-                           + [(c, T.mir_class == c) for c in sorted(T.mir_class.dropna().unique())]
-                           + [("intergenic_or_antisense", T.mir_class.isin(["intergenic", "antisense_overlap"])),
-                              ("host_coupled", T.mir_class.isin(["sense_coding_host", "sense_lncRNA_host"]))]):
+        for scope, sel in ([("ALL", T.pair_class.notna())]
+                           + [(c, T.pair_class == c) for c in sorted(T.pair_class.dropna().unique())]
+                           + [("intergenic_or_antisense", T.pair_class.isin(["intergenic", "antisense_overlap"])),
+                              ("host_coupled", T.pair_class.isin(["sense_coding_host", "sense_lncRNA_host"]))]):
             for ori in ("OPPOSITE", "SAME"):
                 s = T[(T.variant == variant) & sel & (T.orientation == ori) & T.rho_adj.notna()]
                 if s.empty:
