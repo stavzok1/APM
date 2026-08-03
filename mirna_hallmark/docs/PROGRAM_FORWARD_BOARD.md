@@ -667,8 +667,18 @@ One line each. The detail is in the registry row named.
   (−0.0374, p=3.5e-06); it does NOT win on protein (p=0.554).** ⇒ **a LAYER split, not a general
   negative** — and the mRNA win survives the subtype control (within-PAM50 gap −0.0154, retention 0.81).
 
-**⬜ What that opens next.** The layer split is now the sharpest open question on the board: is the
-protein null **biology** (repression is transcript-level, so protein adds nothing beyond mRNA) or
-**instrument** (RPPA's ~200-antibody signalling-biased panel, phospho contamination, n=180 after the
-antibody join)? **These are separable** — a total-protein-only re-run at matched n, and the same test on
-CPTAC's proteome-scale panel *with* the composition block MH-83/84 lacked, would decide it.
+✅ **AND THAT QUESTION IS NOW CLOSED — SAME DAY, AND IT CORRECTS THE ROW ABOVE (MH-205).** *"Is the protein
+null biology or instrument?"* → **INSTRUMENT: gene selection and power — and NOT the phospho contamination
+I had named as the suspect** (13/180 genes; dropping them moves −0.0086 → −0.0089).
+**On the same 180 genes the mRNA gap is also n.s. (−0.0103, p=0.0565), both sit inside their own MDE, and
+paired on gene at 5× the gene count the layers are indistinguishable — CPTAC `tcga105` +0.0018 (p=0.287),
+`prospective` +0.0056 (p=0.341).** ⇒ **the "layer split" is WITHDRAWN; the protein half is UNRESOLVED.**
+A consistent direction across all three instruments (Stouffer z=+2.44, anti-conservative) leaves a **small**
+penalty ~0.002–0.006 ρ plausible. ✅ Destabilisation-not-translation survives, now on 849/897 genes.
+→ `learned/eval/layer_boundary.py`.
+
+**⬜ What THIS opens.** The binding constraint is now explicit, and it is **genes with a protein readout, not
+patients**: ~514 genes are needed for the mRNA-sized effect, and no cohort supplies both a large gene count
+and a large patient count (RPPA 180×866; CPTAC ~880×105). The honest options are (a) a gene-powered proteome
+cohort, or (b) accepting the protein layer is **bounded** — |gap| ≲ 0.006 — which is itself a real constraint
+and far cheaper than chasing it.

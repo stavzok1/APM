@@ -435,10 +435,26 @@ now exists in all three places:
 | **mRNA, transported to BUFFA** (multi-family, n=243) | −0.0334 | +0.0035 | **−0.0374** | **3.54e-06** |
 | protein, RPPA (n=180) | −0.0186 | −0.0264 | −0.0086 | 0.554 |
 
-⇒ **β beats a fitted, matched, site-free fake on mRNA in BOTH cohorts, and fails only on protein.** That is
-a **layer boundary, not a general negative** — and it retires the standing caveat *"every win is fitted β vs
+⇒ **β beats a fitted, matched, site-free fake on mRNA in BOTH cohorts** — which retires the standing caveat *"every win is fitted β vs
 UNFITTED abundance"*. ⚠ **It also survives the subtype control:** within-PAM50 gap **−0.0154 (p=4.2e-08)**,
 **retention 0.81** (real −0.0528 vs decoy −0.0363, n=1,354) ⇒ the mRNA effect is **not** lineage-scale.
+
+⛔⛔ **THE PROTEIN ROW IS *NOT* A LAYER BOUNDARY — CORRECTED SAME-DAY (MH-205).** This block first read
+*"fails only on protein ⇒ a layer boundary, not a general negative"*. **That was wrong, and the error was
+comparing a 180-gene protein test against a 1,354-gene mRNA test.** Three things were confounded — gene
+selection, power, and layer:
+* ⭐ **on the SAME 180 genes the *mRNA* gap is −0.0103, p=0.0565 — also n.s.** Those genes are weak on
+  **both** layers; RPPA's antibody panel is signalling-biased, not a random draw. Matched, protein retains
+  **84%** of the mRNA gap, not the 45% the naive comparison implies.
+* ⭐ **the MDE at n=180 genes is 0.0309 / 0.0232 — both observed values sit INSIDE their own noise floor.**
+  Detecting the mRNA-sized gap needs **~514 genes**.
+* ⭐ **NOT the phospho contamination I had named** — 13/180 genes, and dropping them moves −0.0086 → −0.0089.
+* ⭐⭐ **paired on gene at 5× the genes, the layers are indistinguishable:** CPTAC `tcga105` (849 genes, the
+  SAME patients ⇒ layer-only) **+0.0018, p=0.287**; `prospective` (897, TMT-11) **+0.0056, p=0.341**.
+* ⚠ **What survives:** the direction is consistent in all three instruments (Stouffer z=+2.44, p=0.015 —
+  **anti-conservative**, 151/180 genes recur), so a **small** protein penalty of order 0.002–0.006 ρ stays
+  plausible — an order of magnitude below what was claimed.
+⇒ **the protein half is UNRESOLVED, not a measured negative. The mRNA results are untouched.**
 
 ✅ **AND IT CARRIES A ZERO-CROSSING INTERNAL CONTROL — the strongest this arc has produced.** Stratifying the
 gap by `gene_repression_class` crosses zero exactly where repression stops: constitutive_repressed −0.1464
@@ -516,9 +532,12 @@ measure.** ⚠ This does **not** rescue MH-103 — that died of a **mediator lea
 **⭐ THE RESULT — DESTABILISATION, NOT TRANSLATION.** Residualising protein on its own mRNA isolates the
 translational channel, which the project has never had the n to separate: **`rho_mrna` carries the signal;
 `rho_disc` (protein-beyond-mRNA) does not.** ⇒ what the model measures is transcript destabilisation.
-⛔ **And the fitted-decoy control is NEGATIVE on protein (gap −0.0086, p=0.554, n=180)** — see Axis 4. The
-honest reading is a **layer split**: the targeting-specific component is demonstrable on mRNA in two
-cohorts and **not** demonstrable on protein even at 8× the n.
+⚠ **The fitted-decoy control on protein reads −0.0086, p=0.554 (n=180) — but that is UNDERPOWERED AND
+GENE-SELECTED, not a measured negative (MH-205; see Axis 4).** On the same 180 genes mRNA is *also* n.s.
+(p=0.0565), both sit inside a 0.023–0.031 MDE, and paired on gene at 849–897 CPTAC genes the two layers are
+indistinguishable (+0.0018 / +0.0056). ⇒ **do not cite a "layer split".**
+✅ **What DOES survive, and is now measured on 849/897 genes instead of 180: the protein-beyond-mRNA
+channel is flat everywhere (−0.0011, p=0.657; +0.0034, p=0.659) ⇒ DESTABILISATION, NOT TRANSLATION.**
 
 ---
 
