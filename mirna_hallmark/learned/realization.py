@@ -990,8 +990,15 @@ def retention_realization() -> pd.DataFrame:
         out.append({"retention": rcol, "n_edges": len(j), "spearman_raw": _r3(raw),
                     "spearman_partial_expr": _r3(par)})
     df = pd.DataFrame(out)
+    # ⭐ PERSIST (MH-212): `retention_realization.tsv` held only the raw JOIN — the two Spearmans that ARE
+    # the pre-registered result (near-null: retention ⊥ realization coupling) were printed and lost.
+    # ⚠ eff-n is ARMS (~379), not edges: rows sharing an arm share `r_adj` by construction, so `n_edges`
+    # overstates independence. Reported so the near-null is not read as an underpowered null.
+    df["n_arms_eff"] = int(j["arm"].nunique())
+    df.to_csv(OUT / "retention_realization_test.tsv", sep="\t", index=False)
     print("[retention_realization] retention vs edge realization ρ_adj (raw + expression-partial):")
     print(df.to_string(index=False))
+    print(f"-> {OUT / 'retention_realization_test.tsv'}")
     return df
 
 
@@ -1374,6 +1381,25 @@ def patient_realization_efficiency(*, n_perm: int = 500, n_split: int = 50, seed
             v = out[["efficiency", col]].dropna()
             if len(v) > 20:
                 print(f"  efficiency vs {col}: ρ={spearmanr(v.efficiency, v[col]).correlation:+.2f}")
+    # ⭐ PERSIST THE TEST (MH-212). Until now this function wrote only `patient·efficiency·comp_dist`+clinical,
+    # so MH-162's ENTIRE A-grade result — the population-mean site-specificity gap and both reliabilities —
+    # existed only on stdout and could not be re-read, re-checked, or re-cited from disk.
+    # ⚠ The two rows are DIFFERENT ESTIMANDS and must never be collapsed: the TRAIT ("which patient realizes
+    # more") is DEAD — the site-free decoy matches its split-half reliability, so it is global miRNA–mRNA
+    # co-movement; the population MEAN is ALIVE and corroborates MH-158.
+    summ = pd.DataFrame([
+        {"estimand": "trait (which patient realizes more)", "verdict": "DEAD — decoy matches reliability",
+         "real": _r3(reliability), "decoy": _r3(dec_reliability),
+         "gap": np.nan, "lo95": np.nan, "hi95": np.nan, "p": np.nan,
+         "note": "split-half-over-genes reliability; decoy >= real ⇒ global co-movement, not realization"},
+        {"estimand": "population mean (site-specificity)", "verdict": "ALIVE — corroborates MH-158",
+         "real": _r3(obs), "decoy": _r3(dec_obs), "gap": _r3(gap_pt),
+         "lo95": _r3(gap_lo), "hi95": _r3(gap_hi), "p": gap_p,
+         "note": f"per-gene paired REAL-vs-DECOY contribution; perm-null(patient labels) p={p_pop:.3g}; "
+                 f"n_patients={len(pts)} n_genes={ng}; efficiency vs comp-shift rho={r_comp:+.2f}"},
+    ])
+    summ.to_csv(OUT / "patient_realization_efficiency_summary.tsv", sep="\t", index=False)
+    print(f"-> {OUT / 'patient_realization_efficiency_summary.tsv'}")
     return out
 
 

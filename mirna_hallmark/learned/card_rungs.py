@@ -49,7 +49,11 @@ _READOUTS = ("beta", "beta_sd", "z", "identified", "identity", "identity_deconv"
              "m_nnls", "pip_dense", "pip_discovery", "prior_pi", "beta_deconv", "retention_beta",
              "composition_class", "net_pressure", "identity_allocated")
 _GENE_DESC = ("n", "p_fam", "role", "n_arms", "n_fam")
-_ARM_DESC = ("arm_med_rpm", "arm_pct_floor", "arm_iqr", "arm_id_status", "ago_loading", "detection",
+_ARM_DESC = ("arm_med_rpm", "arm_pct_floor", "arm_iqr", "arm_id_status", "ago_loading",
+             # ⭐ MH-214: ARM rung like the column it qualifies — derived from the arm alone, so it is
+             # constant within arm across genes. A DOMAIN entry alone is not enough: domain says WHERE a
+             # column is defined, rung says WHAT UNIT it lives on, and `--check` needs both.
+             "ago_loading_measured", "detection",
              "spiker", "healthy_leg", "healthy_potential", "healthy_uninformative",
              "arm_id_status_UNUSED", "surrogate_instrument", "surrogate_corr",
              "dose_comp_retention", "dose_prolif_retention", "dose_confounded",
