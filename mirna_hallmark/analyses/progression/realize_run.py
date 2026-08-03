@@ -70,7 +70,8 @@ def finalize_phase2() -> None:
         R.owner_convergence()
     R.retention_realization()
     # ⭐ integrated progression cards (edge + gene) — now with the Phase-2 realization/owner columns
-    ec = R.edge_card(); gc = R.gene_card()
+    # annotate ONCE, after both are built (each call would otherwise re-run the full join)
+    ec = R.edge_card(annotate=False); gc = R.gene_card()   # gene_card's annotate covers edge too
     print(f"\n[progression cards] edge {ec.shape} · gene {gc.shape}")
     R.class_realization()   # cross-state class -> within-patient realization (gene-clustered, dose-ctrl, decoy-arbitrated)
     R.patient_realization_efficiency()   # FU-1: within-sample per-patient efficiency (decoy-controlled)

@@ -801,26 +801,36 @@ _COREP = Path(C.OUTPUT_ROOT) / "tissue_reference" / "mirna_comovement" / "gene_c
 _ACQ = Path(C.OUTPUT_ROOT) / "tissue_reference" / "mirna_state_class" / "gene_acquired_pressure.tsv"
 
 
-def _warn_if_annotations_dropped(path, built: pd.DataFrame) -> None:
-    """⚠ LOUD GUARD (MH-222). `edge_card()`/`gene_card()` rebuild a card from its BUILD INPUTS, which do
-    NOT carry the `card_context` annotation block (`ctx_`/`cptac_`/`tcga_`/`comp_`/`cal_` + the arm-rung
-    columns). Overwriting therefore SILENTLY DROPS them — measured once for real: the edge card went
-    **161 -> 108 columns, losing 57**, and nothing said so. A downstream reader then sees `ctx_gap_core`
-    missing and concludes "no context for this edge" when the truth is "the annotation step has not run
-    yet". Compare against what was on disk and say so."""
+def _finish_card(path, built: pd.DataFrame, annotate: bool) -> None:
+    """Write a card and, BY DEFAULT, run the `card_context` annotation so the card on disk is COMPLETE.
+
+    ⚠⚠ WHY THIS IS THE DEFAULT (MH-222, user-directed). `edge_card()`/`gene_card()` rebuild from the BUILD
+    INPUTS, which carry none of the `card_context` block (`ctx_`/`cptac_`/`tcga_`/`comp_`/`cal_` + the
+    arm-rung columns). Writing without annotating therefore SILENTLY DROPPED them — measured once for real:
+    the edge card went **161 → 108 columns, 57 lost**, with no error. A reader then sees `ctx_gap_core`
+    missing and concludes "no context for this edge" when the truth is "the annotation step has not run".
+    Warning about it was not enough: the DEFAULT still produced a broken card. Now the default produces a
+    complete one.
+
+    `annotate=False` is for the sharded/batch path, where you rebuild many cards and annotate ONCE at the
+    end — it prints exactly which columns are still missing so the omission stays visible.
+    """
+    built.to_csv(path, sep="\t", index=False)
+    if annotate:
+        from mirna_hallmark.learned import card_context as CC
+        CC.annotate()
+        return
     try:
-        prev = pd.read_csv(path, sep="\t", nrows=0)
+        prev_cols = set(pd.read_csv(path, sep="\t", nrows=0).columns)
     except Exception:
         return
-    lost = [c for c in prev.columns if c not in built.columns]
+    lost = [c for c in prev_cols if c not in built.columns]
     if lost:
-        print(f"  ⚠⚠ {path.name}: {len(lost)} columns present on disk are NOT in the rebuild "
-              f"(e.g. {', '.join(lost[:5])}{'…' if len(lost) > 5 else ''}).")
-        print(f"     These are the `card_context` annotations. THE CARD IS INCOMPLETE UNTIL YOU RUN:")
-        print(f"     .venv/bin/python3 -m mirna_hallmark.learned.card_context --annotate")
+        print(f"  ⚠ {path.name}: written WITHOUT annotation ({len(lost)} context columns absent). "
+              f"Run `card_context --annotate` before reading it.")
 
 
-def edge_card() -> pd.DataFrame:
+def edge_card(*, annotate: bool = True) -> pd.DataFrame:
     """⭐ THE INTEGRATED PROGRESSION EDGE CARD — one row per (gene, arm), folding BOTH progression objects onto
     the attribution card so every cross-resolution question is a column read, not a multi-file join:
       • CROSS-STATE (cohort, `canonical_card`): `shift_class`, `coupling_{hly,nat,tum}`, `grank_*`,
@@ -858,8 +868,7 @@ def edge_card() -> pd.DataFrame:
     m["gene_repr_class"] = m.gene.map(cp["gene_repression_class"])
     m["gene_net_repr"] = m.gene.map(cp["gene_net_repressed_tumor"])
     m["gene_dominated"] = m.groupby("gene").share_TUM.transform("max") > 0.6
-    _warn_if_annotations_dropped(OUT / "edge_card.tsv", m)
-    m.to_csv(OUT / "edge_card.tsv", sep="\t", index=False)
+    _finish_card(OUT / "edge_card.tsv", m, annotate)
     return m
 
 
@@ -877,7 +886,7 @@ def _dominant_by_state(card: pd.DataFrame, state_col: str) -> pd.Series:
     return c.loc[c.groupby("gene")[state_col].idxmax()].set_index("gene")["arm"]
 
 
-def gene_card() -> pd.DataFrame:
+def gene_card(*, annotate: bool = True) -> pd.DataFrame:
     """⭐ THE INTEGRATED PROGRESSION GENE CARD — one row per gene:
       • tumour attribution summary (`readouts_genes`: n_fam, total_pressure, top_identity, concentration, retention);
       • WITHIN-PATIENT paired realization — gene aggregate (`realized_rho_{raw,adj}`, retention, comp_explained) +
@@ -955,8 +964,7 @@ def gene_card() -> pd.DataFrame:
     if "share_TUM" in sc:
         dom = sc.loc[sc.groupby("gene")["share_TUM"].idxmax()].set_index("gene")["shift_class"]
         G["dominant_edge_shift_class"] = G.gene.map(dom)
-    _warn_if_annotations_dropped(OUT / "gene_card.tsv", G)
-    G.to_csv(OUT / "gene_card.tsv", sep="\t", index=False)
+    _finish_card(OUT / "gene_card.tsv", G, annotate)
     return G
 
 

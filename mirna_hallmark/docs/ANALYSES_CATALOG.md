@@ -26,14 +26,16 @@ independent of `analysis/` catalogs. CLI is always
 `gene_cptac_card.tsv` are **BLOCKS joined onto** cards, not cards. `*_card_rungs.tsv` are the per-card rung
 audits emitted by `card_rungs.py --check`.
 
-⚠⚠ **BUILD ORDER MATTERS AND USED TO FAIL SILENTLY.** `realization.edge_card()`/`gene_card()` rebuild from
-the build inputs, which carry **no** `card_context` annotation block — so overwriting **drops it**. Measured
-once for real: the edge card went **161 → 108 columns, 57 lost, with no error**. Both now warn
-(`realization._warn_if_annotations_dropped`), but the order is still yours to get right:
+✅ **BUILD ORDER IS NOW HANDLED FOR YOU (MH-222).** `realization.edge_card()`/`gene_card()` rebuild from
+the build inputs, which carry **no** `card_context` annotation block — so writing without annotating USED TO
+drop it silently (measured: the edge card went **161 → 108 columns, 57 lost, with no error**). They now call
+`card_context.annotate()` themselves; **`annotate=True` is the default**, so a card on disk is complete.
 
 ```
-canonical_card --reuse-attribution   →   realization.edge_card()/gene_card()   →   card_context --annotate
+canonical_card --reuse-attribution   →   realization.edge_card()/gene_card()      # annotates by default
 ```
+Pass `annotate=False` only in a batch path that annotates once at the end — it then prints exactly which
+context columns are still absent, so the omission stays visible.
 
 ⚠ `card_context --annotate` covers **edge + gene + family only**. `arm_card` and `seed_family_card` are built
 complete by their own modules — a missing `ctx_`/`cptac_` column on those is **not** a bug.

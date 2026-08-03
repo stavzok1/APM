@@ -908,7 +908,11 @@ def _compartment() -> pd.DataFrame:
         return pd.DataFrame().rename_axis("arm")
     d = _key_index(_read(p, sep="\t"), "arm", src="compartment")
     keep = [c for c in ("arm_lock", "arm_top_compartment", "dose_rpm") if c in d.columns]
-    return d[keep].rename(columns={c: f"comp_{c.replace('arm_', '')}" for c in keep})
+    # ⛔ prefix is `cload_`, NOT `comp_`: the GENE and FAMILY cards already carry a `comp_tcga_mrna_*`
+    # block (the CPTAC/TCGA compartment analysis), and `card_rungs.domain_of` matches by prefix
+    # GLOBALLY across cards — a bare `comp_` here mislabelled 10 of their columns with THIS
+    # block's domain string. Third instance of that root cause (cf. `esub_`, `echim_`).
+    return d[keep].rename(columns={c: f"cload_{c.replace('arm_', '')}" for c in keep})
 
 
 # ⭐ THE REALIZATION LADDER. axiom 5: a threshold count is only honest as a SWEEP — one cut is a
@@ -1112,7 +1116,7 @@ def build() -> pd.DataFrame:
                         ("cov_expr", "abund_med"),
                         # v3
                         ("cov_attr", "attr_n_edges"), ("cov_subtype", "sub_n_edges"),
-                        ("cov_field", "field_r_own"), ("cov_comp", "comp_lock"),
+                        ("cov_field", "field_r_own"), ("cov_comp", "cload_lock"),
                         ("cov_real", "real_n_scored"), ("cov_famrole", "famrole_abund_share")):
         card[flag] = card[probe].notna() if probe in card.columns else False
 

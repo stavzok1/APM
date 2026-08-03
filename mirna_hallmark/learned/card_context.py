@@ -92,11 +92,11 @@ EDGE_CTX = OUT / "edge_design_context.tsv"
 # ⚠ **THIS MODULE ANNOTATES ONLY edge + gene + family.** `arm_card` and `seed_family_card` are built
 #   complete by their own modules (`learned/arm_card.py`, `learned/seed_family_card.py`) and are NOT
 #   annotated here — do not assume a missing `ctx_`/`cptac_` column on them is a bug.
-# ⚠ **A CARD REBUILT BY `realization.edge_card()`/`gene_card()` IS INCOMPLETE UNTIL `--annotate` RUNS.**
-#   Those functions rebuild from the build inputs, which carry no annotation block, so overwriting drops
-#   it — measured once at **161 → 108 columns, 57 lost, silently**. Both now warn
-#   (`realization._warn_if_annotations_dropped`), but the ORDER is still on you:
-#   `canonical_card` → `realization.edge_card()/gene_card()` → **`card_context --annotate`**.
+# ✅ **A CARD REBUILT BY `realization.edge_card()`/`gene_card()` IS COMPLETE BY DEFAULT (MH-222).** Those
+#   functions rebuild from the build inputs, which carry no annotation block, so writing without annotating
+#   USED TO drop it — measured once at **161 → 108 columns, 57 lost, silently**. They now call
+#   `card_context.annotate()` themselves (`annotate=True` is the default). Pass `annotate=False` only in a
+#   batch/sharded path that annotates once at the end; it then prints exactly what is still missing.
 CARDS_EDGE = [OUT / "realization/edge_card.tsv"]
 CARDS_GENE = [OUT / "realization/gene_card.tsv"]
 INTERMEDIATE = OUT / "edge_card_base.tsv"
@@ -267,15 +267,16 @@ def _calibrate_widths(card_path: Path) -> None:
           f"[{d.cal_identified_hi.mean():.1%}-{d.cal_identified_lo.mean():.1%}] over its +/-1SD range")
 
 
-def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--annotate", action="store_true", help="join the context onto the cards in place")
-    a = ap.parse_args()
+def annotate() -> None:
+    """Rebuild the context tables and JOIN them onto the edge / gene / family cards, in place.
+
+    ⭐ Callable, not CLI-only (MH-222): `realization.edge_card()`/`gene_card()` call this by DEFAULT so a
+    rebuilt card is COMPLETE when it is written. It used to be reachable only via `--annotate`, which meant
+    the default path emitted a card missing its whole annotation block (measured: 161 → 108 columns, 57
+    lost, silently) and every downstream reader saw absent columns rather than an un-run step.
+    """
     g = gene_context()
     e, arm = edge_context()
-    if not a.annotate:
-        print("\n(context tables written; pass --annotate to join them onto the cards)")
-        return
     # ⛔ THE GOLD PROTEIN BLOCK IS DELIBERATELY *NOT* JOINED ONTO THE CARDS (measured 2026-08-01).
     # `discovery_dossier_gold` scores ORPHAN edges; the cards are the HE universe. They are DISJOINT
     # BY CONSTRUCTION — measured: |card ∩ gold| = **0** of 5,648 vs 747, even though 466 genes and 115
@@ -337,6 +338,18 @@ def main() -> None:
           f"{' (design block + CPTAC aggregate block)' if gcp is not None else ''}:")
     for p in CARDS_GENE:
         _annotate(p, gblocks, gkeys)
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--annotate", action="store_true",
+                    help="join the context onto the cards in place (the builders now do this by default)")
+    a = ap.parse_args()
+    if not a.annotate:
+        gene_context(); edge_context()
+        print("\n(context tables written; pass --annotate to join them onto the cards)")
+        return
+    annotate()
 
 
 if __name__ == "__main__":
