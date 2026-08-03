@@ -625,6 +625,17 @@ miRNA + GSE22219 mRNA, **207 paired tumours** (not 210), **DRFS only, 77 events*
 - **miR-210 → DRFS reproduces Buffa 2011** — a working **positive control**, which is what makes the
   pressure nulls credible rather than merely underpowered.
 
+⭐⭐ **2026-08-03 (MH-202) — THE *LEARNED β* IS NOW ON OUTCOME TOO, AND THE VERDICT SURVIVES THE UPGRADE.**
+Everything above tested the **heuristic** pressure, so "pressure is non-prognostic" was open to the reply
+*"you tested the weaker object"*. `learned/eval/beta_prognostic.py` closes that: Buffa DRFS + TCGA OS/DFI on
+the learned coupling model. **Per-gene YES, aggregate NO — and the WEIGHTS earn nothing** (β-weighted
+budgets do not beat unweighted abundance on outcome). ⇒ **a good coupling estimator is not thereby a
+prognostic one; the two orderings are different objects.**
+✅ **Credible because GATED, not merely null:** `gate()` requires miR-210→DRFS to reproduce Buffa 2011 and
+**the module refuses to report if it fails** — which is exactly what separates a well-earned negative from
+an underpowered one. ⚠ TCGA is the **weaker** cohort here (OS only, no DRFS) — the same direction, not an
+independent confirmation.
+
 **⛔ DEAD — the "TCGA is sparse so it cannot arbitrate" defense.** MH-76 ran the **frozen-panel**
 test (Buffa-trained, frozen, scored on TCGA), which removes overfitting as an explanation entirely:
 **DFI +0.002, OS +0.006; panel-alone C 0.48–0.53 ≈ random.** MH-73/74 still assert the superseded
