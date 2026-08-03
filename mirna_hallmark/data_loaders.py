@@ -131,8 +131,35 @@ def normal_like_participants() -> set:
 # --------------------------------------------------------------------------- #
 # Expression matrices
 # --------------------------------------------------------------------------- #
-def load_mirna_arms() -> pd.DataFrame:
-    """arm_name x participant log2(RPM+1) (reuses mirna_target_integration loaders)."""
+def load_mirna_arms(sample_type: Optional[str] = None) -> pd.DataFrame:
+    """arm_name x participant log2(RPM+1) (reuses mirna_target_integration loaders).
+
+    ⚠⚠ **THIS AVERAGES TUMOUR AND NAT — MEASURED, MH-219.** `load_mirna_expression` slices barcodes to
+    12-char participants and means over **every barcode a participant has** (tumour + NAT + metastatic +
+    replicate aliquots). For the **103 of 1,079 participants (9.5%)** that have both a tumour and a NAT
+    sample, the returned column is therefore **not a tumour measurement**: on the 97 with exactly one of
+    each it is **exactly `(tumour + NAT)/2`** (verified, max diff 0.00e+00).
+
+    **Blast radius, measured — real, bounded, and NOT a set-level risk:** the per-cell distortion is
+    `|Δ|/2`, median **0.380 log2** ≈ **0.39×** the arm's own across-cohort SD (32/1,267 arms exceed their
+    own SD). On 1,672 HE edges the coupling barely moves — median paired Δρ **−0.0004** (Wilcoxon p=0.698),
+    `corr(ρ_avg, ρ_tumour) = 0.982` — **but 39.8% of individual edges shift |Δρ|>0.02 and 9.6% >0.05.**
+    ⚠ And it is a **directional bias, not just noise**: on repressive edges the averaged matrix gives
+    median |ρ| **0.1087 vs 0.1021** pure-tumour, i.e. it *inflates* apparent repression by ~0.007 — the
+    two-cluster correlation artifact, since the NAT point sits at low-miRNA/high-target, extending the
+    range along exactly the repression axis.
+
+    ⇒ **Aggregate/set-level results are safe** (that is what this project reports). **Per-edge values carry
+    avoidable noise, with a small pro-hypothesis tilt.** Pass `sample_type="01"` where a tumour-only matrix
+    is the intended object; anything NAT-facing must use `learned.states.state_matrices`, never this.
+
+    `sample_type=None` (default) preserves the historical all-barcode averaging so no existing caller
+    changes behaviour. `"01"` tumour · `"11"` NAT · `"06"` metastatic — delegated to the already-tested
+    barcode-level filter in `learned.states`, not re-implemented here.
+    """
+    if sample_type is not None:
+        from mirna_hallmark.learned import states as _ST      # local: states imports this module
+        return _ST.state_matrices(sample_type)[0]
     from analysis.expression.mirna_target_integration import (
         load_mimat_to_arm,
         load_mirna_expression,
@@ -142,8 +169,16 @@ def load_mirna_arms() -> pd.DataFrame:
     return load_mirna_expression(C.MIRNA_EXPRESSION, mimat_to_arm=mimat_to_arm)
 
 
-def load_rna() -> pd.DataFrame:
-    """gene_symbol x participant log2(TPM+1) (reuses utils.common.loaders)."""
+def load_rna(sample_type: Optional[str] = None) -> pd.DataFrame:
+    """gene_symbol x participant log2(TPM+1) (reuses utils.common.loaders).
+
+    ⚠⚠ **AVERAGES TUMOUR AND NAT for the paired participants — see `load_mirna_arms` for the measured
+    blast radius (MH-219).** Same collapse, same 9.5% of participants. Pass `sample_type="01"` for a
+    tumour-only matrix; use `learned.states.state_matrices` for anything NAT-facing.
+    """
+    if sample_type is not None:
+        from mirna_hallmark.learned import states as _ST
+        return _ST.state_matrices(sample_type)[1]
     from analysis.utils.common.loaders import load_rna_log2tpm
 
     return load_rna_log2tpm(C.RNA_EXPRESSION)

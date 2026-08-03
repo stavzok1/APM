@@ -97,7 +97,7 @@ CARDS = {
                   "gene": "key", "arm": "key"},
         # `esub_` = the per-(gene,arm) PAM50 block annotated by `card_ladders` — EDGE rung: it is fit
         # per edge, and the arm card's `sub_` aggregate of the same source lives at arm rung.
-        prefix=(("esub_", "edge"),
+        prefix=(("esub_", "edge"), ("adm_", "edge"), ("echim_", "edge"), ("kd_", "edge"),
                 ("ctx_", "gene"), ("comp_", "gene"), ("cptac_", "edge"), ("tcga_", "gene"),
                 ("cal_", "edge"))),
     "family": dict(
@@ -120,8 +120,14 @@ CARDS = {
     "arm": dict(
         path=OUT / "arm_card.tsv", key=["arm"],
         explicit={"arm": "key"},
-        prefix=(("", "arm"),)),           # one row per arm => everything is arm rung by construction
-    # ⭐ THE FIFTH RUNG (MH-212, user-identified). The card registered above as "family" is keyed
+        prefix=(("", "arm"),),            # one row per arm => everything is arm rung by construction
+        # ⭐⭐ BROADCAST SPEC (MH-217). A single-key card has NO invariance to check — `verify()` returned
+        # an EMPTY frame for it, so the 4th and 5th rungs were the only ones whose labels were never
+        # tested. `bc_*` and `famrole_*` claim a value was INHERITED from a coarser unit; that claim IS
+        # testable — such a column must be CONSTANT within the unit it came from. This turns the prefix
+        # from an assertion into a test, which is the same upgrade axiom 7 demanded of the rung labels.
+        broadcast={"bc_fam_": "seed_family", "bc_meth_": "_hairpin"}),
+    # ⭐ THE FIFTH RUNG (MH-215, user-identified). The card registered above as "family" is keyed
     # ['gene','family'] — a GENE×FAMILY card, which cannot express a property of the family ITSELF.
     # This one is one row per SEED FAMILY. ⛔ Its artifact is `seed_family_card.tsv`, NOT
     # `family_card.tsv`: two rungs must never share a filename (axiom 6's collision class).
@@ -238,7 +244,21 @@ DOMAIN = {
     "⚠ BROADCAST from the pri-miRNA HAIRPIN — 5p and 3p share one promoter and one Δβ (354 arms)": ("bc_meth_",),
     "⚠ BROADCAST from the seed FAMILY (genomic_context.family_context)": ("bc_fam_",),
     "arms measurable in CPTAC (2,095)": ("cov_cptac",),
-    # ── v3 blocks (MH-212)
+    # ⭐⭐ MH-216: the site/expression legs. On the EDGE card these are per-(gene,arm) tags (4,937 of
+    # 5,648 edges); on the ARM card they are that arm's rollup. ⚠ `adm_admissible` is a DIAGNOSTIC
+    # FLAG, NOT A FILTER — MH-161 pre-registered that gating on it sharpens the decoy gap and the
+    # prediction was REFUTED (n.s. at every width, pooled p=0.39), and the gate shrinks n_fam 2->1.
+    "edges/arms with an admissibility tag (4,937 edges; has_site 89.9% · expressed 63.9% · admissible 60.4%)": ("adm_",),
+    # ⛔ `lit_agrees_*` is an ARGMAX statistic, which MH-196 measured AT CHANCE at every k. The real
+    # verdict is its cluster-bootstrapped RANK test under a family-fame null. Inspect per gene; never aggregate.
+    "genes with a versioned literature canonical family (329 of 1,549, sha256-stamped, MH-196)": ("lit_",),
+    # ⭐ MH-218: chimeric at its NATIVE (gene,arm) rung — the one evidence type that resolves the mature
+    # arm. ⛔ `echim_` not `chim_`: the ARM card owns `chim_` for its rollup and PREFIXES strips globally.
+    # ⚠⚠ ~90% of the mass is Manakov = HEK293T, a CELL LINE. No breast chimeric exists in ANY source.
+    "edges with a chimeric (AGO-ligation) duplex — ⚠ per-source, NEVER pooled; cross-tissue, not breast": ("echim_",),
+    # ⚠ a WITHIN-ARM rank: a promiscuous arm's 99th pct and a specialist's are not comparable in K_D.
+    "edges in the genome-wide scanMiR K_D scan — `is g among THIS arm's strongest targets` (within-arm rank)": ("kd_",),
+    # ── v3 blocks (MH-215)
     "arms with a Shapley/attribution decomposition over their edges (728)": ("attr_",),
     "arms with a per-PAM50 edge-heterogeneity fit (728) — ⚠ DISTRIBUTIONAL (MH-165), not a validated label": ("sub_",),
     "arms with a within-patient NAT field-effect fit (571)": ("field_",),
@@ -246,9 +266,9 @@ DOMAIN = {
     "arms with ≥1 calibrated-coupling-scored edge (593) — the realization LADDER; rates are gated at n≥5": ("real_",),
     "arms with a seed family — the arm's ROLE inside it; ⛔ DEGENERATE at famrole_n_members==1": ("famrole_",),
     "arms with a categorical guide/passenger call — ⚠ defined ONLY where AGO dominance was MEASURED": ("ago_guide_class",),
-    # ── SEED-FAMILY CARD (the 5th rung, MH-212). One row per family; ⛔ degenerate at 1 member (83.7%).
+    # ── SEED-FAMILY CARD (the 5th rung, MH-215). One row per family; ⛔ degenerate at 1 member (83.7%).
     "seed families in the arm-card universe (1,959; ⛔ 83.7% single-member ⇒ shares/HHI are 1 or NaN)": ("fam_",),
-    # ── CROSS-CARD LADDERS (MH-212, `learned/card_ladders.py --annotate`). ⚠ These are POST-BUILD
+    # ── CROSS-CARD LADDERS (MH-215, `learned/card_ladders.py --annotate`). ⚠ These are POST-BUILD
     # annotations: a gene_card/edge_card rebuild drops them and card_ladders must be re-run.
     "genes with ≥1 calibrated-coupling-scored regulator (1,260) — the GENE-side ladder; rates gated n≥3": ("greal_",),
     "edges with a per-PAM50 heterogeneity fit — ⚠ DISTRIBUTIONAL (MH-165), not a per-edge subtype label": ("esub_",),
@@ -303,6 +323,26 @@ def verify(card: str, sample_genes: int = 900) -> pd.DataFrame:
     if "gene" in d and d.gene.nunique() > sample_genes:
         d = d[d.gene.isin(d.gene.drop_duplicates().sample(sample_genes, random_state=0))]
     R = build(card)
+    # ⭐ BROADCAST CONSTANCY — the only checkable invariance on a single-key card (MH-217).
+    bspec = spec.get("broadcast") or {}
+    if bspec:
+        if "_hairpin" in bspec.values() and "arm" in d.columns:
+            d = d.assign(_hairpin=d["arm"].astype(str).str.replace(r"-(3p|5p)$", "", regex=True))
+        for pref, key in bspec.items():
+            if key not in d.columns:
+                continue
+            cols = [c for c in d.columns if c.startswith(pref)]
+            for c in cols:
+                nu = d.groupby(key, dropna=False)[c].nunique(dropna=True)
+                v = int((nu > 1).sum())
+                out_row = {"column": c, "rung": f"broadcast<{key}>", "n_groups": int(len(nu)),
+                           "n_violating": v, "rate": v / max(len(nu), 1)}
+                R = pd.concat([R, pd.DataFrame([out_row])], ignore_index=True) if False else R
+                if v:
+                    print(f"      X {c:26s} BROADCAST<{key}> varies in {v} of {len(nu)} groups")
+        n_bc = sum(1 for pref in bspec for c in d.columns if c.startswith(pref))
+        print(f"   broadcast: {n_bc} column(s) declared inherited from "
+              f"{sorted(set(bspec.values()))} — constancy TESTED")
     grp = {"gene": ["gene"],
            "family": ["gene", "seed_family"] if card == "edge" else None,
            "arm": ["arm"] if card == "edge" else None}

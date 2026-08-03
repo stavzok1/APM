@@ -5,9 +5,15 @@ Fit the learned model in **NAT** (tumour-adjacent normal, TCGA sample-type 11), 
 `load_mirna_expression` collapses all sample types to 12-char participant (averaging tumour+NAT).
 
 COMPOSITION CAVEAT (analysis guardrail): NAT is normal breast (adipose/stroma/epithelial mix) vs tumour
-(epithelial) — cross-state coupling differences are confounded by composition, and NAT has no CIBERSORTx
-deconvolution. The clean design is the **paired within-patient** difference (Phase D), which removes the
-patient baseline. State-level coupling here is reported as descriptive, composition-uncontrolled.
+(epithelial) — cross-state coupling differences are confounded by composition. The clean design is the
+**paired within-patient** difference (Phase D), which removes the patient baseline. State-level coupling
+here is reported as descriptive.
+⛔ **THIS BLOCK USED TO SAY "NAT has no CIBERSORTx deconvolution" — FALSE, corrected 2026-08-03 (MH-219).**
+NAT gets the **full 8-column CIBERSORTx block**: `tcga_cibersortx_fractions.tsv` carries **113 rows keyed
+`<participant>-NAT`**, covering **103/103** of the paired set with **zero** missing values, and
+`_cibersortx_state_cov(parts,"11")` returns it. The `_state_metagene_cov` fallback is **UNREACHABLE for
+NAT** — it is still the real path for **GTEx**, which `_cibersortx_state_cov` refuses by its
+`sample_type not in ("01","11")` guard.
 
     X_state, Y_state = state_matrices("11")           # NAT arm×participant, gene×participant
     df = cross_state_coupling(genes)                  # per-gene NAT vs tumour single-aggregate coupling
@@ -102,7 +108,9 @@ def _cibersortx_state_cov(parts, sample_type: str):
 def _state_metagene_cov(rna_state: pd.DataFrame) -> pd.DataFrame:
     """State-comparable composition+proliferation covariates from mRNA (precursor `_state_covariates`
     source='metagene'): proliferation + epithelial/immune/stroma marker metagenes — computable in EVERY
-    state (NAT/GTEx have no CPE/CIBERSORTx). CIBERSORTx-on-NAT/GTEx is the documented future upgrade."""
+    state. ⛔ The old claim "NAT/GTEx have no CPE/CIBERSORTx … the documented future upgrade" is STALE for
+    NAT (MH-219): CIBERSORTx-on-NAT **shipped** (113 NAT rows, 103/103 paired) and this function is
+    **unreachable for sample_type='11'**. It remains the live path for **GTEx**, which has no deconvolution."""
     from mirna_hallmark.analyses.cross_state.cross_state_coupling import (
         EPI_MARKERS, IMMUNE_MARKERS, STROMA_MARKERS, _metagene, _prolif_metagene)
     from mirna_hallmark.hallmark_sets import HallmarkSets
@@ -117,8 +125,11 @@ def _state_metagene_cov(rna_state: pd.DataFrame) -> pd.DataFrame:
 
 def assemble_state(gene: str, sample_type: str = "11", *, participants=None, family: bool = True,
                    metagene_cov: bool = True):
-    """(Y, X, C, w) for `gene` in a state: gene mRNA + HE-arm abundance + state-comparable metagene
-    composition/proliferation C (NAT/GTEx have no CPE/CIBERSORTx). Returns None if gene/regulators absent."""
+    """(Y, X, C, w) for `gene` in a state: gene mRNA + HE-arm abundance + a composition/proliferation C.
+    ⛔ The old note "NAT/GTEx have no CPE/CIBERSORTx" was FALSE for NAT (MH-219): **NAT takes the gold
+    CIBERSORTx block** (8 Wu-major fractions, n=104, 0 NaN); only **GTEx** falls back to `_state_metagene_cov`.
+    ⚠ NAT still has no CPE — CPE is a tumour-purity call and must never be joined onto a NAT row.
+    Returns None if gene/regulators absent."""
     X_s, Y_s = state_matrices(sample_type)
     if gene not in Y_s.index:
         return None

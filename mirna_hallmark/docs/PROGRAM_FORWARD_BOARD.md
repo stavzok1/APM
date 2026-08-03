@@ -718,6 +718,83 @@ gene-specific component is significant (Δ=−0.085, p=0.038) while abundance's 
   STmiR) as evidence for the miR-29c→ECM axis — they infer miRNA activity *from target expression* and are
   **circular** for exactly this question; landscape/hypothesis only.
 
+
+---
+
+## J. ⭐ WHAT IS ALREADY WRITTEN IN A PATIENT'S NAT — the paired lane's unoccupied axis (planned 2026-08-03)
+
+**The structural fact that motivates this section.** NAT enters this codebase in exactly THREE roles: a
+differencing reference (`dX = Xt − Xn`), a nuisance (`dC`, residualised out of every ρ), and a cohort
+median. **Never as a description of the patient.** And `_realize` correlates `pred` against `dy` over the
+**103 patients** — so every ρ in the lane is a *cross-patient* correlation. The pairing cancels the
+baseline and then discards the patient as a replicate. **`n=103` → per-edge SE≈0.10 → "set-level only" is
+a consequence of that sampling choice, not a fact about the data**, which holds 103 patients × ~1,200
+genes × ~5,600 edges.
+
+**The reframe — a patient's NAT carries FOUR separable kinds of information the lane collapses into one
+subtraction:**
+
+| fold | what it is | status |
+|---|---|---|
+| **Constitution** | germline/imprinted setpoint — 14q32 DLK1–DIO3 = **56 HE arms → 169 HE genes**, NAT-detected *better* than tumour (50 vs 49 arms at >50% of patients) | cohort-level only |
+| **Field** | how far the neighbourhood already moved — CIBERSORTx gives NAT a `Cancer Epithelial` fraction of **median 0.024, max 0.213** | computed, then residualised away |
+| **Headroom** | the target's own NAT level bounds what the malignant step can do | ⬜ **zero code — `grep headroom` = 0 hits in 337 files** |
+| **Architecture** | the tissue the tumour arose in — 113 NAT CIBERSORTx rows, **103/103 paired**, 0 missing | used only as a nuisance |
+
+**The organising question: what does the malignant transformation PRESERVE, AMPLIFY, and ERASE?** — read
+through the target gene's **role in cancer** (TSG/oncogene/dual), because that is where the impact is: a
+patient's field determines *which route to cancer is already open in them*.
+
+- ⬜ **J1. Convergence vs divergence, n-matched.** Two numbers already on disk (MH-102d), recorded as a
+  *scale-floor bug report* and never read as biology: **mRNA targets CONVERGE in tumour (sd 0.600→0.237)
+  while miRNA regulators DIVERGE (0.682→0.947)**. ⚠ n-unmatched. My n-matched read on the same 103
+  patients / 396 HE arms: sd tumour **0.875** vs NAT **0.714**, sd_NAT>sd_TUM for 28%. If it holds: the
+  regulatory *input* becomes more heterogeneous while the *output* becomes more uniform — routes funnelling
+  to one state. Split by target role. Null: permuted state labels.
+- ⬜ **J2. Does the tumour exaggerate who the patient already was?** `realization.py:280` computes
+  `nat_dev = nat_cohort_mean − own_NAT` — the personal offset — then **collapses it to a variance ratio
+  (`own_specific_frac`, median 0.46) and never persists the per-patient vector.** The sign test
+  `corr(nat_dev, own_shift)` has never been run. ⚠ **J1 and J2 are entangled in that one statistic**:
+  `own_specific_frac = 1` IS the perfect-convergence case. Report them separately.
+- ⬜ **J3. Headroom.** A repressor gained where the target is already at floor **cannot** realize;
+  repression needs the target present, de-repression needs transcription to resume — yet the lane treats Δ
+  symmetrically everywhere. ⚠ `ctx_ceiling` is a FALSE FRIEND (an OOF R², not an expression level). ⭐ This
+  **re-opens MH-162B's "acquired-but-unrealized = detection power" null with a competing mechanism** — keep
+  MH-162B's power control in the design so the two explanations compete fairly.
+- ⬜ **J4. The per-patient cancer-gene vulnerability map (the centrepiece).** Per patient × cancer gene:
+  **pre-loading** (NAT pressure) · **headroom** (NAT level) · **acquisition** · **realization**, split by
+  `gene_roles`. Is the patient-specific component of NAT pressure enriched on **TSGs**? Does NAT
+  pre-loading predict that TSG's realized repression in that patient's tumour? ⛔ **MH-162A's condition
+  governs this whole item: every per-patient metric ships with its own site-free decoy or it does not
+  ship** (a decoy matched the per-patient trait's reliability, +0.59 vs +0.50). ⚠ Note MH-162A never tested
+  the reliability of `eff_real − eff_decoy` — the decoy-corrected quantity is a *different* object from the
+  one that died.
+- ⬜ **J5. The LOST repertoire + the opposite-sign control.** What a patient lost is only visible with
+  paired data. Cohort `lost` exists (161 edges, ρ_adj −0.043); **no patient-level lost set, and no
+  de-repression test on TCGA paired data** (the only one in the repo is GEO DCIS, ECM-only). ⭐ Losing a
+  repressor predicts **de-repression — the opposite sign**. If gains repress but losses do not de-repress,
+  the realization signal is not doing what its name says. **The strongest internal control the paired
+  design can supply, never run.**
+- ⬜ **J6. Controls, because "field" and "reverse causation" are the same observation.** (a)
+  **Constitutional restriction** — imprinted 14q32 arms are germline-set and cannot be tumour-induced the
+  way a field effect can; if the patient-specific signal survives inside those 56 arms / 169 genes, reverse
+  causation is weaker. ⚠ no curated imprinting list exists; `genomic_context.host ∈ {MEG3, MEG8, MEG9,
+  DIO3OS, MIR493HG}` covers 52/56 and is a *proxy*. (b) **Field gradient** — `Cancer Epithelial` in NAT
+  (max 0.213) as a covariate and stratifier, not a nuisance. Δpromoter-methylation (70/103, `N::` columns
+  already staged in `mirna_promoter_betas.parquet`) folds in here as a constitution-vs-field lever.
+
+🚫 **Explicitly NOT this section:** ΔRISC-as-moderator, isomiR-Δ, `M_reference` sweep — each is "an
+existing per-arm axis with a Δ in front of it" (module application, not a paired question). And nothing on
+the §F/§I dead list.
+
+⚠⚠ **TRAPS THAT WILL SILENTLY CORRUPT ANY NAT ANALYSIS — read before writing code.**
+`data_loaders.load_mirna_arms()`/`load_rna()` **average tumour and NAT** (see MH-219; now take an opt-in
+`sample_type`) · `ago_gate`'s per-sample RISC capacity is that same average with **zero NAT keys**, so it
+looks available for all 103 and is state-blind · `CPE`/`abs_purity`/`target_cn` are tumour quantities that
+join happily onto NAT rows · missing miRNA is **NaN, not 0** (`.fillna(0)` turns an abstention into a
+measurement) · **no technical replicate exists anywhere** (0 blood-normal, 0 NAT duplicates) ⇒ measurement
+noise cannot be separated from biological retention, only bounded by `r_perm`.
+
 ## I. ⛔ Dead anchors — do not rebuild
 
 One line each. The detail is in the registry row named.

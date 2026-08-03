@@ -193,6 +193,14 @@ def run(
     params = C.AGO_GATE if include_tnrc6 is None else replace(C.AGO_GATE, include_tnrc6=include_tnrc6)
 
     print("[ago_gate] loading RNA + computing RISC capacity ...")
+    # ⚠⚠ STATE-BLIND BY CONSTRUCTION (flagged MH-219). `load_rna()` collapses barcodes to 12-char
+    # participants by MEAN over ALL sample types, so for the 103 participants with both a tumour and a NAT
+    # sample the capacity below is a **tumour/NAT average**, not a tumour measurement. The emitted
+    # `per_sample_ago_capacity.tsv.gz` has 1,095 participant keys and **zero NAT keys** — so it LOOKS
+    # available for all 103 paired patients and is not state-resolved for any of them.
+    # ⛔ DO NOT condition a NAT or a paired-Δ model on this file. A state-resolved RISC capacity must be
+    # rebuilt from `learned.states.state_matrices(sample_type)` — AGO1-4 / TNRC6A-C / DICER1 / DROSHA /
+    # DGCR8 / XPO5 are all mRNA rows present in BOTH states, so it costs no new data.
     rna = D.load_rna()
     gate_df = compute_ago_gate(rna, params=params)
     gate_df.to_csv(out_dir / "per_sample_ago_capacity.tsv.gz", sep="\t", compression="gzip")

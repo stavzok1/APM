@@ -513,7 +513,11 @@ def _healthy_anchor() -> pd.DataFrame:
     # ⛔ labelled hx_: this is the miTED rank-transfer / seed-mate value, NOT a GTEx measurement.
     imp = pd.to_numeric(d.get("healthy_baseline_tcga"), errors="coerce")
     out["hx_hly_baseline_imputed"] = imp.where(src.ne("gtex") & src.ne("floor0")) if src is not None else imp
-    out["bc_hly_seedmate"] = src.eq("gtex_family") if src is not None else np.nan
+    # ⛔ NOT `bc_` — the broadcast-constancy test (MH-217) caught this on its first run: it
+    # varies WITHIN seed_family in 38 of 1,959 groups, and correctly so. It records whether
+    # THIS ARM fell back to the seed-mate baseline, which differs between members of one
+    # family (one measured in GTEx, the other imputed). Arm-native provenance, not inherited.
+    out["hly_from_seedmate"] = src.eq("gtex_family") if src is not None else np.nan
     return out
 
 
@@ -805,7 +809,7 @@ def _family_context(card_index, fam_series) -> pd.DataFrame:
 
 
 # --------------------------------------------------------------------------- #
-# v3 — ATTRIBUTION, REALIZATION and WITHIN-FAMILY ROLE (MH-212)
+# v3 — ATTRIBUTION, REALIZATION and WITHIN-FAMILY ROLE (MH-215)
 # --------------------------------------------------------------------------- #
 def _attribution() -> pd.DataFrame:
     """⭐ THE ARM SHAPLEY / ATTRIBUTION ROLL-UP — the axis v2 was missing entirely.
@@ -1056,7 +1060,7 @@ def build() -> pd.DataFrame:
         "beta rollup": _beta_rollup(), "arm identifiability": _arm_identifiability(),
         "chimeric": _chimeric(), "AGO": _ago(), "methylation (bc)": _methylation(),
         "edge-card lift": _lift_edge_card(),
-        # ── v3 (MH-212): attribution, realization and within-family role
+        # ── v3 (MH-215): attribution, realization and within-family role
         "attribution/shapley": _attribution(), "subtype": _subtype(),
         "field effect": _field_effect(), "compartment": _compartment(),
         "realization ladder": _realization_ladder(),

@@ -500,6 +500,142 @@ def realize_null_test(nd: Optional[pd.DataFrame] = None, *, n_boot: int = 2000) 
 
 
 # --------------------------------------------------------------------------- #
+# HOST-TRANSCRIPTION CONFOUND (MH-212 Phase 1) — is acquired dose just the host gene's transcription?
+@lru_cache(maxsize=1)
+def _arm_context() -> tuple:
+    """(arm → mir_class, arm → host gene symbol) from `learned/genomic_context.py`'s persisted table."""
+    gc = pd.read_csv(_LEARNED / "genomic_context.tsv", sep="\t")
+    cls = dict(zip(gc.arm.astype(str), gc.mir_class.astype(str)))
+    host = {a: (h if isinstance(h, str) and h and h != "nan" else None)
+            for a, h in zip(gc.arm.astype(str), gc.get("host", pd.Series([None] * len(gc))))}
+    return cls, host
+
+
+def _host_residualised_dX(dX: pd.DataFrame, dY: pd.DataFrame, pts) -> tuple:
+    """A copy of ΔX with every INTRAGENIC arm residualised on its HOST gene's Δ mRNA, plus the per-arm
+    `corr(Δarm, Δhost)` that says how much of the arm's acquired dose the host explains.
+
+    ⚠ Intergenic arms are returned UNCHANGED — they have no host, so the contrast between them and the
+    host-coupled classes is what carries the inference. An arm whose host is absent from the mRNA matrix is
+    also left unchanged and reported as `host_measured=False`, never silently treated as residualised."""
+    cls, host = _arm_context()
+    out = dX.copy()
+    rows = []
+    for arm in dX.index:
+        h = host.get(str(arm))
+        rec = {"arm": arm, "mir_class": cls.get(str(arm), "unknown"), "host": h,
+               "host_measured": bool(h and h in dY.index), "r_arm_host": np.nan, "n_pairs": 0}
+        if rec["host_measured"]:
+            v = dX.loc[arm, pts].to_numpy(float)
+            hv = dY.loc[h, pts].to_numpy(float)
+            m = np.isfinite(v) & np.isfinite(hv)
+            if m.sum() >= _MIN_PAIRS and np.nanstd(hv[m]) > 1e-9:
+                rec["r_arm_host"] = _r3(spearmanr(v[m], hv[m]).correlation)
+                rec["n_pairs"] = int(m.sum())
+                res = v.copy()
+                res[m] = _resid_on(v[m], hv[m].reshape(-1, 1))
+                out.loc[arm, pts] = res
+        rows.append(rec)
+    return out, pd.DataFrame(rows)
+
+
+def host_confound(genes: Sequence[str], *, m_ref: str = "complement") -> pd.DataFrame:
+    """⭐ THE FALSIFICATION TEST (MH-212 Phase 1): is the lane's realization signal partly the HOST GENE's
+    transcription rather than miRNA targeting?
+
+    ~47% of HE arms are intragenic. For those, Δdose NAT→tumour may simply BE the host's Δtranscription, in
+    which case their contribution to Δpressure is host-program, not miRNA-specific. This is not speculative:
+    MH-158-D measured host-coupled arms realizing **−0.037** vs intergenic **−0.018** and retaining **0.123
+    vs 0.038**, and flagged that rollup as **"NOT per-class decoy-nulled"** — i.e. the obvious confounded
+    reading was never excluded.
+
+    **The design.** Every (gene, arm) is scored twice — with ΔX as-is, and with each intragenic arm's ΔX
+    residualised on its host's Δ mRNA — for REAL arms **and for their matched site-free DECOYS**.
+    The decoy arm is residualised on ITS OWN host, so the comparison stays symmetric.
+
+    **What the outcomes mean** (pre-registered):
+    * host-residualisation costs REAL and DECOY the same ⇒ host transcription is a shared nuisance and the
+      REAL−DECOY gap is unaffected — the headline survives and is *cleaner* than recorded;
+    * it costs REAL more than DECOY in host-coupled arms ⇒ part of the recorded signal WAS host program;
+    * the gap is carried by INTERGENIC arms ⇒ the headline is stronger than recorded, because host-driven
+      arms were diluting it.
+
+    ⚠ Host mRNA is in `state_matrices` for both states, so this costs no new data. ⚠ An arm whose host is
+    unmeasured is left unresidualised and flagged, never quietly counted as controlled.
+    """
+    from mirna_hallmark.eval import decoy_bench as DB
+    dX, dY, pts_l = ST.paired_delta_matrices()
+    pts = list(pts_l)
+    dC = _delta_C()
+    dCAF = dC["CAFs"].reindex(pts).to_numpy(float) if "CAFs" in dC.columns else np.full(len(pts), np.nan)
+    dXr, host_tbl = _host_residualised_dX(dX, dY, pts)
+    host_tbl.to_csv(OUT / "host_dose_coupling.tsv", sep="\t", index=False)
+    cls, _ = _arm_context()
+    dec = DB.build_decoys(list(genes))
+    rows = []
+    for g, grp in dec.groupby("gene"):
+        try:
+            M = M_reference(g, m_ref)
+            if M.empty or g not in dY.index:
+                continue
+            tgt_L = _corr(dY.loc[g, pts].to_numpy(float), dCAF)
+            for r in grp.itertuples():
+                w = float(M.get(r.real_arm, 0.0))
+                if w <= 0:
+                    continue
+                for lbl, arm in (("REAL", r.real_arm), ("DECOY", r.fake_arm)):
+                    if arm not in dX.index:
+                        continue
+                    ori = orientation(_corr(dX.loc[arm, pts].to_numpy(float), dCAF), tgt_L)
+                    Mt = pd.Series({arm: w})
+                    for variant, XX in (("raw", dX), ("host_resid", dXr)):
+                        res = _realize(g, [arm], Mt, XX, dY, pts, dC)
+                        if res:
+                            rows.append({"gene": g, "group": lbl, "arm": arm, "variant": variant,
+                                         "mir_class": cls.get(str(arm), "unknown"), "orientation": ori,
+                                         "pair_id": f"{g}|{r.real_arm}",
+                                         "rho_raw": res["rho_raw"], "rho_adj": res["rho_adj"]})
+        except Exception:
+            continue
+    T = pd.DataFrame(rows)
+    OUT.mkdir(parents=True, exist_ok=True)
+    T.to_csv(OUT / "host_confound.tsv", sep="\t", index=False)
+    return T
+
+
+def host_confound_summary(T: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+    """REAL−DECOY gap by `mir_class` × variant, using the SAME gene-level paired Wilcoxon that reproduces
+    MH-158's headline (`realize_null_test`) — so the numbers are comparable to the record by construction."""
+    if T is None:
+        T = pd.read_csv(OUT / "host_confound.tsv", sep="\t")
+    rows = []
+    for variant in ("raw", "host_resid"):
+        for scope, sel in ([("ALL", T.mir_class.notna())]
+                           + [(c, T.mir_class == c) for c in sorted(T.mir_class.dropna().unique())]
+                           + [("intergenic_or_antisense", T.mir_class.isin(["intergenic", "antisense_overlap"])),
+                              ("host_coupled", T.mir_class.isin(["sense_coding_host", "sense_lncRNA_host"]))]):
+            for ori in ("OPPOSITE", "SAME"):
+                s = T[(T.variant == variant) & sel & (T.orientation == ori) & T.rho_adj.notna()]
+                if s.empty:
+                    continue
+                gl = s.pivot_table(index="gene", columns="group", values="rho_adj", aggfunc="mean")
+                if not {"REAL", "DECOY"}.issubset(gl.columns):
+                    continue
+                d = (gl["REAL"] - gl["DECOY"]).dropna()
+                if len(d) < 20:
+                    continue
+                rows.append({"variant": variant, "scope": scope, "orientation": ori,
+                             "n_genes": int(len(d)), "n_edges": int(len(s)),
+                             "mean_real": _r3(s[s.group == "REAL"].rho_adj.mean()),
+                             "mean_decoy": _r3(s[s.group == "DECOY"].rho_adj.mean()),
+                             "gap_median": _r3(float(d.median())), "gap_mean": _r3(float(d.mean())),
+                             "wilcoxon_p": float(wilcoxon(d).pvalue)})
+    out = pd.DataFrame(rows)
+    out.to_csv(OUT / "host_confound_summary.tsv", sep="\t", index=False)
+    return out
+
+
+# --------------------------------------------------------------------------- #
 # patient-specificity of NAT — own vs cohort vs subtype reference (the second question)
 def nat_reference_adjudication(genes: Sequence[str], *, m_ref: str = "complement") -> pd.DataFrame:
     """For each of 3 differencing references (own / cohort-NAT-mean / subtype-NAT-mean): residual variance of

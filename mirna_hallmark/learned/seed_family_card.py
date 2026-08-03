@@ -1,4 +1,4 @@
-"""⭐ THE SEED-FAMILY CARD — the FIFTH rung, one row per seed family (MH-212).
+"""⭐ THE SEED-FAMILY CARD — the FIFTH rung, one row per seed family (MH-215).
 
     .venv/bin/python3 -m mirna_hallmark.learned.seed_family_card
 
