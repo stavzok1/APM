@@ -65,6 +65,13 @@ from mirna_hallmark import config as C
 OUT = C.REPO_ROOT / "mirna_hallmark/output/learned"
 DEST = OUT / "ood_cohort"
 FAMILY_CARD = OUT / "family_card.tsv"
+#: ⛔ STALE (MH-204). Dated 2026-07-13; overlaps the CURRENT `decoy_full_pairs.tsv` (07-16) by only
+#: **63 / 3,558 cells = 1.8%** and covers 516 of 1,395 genes, and it predates MH-137's fixes (evidence
+#: hole · Poisson-gated 6mer · dose caliper) so its decoys are TOO WEAK and flatter the real arm.
+#: ⚠ R2a below therefore carries TWO caveats, not one: already underpowered (n=120, p=0.34) AND
+#: stale-input. The clean artifact is `output/learned/decoy_oof_budgets.parquet`
+#: (`eval/decoy_oof_budgets.py`) — but it is TCGA-sample-indexed, so transporting a decoy to Buffa needs
+#: the decoy FAMILY LIST + its fitted β re-emitted from that run, which is not yet done.
 DECOY_FAMILY_BETA = OUT / "decoy_family_betas.tsv"
 
 #: CAF/myofibroblast markers — same set `learned/data.py::_mycaf` uses.
