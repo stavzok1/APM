@@ -428,6 +428,13 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
                      "d_rank_HLY_NAT": (_rk_h - _rk_n) if (_rk_h == _rk_h and _rk_n == _rk_n) else np.nan,  # FIELD Δ
                      "d_rank_NAT_TUM": _drnt,                                              # MALIGNANT Δ  (+ = rose NAT→tum)
                      "d_rank_HLY_TUM": getattr(r, "d_rank_HLY_TUM", np.nan),               # total Δ (acquired axis)
+                     # ⭐ UN-IMPUTED companions (MH-210): the same budget over ONLY the arms GTEx genuinely
+                     # measures — invisible arms ABSTAIN (NaN) instead of being zeroed. Emitted ALONGSIDE the
+                     # repaired leg so any dHT claim can be re-checked without the miTED imputation.
+                     "share_HLY_meas": getattr(r, "share_HLY_meas", np.nan),
+                     "rank_HLY_meas": getattr(r, "rank_HLY_meas", np.nan),
+                     "d_rank_HLY_TUM_meas": getattr(r, "d_rank_HLY_TUM_meas", np.nan),
+                     "n_HLY_meas": getattr(r, "n_HLY_meas", np.nan),
                      "dose_rank_HLY": getattr(r, "dose_rank_HLY", np.nan),                 # within-gene DOSE rank (abund only)
                      "dose_rank_NAT": getattr(r, "dose_rank_NAT", np.nan),
                      "dose_rank_TUM": getattr(r, "dose_rank_TUM", np.nan),

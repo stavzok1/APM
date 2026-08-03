@@ -407,12 +407,48 @@ retention 0.76, 1,322 genes.** ⚠ **The magnitude has SHRUNK at every control f
   MH-201/204**: learned β vs unweighted abundance-sum (Δ −0.0072, p=6.2e-13 on Buffa) and vs a **fitted
   matched decoy** on three layers. Tuning a retired estimator against a non-control comparator is a category
   error (cf. the §Z ruling on PRESSURE_FUTURE_OPTIONS).
-  ⭐ **ONE COMPONENT SURVIVES AND IS WORTH SALVAGING: `D(m)`, miRNA PROMISCUITY** (targetome breadth as a
-  budget split). **No promiscuity / target-count axis exists in `learned/gene_axes.py`** (verified) — its
-  regulator-ensemble family covers dose level, dynamic range and concentration (`reg_dose_hhi`, `reg_var_hhi`,
-  `reg_frac_flat`) but **not how broadly each regulator is spread across other genes**. Per axiom 8 the
-  regulator-ensemble axes are the strongest and most-forgotten family ⇒ add `reg_promiscuity_*` there rather
-  than reviving the heuristic aggregate.
+  ✅ **PURSUED AND CLOSED 2026-08-03 (MH-208) — and my note here was itself a CONTAINER ERROR.** It read
+  *"no promiscuity / target-count axis exists in `learned/gene_axes.py` (verified)"*. True of that file, and
+  **misleading**: a promiscuity annotation **had existed since 2026-06-28**
+  (`analyses/misc/genomewide_promiscuity.py`, cached, one consumer — the retired-arc
+  `coupling_predictor_comparison`). I checked the CONTAINER I expected it in, not the QUANTITY (axiom 7 —
+  the same error I had just written up in MH-206). ⭐ The user caught the structural reason: promiscuity is an
+  **ARM-level property and there is no ARM CARD** (`card_rungs.py` defines edge/family/gene only), so it had
+  nowhere to live and never entered the learned model's axis system.
+  * ⛔ **The annotation was a FAME axis:** curated `he_degree` ↔ #distinct-PMIDs **ρ=+0.736**, ↔ abundance
+    +0.556, but ↔ a curation-free sequence targetome only **+0.124** — top-10 lists **disjoint**, medians
+    **2 vs 3,634 targets**. The retired heuristic's `w/D(m)` was dividing by fame.
+  * ✅ **FIXED + WIRED:** `build_sequence_promiscuity` (scanMiR RBNS K_D, 746 arms, cached, producer'd);
+    `load_promiscuity` defaults to it with `fill="nan"` (missing = UNSCANNED); `reg_promisc_*` added to
+    `gene_axes.regulator_axes(dose, arms=)`.
+  * ⛔ **But the axis does NOT earn its keep:** marginal `reg_promisc_max` −0.119 (q=0.013) / `sd` −0.097
+    (q=0.035) on MH-201's β-over-abundance margin **vanish** under abundance-concentration control
+    (**−0.037 / −0.039, n.s.**), and the curated axis that fired was `reg_dose_hhi` in disguise (ρ=+0.381
+    with it; +0.045 n.s. once controlled). ⭐⭐ **The transferable lesson: arm-level abundance-orthogonality
+    (ρ=−0.004) DOES NOT SURVIVE AGGREGATION to the regulator ensemble (−0.167).**
+  ⇒ **Do not revive the aggregate-force design. The promiscuity infrastructure is built and correct; the
+  axis is a null.** **(→ MH-208)**
+- ✅✅ **AND THE ROOT CAUSE IS FIXED — THE ARM CARD EXISTS (MH-209, user-diagnosed).** The user's read of
+  MH-208 — *"we don't have a miRNA card"* — was the correct structural diagnosis: `card_rungs` knew only
+  `edge`/`family`/`gene`, so per-arm facts had **no rung to live on** and six modules each re-derived their
+  own. `learned/arm_card.py` → `output/learned/arm_card.tsv`, **3,241 arms × 47 cols**, registered as the
+  4th card (`--check` CLEAN; registry 328 → **375** rows).
+  * ⭐ **Provenance-prefixed by design**, because the targetome universes are NOT interchangeable:
+    `seq_` genome-wide (746 arms) · `site_` ⚠ **Hallmark-scoped, 1,432 genes** (771) · `ts_` TargetScan
+    per-site (⚠ 321) · `cur_`/`fame_` ⛔ fame, for CONTROL only · `cov_*` flags — **missing = UNSCANNED**.
+  * ✅ **Definitional control exact**: re-derives all five MH-208 correlations to the digit.
+  * ⚠ Two of my own design assumptions died on contact: **sites-vs-genes is not an independent axis**
+    (ρ=+0.927) and the **8mer share is TOOL-DEPENDENT** (ρ=+0.620, medians 2.2× apart) — never compare it
+    across sources.
+  ⬜ **Still to fold onto the card** (all arm-level, all already built elsewhere): `arm_rung` β +
+  identifiability · `rarity_bench` seed rarity · `kd` per-arm κ0. **(→ MH-209)**
+- 🔨 **NEW, SURFACED BY MH-208 — give MH-201's axis scan a PRODUCER.**
+  `output/learned/ood_cohort/{ood_cohort_regulator_features,ood_cohort_modifier_scan}.tsv` carry MH-201's
+  headline `reg_dose_hhi` (q=2.1e-05) and its entire 82-modifier FDR scan, and **nothing in the repo writes
+  them** (verified: `ood_cohort.py` writes `ood_cohort_genes.tsv`, `edge_leg_*` and the manifest). This is the
+  **MH-196 shape** that rotted the literature ground-truth sets. The outcome column is reconstructible from
+  produced data (`delta = rho_buffa_metagene − rho_abund_metagene`, verified to max|diff| 1.0e-16), so this is
+  a write-the-producer job, not a re-derivation. **(→ MH-208, MH-196, MH-201)**
 
 ## C. Attribution / Shapley
 

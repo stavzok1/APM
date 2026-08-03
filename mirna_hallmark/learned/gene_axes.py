@@ -107,25 +107,67 @@ def hhi(v, *, normalise: bool = True) -> float:
     return float((h - 1 / k) / (1 - 1 / k)) if normalise else h
 
 
-def regulator_axes(dose: np.ndarray) -> dict:
+def _promiscuity_map():
+    """Memoized per-arm SEQUENCE promiscuity (MH-208). Module-level so a per-gene loop does not re-read it.
+
+    ⚠ NFS: `regulator_axes` is called once per gene (~1,549×). A `read_csv` inside it is the exact
+    N_items × N_workers thrash pattern CLAUDE.md axiom 3a.1 exists to prevent. Cache once, here.
+    """
+    if "promisc" not in _MEMO:
+        try:
+            from mirna_hallmark.analyses.misc import genomewide_promiscuity as GP
+            _MEMO["promisc"] = GP.load_promiscuity(col="promisc_seq_strong", fill="nan")
+        except Exception as e:                                   # coverage is optional, never fatal
+            print(f"[gene_axes] sequence promiscuity unavailable ({e}) — reg_promisc_* will be NaN")
+            _MEMO["promisc"] = pd.Series(dtype=float)
+    return _MEMO["promisc"]
+
+
+_MEMO: dict = {}
+
+
+def regulator_axes(dose: np.ndarray, arms=None) -> dict:
     """⭐ THE REGULATOR-ENSEMBLE AXES — usually the strongest family, and the one most often forgotten.
 
     `dose` is (n_regulators × n_samples) for ONE gene, on the cohort you are scoring in. Captures both the
     LEVEL and the DYNAMIC RANGE of each regulator, and — the part that matters — **how each DISTRIBUTES
     across the ensemble**.
+
+    `arms` (optional, aligned to `dose`'s rows) additionally attaches the **PROMISCUITY** sub-family — how
+    broadly each regulator is spread over *other* genes, i.e. the aggregate-force design's `D(m)` budget
+    split. It is the one regulator property the ensemble axes above cannot see, because it is a property of
+    the arm's behaviour OUTSIDE this gene.
+      ⭐ **Its virtue is that it is ABUNDANCE-ORTHOGONAL (ρ=−0.004)** — every other regulator axis here is
+        entangled with dose, so this is the rare independent direction.
+      ⛔ **It uses the SEQUENCE targetome, never the curated one.** The curated count (`he_degree*`) is a
+        FAME axis: ρ=+0.736 with an arm's distinct-PMID count, +0.556 with abundance, and only +0.124 with
+        the sequence targetome — their top-10 lists do not overlap at all (MH-208).
+      ⚠ **A missing arm is UNSCANNED, not un-promiscuous** (K_D covers 746 arms). Missing stays NaN and
+        `reg_promisc_cov` reports the fraction actually scanned — read the axis only where coverage is high.
     """
     if dose.ndim != 2 or dose.shape[0] < 2:
         return {}
     med = np.nanmedian(dose, axis=1)
     sd = np.nanstd(dose, axis=1)
     flat_cut = np.nanpercentile(sd, 10) + 1e-9
-    return {"reg_n": float(dose.shape[0]),
-            "reg_dose_med": float(np.nanmedian(med)), "reg_dose_max": float(np.nanmax(med)),
-            "reg_dose_hhi": hhi(med),          # ⭐ one regulator dominating ABUNDANCE ⇒ a weighted
-                                               #    estimator cannot beat the unweighted sum
-            "reg_var_med": float(np.nanmedian(sd)), "reg_var_max": float(np.nanmax(sd)),
-            "reg_var_min": float(np.nanmin(sd)), "reg_var_hhi": hhi(sd),
-            "reg_frac_flat": float(np.mean(sd < flat_cut))}   # unmeasurable regulators = nothing to weight
+    out = {"reg_n": float(dose.shape[0]),
+           "reg_dose_med": float(np.nanmedian(med)), "reg_dose_max": float(np.nanmax(med)),
+           "reg_dose_hhi": hhi(med),          # ⭐ one regulator dominating ABUNDANCE ⇒ a weighted
+                                              #    estimator cannot beat the unweighted sum
+           "reg_var_med": float(np.nanmedian(sd)), "reg_var_max": float(np.nanmax(sd)),
+           "reg_var_min": float(np.nanmin(sd)), "reg_var_hhi": hhi(sd),
+           "reg_frac_flat": float(np.mean(sd < flat_cut))}   # unmeasurable regulators = nothing to weight
+    if arms is not None:
+        P = _promiscuity_map()
+        p = np.array([P.get(a, np.nan) for a in list(arms)[:dose.shape[0]]], dtype=float)
+        out["reg_promisc_cov"] = float(np.mean(np.isfinite(p))) if len(p) else np.nan
+        if np.isfinite(p).sum() >= 2:
+            q = p[np.isfinite(p)]
+            out.update({"reg_promisc_med": float(np.median(q)), "reg_promisc_max": float(np.max(q)),
+                        "reg_promisc_min": float(np.min(q)),    # the most SPECIALIST regulator
+                        "reg_promisc_sd": float(np.std(q)),
+                        "reg_promisc_hhi": hhi(np.expm1(q))})   # concentration on the raw target COUNT
+    return out
 
 
 def self_axes(y: np.ndarray) -> dict:

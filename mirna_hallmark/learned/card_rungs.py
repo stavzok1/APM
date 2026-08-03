@@ -102,6 +102,13 @@ CARDS = {
         path=OUT / "realization/gene_card.tsv", key=["gene"],
         explicit={"gene": "key"},
         prefix=(("", "gene"),)),          # one row per gene => everything is gene rung by construction
+    # ⭐ THE FOURTH RUNG (MH-209). Until 2026-08-03 there was NO arm card, so every per-arm property
+    # (promiscuity, K_D, host locus, AGO loading, seed rarity) lived scattered in its own module — which
+    # is how MH-208's promiscuity annotation stayed mis-specified for five weeks with one consumer.
+    "arm": dict(
+        path=OUT / "arm_card.tsv", key=["arm"],
+        explicit={"arm": "key"},
+        prefix=(("", "arm"),)),           # one row per arm => everything is arm rung by construction
 }
 AGG_OF = {"gene": {**{c: "arm" for c in ("cptac_prosp_agg_rho_rna", "cptac_prosp_agg_rho_prot",
                                          "cptac_prosp_agg_rho_disc", "cptac_t105_agg_rho_rna",
@@ -156,6 +163,18 @@ DOMAIN = {
     "the WITHIN-PATIENT paired subset (n=103 matched tumour/NAT pairs, MH-158)": (
         "edge_rho_adj", "dShare_M_own", "dShare_raw_own", "mean_own_shift", "mean_dGlobalRank",
         "own_specific_frac"),
+    # ── ARM CARD (MH-209). Each block covers a DIFFERENT scan, so its NaNs mean UNSCANNED, never zero.
+    # Measured on the denominator that matters (803 model arms, ≥1 HE edge): seq 65.8% · site 96.0% ·
+    # ts 33.7% · cur 99.0%. On the union of all 3,241 arms the same numbers read 23.0/23.8/9.9/29.7%.
+    "arms in the scanMiR GENOME-WIDE K_D scan (746 arms; breast-expressed genes)": ("seq_",),
+    "arms in the scanMiR site-type table (771 arms) — ⚠ HALLMARK-SCOPED, 1,432 genes only": ("site_",),
+    "arms in TargetScan's human default predictions (⚠ only 321 arms)": ("ts_",),
+    "arms with miRTarBase curation / ledger PMIDs — ⛔ FAME axes, not targetome (MH-208)": (
+        "cur_", "fame_"),
+    "arms detected in the TCGA miRNA matrix (2,236 of 3,241)": ("abund_",),
+    "arms carrying >=1 curated HE edge in the model design (803 arms)": ("model_",),
+    "arms with a resolvable precursor locus / RISC-loading measurement": (
+        "host_class", "clustered", "mirgenedb", "ago_reads"),
 }
 
 
@@ -232,8 +251,14 @@ def main() -> int:
                   dict(R[R.agg_of != ""].agg_of.value_counts()))
         print(f"   UNASSIGNED {n_un} · invariance violations {nv}"
               + (f" of {len(V)} checkable" if len(V) else " (none checkable on this grain)"))
-        for _, b in V[V.rate > 0].sort_values("rate", ascending=False).head(8).iterrows():
-            print(f"      X {b.column:26s} {b.rung:7s} varies in {b.rate:.0%} of groups")
+        # ⚠ `V` is EMPTY when nothing is invariance-checkable on this grain — true for any single-key card
+        # whose columns are all its own rung (the ARM card, MH-209, is the first such card). An empty frame
+        # has no `.rate`, so the guard is required, not defensive: without it `--check` died with
+        # `AttributeError: 'DataFrame' object has no attribute 'rate'` AFTER printing a clean-looking
+        # per-card summary — a checker that exits 1 mid-report reads as "checked and fine" to a skimmer.
+        if len(V):
+            for _, b in V[V.rate > 0].sort_values("rate", ascending=False).head(8).iterrows():
+                print(f"      X {b.column:26s} {b.rung:7s} varies in {b.rate:.0%} of groups")
         # ⚠ coverage is computed over EVERY column, not just the rung-checkable ones. It used to read
         # off `V`, which only holds gene/family/arm rungs — so it reported 25 thin columns on the edge
         # card where the true number is 89. A coverage report that silently skips two thirds of the

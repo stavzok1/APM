@@ -908,9 +908,24 @@ miTED shows those arms ARE expressed in healthy. ✅ **BOUNDED, NOT FATAL:** the
 between the two classes, so only the **within-state rank/share axis** is corrupted — but that axis is
 exactly `dHT`, the documented headline. ⚠ Note this cuts *against* the usual rank-over-QN preference **on
 this specific axis**: here the within-state rank is the broken one and QN is clean.
-⇒ **FIX AVAILABLE AND CHEAP: the `healthy_leg` provenance flag already exists on the card and already gates
-the COUPLING leg — it is simply not applied to `share_HLY`/`rank_HLY`/`d_rank_HLY_*`.** Gate or NaN those
-for `collapse_blind` arms rather than letting `fillna(0.0)` speak. Registry: **MH-166**.
+✅✅ **FIXED SAME DAY (MH-210).** `budget_shift`'s HLY level now comes from `HA.gtex_qn_baseline()` — the
+collapse-repaired baseline the MAGNITUDE axis already trusted — applied to **every** arm (a within-gene share
+is a RATIO; mixing a TCGA-scale imputed value with raw-GTEx values would break the denominator being
+repaired). **`share_HLY`==0 collapses 100% → 6.3%; dHT>0 goes 50.4% → 13.2% (cb) vs 19.4% (measured); MWU
+p 4.14e-121 → 2.84e-05.** ⚠ **The residual is REVERSED, not gone** — collapsed arms now read slightly LESS
+acquired than measured ones. Over-correction vs the affected arms genuinely being constitutive (they are
+canonical high-abundance family members) is **NOT adjudicated**.
+
+⭐⭐ **AND THE UN-IMPUTED LEG SHIPS ALONGSIDE, NOT INSTEAD** (user-directed; axiom 2a, which the first cut of
+this fix violated by substituting). `share_HLY_meas` · `rank_HLY_meas` · `d_rank_HLY_TUM_meas` · `n_HLY_meas`
+= the same budget over **only the arms GTEx genuinely measures**, invisible arms **NaN — never 0** and
+EXCLUDED from the denominator. **0 is a measurement (*owns none of the healthy budget*); NaN is an
+abstention (*GTEx cannot see it*) — confusing those two IS the original bug.** Covers **2,475 edges
+(43.8%)**, median **3** visible regulators, abstains on **100%** of `collapse_blind` by construction.
+⇒ **any dHT-based claim can be re-checked without the imputation.** Illustration: PTEN's #1 and #2 healthy
+owners under the repaired leg (miR-103a-3p share 0.351, miR-181a-5p 0.175) are BOTH invisible to GTEx.
+✅ Guards: `share_TUM`/`rank_TUM`/`share_NAT`/`rank_NAT`/`ctx_gap_core` 100% identical, `shift_class` 100%
+unchanged. Registry: **MH-166** (defect) → **MH-210** (fix).
 
 ---
 

@@ -425,7 +425,92 @@ def realization_by_subtype(genes, *, alpha: float = 0.005, deconv: bool = True) 
     return df
 
 
-def budget_shift(gene: str, *, alpha: float = 0.005, deconv: bool = True) -> pd.DataFrame:
+def _healthy_level(regs, *, repaired: bool = True) -> pd.Series:
+    """The HLY (healthy) abundance level for the within-gene budget — **collapse-REPAIRED by default**.
+
+    ⚠⚠ **WHY THIS EXISTS (2026-08-03).** GTEx v10's uniquely-mappable miRNA pipeline ZEROES the canonical
+    member of several seed families (let-7a, miR-30a, miR-10a, miR-16, miR-17, miR-200b…) via multi-mapping
+    collapse. Reading the raw GTEx median therefore gave those arms abundance 0 → `fillna(0.0)` → within-gene
+    **share exactly 0 → rank LAST → `dHT` maximally positive**, i.e. the collapse *manufactured* apparent
+    healthy→tumour acquisition on the identity axis. **MEASURED on the edge card before the fix: for the 826
+    `collapse_blind` edges (115 arms) `share_HLY`==0 and `rank_HLY`==last for 100%, median dHT +1.00 and
+    50.4% dHT>0, against 9.4% for `measured` arms (MWU p=4.1e-121).**
+
+    ⭐ **THE OTHER TWO ACQUISITION AXES WERE ALREADY REPAIRED — this one was the straggler.**
+    `card.py`'s magnitude axis uses `HA.load_baseline()` (this same QN baseline) and `acquisition_score`
+    uses the MH-166 same-seed **surrogate**-resolved healthy z; neither is distinguishable between
+    `collapse_blind` and `measured` (p=0.627 / p=0.448). Only `budget_shift`'s rank/share axis read raw
+    GTEx — and that axis is `dHT`, the documented headline.
+
+    ⚠ **APPLIED TO EVERY ARM, NOT ONLY THE COLLAPSED ONES — DELIBERATELY.** A within-gene share is a RATIO,
+    so all of a gene's regulators must sit on ONE scale. Substituting a TCGA-scale imputed value for the
+    blind arms while leaving the rest on the raw-GTEx scale would mix scales inside the denominator and
+    break the very quantity being repaired. `gtex_qn_baseline` supplies both (QN'd GTEx median for measured
+    arms, miTED rank-transfer for collapsed ones; LOO-validated r=0.90, median err 0.86 log2), so it is
+    scale-consistent by construction. True orphans (no GTEx, no miTED, no seed-mate) stay floor-0, which is
+    the CORRECT answer for a genuinely-absent arm — `true_absent` SHOULD rank last.
+
+    `repaired=False` restores the pre-fix raw-GTEx path for audit/regression only.
+    """
+    from mirna_hallmark.learned import state as ST
+    if not repaired:
+        return ST._gtex_mirna().reindex(regs).median(axis=1)
+    from mirna_hallmark import healthy_anchor as HA
+    base = HA.gtex_qn_baseline().reindex(regs)
+    if base.notna().sum() == 0:                      # no baseline at all → fall back rather than emit zeros
+        return ST._gtex_mirna().reindex(regs).median(axis=1)
+    raw = ST._gtex_mirna().reindex(regs).median(axis=1)
+    return base.fillna(raw)                          # baseline first; raw only where the baseline has no entry
+
+
+def _healthy_measured(regs) -> pd.Series:
+    """⭐ The UN-IMPUTED healthy level: **only arms GTEx genuinely measures**, everything else **NaN — never 0**.
+
+    (user-directed 2026-08-03: *"it should probably still have a column without the imputation with just the
+    original expressed GTEx ones, in addition"* — and that is this subproject's standing rule, axiom 2a:
+    **emit both, flag rather than silently condition.** The repaired leg makes an imputation ASSUMPTION
+    (miTED rank-transfer); a reader must be able to ask whether a result survives without it.)
+
+    ⚠ **NaN, NOT 0 — that distinction is the whole point.** Zero says *"this arm owns none of the healthy
+    budget"* (a measurement); NaN says *"GTEx cannot see this arm"* (an abstention). The pre-fix bug WAS
+    exactly this confusion. Arms failing the test are therefore **excluded from the denominator**, so
+    `share_HLY_meas` is the budget among *visible* regulators only — read it with `n_HLY_meas`, which
+    reports how many arms that denominator spans.
+
+    Test mirrors `card.py::_healthy_leg_map`'s `measured` class exactly: raw GTEx median above the abundance
+    floor AND not floored in >50% of samples."""
+    from mirna_hallmark import healthy_anchor as HA
+    from mirna_hallmark.learned import state as ST
+    Xg = ST._gtex_mirna()
+    raw = Xg.reindex(regs).median(axis=1)
+    floored = (Xg.eq(Xg.min(axis=1), axis=0)).mean(axis=1).reindex(regs)
+    return raw.where((raw > HA.ABUND_FLOOR) & (floored.fillna(1.0) <= 0.5))
+
+
+def _budget(level: pd.Series, Mv: np.ndarray, fam: pd.Series, regs) -> tuple:
+    """(share, rank, n) from a per-arm level vector. **NaN levels are EXCLUDED from the denominator**, not
+    zeroed — so a budget over partially-visible regulators stays a proper share of what IS visible."""
+    a = pd.Series(level).reindex(regs).to_numpy(float)
+    ok = np.isfinite(a)
+    share = np.full(len(regs), np.nan)
+    rank = np.full(len(regs), np.nan)
+    if not ok.any():
+        return share, rank, 0
+    a_lin = np.zeros(len(regs), float)
+    a_lin[ok] = np.clip(np.power(2.0, a[ok]) - 1.0, 0.0, None)
+    pool = pd.Series(a_lin, index=list(regs)).groupby(fam).transform("sum").to_numpy(float)
+    x_fam = np.log2(1.0 + pool)
+    sif = np.divide(a_lin, pool, out=np.zeros_like(a_lin), where=pool > 0)
+    c = np.clip(Mv * x_fam * sif, 0.0, None)
+    tot = float(c[ok].sum())
+    if tot > 0:
+        share[ok] = np.round(c[ok] / tot, 3)
+    rank[ok] = pd.Series(c[ok]).rank(ascending=False).to_numpy()
+    return share, rank, int(ok.sum())
+
+
+def budget_shift(gene: str, *, alpha: float = 0.005, deconv: bool = True,
+                 healthy_repaired: bool = True) -> pd.DataFrame:
     """(E7/G4 across states) — the WITHIN-GENE contribution ranking and how it SHIFTS NAT→tumour.
     contribution(m,state) = the arm's share of its FAMILY's realized pressure M(fam)·X_fam(state), apportioned
     by the arm's linear-RPM share of the family pool (so Σ_arms(family) = M(fam)·X_fam, NO family-size inflation:
@@ -445,8 +530,7 @@ def budget_shift(gene: str, *, alpha: float = 0.005, deconv: bool = True) -> pd.
     levels = {"HLY": None, "NAT": state_matrices("11")[0].reindex(regs).median(axis=1),
               "TUM": state_matrices("01")[0].reindex(regs).median(axis=1)}
     try:
-        from mirna_hallmark.learned import state as ST
-        levels["HLY"] = ST._gtex_mirna().reindex(regs).median(axis=1)
+        levels["HLY"] = _healthy_level(regs, repaired=healthy_repaired)
     except Exception:
         levels.pop("HLY")
     df = pd.DataFrame({"arm": regs, "M": np.round(Mv, 3)})
@@ -461,13 +545,26 @@ def budget_shift(gene: str, *, alpha: float = 0.005, deconv: bool = True) -> pd.
         tot = c.sum()
         df[f"share_{st}"] = np.round(c / tot, 3) if tot > 0 else 0.0
         df[f"rank_{st}"] = pd.Series(c).rank(ascending=False).astype(int).values
+    # ⭐ THE UN-IMPUTED COMPANION (user-directed) — same budget, but computed ONLY over arms GTEx genuinely
+    # measures, with the invisible ones ABSTAINING (NaN) instead of being zeroed. Emitted ALONGSIDE the
+    # repaired leg, never instead of it, so any dHT-based claim can be re-checked without the imputation.
+    if "HLY" in levels:
+        try:
+            sm, rm, nm = _budget(_healthy_measured(regs), Mv, fam, regs)
+            df["share_HLY_meas"], df["rank_HLY_meas"], df["n_HLY_meas"] = sm, rm, nm
+        except Exception:
+            df["share_HLY_meas"] = df["rank_HLY_meas"] = np.nan
+            df["n_HLY_meas"] = 0
     df = df.sort_values("share_TUM", ascending=False)
     states_present = list(levels)
     df["d_rank_NAT_TUM"] = df["rank_NAT"] - df["rank_TUM"]                # +ve = rose NAT→tumour
     if "HLY" in states_present:
         df["d_rank_HLY_TUM"] = df["rank_HLY"] - df["rank_TUM"]            # +ve = rose healthy→tumour (acquired, dHT)
+        # ⚠ the un-imputed dHT: NaN wherever GTEx cannot see the arm — an ABSTENTION, which is the honest
+        # answer there. Compare against `d_rank_HLY_TUM` to see exactly what the imputation is buying.
+        df["d_rank_HLY_TUM_meas"] = df["rank_HLY_meas"] - df["rank_TUM"]
     order = ["arm", "M"] + [f"{p}_{st}" for st in states_present for p in ("share", "rank")] \
-        + [c for c in ("d_rank_HLY_TUM", "d_rank_NAT_TUM") if c in df]
+        + [c for c in ("d_rank_HLY_TUM", "d_rank_HLY_TUM_meas", "n_HLY_meas", "d_rank_NAT_TUM") if c in df]
     print(f"\n=== {gene}: within-gene contribution budget across states {states_present} (cell-intrinsic M) ===")
     print(df[order].to_string(index=False))
     if "d_rank_HLY_TUM" in df:
