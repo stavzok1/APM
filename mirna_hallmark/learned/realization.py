@@ -2725,3 +2725,99 @@ def patient_realization_swap(*, m_ref: str = "complement", centre: bool = False)
     df = pd.DataFrame(rows)
     df.to_csv(OUT / f"patient_realization_swap{'_centred' if centre else ''}.tsv", sep="\t", index=False)
     return df
+
+
+_ARCH_COLS = ("n_fam", "n_arms", "w_max", "ctx_n_abund", "ctx_frac_abund", "ctx_n_fam_multi")
+
+
+@lru_cache(maxsize=2)
+def _gene_architecture(m_ref: str = "complement") -> pd.DataFrame:
+    """Per-gene REGULATORY ARCHITECTURE — **read from `gene_card.tsv`, not recomputed** (axiom 8: the card
+    already carries the atlas block; hand-rolling it both duplicates the definition and costs a full
+    `M_reference` sweep). Adds only what the card cannot know: the acquired pressure's spread ACROSS
+    PATIENTS (`pressure_sd`) and the target's own Δ spread (`target_sd`), both free from `_pr_matrices`.
+
+    ⚠ `w_max` is the **max curated EVIDENCE weight** over the gene's arms (`card_rungs`), i.e. evidence
+    dominance — **not** a dose or β share. Do not read it as "how concentrated is the regulation"."""
+    Rm, _Dm, Ym, genes, pts = _pr_matrices(m_ref)
+    card = pd.read_csv(OUT / "gene_card.tsv", sep="\t")
+    have = [c for c in _ARCH_COLS if c in card.columns]
+    a = card.set_index("gene")[have].reindex(list(genes)).reset_index(names="gene")
+    a["i"] = np.arange(len(genes))
+    a["pressure_sd"] = Rm.std(axis=1, ddof=1)
+    a["target_sd"] = Ym.std(axis=1, ddof=1)
+    return a
+
+
+def patient_realization_by_gene_profile(*, m_ref: str = "complement", n_bin: int = 3) -> pd.DataFrame:
+    """§J8d. Stratify the §J8c swap contrast by the gene's REGULATORY ARCHITECTURE. For each equal-sized
+    stratum, recompute `diag − offdiag` for REAL and for DECOY, and report the doubly-controlled
+    `REAL − DECOY` — does the personal component concentrate in genes of a particular architecture?
+    ⚠ Bins are EQUAL-SIZED because `diag − offdiag` is noisier on fewer genes."""
+    Rm, Dm, Ym, genes, pts = _pr_matrices(m_ref)
+    arch = _gene_architecture(m_ref)
+    n = len(pts)
+    eye = ~np.eye(n, dtype=bool)
+
+    def _contrast(idx):
+        out = {}
+        for lbl, P in (("REAL", Rm), ("DECOY", Dm)):
+            C = _rank_z(P[idx]).T @ _rank_z(Ym[idx]) / len(idx)
+            out[lbl] = float(np.diag(C).mean() - C[eye].mean())
+        return out
+    labels = {3: ["low", "mid", "high"], 4: ["Q1", "Q2", "Q3", "Q4"]}[n_bin]
+    rows = []
+    for axis in [c for c in (*_ARCH_COLS, "pressure_sd", "target_sd") if c in arch.columns]:
+        v = arch[axis]
+        if v.notna().sum() < 3 * 60:
+            continue
+        try:
+            b = pd.qcut(v.rank(method="first"), n_bin, labels=labels)
+        except ValueError:
+            continue
+        for lab in labels:
+            idx = arch.i[b == lab].to_numpy()
+            if len(idx) < 60:
+                continue
+            c = _contrast(idx)
+            rows.append({"axis": axis, "stratum": lab, "n_genes": len(idx),
+                         "median_value": _r2(float(v[b == lab].median())),
+                         "diff_REAL": _r3(c["REAL"]), "diff_DECOY": _r3(c["DECOY"]),
+                         "REAL_minus_DECOY": _r3(c["REAL"] - c["DECOY"])})
+    df = pd.DataFrame(rows)
+    df.to_csv(OUT / "patient_realization_by_gene_profile.tsv", sep="\t", index=False)
+    return df
+
+
+def patient_realization_profile_grid(*, m_ref: str = "complement", a: str = "pressure_sd",
+                                     b: str = "n_fam", n_bin: int = 3) -> pd.DataFrame:
+    """§J8e. The 2-D version of `patient_realization_by_gene_profile` — `REAL − DECOY` in an equal-n
+    `a` × `b` grid. ⚠ Needed because the architecture axes are heavily COLLINEAR (n_fam↔n_arms ρ=0.97,
+    n_fam↔ctx_n_abund 0.74, n_fam↔pressure_sd 0.47), so a marginal gradient on any one of them may be a
+    proxy for another. Measured: `pressure_sd` survives inside every `n_fam` stratum, while `n_fam`
+    REVERSES inside the top `pressure_sd` stratum."""
+    Rm, Dm, Ym, genes, pts = _pr_matrices(m_ref)
+    arch = _gene_architecture(m_ref)
+    n = len(pts)
+    eye = ~np.eye(n, dtype=bool)
+
+    def _c(idx):
+        o = {}
+        for lbl, P in (("REAL", Rm), ("DECOY", Dm)):
+            C = _rank_z(P[idx]).T @ _rank_z(Ym[idx]) / len(idx)
+            o[lbl] = float(np.diag(C).mean() - C[eye].mean())
+        return o["REAL"] - o["DECOY"]
+    labs = [f"{n_bin}q{i+1}" for i in range(n_bin)]
+    arch = arch.assign(_A=pd.qcut(arch[a].rank(method="first"), n_bin, labels=labs))
+    rows = []
+    for la in labs:
+        sub = arch[arch._A == la]
+        r = {a: la, "n": len(sub), f"med_{a}": _r3(float(sub[a].median()))}
+        bb = pd.qcut(sub[b].rank(method="first"), n_bin, labels=labs)
+        for lb in labs:
+            idx = sub.i[bb == lb].to_numpy()
+            r[f"{b}_{lb}"] = round(_c(idx), 4) if len(idx) >= 60 else np.nan
+        rows.append(r)
+    df = pd.DataFrame(rows)
+    df.to_csv(OUT / f"patient_realization_grid_{a}_x_{b}.tsv", sep="\t", index=False)
+    return df
