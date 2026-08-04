@@ -12,7 +12,7 @@ error: **not knowing what unit a number lives on.**
 
 THE TRAP THIS REGISTRY EXISTS FOR — `beta` MEANS A DIFFERENT THING ON EACH CARD:
       edge_card.tsv    beta is EDGE rung   — readouts.run(level="arm"),    the SS8 collapse REMOVED
-      family_card.tsv  beta is FAMILY rung — readouts.run(level="family"), the SS8 collapse APPLIED
+      gene_family_card.tsv  beta is FAMILY rung — readouts.run(level="family"), the SS8 collapse APPLIED
     Same name, same estimator, DIFFERENT unit. => THE RUNG IS A PROPERTY OF (CARD, COLUMN), NEVER OF THE
     COLUMN NAME. A single shared prefix map cannot express that, which is why each card gets its own.
 
@@ -102,8 +102,8 @@ CARDS = {
         prefix=(("esub_", "edge"), ("adm_", "edge"), ("echim_", "edge"), ("kd_", "edge"),
                 ("ctx_", "gene"), ("comp_", "gene"), ("cptac_", "edge"), ("tcga_", "gene"),
                 ("cal_", "edge"))),
-    "family": dict(
-        path=OUT / "family_card.tsv", key=["gene", "family"],
+    "gene_family": dict(
+        path=OUT / "gene_family_card.tsv", key=["gene", "family"],
         # the SAME readouts columns are FAMILY rung here — level="family", the collapse applied
         explicit={**{c: "family" for c in _READOUTS + _FAMILY_ATTR},
                   **{c: "gene" for c in _GENE_DESC + _GENE_ROLLUP},
@@ -132,7 +132,7 @@ CARDS = {
     # ⭐ THE FIFTH RUNG (MH-215, user-identified). The card registered above as "family" is keyed
     # ['gene','family'] — a GENE×FAMILY card, which cannot express a property of the family ITSELF.
     # This one is one row per SEED FAMILY. ⛔ Its artifact is `seed_family_card.tsv`, NOT
-    # `family_card.tsv`: two rungs must never share a filename (axiom 6's collision class).
+    # `gene_family_card.tsv`: two rungs must never share a filename (axiom 6's collision class).
     "seed_family": dict(
         path=OUT / "seed_family_card.tsv", key=["seed_family"],
         explicit={"seed_family": "key"},

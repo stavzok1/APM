@@ -72,7 +72,7 @@ def _family_beta() -> dict:
     (MH-191/192). A family-pooled design column must be weighted by the family-rung β; using an arm's β
     there is a unit mismatch, and picking the FIRST arm's β is additionally arbitrary."""
     if not _FAMBETA:
-        for f in ("family_card.tsv", "readouts_edges.tsv"):
+        for f in ("gene_family_card.tsv", "readouts_edges.tsv"):
             p = OUT / f
             if p.exists():
                 d = pd.read_csv(p, sep="\t", low_memory=False)
@@ -269,7 +269,7 @@ def build_gene() -> pd.DataFrame:
             # ⛔ WAS: `bfam[f] = b` — the FIRST arm's β used as the family's. Arbitrary, because β is fit
             # PER ARM (`readouts.run(level="arm")`) and DIFFERS across arms in 99.8% of multi-arm cells
             # (MH-191). Picking one arm silently chose a winner among near-collinear same-seed arms.
-            # ⭐ NOW: read the FAMILY-rung β from `family_card.tsv` — the same estimator at
+            # ⭐ NOW: read the FAMILY-rung β from `gene_family_card.tsv` — the same estimator at
             # `level="family"`, i.e. the number that actually belongs on a family-pooled column
             # (MH-193). Falls back to the arms' MEAN, which is at least symmetric, if a cell is absent.
             fkeys, bfam, acc, seen = [], {}, {}, {}

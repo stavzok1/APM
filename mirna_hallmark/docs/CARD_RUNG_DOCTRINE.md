@@ -13,7 +13,7 @@
 | card | what `beta` is |
 |---|---|
 | `edge_card.tsv` | **EDGE** rung — `readouts.run(level="arm")`, the SS8 collapse **REMOVED** |
-| `family_card.tsv` | **FAMILY** rung — `readouts.run(level="family")`, the SS8 collapse **APPLIED** |
+| `gene_family_card.tsv` | **FAMILY** rung — `readouts.run(level="family")`, the SS8 collapse **APPLIED** |
 
 Same name, same estimator, different unit. A single shared prefix map cannot express that, which is why
 each card carries its own map and why `domain_of(col, card)` is **card-scoped** — prefixes were once
@@ -30,7 +30,7 @@ per-arm). All the same error.
 | rung | card | key | expresses |
 |---|---|---|---|
 | **edge** | `realization/edge_card.tsv` | `[gene, arm]` | one (miRNA, gene) pair |
-| **family_edge** | `family_card.tsv` | `[gene, family]` | one (seed family, gene) pair |
+| **family_edge** | `gene_family_card.tsv` | `[gene, family]` | one (seed family, gene) pair |
 | **gene** | `realization/gene_card.tsv` | `[gene]` | the gene's total incoming regulation |
 | **arm** | `arm_card.tsv` | `[arm]` | the arm itself, gene-free |
 | **seed_family** | `seed_family_card.tsv` | `[seed_family]` | the family itself, gene-free |
@@ -79,7 +79,7 @@ card's key**:
 4. **Both annotation passes run.** `realization.edge_card()`/`gene_card()` call `card_context.annotate()`
    **and** `card_ladders.annotate()` by default (MH-222/227). Writing a card without them silently drops
    ~57 columns.
-5. ⚠ **`family_card.tsv` has no `_finish_card` call site** — adding columns there means extending
+5. ⚠ **`gene_family_card.tsv` has no `_finish_card` call site** — adding columns there means extending
    `readouts.py`'s promotion or adding one, **plus** registering in `CARDS["family"]["explicit"]`.
 
 ## 5. Traps with a recorded cost

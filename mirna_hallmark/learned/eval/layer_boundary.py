@@ -72,7 +72,7 @@ OUT = C.REPO_ROOT / "mirna_hallmark/output/learned/layer_boundary"
 LEARNED = C.REPO_ROOT / "mirna_hallmark/output/learned"
 BUDGETS = LEARNED / "decoy_oof_budgets.parquet"
 SCORED = LEARNED / "decoy_oof_scored.tsv"
-FAMILY_CARD = LEARNED / "family_card.tsv"
+FAMILY_CARD = LEARNED / "gene_family_card.tsv"
 DECOY_FAMILY_BETA = LEARNED / "decoy_family_betas_oof.tsv"
 PAIRS = LEARNED / "decoy_full_pairs.tsv"
 

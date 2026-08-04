@@ -220,7 +220,7 @@ def _tcga_one(gene: str):
 
     beta = _MEM.setdefault("fam_beta", None)
     if beta is None:
-        f = pd.read_csv(C.REPO_ROOT / "mirna_hallmark/output/learned/family_card.tsv", sep="\t",
+        f = pd.read_csv(C.REPO_ROOT / "mirna_hallmark/output/learned/gene_family_card.tsv", sep="\t",
                         usecols=["gene", "family", "beta"])
         beta = dict(zip(zip(f.gene, f.family.astype(str)), f.beta.astype(float)))
         _MEM["fam_beta"] = beta
@@ -262,14 +262,14 @@ def tcga_arm(genes=None, workers: int = 6, endpoints=("os", "dfi")) -> pd.DataFr
     cl = load_tcga_outcome()
     cov = pd.concat([cl["base"], cl["comp"]], axis=1)
     if genes is None:
-        f = pd.read_csv(C.REPO_ROOT / "mirna_hallmark/output/learned/family_card.tsv", sep="\t", usecols=["gene"])
+        f = pd.read_csv(C.REPO_ROOT / "mirna_hallmark/output/learned/gene_family_card.tsv", sep="\t", usecols=["gene"])
         genes = sorted(f.gene.unique())
     # warm every static read in the PARENT before forking (axiom 3a): the family beta map, the
     # learned data matrices, and the CNV cache for the whole universe in ONE batched call - a per-gene
     # cache miss re-scans the ASCAT3 source and cost 2 h earlier in this arc.
     from mirna_hallmark import data_loaders as _D
     from mirna_hallmark.learned import data as _LD
-    f0 = pd.read_csv(C.REPO_ROOT / "mirna_hallmark/output/learned/family_card.tsv", sep="\t",
+    f0 = pd.read_csv(C.REPO_ROOT / "mirna_hallmark/output/learned/gene_family_card.tsv", sep="\t",
                      usecols=["gene", "family", "beta"])
     _MEM["fam_beta"] = dict(zip(zip(f0.gene, f0.family.astype(str)), f0.beta.astype(float)))
     _D.load_cnv_target_genes(sorted(set(genes) & set(_LD._load()["Y"].index)))

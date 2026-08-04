@@ -12,7 +12,7 @@ files themselves (coverage, dtype, examples). Read-only.
 
 WHY THE `family` / `seed_family` DISTINCTION KEEPS BITING — this tool prints the KEY, always:
 
-    CARDS["family"]       key = [gene, family]     -> a GENE-BY-FAMILY card. One row per (gene, family):
+    CARDS["gene_family"]  key = [gene, family]     -> a GENE-BY-FAMILY card. One row per (gene, family):
                                                       "how family F behaves AT gene G".
     CARDS["seed_family"]  key = [seed_family]      -> the FAMILY rung. One row per family:
                                                       "what family F IS", independent of any gene.

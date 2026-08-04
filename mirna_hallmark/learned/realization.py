@@ -947,7 +947,7 @@ def gene_card(*, annotate: bool = True) -> pd.DataFrame:
     # concentrated exactly where the rung is a real question. Doctrine backs the fix: identity is a
     # FAMILY quantity (MH-138; Design §F — same-seed arms are indistinguishable, so an arm argmax picks
     # an arbitrary member). Now reads the family card, falling back to the old path only if absent.
-    _fam_card = _LEARNED / "family_card.tsv"
+    _fam_card = _LEARNED / "gene_family_card.tsv"
     if _fam_card.exists():
         _fc = pd.read_csv(_fam_card, sep="\t", low_memory=False)
         if {"gene", "family", "identity"} <= set(_fc.columns):

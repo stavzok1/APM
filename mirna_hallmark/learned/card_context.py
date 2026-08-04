@@ -83,7 +83,7 @@ EDGE_CTX = OUT / "edge_design_context.tsv"
 #   card          artifact                                   rows are        registry cols
 #   edge          realization/edge_card.tsv                  (gene, arm)          185
 #   gene          realization/gene_card.tsv                  gene                 123
-#   family        family_card.tsv                            (gene, seed-family)   61
+#   family        gene_family_card.tsv                            (gene, seed-family)   61
 #   arm           arm_card.tsv                               arm                  297
 #   seed_family   seed_family_card.tsv                       seed-family           33
 #
@@ -341,7 +341,7 @@ def annotate() -> None:
     # ⛔ It must NOT receive the arm/edge blocks: `arm_*`, `cptac_*` (per-edge) and `cal_*` are defined
     # on units this card does not have. Handing a family-grain table an arm column is the exact mistake
     # the registry exists to prevent, so the block list here is deliberately shorter.
-    fam_card = OUT / "family_card.tsv"
+    fam_card = OUT / "gene_family_card.tsv"
     if fam_card.exists():
         print("[card_context] annotating the FAMILY card (gene-level blocks only):")
         _fb = [g] + ([cmp_] if cmp_ is not None else [])

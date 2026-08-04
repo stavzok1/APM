@@ -81,7 +81,7 @@ variability (`fam_var_{med,max,hhi}`), **seed heterogeneity** (`fam_seed_shift_m
 (`fam_fame_npmid_sum`, `fam_cur_degree_max`), guide/passenger (`fam_n_guide`, `fam_n_passenger`),
 context homogeneity (`fam_ctx_*`) and `fam_redund_m_eff`.
 
-⚠ **`family_card.tsv` is NOT this rung** — it is keyed `[gene, family]` and cannot express a property of
+⚠ **`gene_family_card.tsv` is NOT this rung** — it is keyed `[gene, family]` and cannot express a property of
 the family itself. That distinction is why `seed_family_card` exists (see `CARD_RUNG_DOCTRINE.md` §1).
 
 ## 7. Traps with a recorded cost

@@ -3,14 +3,14 @@
     .venv/bin/python3 -m mirna_hallmark.learned.seed_family_card
 
 **WHY THIS EXISTS — the same gap as the arm card, one rung up (user-identified, 2026-08-03).**
-`card_rungs.CARDS["family"]` is keyed **`['gene', 'family']`** — it is a *gene × family* card (5,117
+`card_rungs.CARDS["gene_family"]` is keyed **`['gene', 'family']`** — it is a *gene × family* card (5,117
 rows over 592 families), which can say "how family F behaves at gene G" but **cannot say anything about
 family F itself**. So per-FAMILY facts — how concentrated the family's dose is, whether its members are
 seed-homogeneous, how redundant its members are as tests — had nowhere to live, exactly as per-ARM facts
 had nowhere to live before MH-209. `family_context.tsv` (573 rows) is the only one-row-per-family
 artifact in the subproject and it was never registered as a card.
 
-⛔ **NAME COLLISION AVOIDED DELIBERATELY:** the artifact is `seed_family_card.tsv`, NOT `family_card.tsv`
+⛔ **NAME COLLISION AVOIDED DELIBERATELY:** the artifact is `seed_family_card.tsv`, NOT `gene_family_card.tsv`
 — that name is already taken by the (gene, family) card. Two different rungs must never share a filename;
 `--check`'s cross-card report exists because that class of collision is this subproject's most common
 false bug (axiom 6).

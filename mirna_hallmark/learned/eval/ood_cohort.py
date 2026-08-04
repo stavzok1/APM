@@ -64,7 +64,7 @@ from mirna_hallmark import config as C
 
 OUT = C.REPO_ROOT / "mirna_hallmark/output/learned"
 DEST = OUT / "ood_cohort"
-FAMILY_CARD = OUT / "family_card.tsv"
+FAMILY_CARD = OUT / "gene_family_card.tsv"
 #: ⭐ MIGRATED (MH-204) — was `decoy_family_betas.tsv` (2026-07-13), which overlapped the CURRENT
 #: `decoy_full_pairs.tsv` by only **63/3,558 cells = 1.8%**, covered 516 of 1,395 genes, and predated
 #: MH-137's fixes (evidence hole · Poisson-gated 6mer · dose caliper) so its decoys were TOO WEAK and
@@ -293,7 +293,7 @@ def buffa_family_matrix() -> pd.DataFrame:
 def family_beta(decoy: bool = False) -> dict:
     """(memoized) frozen FAMILY-rung β, `(gene, family) -> beta`.
 
-    Real β is `readouts.run(level="family")` (the §8 collapse APPLIED) as carried by `family_card.tsv`.
+    Real β is `readouts.run(level="family")` (the §8 collapse APPLIED) as carried by `gene_family_card.tsv`.
     ⛔ NOT the edge card's `beta`, which is `level="arm"` — same name, different unit (MH-191/192), and
     Buffa's array cannot resolve arms anyway.
     Decoy β is the site-free fitted fake from **`decoy_family_betas_oof.tsv`** (MH-204) — full-data β on
@@ -800,7 +800,7 @@ def write_manifest(R: pd.DataFrame, res: dict) -> None:
                                   "arrays (best r median 0.270, margin 0.0094); 49% have no clinical "
                                   "candidate; different institutions/accrual. STATE_OF_PLAY Axis 7 is wrong.",
         "estimator": "dense Gibbs spike_slab._gibbs_posterior at pi==1 (readouts.run(level='family'))",
-        "rung": "FAMILY (family_card.tsv) — forced: Buffa's miRNA array has no -5p/-3p resolution",
+        "rung": "FAMILY (gene_family_card.tsv) — forced: Buffa's miRNA array has no -5p/-3p resolution",
         "beta_frozen": True, "params_fit_in_buffa": 0,
         "ceiling_definition": {
             "source": "TCGA 5-fold OOF, FULL canonical C (CPE, target_cn, mal_prolif)",

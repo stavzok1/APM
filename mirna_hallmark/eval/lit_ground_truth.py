@@ -54,7 +54,7 @@ files; this module stamps their size+mtime and a content hash of its own output 
 
 ADMISSION CRITERIA (all four, per gene)
 ---------------------------------------
-  (a) the gene is in the learned design (`family_card.tsv`)
+  (a) the gene is in the learned design (`gene_family_card.tsv`)
   (b) the top family by LT-func PMID depth is PRESENT among that gene's design families
   (c) the design offers >= `min_competitors` families — with one family there is nothing to attribute
   (d) the top is UNAMBIGUOUS: `margin` = n_pmid(top) - n_pmid(runner-up) >= 1, so ties are excluded rather
@@ -78,7 +78,7 @@ from mirna_hallmark import config as C
 OUT = C.REPO_ROOT / "mirna_hallmark/output/learned"
 DEST = OUT / "lit_ground_truth.tsv"
 PROV = OUT / "lit_ground_truth_provenance.json"
-FAMILY_CARD = OUT / "family_card.tsv"
+FAMILY_CARD = OUT / "gene_family_card.tsv"
 
 #: low-throughput FUNCTIONAL assays — repression demonstrated, not binding observed.
 LT_FUNC = ("reporter", "western", "proteomics")

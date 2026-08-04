@@ -18,7 +18,7 @@ PRODUCER** in the repo (verified 2026-08-03: `ood_cohort.py` writes `ood_cohort_
 `edge_leg_*` tables and the manifest, and nothing anywhere writes those two). That is the MH-196 shape
 that rotted the literature sets. This module therefore rebuilds its outcome from PRODUCED artifacts
 only: `delta = rho_buffa_metagene − rho_abund_metagene` from `ood_cohort_genes.tsv` (verified to
-reproduce the recorded `delta` at max|diff| = 1.0e-16) and the design from `family_card.tsv`.
+reproduce the recorded `delta` at max|diff| = 1.0e-16) and the design from `gene_family_card.tsv`.
 
 Run: `.venv/bin/python3 -m mirna_hallmark.learned.eval.promiscuity_axis`
 """
@@ -34,7 +34,7 @@ from mirna_hallmark import config as C
 
 OUT = C.REPO_ROOT / "mirna_hallmark/output/learned"
 DEST = OUT / "ood_cohort"
-FAMILY_CARD = OUT / "family_card.tsv"
+FAMILY_CARD = OUT / "gene_family_card.tsv"
 GENES = DEST / "ood_cohort_genes.tsv"
 PROMISC_AXES = ("reg_promisc_med", "reg_promisc_max", "reg_promisc_min",
                 "reg_promisc_sd", "reg_promisc_hhi")

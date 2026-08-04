@@ -150,7 +150,7 @@ def run(workers: int = 6) -> pd.DataFrame:
     from mirna_hallmark.stats import bh_fdr
 
     R = rppa()
-    f = pd.read_csv(C.REPO_ROOT / "mirna_hallmark/output/learned/family_card.tsv", sep="\t",
+    f = pd.read_csv(C.REPO_ROOT / "mirna_hallmark/output/learned/gene_family_card.tsv", sep="\t",
                     usecols=["gene", "family", "beta"])
     _MEM["beta"] = dict(zip(zip(f.gene, f.family.astype(str)), f.beta.astype(float)))
     genes = sorted(set(f.gene) & set(R["g2ab"]))

@@ -153,7 +153,7 @@ def build(tier: int = 2) -> pd.DataFrame:
     from mirna_hallmark.eval import lit_ground_truth as GT
 
     gt = GT.load(min_tier=tier)
-    card = pd.read_csv(OUT / "family_card.tsv", sep="\t", low_memory=False)
+    card = pd.read_csv(OUT / "gene_family_card.tsv", sep="\t", low_memory=False)
     bad = BANNED & set(SCORERS)
     if bad:                                          # a guard, not a comment — see module docstring
         raise RuntimeError(f"w-contaminated scorer(s) against a w-derived ground truth: {sorted(bad)}")
@@ -229,7 +229,7 @@ def fame_null(tier: int = 2, n_boot: int = 5000) -> pd.DataFrame:
     from mirna_hallmark.eval import lit_ground_truth as GT
 
     gt = GT.load(min_tier=tier)
-    card = pd.read_csv(OUT / "family_card.tsv", sep="\t", low_memory=False)
+    card = pd.read_csv(OUT / "gene_family_card.tsv", sep="\t", low_memory=False)
     card = card[card["gene"].isin(set(gt["gene"]))].copy()
     card["abundance"] = _family_abundance(card)
     card["w_ledger"] = _ledger_weight(card)
