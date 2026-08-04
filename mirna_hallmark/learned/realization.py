@@ -2881,7 +2881,19 @@ def personal_signal_axes(*, m_ref: str = "complement") -> tuple:
     cats = [c for c in ("ctx_apriori_class", "dominant_edge_shift_class", "gene_repression_class")
             if c in card.columns]
     ck = card[cats].reindex(Ak.index)
-    cat = GA.scan_categorical(yk, ck)
+    # ⭐ MH-237: each class is THRESHOLDED FROM a continuous coupling variable, so it separates a coupling
+    # outcome by construction. Hand the defining variables to `scan_categorical` as `controls` and read
+    # `p_resid` against `p_matched` (never against `p` — different row sets).
+    ec = pd.read_csv(OUT / "edge_card.tsv", sep="\t")
+    dom = card["dominant_TUM"].rename("arm").reset_index() if "dominant_TUM" in card.columns else None
+    ctl = {}
+    if dom is not None and {"gene", "arm", "coupling_z_tum"} <= set(ec.columns) | {"gene", "arm"}:
+        D = dom.merge(ec[["gene", "arm", "coupling_z_tum"]], on=["gene", "arm"], how="left").set_index("gene")
+        ctl["dominant_edge_shift_class"] = D[["coupling_z_tum"]].reindex(Ak.index)
+    gr_ctl = [c for c in ("rho_gene_pressure_tumor", "gene_net_repressed_tumor") if c in card.columns]
+    if gr_ctl:
+        ctl["gene_repression_class"] = card[gr_ctl].reindex(Ak.index)
+    cat = GA.scan_categorical(yk, ck, controls=ctl)
     sc.to_csv(OUT / "personal_signal_axes.tsv", sep="\t", index=False)
     cat.to_csv(OUT / "personal_signal_axes_categorical.tsv", sep="\t", index=False)
     return sc, cat

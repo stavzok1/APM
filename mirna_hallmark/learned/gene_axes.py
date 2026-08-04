@@ -278,22 +278,60 @@ def sign_analysis(reference: pd.Series, candidate: pd.Series, *, expect_negative
     return out
 
 
-def scan_categorical(outcome: pd.Series, cats: pd.DataFrame, *, min_level_n: int = 25) -> pd.DataFrame:
+def _resid_on_controls(y: np.ndarray, X: np.ndarray) -> np.ndarray:
+    A = np.column_stack([np.ones(len(y)), X])
+    b, *_ = np.linalg.lstsq(A, y, rcond=None)
+    return y - A @ b
+
+
+def scan_categorical(outcome: pd.Series, cats: pd.DataFrame, *, min_level_n: int = 25,
+                     circular: set | None = None, controls: dict | None = None) -> pd.DataFrame:
     """Kruskal-Wallis across the levels of each categorical class column, BH-FDR across columns.
 
     ⛔ **EXISTS BECAUSE `scan()` IS NUMERIC-ONLY AND SILENTLY SKIPS CLASS COLUMNS.** In MH-201 that dropped
     six of them, including `ctx_apriori_class` — the one that carried the mechanism (q=0.0084 while every
     other categorical was null at q≈0.97). A scan that quietly ignores a column type is worse than no scan,
-    because its silence reads as coverage."""
+    because its silence reads as coverage.
+
+    ⭐ **`circular` / `controls` ADDED 2026-08-04 (MH-237).** `scan()` has always flagged circular axes;
+    this function did not, so the check had to be hand-built — and when it was, it RETRACTED the headline.
+    A class thresholded from a continuous variable will separate an outcome correlated with that variable
+    **by construction**; the question is whether it adds anything BEYOND it.
+      • `circular` — names of class columns that are the outcome's own source (flagged, never dropped).
+      • `controls` — `{class_column: DataFrame of the continuous variables it was THRESHOLDED FROM}`,
+        indexed like `outcome`. Emits `p_resid` (Kruskal on the residualised outcome) and `p_matched`.
+    ⚠⚠ **`p_matched`, NOT `p`, is the comparator for `p_resid`** — the controls carry NaNs, so residualising
+    silently changes the row set. Comparing `p` to `p_resid` across different n is invalid and cost me a
+    wrong "it collapses" call (p=0.057 unmatched vs **0.0011** matched, same data).
+    ⚠ A control that shares real biology with the outcome REMOVES REAL SIGNAL: read `p` as a circular upper
+    bound and `p_resid` as an over-controlled lower bound. Neither alone is the answer."""
     from mirna_hallmark.stats import bh_fdr
     from scipy.stats import kruskal
+    circular = circular or set()
+    controls = controls or {}
     rows = []
     for c in cats.columns:
         m = pd.concat([outcome.rename("_y"), cats[c]], axis=1).dropna()
         grps = [g["_y"].to_numpy(float) for _, g in m.groupby(c) if len(g) >= min_level_n]
         if len(grps) < 2:
             continue
-        rows.append({"axis": c, "n": len(m), "levels": len(grps), "p": float(kruskal(*grps).pvalue)})
+        r = {"axis": c, "n": len(m), "levels": len(grps), "p": float(kruskal(*grps).pvalue),
+             "circular": c in circular, "n_matched": np.nan, "p_matched": np.nan, "p_resid": np.nan}
+        ctl = controls.get(c)
+        if ctl is not None and len(ctl.columns):
+            X = ctl.reindex(m.index).apply(pd.to_numeric, errors="coerce").to_numpy(float)
+            ok = np.isfinite(X).all(axis=1)
+            if ok.sum() >= 3 * min_level_n:
+                mm = m[ok]
+                yv = mm["_y"].to_numpy(float)
+                rv = _resid_on_controls(yv, X[ok])
+                gr = [i for _, i in pd.DataFrame({"_y": yv, "_r": rv, "_c": mm[c].to_numpy()})
+                      .groupby("_c") if len(i) >= min_level_n]
+                if len(gr) >= 2:
+                    r["n_matched"] = int(ok.sum())
+                    r["p_matched"] = float(kruskal(*[g["_y"].to_numpy() for g in gr]).pvalue)
+                    r["p_resid"] = float(kruskal(*[g["_r"].to_numpy() for g in gr]).pvalue)
+        rows.append(r)
     S = pd.DataFrame(rows)
     if len(S):
         S["q"] = bh_fdr(S["p"].to_numpy())
