@@ -792,7 +792,15 @@ patient's field determines *which route to cancer is already open in them*.
   ship** (a decoy matched the per-patient trait's reliability, +0.59 vs +0.50). ⚠ Note MH-162A never tested
   the reliability of `eff_real − eff_decoy` — the decoy-corrected quantity is a *different* object from the
   one that died.
-- ⬜ **J5. The LOST repertoire + the opposite-sign control.** What a patient lost is only visible with
+- ✅ **J5. The opposite-sign control — DONE, and it PASSES (MH-231, 2026-08-04).** `dy_gain` **−0.0170**
+  (p=9.1e-18) and `dy_loss` **+0.0230** (p=3.8e-28) across 1,003 HE genes — opposite signs, both
+  significant, **de-repression the STRONGER leg**. Separation +0.0570 vs a broken-pairing null of
+  **+0.0000**, paired Wilcoxon **p=1.2e-24**, opposite-sign in **57.0%** of genes (chance 25%). Replicates
+  independently within TSG (n=46) and oncogene (n=72). **No role dependence** (cancer vs unknown p=0.110 —
+  recorded as null, not as the 1.7× it superficially looks like). ⇒ **the pooled realization ρ is not a
+  one-directional "gain ⇒ down" artifact; the paired lane's central quantity survives its own sign test.**
+  ⬜ Still open from the original item: the **per-patient** lost set (only the gene-level sign test is
+  done). Original text: **J5. The LOST repertoire + the opposite-sign control.** What a patient lost is only visible with
   paired data. Cohort `lost` exists (161 edges, ρ_adj −0.043); **no patient-level lost set, and no
   de-repression test on TCGA paired data** (the only one in the repo is GEO DCIS, ECM-only). ⭐ Losing a
   repressor predicts **de-repression — the opposite sign**. If gains repress but losses do not de-repress,

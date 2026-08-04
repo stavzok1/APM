@@ -2215,3 +2215,74 @@ def lost_repertoire_summary(df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
     print(out.to_string())
     out.to_csv(OUT / "lost_repertoire_summary.tsv", sep="\t")
     return out
+
+
+# --------------------------------------------------------------------------- #
+# §J6 — "FIELD" AND "REVERSE CAUSATION" ARE THE SAME OBSERVATION.               #
+# NAT may look personal because the tumour altered its neighbourhood. Two       #
+# levers, both on the §J2 slope `b` (the only per-patient signal §J found):     #
+#  (a) CONSTITUTIONAL RESTRICTION — imprinted 14q32 DLK1–DIO3 arms are          #
+#      germline-set and CANNOT be tumour-induced the way a field effect can.    #
+#      If b is HIGHER there, the signal is constitution, not field.             #
+#  (b) FIELD GRADIENT — `Cancer Epithelial` in NAT (median 0.024, max 0.213) is #
+#      a direct per-patient field readout. If retention is field contamination, #
+#      it must CONCENTRATE in the high-field patients.                          #
+# ⚠ `Cancer Epithelial` is NOT in the C block (it is the malignant fraction and #
+#   is deliberately excluded) — read it from the raw deconvolution table.       #
+# --------------------------------------------------------------------------- #
+
+_IMPRINT_HOSTS = ("MEG3", "MEG8", "MEG9", "DIO3OS", "MIR493HG")   # 14q32 proxy — covers 52/56 HE arms
+
+
+def _nat_field() -> pd.Series:
+    """Per-patient `Cancer Epithelial` fraction in the patient's own NAT — the field-effect readout."""
+    f = ST._deconv_raw()
+    col = next((c for c in f.columns if c.strip().lower() == "cancer epithelial"), None)
+    if col is None:
+        return pd.Series(dtype=float)
+    nat = {i[:-4]: v for i, v in zip(f.index.astype(str), f[col]) if str(i).endswith("-NAT")}
+    return pd.Series(nat, dtype=float)
+
+
+def constitution_vs_field(*, n_boot: int = 2000, seed: int = 0) -> pd.DataFrame:
+    """§J6. Is the §J2 personal signal CONSTITUTIONAL (germline 14q32) or FIELD (tumour-altered NAT)?
+    (a) b inside vs outside the imprinted 14q32 set. (b) b recomputed within patient strata of the NAT
+    `Cancer Epithelial` fraction — field contamination must CONCENTRATE in the high-field stratum."""
+    _, host = _arm_context()
+    d = pd.read_csv(OUT / "offset_amplification_mirna.tsv", sep="\t")
+    d["host"] = d.feature.map(lambda a: host.get(str(a)))
+    d["imprinted"] = d.host.isin(_IMPRINT_HOSTS)
+    rows = []
+    ins, out = d.b[d.imprinted].dropna(), d.b[~d.imprinted].dropna()
+    if len(ins) >= 5:
+        u = mannwhitneyu(ins, out)
+        rows.append({"test": "14q32_imprinted_vs_rest", "n_in": len(ins), "n_out": len(out),
+                     "b_in": _r3(float(ins.median())), "b_out": _r3(float(out.median())),
+                     "p": float(u.pvalue)})
+        print(f"[J6a CONSTITUTION] imprinted 14q32 arms n={len(ins)} b={ins.median():+.3f} vs rest "
+              f"n={len(out)} b={out.median():+.3f} | MW p={u.pvalue:.4g}")
+    # (b) field gradient — recompute b within patient strata
+    _, _, pts = ST.paired_delta_matrices()
+    fld = _nat_field().reindex(pts).dropna()
+    he = LD.D.high_evidence_edges()
+    T0, N0 = _matched_state_pair("mirna", pts, sorted(set(he["miRNA"])))
+    T, N = _resid_composition_pair(_sample_centre(T0), _sample_centre(N0))
+    q = pd.qcut(fld.reindex([p for p in T.columns if p in fld.index]), 3,
+                labels=["low field", "mid", "HIGH field"])
+    print(f"[J6b FIELD] NAT Cancer Epithelial: median {fld.median():.4f} max {fld.max():.4f} "
+          f"(n={len(fld)} patients)")
+    for lab in ("low field", "mid", "HIGH field"):
+        sel = [p for p in q.index if q[p] == lab]
+        if len(sel) < _MIN_PAIRS:
+            continue
+        Tc, Nc = _dev_pair(T[sel], N[sel])
+        keep = (Nc.std(axis=1) > 0.05) & (Tc.std(axis=1) > 0.05)
+        b, r = _slope_corr(Tc[keep], Nc[keep])
+        rows.append({"test": f"field_{lab.replace(' ', '_')}", "n_in": len(sel),
+                     "n_out": int(keep.sum()), "b_in": _r3(float(np.nanmedian(b))),
+                     "b_out": _r3(float(np.nanmedian(r))), "p": np.nan})
+        print(f"   {lab:11s} n_pat={len(sel):3d} med field {fld[sel].median():.4f} | "
+              f"b={np.nanmedian(b):+.3f}  r={np.nanmedian(r):+.3f}  ({int(keep.sum())} arms)")
+    df = pd.DataFrame(rows)
+    df.to_csv(OUT / "constitution_vs_field.tsv", sep="\t", index=False)
+    return df
