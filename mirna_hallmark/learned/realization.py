@@ -2286,3 +2286,89 @@ def constitution_vs_field(*, n_boot: int = 2000, seed: int = 0) -> pd.DataFrame:
     df = pd.DataFrame(rows)
     df.to_csv(OUT / "constitution_vs_field.tsv", sep="\t", index=False)
     return df
+
+
+# --------------------------------------------------------------------------- #
+# §J4 — DOES A PATIENT'S OWN NAT PRE-LOADING PREDICT HOW THAT GENE MOVES IN     #
+#       THEIR TUMOUR?  (board §J4, sharpened by J1/J2/J5)                       #
+#                                                                              #
+# The board's original centrepiece asked four quantities at once. MH-229 killed #
+# its LEVEL-axis premise (the patient's own NAT explains r²≈2% of where their   #
+# tumour sits) — but MH-231 showed the CHANGE axis is real and sign-correct, so #
+# the question that survives is a change-axis one: given how much standing      #
+# pressure a patient already carries on gene g in their normal tissue, does g   #
+# move differently in THEIR tumour?                                            #
+#                                                                              #
+# At single-edge resolution the M weight is a positive constant, so a rank      #
+# statistic makes `Σ M·N` collapse to `N` — the test is exactly                 #
+# `partial_spearman(own NAT level of the arm, Δtarget, ΔC)`.                    #
+#                                                                              #
+# ⛔ MH-162A GOVERNS: a site-free decoy matched a per-patient trait's           #
+# reliability (+0.59 vs +0.50), so every per-patient metric ships with its      #
+# decoy or it does not ship. Only REAL − DECOY counts here.                     #
+# --------------------------------------------------------------------------- #
+
+def nat_preload(genes: Optional[Sequence[str]] = None, *, m_ref: str = "complement") -> pd.DataFrame:
+    """§J4. Per edge, ρ(patient's OWN NAT level of the arm, Δtarget), ΔC-adjusted — for the REAL arm and
+    its Hungarian-matched site-free DECOY. The decoy absorbs any global 'this patient runs high' effect."""
+    from mirna_hallmark.eval import decoy_bench as DB
+    _, dY, pts_l = ST.paired_delta_matrices()
+    pts = list(pts_l)
+    Xn = ST.state_matrices("11")[0]
+    dC = _delta_C()
+    Cm = dC.reindex(pts).to_numpy(float) if len(dC.columns) else None
+    ed = LD.D.high_evidence_edges()
+    genes = list(genes) if genes is not None else sorted(set(ed["gene"]))
+    dec = DB.build_decoys(genes)
+    rows = []
+    for g, grp in dec.groupby("gene"):
+        if g not in dY.index:
+            continue
+        try:
+            M = M_reference(g, m_ref)
+        except Exception:
+            continue
+        dy = dY.loc[g, pts].to_numpy(float)
+        for r in grp.itertuples():
+            if float(M.get(r.real_arm, 0.0)) <= 0:
+                continue
+            for lbl, arm in (("REAL", r.real_arm), ("DECOY", r.fake_arm)):
+                if arm not in Xn.index:
+                    continue
+                pl = Xn.loc[arm, pts].to_numpy(float)
+                ok = np.isfinite(pl) & np.isfinite(dy)
+                if ok.sum() < _MIN_PAIRS or np.nanstd(pl[ok]) < 1e-9:
+                    continue
+                rows.append({"gene": g, "group": lbl, "real_arm": r.real_arm, "arm": arm,
+                             "n": int(ok.sum()),
+                             "rho": _r3(partial_spearman(pl[ok], dy[ok],
+                                                         Cm[ok] if Cm is not None else None))})
+    df = pd.DataFrame(rows)
+    OUT.mkdir(parents=True, exist_ok=True)
+    df.to_csv(OUT / "nat_preload.tsv", sep="\t", index=False)
+    return df
+
+
+def nat_preload_summary(df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+    """§J4 verdict — REAL vs its OWN matched DECOY (paired on the real arm), then split by gene role."""
+    from mirna_hallmark import gene_roles as GR
+    if df is None:
+        df = pd.read_csv(OUT / "nat_preload.tsv", sep="\t")
+    w = (df.pivot_table(index=["gene", "real_arm"], columns="group", values="rho", aggfunc="mean")
+           .dropna().reset_index())
+    w["gap"] = w.REAL - w.DECOY
+    print(f"[J4] {len(w)} matched REAL/DECOY edge pairs | REAL mean ρ {w.REAL.mean():+.4f} · "
+          f"DECOY {w.DECOY.mean():+.4f}")
+    print(f"  REAL vs 0:        Wilcoxon p={wilcoxon(w.REAL).pvalue:.3g}")
+    print(f"  REAL−DECOY (the only quantity MH-162A allows): mean {w.gap.mean():+.4f}, median "
+          f"{w.gap.median():+.4f}, Wilcoxon p={wilcoxon(w.gap).pvalue:.4g}, frac<0 {float((w.gap<0).mean()):.3f}")
+    w["role"] = GR.load_gene_roles(genes=list(w.gene)).set_index("gene")["role"].reindex(w.gene).to_numpy()
+    out = w.groupby("role").agg(n=("gap", "size"), REAL=("REAL", "mean"), DECOY=("DECOY", "mean"),
+                                gap=("gap", "median")).round(4)
+    print(out.to_string())
+    tsg, onc = w.gap[w.role == "tsg"], w.gap[w.role == "oncogene"]
+    if len(tsg) >= 8 and len(onc) >= 8:
+        print(f"  TSG vs oncogene gap: {tsg.median():+.4f} (n={len(tsg)}) vs {onc.median():+.4f} "
+              f"(n={len(onc)}) | MW p={mannwhitneyu(tsg, onc).pvalue:.3g}")
+    out.to_csv(OUT / "nat_preload_summary.tsv", sep="\t")
+    return out

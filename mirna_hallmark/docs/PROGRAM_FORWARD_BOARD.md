@@ -806,7 +806,18 @@ patient's field determines *which route to cancer is already open in them*.
   repressor predicts **de-repression — the opposite sign**. If gains repress but losses do not de-repress,
   the realization signal is not doing what its name says. **The strongest internal control the paired
   design can supply, never run.**
-- ⬜ **J6. Controls, because "field" and "reverse causation" are the same observation.** (a)
+- ✅ **J6. Controls — DONE (MH-232, 2026-08-04). Reverse causation is NOT the explanation — via lever (b).**
+  **(b) FIELD GRADIENT passes:** `b` within NAT `Cancer Epithelial` tertiles = low **0.171** · mid **0.221**
+  · HIGH **0.134** — no gradient, high-field lowest. Field contamination would have to RISE with the field.
+  ⚠ `Cancer Epithelial` is **not** in the C block (it is the malignant fraction) — read it from the raw
+  deconvolution table. **(a) CONSTITUTIONAL RESTRICTION INVERTS and so cannot do its job:** imprinted 14q32
+  arms have **LOWER** b (+0.101, n=13) than the rest (+0.186, n=208), MW **p=0.0082**, and it is **not** the
+  abundance artifact (level-matched −0.0769, p=0.017, 85% below same-decile peers; matching removes only 9%
+  of the raw gap). ⇒ **14q32 is where the malignant step most completely OVERWRITES the constitutional
+  setpoint** — coherent with its near-uniform silencing (68% lose) — so the set is the place the signal is
+  *weakest*, not where it survives, and the verdict rests entirely on (b). Coverage 13/52 (complete-case;
+  depletion not differential, 25% vs 28%). ⬜ Δpromoter-methylation lever not run.
+  Original text: **J6. Controls, because "field" and "reverse causation" are the same observation.** (a)
   **Constitutional restriction** — imprinted 14q32 arms are germline-set and cannot be tumour-induced the
   way a field effect can; if the patient-specific signal survives inside those 56 arms / 169 genes, reverse
   causation is weaker. ⚠ no curated imprinting list exists; `genomic_context.host ∈ {MEG3, MEG8, MEG9,
