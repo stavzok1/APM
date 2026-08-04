@@ -1983,3 +1983,151 @@ def offset_amplification(*, n_perm: int = 200, seed: int = 0, min_sd: float = 0.
     for k, v in per_feat.items():
         v.to_csv(OUT / f"offset_amplification_{k}.tsv", sep="\t", index=False)
     return df
+
+
+# --------------------------------------------------------------------------- #
+# §J3 — HEADROOM: the target's own NAT level bounds what the malignant step can #
+#       do.  A repressor gained where the target is already at floor CANNOT     #
+#       realize; a repressor lost where the target is already at ceiling cannot #
+#       de-repress.  The lane treats Δ symmetrically everywhere.                #
+#                                                                              #
+# ⚠ The board's stated test ("condition realization on the target's own-NAT     #
+# expression") is UNUSABLE: headroom IS N and the lane's outcome is dy = T − N, #
+# so corr(dy, head) is mechanically negative — which is exactly what headroom   #
+# predicts. The naive test CANNOT FAIL. Use ANCOVA instead: regress the LEVEL   #
+# T on N + pred + pred×N. The outcome no longer contains N.                     #
+#                                                                              #
+# ⭐ AND the a3 interaction is what separates headroom from MH-162B's detection- #
+# power explanation, which the between-gene design could never do:              #
+#     detection power is SIGN-SYMMETRIC (noise attenuates gains and losses      #
+#         alike)  ⇒ same sign of a3 in both halves;                             #
+#     headroom is SIGN-ASYMMETRIC (a gain needs the target PRESENT, a loss      #
+#         needs room to RISE)          ⇒ a3_gain < 0 < a3_loss.                 #
+# No amount of measurement noise flips a sign between the two halves.           #
+# --------------------------------------------------------------------------- #
+
+def _ols_t(A: np.ndarray, y: np.ndarray, k: int) -> tuple:
+    """(coef_k, t_k) for column k of design A. Returns (nan, nan) if rank-deficient."""
+    n, p = A.shape
+    if n <= p + 1:
+        return np.nan, np.nan
+    try:
+        beta, *_ = np.linalg.lstsq(A, y, rcond=None)
+        r = y - A @ beta
+        s2 = float(r @ r) / (n - p)
+        XtXi = np.linalg.pinv(A.T @ A)
+        se = float(np.sqrt(max(s2 * XtXi[k, k], 0.0)))
+        return float(beta[k]), (float(beta[k] / se) if se > 0 else np.nan)
+    except np.linalg.LinAlgError:
+        return np.nan, np.nan
+
+
+def _headroom_fit(T: np.ndarray, N: np.ndarray, pred: np.ndarray, Cm) -> tuple:
+    """ANCOVA  T ~ 1 + N + pred + pred·N_c (+C).  Returns (a3, t3)."""
+    Nc = N - N.mean()
+    pc = pred - pred.mean()
+    cols = [np.ones(len(T)), N, pred, pc * Nc]
+    if Cm is not None and Cm.shape[1]:
+        cols.append(Cm)
+    A = np.column_stack([c if c.ndim > 1 else c[:, None] for c in cols])
+    return _ols_t(A, T, 3)
+
+
+def headroom(genes: Optional[Sequence[str]] = None, *, m_ref: str = "complement",
+             n_perm: int = 200, seed: int = 0) -> pd.DataFrame:
+    """§J3. Per gene, ANCOVA `T = a0 + a1·N + a2·pred + a3·(pred × N_c) + ΔC`, fitted on ALL paired
+    patients and separately on the GAIN (pred>0) and LOSS (pred<0) halves.
+    **a3_gain < 0 < a3_loss ⇒ headroom. Same sign in both ⇒ MH-162B's detection power.**"""
+    dX, dY, pts = ST.paired_delta_matrices()
+    Tt = ST.state_matrices("01")[1]
+    Nn = ST.state_matrices("11")[1]
+    dC = _delta_C()
+    Cm_all = dC.reindex(pts).to_numpy(float) if len(dC.columns) else None
+    ed = LD.D.high_evidence_edges()
+    genes = list(genes) if genes is not None else sorted(set(ed["gene"]))
+    rng = np.random.default_rng(seed)
+    rows = []
+    for g in genes:
+        if g not in Tt.index or g not in Nn.index or g not in dY.index:
+            continue
+        try:
+            M = M_reference(g, m_ref)
+        except Exception:
+            continue
+        regs = [a for a in M[M > 0].index if a in dX.index]
+        if not regs:
+            continue
+        pred = dX.loc[regs, pts].fillna(0.0).T.to_numpy(float) @ M[regs].to_numpy(float)
+        T = Tt.loc[g, pts].to_numpy(float)
+        N = Nn.loc[g, pts].to_numpy(float)
+        ok = np.isfinite(pred) & np.isfinite(T) & np.isfinite(N)
+        if ok.sum() < _MIN_PAIRS or np.std(N[ok]) < 1e-6 or np.std(pred[ok]) < 1e-9:
+            continue
+        C_ok = Cm_all[ok] if Cm_all is not None else None
+        a3, t3 = _headroom_fit(T[ok], N[ok], pred[ok], C_ok)
+        r = {"gene": g, "n": int(ok.sum()), "n_reg": len(regs), "a3": _r3(a3), "t3": _r2(t3),
+             "nat_level": _r2(float(np.mean(N[ok]))), "nat_spread": _r2(float(np.std(N[ok])))}
+        # the DISCRIMINATOR: fit the two halves separately
+        for lab, sel in (("gain", pred[ok] > 0), ("loss", pred[ok] < 0)):
+            if sel.sum() >= _MIN_PAIRS and np.std(N[ok][sel]) > 1e-6 and np.std(pred[ok][sel]) > 1e-9:
+                a, t = _headroom_fit(T[ok][sel], N[ok][sel], pred[ok][sel],
+                                     C_ok[sel] if C_ok is not None else None)
+                r[f"a3_{lab}"], r[f"n_{lab}"] = _r3(a), int(sel.sum())
+            else:
+                r[f"a3_{lab}"], r[f"n_{lab}"] = np.nan, int(sel.sum())
+        # broken-pairing null on pred (preserves both marginals)
+        nulls = []
+        for _ in range(max(0, n_perm // 10)):
+            a, _t = _headroom_fit(T[ok], N[ok], pred[ok][rng.permutation(int(ok.sum()))], C_ok)
+            nulls.append(a)
+        r["a3_null"] = _r3(float(np.nanmean(nulls))) if nulls else np.nan
+        # ⭐ the DISCRIMINATOR and ITS OWN null — the split is redone INSIDE each permutation, because
+        # a null on the pooled a3 says nothing about whether splitting on sign(pred) manufactures the
+        # asymmetry. Testing `disc` against 0 instead of against `disc_null` is anti-conservative.
+        Tk, Nk, Pk = T[ok], N[ok], pred[ok]
+
+        def _disc(p):
+            gs, ls = p > 0, p < 0
+            if gs.sum() < _MIN_PAIRS or ls.sum() < _MIN_PAIRS:
+                return np.nan
+            a, _ = _headroom_fit(Tk[gs], Nk[gs], p[gs], C_ok[gs] if C_ok is not None else None)
+            b, _ = _headroom_fit(Tk[ls], Nk[ls], p[ls], C_ok[ls] if C_ok is not None else None)
+            return a - b
+        r["disc"] = _r3(_disc(Pk))
+        dn = [_disc(Pk[rng.permutation(len(Pk))]) for _ in range(max(0, n_perm // 5))]
+        r["disc_null"] = _r3(float(np.nanmedian(dn))) if dn and np.isfinite(dn).any() else np.nan
+        rows.append(r)
+    df = pd.DataFrame(rows)
+    OUT.mkdir(parents=True, exist_ok=True)
+    df.to_csv(OUT / "headroom.tsv", sep="\t", index=False)
+    return df
+
+
+def headroom_summary(df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+    """The §J3 verdict table — and the sign test that decides headroom vs detection power."""
+    if df is None:
+        df = pd.read_csv(OUT / "headroom.tsv", sep="\t")
+    rows = []
+    for col in ("a3", "a3_gain", "a3_loss", "a3_null"):
+        v = df[col].dropna()
+        if len(v) < 10:
+            continue
+        rows.append({"coef": col, "n_genes": len(v), "median": _r3(float(v.median())),
+                     "frac_neg": _r3(float((v < 0).mean())),
+                     "p_wilcoxon": float(wilcoxon(v).pvalue)})
+    out = pd.DataFrame(rows)
+    both = df[["a3_gain", "a3_loss", "disc", "disc_null"]].dropna()
+    if len(both) >= 10:
+        d = both.disc - both.disc_null                                  # vs its OWN split-null, not vs 0
+        from scipy.stats import binomtest
+        sgn = binomtest(int((d < 0).sum()), len(d), 0.5).pvalue
+        print(f"[J3 DISCRIMINATOR] n={len(both)} genes with both halves | median a3_gain "
+              f"{both.a3_gain.median():+.4f} vs a3_loss {both.a3_loss.median():+.4f}")
+        print(f"  disc = a3_gain−a3_loss: OBS {both.disc.median():+.4f} vs SPLIT-NULL "
+              f"{both.disc_null.median():+.4f} (null frac<0 {float((both.disc_null<0).mean()):.3f} — "
+              f"the split itself does NOT manufacture it)")
+        print(f"  PRE-REGISTERED paired Wilcoxon (obs−null): p={wilcoxon(d).pvalue:.4g} | "
+              f"secondary sign test frac<0 {float((d<0).mean()):.3f}, p={sgn:.4g} (NOT pre-registered)")
+        print(f"  ⇒ {'HEADROOM SUPPORTED' if wilcoxon(d).pvalue < 0.05 else 'NOT ESTABLISHED — direction right, significance absent'}")
+    out.to_csv(OUT / "headroom_summary.tsv", sep="\t", index=False)
+    return out
