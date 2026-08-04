@@ -31,6 +31,7 @@ tested · **CLOSED-BY-DATA** = untestable with what is in this repo.
 | A3 | The evidence exclusion covers **all** evidence, not just high-confidence curation | **HOLDS** (was a 126× hole) | **MH-137**; Manakov chimeric is in the cache — verify with the `[sites]` log line, never by assumption |
 | A4 | Remaining uncovered evidence would not overturn it | **CLOSED-BY-DATA** | POSTAR3 miRNA-target is **not in this repo** (only its lncRNA/RBP tables) ⇒ acquisition, not a re-run. Board §B |
 | A5 | A decoy is not a disguised real regulator via family or genomic cluster | **HOLDS** | seed-family + cluster-mate exclusion in `build_decoys` |
+| A6 | The decoy's **Δ is INDEPENDENT of the real arm's Δ** across patients — i.e. a decoy carries no shared signal | **VIOLATED — BOUND (deflating)** ⚠ | **MH-238** (2026-08-04). `corr(dX[real_arm], dX[fake_arm])` median **+0.211** over 1,722 pairs vs a **+0.124** two-random-arms baseline ⇒ the Hungarian matching makes the decoy **+0.087 MORE** correlated with the real arm than chance. And decoy edges reach `p_perm<0.05` at **9.2%** (~1.8× nominal) under a per-edge permutation null that is calibrated by construction ⇒ **site-free arms genuinely correlate with these targets** (global miRNA–mRNA co-movement / residual composition). **The decoy is a CONSERVATIVE control, not a null set.** ⚠⚠ **SCOPE: measured on the PAIRED-Δ use of the decoy (`realize_null` / §J9), NOT on the OOF claim-1 bench** — it is not evidence about claim 1 until re-measured there. |
 
 ## B. What makes the fake MATCHED (so the contrast is sites, not confounds)
 
@@ -43,6 +44,12 @@ tested · **CLOSED-BY-DATA** = untestable with what is in this repo.
 | B5 | Matched on **design WIDTH** (families per design) | **VIOLATED but INERT** | **MH-167** — real 3.096 vs fake 3.510 families; gap contamination bounded near zero |
 | B6 | Matched on **within-design collinearity** | **VIOLATED but INERT** | **MH-167** — same bound |
 | B7 | Any single construction is an **upper bound** — every mismatch inflates | **BOUND, standing** | `decoy_bench` header; the trajectory −0.045 → −0.0306 → −0.0147 → −0.0129/−0.0124 has only ever shrunk |
+
+⚠⚠ **B7 vs A6 — THE NET DIRECTION IS NO LONGER ESTABLISHED.** B7's mechanism is *mismatch*: a decoy
+differing from the real arm in some property **inflates** the apparent gap (upper bound). A6's mechanism is
+*shared variation*: a decoy whose Δ co-varies with the real Δ **deflates** it (lower bound). **Both are
+measured, they push opposite ways, and their net has not been quantified.** Until it is, do not describe the
+gap as an upper bound without naming A6 alongside.
 
 ## C. What makes the SCORING honest
 
