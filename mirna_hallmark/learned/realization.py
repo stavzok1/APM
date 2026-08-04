@@ -2918,3 +2918,91 @@ def decoy_predictor_leak(*, m_ref: str = "complement") -> pd.DataFrame:
                         "rho_real": np.round(ry, 3), "rho_decoy": np.round(dy, 3)})
     out.to_csv(OUT / "decoy_predictor_leak.tsv", sep="\t", index=False)
     return out
+
+
+# --------------------------------------------------------------------------- #
+# §J9 — THE MISSING NULL: a per-EDGE PATIENT-PERMUTATION test on the PAIRED Δ.  #
+#                                                                              #
+# The paired lane's per-edge result rests on `realize_null`, which SUBSTITUTES  #
+# a site-free arm — and that decoy is measurably not independent of the real    #
+# arm (corr +0.211 vs a +0.124 random-arm baseline, `decoy_predictor_leak`).    #
+# The clean null keeps the SAME arm and the SAME gene and only breaks WHICH     #
+# PATIENT meets WHICH: two 103-vectors per edge, permute one across patients.   #
+#                                                                              #
+# Uses `coupling_inference.permutation_pvalues` (Freedman–Lane) rather than a   #
+# hand-rolled shuffle, so it inherits the two things that matter: it permutes   #
+# the RESIDUALISED predictor (correct under covariate adjustment — the raw      #
+# permutation is only valid without covariates), and it applies the SAME        #
+# permutation to every edge per draw, preserving cross-edge/seed-family         #
+# dependence that an independent per-edge shuffle would destroy.                #
+# --------------------------------------------------------------------------- #
+
+def paired_edge_permutation(genes: Optional[Sequence[str]] = None, *, m_ref: str = "complement",
+                            n_perm: int = 2000, seed: int = 0) -> pd.DataFrame:
+    """§J9. Per-edge partial-Spearman(Δarm, Δtarget | ΔC) on the 103 paired patients, against a
+    PATIENT-PERMUTATION null — run for REAL arms and for their matched site-free DECOY arms."""
+    from mirna_hallmark.coupling_inference import permutation_pvalues
+    from mirna_hallmark.eval import decoy_bench as DB
+    dX, dY, pts_l = ST.paired_delta_matrices()
+    pts = list(pts_l)
+    dC = _delta_C().reindex(pts)
+    ed = LD.D.high_evidence_edges()
+    genes = list(genes) if genes is not None else sorted(set(ed["gene"]))
+    dec = DB.build_decoys(genes)
+    out = []
+    for lbl, arm_col in (("REAL", "real_arm"), ("DECOY", "fake_arm")):
+        P, T, keys, fams = {}, {}, [], []
+        for r in dec.itertuples():
+            g, a = r.gene, getattr(r, arm_col)
+            if g not in dY.index or a not in dX.index:
+                continue
+            try:
+                if float(M_reference(g, m_ref).get(r.real_arm, 0.0)) <= 0:
+                    continue
+            except Exception:
+                continue
+            k = f"{g}|{r.real_arm}"                       # keyed on the REAL arm so REAL/DECOY rows pair up
+            if k in P:
+                continue
+            P[k] = dX.loc[a, pts].to_numpy(float)
+            T[k] = dY.loc[g, pts].to_numpy(float)
+            keys.append(k)
+            fams.append(str(FAM.family_of([r.real_arm]).iloc[0]))
+        if not keys:
+            continue
+        Pdf = pd.DataFrame(P, index=pts).T.loc[keys]
+        Tdf = pd.DataFrame(T, index=pts).T.loc[keys]
+        res = permutation_pvalues(Pdf, Tdf, covariates=dC, families=fams,
+                                  n_perm=n_perm, tail="neg", seed=seed)
+        res = res.assign(group=lbl, edge=keys)
+        out.append(res)
+    df = pd.concat(out, ignore_index=True) if out else pd.DataFrame()
+    OUT.mkdir(parents=True, exist_ok=True)
+    df.to_csv(OUT / "paired_edge_permutation.tsv", sep="\t", index=False)
+    return df
+
+
+def paired_edge_permutation_summary(df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+    """§J9 verdict — does the paired per-edge signal survive a PATIENT shuffle, and does REAL beat DECOY
+    under the *same* null? Reported set-level (the lane's standing n≈103 rule) plus the per-edge FDR count."""
+    if df is None:
+        df = pd.read_csv(OUT / "paired_edge_permutation.tsv", sep="\t")
+    rows = []
+    for lbl, g in df.groupby("group"):
+        r = {"group": lbl, "n_edges": len(g), "median_rho": _r3(float(g.rho.median())),
+             "frac_rho_neg": _r3(float((g.rho < 0).mean())),
+             "frac_p_perm_lt05": _r3(float((g.p_perm < 0.05).mean()))}
+        for qc in ("q_bh", "q_by", "q_family"):
+            if qc in g.columns:
+                r[f"n_{qc}_lt10"] = int((g[qc] < 0.10).sum())
+        rows.append(r)
+    S = pd.DataFrame(rows)
+    w = df.pivot_table(index="edge", columns="group", values="rho", aggfunc="mean").dropna()
+    if len(w) >= 10:
+        d = w.REAL - w.DECOY
+        print(f"[J9] paired REAL vs DECOY on {len(w)} matched edges, SAME patient-permutation null: "
+              f"REAL median ρ {w.REAL.median():+.4f} vs DECOY {w.DECOY.median():+.4f} | "
+              f"gap {d.median():+.4f}, Wilcoxon p={wilcoxon(d).pvalue:.4g}, frac<0 {float((d < 0).mean()):.3f}")
+    print(S.to_string(index=False))
+    S.to_csv(OUT / "paired_edge_permutation_summary.tsv", sep="\t", index=False)
+    return S
