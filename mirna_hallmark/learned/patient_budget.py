@@ -387,3 +387,68 @@ def budget_dispersion(df: Optional[pd.DataFrame] = None, *, arm_level: bool = Tr
     out.to_csv(OUT / f"budget_dispersion_{'edge' if arm_level else 'family_edge'}.tsv",
                sep="\t", index=False)
     return out
+
+
+# --------------------------------------------------------------------------- #
+# Does the per-patient BUDGET RANK SHIFT track realization?
+# --------------------------------------------------------------------------- #
+
+def rank_shift_realization(genes: Optional[Sequence[str]] = None, *, m_source: str = "complement",
+                           arm_level: bool = True, n_perm: int = 500, seed: int = 0) -> pd.DataFrame:
+    """Per edge: ρ(own-NAT Δrank across patients, Δtarget), with BOTH nulls — a site-free DECOY arm and a
+    PATIENT PERMUTATION. ⚠ `m_source="complement"` here (leak-free), NOT `canonical`: the gate needed
+    `canonical` to reproduce `budget_shift`, but a paired test must not be fit on its own patients.
+    ⚠ Δrank is coarse (ranks among a handful of regulators; ~20% are exactly 0) — expect attenuation."""
+    from mirna_hallmark.learned import realization as R
+    from mirna_hallmark.eval import decoy_bench as DB
+    from scipy.stats import spearmanr
+    _dX, dY, pts_l = ST.paired_delta_matrices()
+    pts = list(pts_l)
+    genes = list(genes) if genes is not None else list(_he_genes())
+    fake = {(r.gene, r.real_arm): r.fake_arm for r in DB.build_decoys(genes).itertuples()}
+    Xt, Xn = ST.state_matrices("01")[0], ST.state_matrices("11")[0]
+    rng = np.random.default_rng(seed)
+    rows = []
+    for g in genes:
+        if g not in dY.index:
+            continue
+        try:
+            M = _M_for(g, m_source, arm_level)
+            regs = [a for a in M[M > 0].index if a in Xt.index and a in Xn.index]
+            if len(regs) < 2:
+                continue
+            Mv = M.reindex(regs).to_numpy(float)
+            codes, n_fam = _fam_codes(regs, arm_level)
+        except Exception:
+            continue
+        dy = dY.loc[g, pts].to_numpy(float)
+
+        def _drank(units):
+            At = Xt.reindex(index=units, columns=pts).to_numpy(float)
+            An = Xn.reindex(index=units, columns=pts).to_numpy(float)
+            _c1, _s1, r1 = _budget_matrix(At, Mv, codes, n_fam, "zero")
+            _c0, _s0, r0 = _budget_matrix(An, Mv, codes, n_fam, "zero")
+            return r1 - r0
+        dR = _drank(regs)
+        dec_units = [fake.get((g, a)) for a in regs]
+        dR_dec = _drank(dec_units) if all(f and f in Xt.index and f in Xn.index for f in dec_units) else None
+        for i, a in enumerate(regs):
+            v = dR[i]
+            ok = np.isfinite(v) & np.isfinite(dy)
+            if ok.sum() < 25 or np.nanstd(v[ok]) < 1e-9:
+                continue
+            rho = spearmanr(v[ok], dy[ok]).correlation
+            nul = [spearmanr(v[ok][rng.permutation(int(ok.sum()))], dy[ok]).correlation
+                   for _ in range(n_perm // 10)]
+            rd = np.nan
+            if dR_dec is not None and np.nanstd(dR_dec[i][ok]) > 1e-9:
+                rd = spearmanr(dR_dec[i][ok], dy[ok]).correlation
+            rows.append({"gene": g, "unit": a, "n": int(ok.sum()), "rho": rho,
+                         "rho_perm_mean": float(np.nanmean(nul)) if nul else np.nan,
+                         "rho_decoy": rd, "frac_dzero": float((v[ok] == 0).mean())})
+    df = pd.DataFrame(rows)
+    if len(df):
+        OUT.mkdir(parents=True, exist_ok=True)
+        df.to_csv(OUT / f"rank_shift_realization_{'edge' if arm_level else 'family_edge'}.tsv",
+                  sep="\t", index=False)
+    return df
