@@ -760,9 +760,23 @@ gene-specific component is significant (Δ=−0.085, p=0.038) while abundance's 
 > J4 p=0.333). The "read it through the gene's cancer role" lens is **consistently null in this arc** —
 > treat a role split here as a control that has already failed to fire, not as a live hypothesis.
 >
+> **➕ FOLLOW-UPS RUN SAME DAY (user-directed), MH-234 / MH-235:**
+> **J7 — per-patient identity by LEVEL × PROFILE.** `patient_nat_identity` pools **all arms and only arms**;
+> generalised to 3 levels × 11 profiles. `frac_own_wins` climbs 0.010 → 0.369 as the set narrows, which
+> against a plain n-matched control looks like a 23×/4.2×/2.5× win — ⛔ **and dies completely against an
+> EXPRESSION-MATCHED control** (0.252 vs **0.275**, 0.350 vs 0.269, 0.369 vs 0.285). The unmatched control
+> gives 0.011 where the matched one gives 0.275 at the same n. **There is no hidden per-patient identity at
+> any level or profile tested.** The control is now expression-matched inside the function.
+> **J8 — the TRANSPOSE (within-patient, across 1,070 genes).** `rho_real` **−0.0580** vs `rho_decoy`
+> **−0.0180**, gap **−0.0320, p=4.3e-11, real beats decoy in 78.6% of patients** — **the first per-patient
+> quantity in this program to survive a matched decoy.** ⛔ But split-half over genes gives Spearman–Brown
+> **r = 0.329**, so ~11% of the between-patient variance is reproducible ⇒ **a set-level quantity computed
+> patient-wise, not a biomarker** — which is why the gap tracks nothing (field p=0.76, ΔC p=0.87, subtype
+> flat). ⭐ **This closes MH-162A's explicitly untested object: the reliability of `real − decoy` is 0.33.**
+> ⇒ **do not build a per-patient miRNA-realization biomarker on this cohort.**
+>
 > **⬜ What is genuinely still open:** the per-PATIENT lost set (J5 did the gene-level sign test only);
-> Δpromoter-methylation as J6's third lever (70/103, staged); and MH-162A's untested object — the
-> *reliability* of `eff_real − eff_decoy`, as opposed to its effect, which MH-233 has now measured as null.
+> Δpromoter-methylation as J6's third lever (70/103, staged); and ~~MH-162A's untested object~~ — **✅ CLOSED by MH-235: the reliability of `eff_real − eff_decoy` is 0.33.**
 
 **The structural fact that motivates this section.** NAT enters this codebase in exactly THREE roles: a
 differencing reference (`dX = Xt − Xn`), a nuisance (`dC`, residualised out of every ρ), and a cohort
