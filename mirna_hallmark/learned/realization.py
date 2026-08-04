@@ -2937,15 +2937,50 @@ def decoy_predictor_leak(*, m_ref: str = "complement") -> pd.DataFrame:
 # dependence that an independent per-edge shuffle would destroy.                #
 # --------------------------------------------------------------------------- #
 
+def _state_resid_pair(mode: str, pts):
+    """(arm-source, target-source) already residualised on EACH STATE'S OWN composition block.
+    ⚠ For a CROSS-state test the two sides come from different samples, so a single covariate hat is wrong —
+    residualise each side on its own state's C first, then permute with no further covariates."""
+    def _rs(M, st):
+        cov = ST._cibersortx_state_cov(list(pts), st)
+        if cov is None:
+            return M.reindex(columns=pts)
+        Cm = cov.reindex(pts).apply(lambda s: s.fillna(s.median())).to_numpy(float)
+        V = M.reindex(columns=pts).to_numpy(float)
+        ok = np.isfinite(V).all(axis=1)
+        A = np.column_stack([np.ones(len(pts)), Cm])
+        R = V.copy()
+        b, *_ = np.linalg.lstsq(A, V[ok].T, rcond=None)
+        R[ok] = V[ok] - (A @ b).T
+        return pd.DataFrame(R, index=M.index, columns=pts)
+    Xn, Yn = ST.state_matrices("11")
+    Xt, Yt = ST.state_matrices("01")
+    if mode == "nat":
+        return _rs(Xn, "11"), _rs(Yn, "11")
+    if mode == "tumour":
+        return _rs(Xt, "01"), _rs(Yt, "01")
+    if mode == "cross":                       # patient's NAT arm  ->  their TUMOUR target
+        return _rs(Xn, "11"), _rs(Yt, "01")
+    raise ValueError(mode)
+
+
 def paired_edge_permutation(genes: Optional[Sequence[str]] = None, *, m_ref: str = "complement",
-                            n_perm: int = 2000, seed: int = 0) -> pd.DataFrame:
-    """§J9. Per-edge partial-Spearman(Δarm, Δtarget | ΔC) on the 103 paired patients, against a
-    PATIENT-PERMUTATION null — run for REAL arms and for their matched site-free DECOY arms."""
+                            n_perm: int = 2000, seed: int = 0, mode: str = "delta") -> pd.DataFrame:
+    """§J9. Per-edge partial-Spearman(arm, target) on the 103 paired patients against a PATIENT-PERMUTATION
+    null, for REAL arms and their matched site-free DECOY arms.
+
+    `mode`: **delta** (default) Δarm vs Δtarget | ΔC — the paired lane's own estimand · **nat** NAT arm vs
+    NAT target · **tumour** tumour arm vs tumour target · **cross** the patient's OWN NAT arm vs their
+    TUMOUR target (does normal-tissue dose predict the tumour's target?). For the non-delta modes each side
+    is pre-residualised on its OWN state's composition block and no further covariate is passed."""
     from mirna_hallmark.coupling_inference import permutation_pvalues
     from mirna_hallmark.eval import decoy_bench as DB
     dX, dY, pts_l = ST.paired_delta_matrices()
     pts = list(pts_l)
     dC = _delta_C().reindex(pts)
+    if mode != "delta":
+        dX, dY = _state_resid_pair(mode, pts)
+        dC = None
     ed = LD.D.high_evidence_edges()
     genes = list(genes) if genes is not None else sorted(set(ed["gene"]))
     dec = DB.build_decoys(genes)
@@ -2974,11 +3009,12 @@ def paired_edge_permutation(genes: Optional[Sequence[str]] = None, *, m_ref: str
         Tdf = pd.DataFrame(T, index=pts).T.loc[keys]
         res = permutation_pvalues(Pdf, Tdf, covariates=dC, families=fams,
                                   n_perm=n_perm, tail="neg", seed=seed)
-        res = res.assign(group=lbl, edge=keys)
+        res = res.assign(group=lbl, edge=keys, mode=mode)
         out.append(res)
     df = pd.concat(out, ignore_index=True) if out else pd.DataFrame()
     OUT.mkdir(parents=True, exist_ok=True)
-    df.to_csv(OUT / "paired_edge_permutation.tsv", sep="\t", index=False)
+    df.to_csv(OUT / f"paired_edge_permutation{'' if mode == 'delta' else '_' + mode}.tsv",
+              sep="\t", index=False)
     return df
 
 
