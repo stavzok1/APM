@@ -452,3 +452,39 @@ def rank_shift_realization(genes: Optional[Sequence[str]] = None, *, m_source: s
         df.to_csv(OUT / f"rank_shift_realization_{'edge' if arm_level else 'family_edge'}.tsv",
                   sep="\t", index=False)
     return df
+
+
+def patient_level_axis(*, arm_level: bool = True, persist: bool = True) -> pd.DataFrame:
+    """Per-patient WITHIN-STATE level measures — the analogues of the cohort `grank_*` / `arm_med_rpm` /
+    `arm_iqr`. `grank` is the arm's GLOBAL abundance percentile **within that patient's own sample**
+    (`dose_shift_arm` already computes exactly this at `realization.py:264-265` and then collapses it to
+    `mean_dGlobalRank`/`sd_dGlobalRank`). Unlike the budget rung this is gene-free: one value per
+    (unit, patient, state)."""
+    rows = []
+    for st in ("01", "11"):
+        X = ST.state_matrices(st)[0]
+        if not arm_level:
+            X = _family_levels(X, list(dict.fromkeys(FAM.family_of(pd.Index(X.index)).dropna())))
+        gr = X.rank(pct=True) * 100.0                    # global %ile WITHIN each patient's own sample
+        rows.append(pd.DataFrame({"unit": np.repeat(list(X.index), X.shape[1]),
+                                  "patient": np.tile(list(X.columns), X.shape[0]),
+                                  "state": st, "level": X.to_numpy(float).ravel(),
+                                  "grank": gr.to_numpy(float).ravel()}))
+    df = pd.concat(rows, ignore_index=True)
+    if persist:
+        OUT.mkdir(parents=True, exist_ok=True)
+        df.to_parquet(OUT / f"patient_level_axis_{'arm' if arm_level else 'family'}.parquet", index=False)
+    return df
+
+
+def patient_level_summary(df: Optional[pd.DataFrame] = None, *, arm_level: bool = True) -> pd.DataFrame:
+    """Across-patient dispersion of the per-patient level axis, and the collapse check against the
+    cohort columns it generalises (`arm_med_rpm` = median level; `arm_iqr` = its IQR)."""
+    if df is None:
+        df = pd.read_parquet(OUT / f"patient_level_axis_{'arm' if arm_level else 'family'}.parquet")
+    g = df.groupby(["unit", "state"]).agg(
+        n_pat=("patient", "size"), level_med=("level", "median"),
+        level_iqr=("level", lambda s: float(s.quantile(.75) - s.quantile(.25))),
+        grank_med=("grank", "median"), grank_sd=("grank", "std")).reset_index()
+    g.to_csv(OUT / f"patient_level_summary_{'arm' if arm_level else 'family'}.tsv", sep="\t", index=False)
+    return g
