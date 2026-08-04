@@ -8,7 +8,7 @@ COMPOSITION CAVEAT (analysis guardrail): NAT is normal breast (adipose/stroma/ep
 (epithelial) — cross-state coupling differences are confounded by composition. The clean design is the
 **paired within-patient** difference (Phase D), which removes the patient baseline. State-level coupling
 here is reported as descriptive.
-⛔ **THIS BLOCK USED TO SAY "NAT has no CIBERSORTx deconvolution" — FALSE, corrected 2026-08-03 (MH-219).**
+⛔ **THIS BLOCK USED TO SAY "NAT has no CIBERSORTx deconvolution" — FALSE, corrected 2026-08-03 (MH-223).**
 NAT gets the **full 8-column CIBERSORTx block**: `tcga_cibersortx_fractions.tsv` carries **113 rows keyed
 `<participant>-NAT`**, covering **103/103** of the paired set with **zero** missing values, and
 `_cibersortx_state_cov(parts,"11")` returns it. The `_state_metagene_cov` fallback is **UNREACHABLE for
@@ -109,7 +109,7 @@ def _state_metagene_cov(rna_state: pd.DataFrame) -> pd.DataFrame:
     """State-comparable composition+proliferation covariates from mRNA (precursor `_state_covariates`
     source='metagene'): proliferation + epithelial/immune/stroma marker metagenes — computable in EVERY
     state. ⛔ The old claim "NAT/GTEx have no CPE/CIBERSORTx … the documented future upgrade" is STALE for
-    NAT (MH-219): CIBERSORTx-on-NAT **shipped** (113 NAT rows, 103/103 paired) and this function is
+    NAT (MH-223): CIBERSORTx-on-NAT **shipped** (113 NAT rows, 103/103 paired) and this function is
     **unreachable for sample_type='11'**. It remains the live path for **GTEx**, which has no deconvolution."""
     from mirna_hallmark.analyses.cross_state.cross_state_coupling import (
         EPI_MARKERS, IMMUNE_MARKERS, STROMA_MARKERS, _metagene, _prolif_metagene)
@@ -126,7 +126,7 @@ def _state_metagene_cov(rna_state: pd.DataFrame) -> pd.DataFrame:
 def assemble_state(gene: str, sample_type: str = "11", *, participants=None, family: bool = True,
                    metagene_cov: bool = True):
     """(Y, X, C, w) for `gene` in a state: gene mRNA + HE-arm abundance + a composition/proliferation C.
-    ⛔ The old note "NAT/GTEx have no CPE/CIBERSORTx" was FALSE for NAT (MH-219): **NAT takes the gold
+    ⛔ The old note "NAT/GTEx have no CPE/CIBERSORTx" was FALSE for NAT (MH-223): **NAT takes the gold
     CIBERSORTx block** (8 Wu-major fractions, n=104, 0 NaN); only **GTEx** falls back to `_state_metagene_cov`.
     ⚠ NAT still has no CPE — CPE is a tumour-purity call and must never be joined onto a NAT row.
     Returns None if gene/regulators absent."""

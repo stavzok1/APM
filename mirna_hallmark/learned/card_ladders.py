@@ -22,14 +22,14 @@ target at coupling < −0.10?"). The audit then found the mirror question has no
     made **visible**: `ago_loading.measured()` (new) reports who was really measured, and `esub_`'s
     sibling column `ago_loading_measured` is annotated onto the edge card here.
 
-⚠ **`ago_loading_measured` is the ONE annotated column without a module prefix** — deliberately, because
-it must sit adjacent to the column it qualifies. It is added to `PREFIXES` explicitly so the idempotent
-re-run still strips it.
+⚠ **`ago_loading_measured` deliberately carries no module prefix** — it must sit adjacent to the column
+it qualifies. That needs no special handling: `_annotate` derives what it owns from the blocks, so an
+un-prefixed column is stripped and re-added exactly like any other.
 
-⚠ **ADDITIVE ONLY, and idempotent.** `_annotate` strips this module's own prefixes before re-joining (so
-a re-run replaces rather than appending `_x`/`_y`), then asserts **every pre-existing column is
-bit-identical and the row count is unchanged** — aborting otherwise. Same contract as
-`card_context._annotate`, which established the pattern.
+⚠ **ADDITIVE ONLY, and idempotent.** `_annotate` strips exactly the columns the blocks supply before
+re-joining (so a re-run replaces rather than appending `_x`/`_y`), then asserts **every pre-existing
+column is bit-identical and the row count is unchanged** — aborting otherwise. Same contract as
+`card_context._annotate`, which established the pattern; the owned-set derivation is stricter.
 
 ⚠ **RE-RUN THIS AFTER ANY `gene_card` / `edge_card` REBUILD** — those builders do not know about these
 columns and will drop them.
@@ -48,7 +48,8 @@ OUT = C.REPO_ROOT / "mirna_hallmark/output/learned"
 EDGE_CARD = OUT / "realization/edge_card.tsv"
 GENE_CARD = OUT / "realization/gene_card.tsv"
 SUBTYPE = OUT / "subtype_edge_heterogeneity.tsv"
-PREFIXES = ("greal_", "esub_", "ago_loading_measured", "adm_", "lit_", "echim_", "kd_")
+# ⛔ NO MODULE-LEVEL PREFIX LIST. `_annotate` derives what it owns from the blocks it is given —
+# see its docstring. A global list here is what destroyed the arm card's `chim_` block (MH-218).
 
 # the SAME cuts the arm card uses — a ladder is only comparable across rungs if the rungs agree on it
 COUPLING_CUTS = (-0.05, -0.10, -0.15, -0.20, -0.30)
@@ -294,8 +295,8 @@ def seedless_chimeric_candidates(strong: float = -0.10) -> pd.DataFrame:
 def _annotate(card_path: Path, blocks: list) -> None:
     """Join EVERY block for this card in ONE call. ADDITIVE ONLY — aborts if a pre-existing column changes.
 
-    ⛔⛔ **`blocks` is a LIST, and that is not cosmetic.** This function strips ALL of `PREFIXES` before
-    re-joining, so calling it twice on the same card makes the second call DELETE the first call's
+    ⛔⛔ **`blocks` is a LIST, and that is not cosmetic.** This function strips everything it is about to
+    re-add, so calling it twice on the same card makes the second call DELETE the first call's
     columns — measured when exactly that happened here: edge_card went 165→173 (+esub_) and then
     165→166, silently dropping all 8 `esub_` columns. Idempotency and multi-block joins are in tension;
     the resolution is one call per card, never one call per block.
@@ -305,11 +306,17 @@ def _annotate(card_path: Path, blocks: list) -> None:
         print(f"  ⚠ absent/empty, skipped: {card_path.name}")
         return
     card = pd.read_csv(card_path, sep="\t", low_memory=False)
-    # ⚠ strip this module's prefixes first, so a RE-RUN replaces instead of appending `_x`/`_y`
-    before = card.drop(columns=[c for c in card.columns if c.startswith(PREFIXES)], errors="ignore")
+    # ⭐⭐ WHAT THIS CALL OWNS IS DERIVED FROM THE BLOCKS, NOT FROM A GLOBAL PREFIX LIST (MH-220).
+    # The old form stripped a module-level `PREFIXES` tuple, which is GLOBAL while columns are
+    # CARD-SPECIFIC — so adding `chim_` for the edge card silently DELETED the arm card's own native
+    # 5-column `chim_` rollup (293 -> 288), because the arm call re-added only `adm_`. Deriving the
+    # owned set from the blocks makes that failure UNREPRESENTABLE: this function can now only ever
+    # strip columns it is about to re-add, on whatever card it is pointed at.
+    owned = {c for b, k in blocks for c in b.columns if c not in k}
+    before = card.drop(columns=[c for c in card.columns if c in owned], errors="ignore")
     out = before.copy()
     for block, key in blocks:
-        cols = [c for c in block.columns if c.startswith(PREFIXES) or c in key]
+        cols = [c for c in block.columns if c in owned or c in key]
         out = out.merge(block[cols].drop_duplicates(subset=key), on=key, how="left")
     # ⭐ THE CONTROL: every pre-existing column bit-identical, same order, same row count
     chk = out[before.columns]
@@ -319,7 +326,7 @@ def _annotate(card_path: Path, blocks: list) -> None:
     if len(out) != len(before):
         raise SystemExit(f"⛔ ABORT — row count changed for {card_path.name}: {len(before)} -> {len(out)}")
     out.to_csv(card_path, sep="\t", index=False)
-    added = [c for c in out.columns if c.startswith(PREFIXES)]
+    added = sorted(owned & set(out.columns))
     print(f"  ✅ {card_path.name}: {len(before.columns)} -> {out.shape[1]} cols (+{len(added)}), "
           f"{len(out):,} rows, pre-existing columns bit-identical")
 

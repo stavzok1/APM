@@ -134,7 +134,7 @@ def normal_like_participants() -> set:
 def load_mirna_arms(sample_type: Optional[str] = None) -> pd.DataFrame:
     """arm_name x participant log2(RPM+1) (reuses mirna_target_integration loaders).
 
-    ⚠⚠ **THIS AVERAGES TUMOUR AND NAT — MEASURED, MH-219.** `load_mirna_expression` slices barcodes to
+    ⚠⚠ **THIS AVERAGES TUMOUR AND NAT — MEASURED, MH-223.** `load_mirna_expression` slices barcodes to
     12-char participants and means over **every barcode a participant has** (tumour + NAT + metastatic +
     replicate aliquots). For the **103 of 1,079 participants (9.5%)** that have both a tumour and a NAT
     sample, the returned column is therefore **not a tumour measurement**: on the 97 with exactly one of
@@ -173,7 +173,7 @@ def load_rna(sample_type: Optional[str] = None) -> pd.DataFrame:
     """gene_symbol x participant log2(TPM+1) (reuses utils.common.loaders).
 
     ⚠⚠ **AVERAGES TUMOUR AND NAT for the paired participants — see `load_mirna_arms` for the measured
-    blast radius (MH-219).** Same collapse, same 9.5% of participants. Pass `sample_type="01"` for a
+    blast radius (MH-223).** Same collapse, same 9.5% of participants. Pass `sample_type="01"` for a
     tumour-only matrix; use `learned.states.state_matrices` for anything NAT-facing.
     """
     if sample_type is not None:

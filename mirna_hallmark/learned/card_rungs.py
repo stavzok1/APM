@@ -238,7 +238,7 @@ DOMAIN = {
     "arms in a co-expression module (371) — pure co-expression; the state-class columns are excluded": ("comv_",),
     "arms with a learned-β edge rollup (728)": ("arb_",),
     "arms inside ≥1 MULTI-ARM (gene,family) cell — the arm rung's 20.3%-of-edges footprint (142)": ("aid_",),
-    "arms with chimeric ligation evidence (1,538) — ⚠ ~90% Manakov/HEK293T, per-source, NEVER pooled": ("chim_",),
+    "arms with chimeric ligation evidence (1,538) — ⚠ ~90% Manakov/HEK293T, per-source, NEVER pooled": ("arm:chim_",),
     "arms with a Manakov AGO-dominance measurement — ⛔ NOT loading(), which fabricates 1.0": (
         "ago_", "ago_reads"),
     "⚠ BROADCAST from the pri-miRNA HAIRPIN — 5p and 3p share one promoter and one Δβ (354 arms)": ("bc_meth_",),
@@ -251,28 +251,28 @@ DOMAIN = {
     "edges/arms with an admissibility tag (4,937 edges; has_site 89.9% · expressed 63.9% · admissible 60.4%)": ("adm_",),
     # ⛔ `lit_agrees_*` is an ARGMAX statistic, which MH-196 measured AT CHANCE at every k. The real
     # verdict is its cluster-bootstrapped RANK test under a family-fame null. Inspect per gene; never aggregate.
-    "genes with a versioned literature canonical family (329 of 1,549, sha256-stamped, MH-196)": ("lit_",),
+    "genes with a versioned literature canonical family (329 of 1,549, sha256-stamped, MH-196)": ("gene:lit_",),
     # ⭐ MH-218: chimeric at its NATIVE (gene,arm) rung — the one evidence type that resolves the mature
     # arm. ⛔ `echim_` not `chim_`: the ARM card owns `chim_` for its rollup and PREFIXES strips globally.
     # ⚠⚠ ~90% of the mass is Manakov = HEK293T, a CELL LINE. No breast chimeric exists in ANY source.
-    "edges with a chimeric (AGO-ligation) duplex — ⚠ per-source, NEVER pooled; cross-tissue, not breast": ("echim_",),
+    "edges with a chimeric (AGO-ligation) duplex — ⚠ per-source, NEVER pooled; cross-tissue, not breast": ("edge:echim_",),
     # ⚠ a WITHIN-ARM rank: a promiscuous arm's 99th pct and a specialist's are not comparable in K_D.
-    "edges in the genome-wide scanMiR K_D scan — `is g among THIS arm's strongest targets` (within-arm rank)": ("kd_",),
+    "edges in the genome-wide scanMiR K_D scan — `is g among THIS arm's strongest targets` (within-arm rank)": ("edge:kd_",),
     # ── v3 blocks (MH-215)
     "arms with a Shapley/attribution decomposition over their edges (728)": ("attr_",),
-    "arms with a per-PAM50 edge-heterogeneity fit (728) — ⚠ DISTRIBUTIONAL (MH-165), not a validated label": ("sub_",),
+    "arms with a per-PAM50 edge-heterogeneity fit (728) — ⚠ DISTRIBUTIONAL (MH-165), not a validated label": ("arm:sub_",),
     "arms with a within-patient NAT field-effect fit (571)": ("field_",),
-    "arms with a compartment-loading row (1,473) — ⚠⚠ its source has NO PRODUCER (MH-111 ad-hoc)": ("cload_",),
-    "genes/families with a TCGA-mRNA compartment driver — ⚠ MH-201: these axes predict the SIGN of β's gain": ("comp_tcga_mrna_",),
+    "arms with a compartment-loading row (1,473) — ⚠⚠ its source has NO PRODUCER (MH-111 ad-hoc)": ("arm:cload_",),
+    "genes/families with a TCGA-mRNA compartment driver — ⚠ MH-201: these axes predict the SIGN of β's gain": ("gene:comp_tcga_mrna_", "family:comp_tcga_mrna_"),
     "arms with ≥1 calibrated-coupling-scored edge (593) — the realization LADDER; rates are gated at n≥5": ("real_",),
     "arms with a seed family — the arm's ROLE inside it; ⛔ DEGENERATE at famrole_n_members==1": ("famrole_",),
     "arms with a categorical guide/passenger call — ⚠ defined ONLY where AGO dominance was MEASURED": ("ago_guide_class",),
     # ── SEED-FAMILY CARD (the 5th rung, MH-215). One row per family; ⛔ degenerate at 1 member (83.7%).
-    "seed families in the arm-card universe (1,959; ⛔ 83.7% single-member ⇒ shares/HHI are 1 or NaN)": ("fam_",),
+    "seed families in the arm-card universe (1,959; ⛔ 83.7% single-member ⇒ shares/HHI are 1 or NaN)": ("seed_family:fam_",),
     # ── CROSS-CARD LADDERS (MH-215, `learned/card_ladders.py --annotate`). ⚠ These are POST-BUILD
     # annotations: a gene_card/edge_card rebuild drops them and card_ladders must be re-run.
-    "genes with ≥1 calibrated-coupling-scored regulator (1,260) — the GENE-side ladder; rates gated n≥3": ("greal_",),
-    "edges with a per-PAM50 heterogeneity fit — ⚠ DISTRIBUTIONAL (MH-165), not a per-edge subtype label": ("esub_",),
+    "genes with ≥1 calibrated-coupling-scored regulator (1,260) — the GENE-side ladder; rates gated n≥3": ("gene:greal_",),
+    "edges with a per-PAM50 heterogeneity fit — ⚠ DISTRIBUTIONAL (MH-165), not a per-edge subtype label": ("edge:esub_",),
     # ⭐ MH-214: makes `ago_loading`'s `.fillna(1.0)` visible. Measured 3,820/5,648 edges (67.6%) ⇒ 32.4%
     # of that column is the default, and of the 2,803 edges reading exactly 1.0, 1,786 (64%) are fills.
     "every edge — TRUE iff `ago_loading` was MEASURED rather than defaulted to 1.0": ("ago_loading_measured",),
@@ -288,10 +288,28 @@ DOMAIN = {
 }
 
 
-def domain_of(col: str) -> str:
+def domain_of(col: str, card: str = "") -> str:
+    """The declared domain of a column, optionally SCOPED TO A CARD.
+
+    ⛔⛔ **WHY `card` EXISTS — three bugs came from its absence.** A DOMAIN entry is a prefix, and prefixes
+    were matched GLOBALLY while columns are CARD-SPECIFIC. Every time two cards independently grew a block
+    with the same prefix, one card's caveat was silently attached to the other's columns:
+      · `sub_`  — the arm card's per-arm PAM50 aggregate vs the edge card's per-edge fit  (→ `esub_`)
+      · `chim_` — the arm card's chimeric rollup vs the edge card's per-edge duplex       (→ `echim_`)
+      · `comp_` — the arm card's compartment loading vs the gene/family `comp_tcga_mrna_*` block, which
+                  inherited a false "its source has NO PRODUCER" warning on **10 columns**  (→ `cload_`)
+    Each was patched with a rename, which fixes the instance and not the cause.
+
+    **An entry may now be SCOPED as `"card:prefix"`** — e.g. `"arm:cload_"` matches `cload_*` on the arm
+    card only. Unscoped entries stay global, so a prefix that legitimately means the same thing on several
+    cards (`adm_`, `cptac_`) needs no change.
+    """
     for dom, cols in DOMAIN.items():
         for c in cols:
-            if col == c or (c.endswith("_") and col.startswith(c)):
+            scope, sep, pat = c.rpartition(":")
+            if sep and scope and card and scope != card:
+                continue                       # this entry belongs to a different card
+            if col == pat or (pat.endswith("_") and col.startswith(pat)):
                 return dom
     return ""
 
@@ -312,7 +330,7 @@ def build(card: str) -> pd.DataFrame:
     R = pd.DataFrame({"card": card, "column": cols,
                       "rung": [rung_of(card, c) for c in cols],
                       "agg_of": [AGG_OF.get(card, {}).get(c, "") for c in cols],
-                      "domain": [domain_of(c) for c in cols]})
+                      "domain": [domain_of(c, card) for c in cols]})
     R.to_csv(OUT / f"{card}_card_rungs.tsv", sep="\t", index=False)
     return R
 

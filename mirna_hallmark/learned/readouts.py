@@ -387,6 +387,20 @@ def run(genes: Optional[Sequence[str]] = None, *, workers: int = 8, limit: Optio
     oe.parent.mkdir(parents=True, exist_ok=True)
     E.to_csv(oe, sep="\t", index=False, float_format="%.5f")
     G.to_csv(og, sep="\t", index=False, float_format="%.5f")
+    # ⭐ PROMOTE TO THE FAMILY CARD (MH-225). `family_card.tsv` is THE family rung — it is what
+    # `card_rungs.CARDS["family"]`, `gene_axes`, `cptac_card`, `ood_cohort`, `rppa_protein` and the decoy
+    # arc all read — and until now **NOTHING IN THE REPO WROTE IT**. Verified: zero `to_csv`/rename/copy
+    # sites; the file on disk was `readouts_edges.tsv` promoted BY HAND at some point and thereafter only
+    # annotated in place (its 61 columns = these 27 + 34 from `card_context`). A headline artifact whose
+    # producer exists only in someone's shell history is the same defect class as MH-204's stale decoy
+    # table: nobody can rebuild it, and nobody can tell whether it is current.
+    # ⚠ This writes the 27-column BASE. `card_context.annotate()` re-adds the 34-column block — and since
+    # MH-222 the card builders call that by default, so the promotion is safe in the normal chain.
+    if level == "family":
+        fc = oe.with_name("family_card.tsv")
+        E.to_csv(fc, sep="\t", index=False, float_format="%.5f")
+        print(f"[readouts:{level}] -> {fc.name} (BASE, {E.shape[1]} cols; "
+              f"run `card_context --annotate` — or any card builder — to restore the annotation block)")
     print(f"[readouts:{level}] {len(E)} rows x {E.gene.nunique()} genes -> {oe.name} / {og.name}")
     return E, G
 

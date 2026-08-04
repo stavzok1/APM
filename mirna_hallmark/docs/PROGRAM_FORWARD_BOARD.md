@@ -788,7 +788,7 @@ existing per-arm axis with a Δ in front of it" (module application, not a paire
 the §F/§I dead list.
 
 ⚠⚠ **TRAPS THAT WILL SILENTLY CORRUPT ANY NAT ANALYSIS — read before writing code.**
-`data_loaders.load_mirna_arms()`/`load_rna()` **average tumour and NAT** (see MH-219; now take an opt-in
+`data_loaders.load_mirna_arms()`/`load_rna()` **average tumour and NAT** (see MH-223; now take an opt-in
 `sample_type`) · `ago_gate`'s per-sample RISC capacity is that same average with **zero NAT keys**, so it
 looks available for all 103 and is state-blind · `CPE`/`abs_purity`/`target_cn` are tumour quantities that
 join happily onto NAT rows · missing miRNA is **NaN, not 0** (`.fillna(0)` turns an abstention into a
