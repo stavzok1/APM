@@ -2649,3 +2649,79 @@ def patient_realization_reliability(*, n_split: int = 30, seed: int = 0,
     print(f"  ⇒ {'the per-patient trait is REPRODUCIBLE' if r_full > 0.4 else 'the BETWEEN-PATIENT spread is mostly NOISE — the score is a set-level quantity, not a personal trait'}")
     pd.DataFrame([out]).to_csv(OUT / "patient_realization_reliability.tsv", sep="\t", index=False)
     return out
+
+
+@lru_cache(maxsize=2)
+def _pr_matrices(m_ref: str = "complement"):
+    """(pred_real, pred_decoy, dY) as gene × patient arrays + (genes, patients). Cached — the
+    per-gene `M_reference` call is the expensive part and §J8's three readouts all need the same matrices."""
+    from mirna_hallmark.eval import decoy_bench as DB
+    dX, dY, pts_l = ST.paired_delta_matrices()
+    pts = list(pts_l)
+    genes = sorted(set(LD.D.high_evidence_edges()["gene"]))
+    fake = {(r.gene, r.real_arm): r.fake_arm for r in DB.build_decoys(genes).itertuples()}
+    PR, PD, YY, kept = [], [], [], []
+    for g in genes:
+        if g not in dY.index:
+            continue
+        try:
+            M = M_reference(g, m_ref)
+        except Exception:
+            continue
+        regs = [a for a in M[M > 0].index if a in dX.index]
+        dreg = [fake.get((g, a)) for a in regs]
+        if not regs or any(f is None or f not in dX.index for f in dreg):
+            continue
+        y = dY.loc[g, pts].to_numpy(float)
+        if not np.isfinite(y).all():
+            continue
+        w = M[regs].to_numpy(float)
+        PR.append(dX.loc[regs, pts].fillna(0.0).T.to_numpy(float) @ w)
+        PD.append(dX.loc[dreg, pts].fillna(0.0).T.to_numpy(float) @ w)
+        YY.append(y)
+        kept.append(g)
+    return np.array(PR), np.array(PD), np.array(YY), tuple(kept), tuple(pts)
+
+
+def _rank_z(A: np.ndarray) -> np.ndarray:
+    """Column-wise rank then z-score — turns a Pearson matrix product into a Spearman matrix."""
+    R = np.apply_along_axis(rankdata, 0, A)
+    R = R - R.mean(axis=0, keepdims=True)
+    s = R.std(axis=0, ddof=0, keepdims=True)
+    return np.divide(R, s, out=np.zeros_like(R), where=s > 0)
+
+
+def patient_realization_swap(*, m_ref: str = "complement", centre: bool = False) -> pd.DataFrame:
+    """§J8c — the CROSS-PATIENT SWAP null (user-proposed): the full 103×103 matrix of
+    ρ(patient p's Δpressure, patient q's Δtarget) across genes. **Diagonal = own pairing; off-diagonal =
+    someone else's.** This breaks the PATIENT PAIRING while keeping real targeting — the complement of the
+    decoy, which breaks targeting while keeping the pairing.
+
+    ⚠ `centre=True` (per-gene centring across patients) forces Σ_q Yc[g,q] = 0, so the off-diagonal mean is
+    mechanically ≈ −diag/(n−1) and is NOT a free null. The **default is UNCENTRED**: the shared cross-gene
+    structure then sits in BOTH diagonal and off-diagonal, and `diag − offdiag` is the personal increment."""
+    Rm, Dm, Ym, genes, pts = _pr_matrices(m_ref)
+    if centre:
+        Rm, Dm, Ym = (A - A.mean(1, keepdims=True) for A in (Rm, Dm, Ym))
+    n = len(pts)
+    rows = []
+    for lbl, P in (("REAL", Rm), ("DECOY", Dm)):
+        C = _rank_z(P).T @ _rank_z(Ym) / P.shape[0]        # 103×103 Spearman matrix
+        diag = np.diag(C).copy()
+        off = C[~np.eye(n, dtype=bool)]
+        # per-patient z of own pairing against that patient's OWN row of swaps
+        zr = np.array([(diag[i] - np.delete(C[i], i).mean()) / (np.delete(C[i], i).std(ddof=1) or np.nan)
+                       for i in range(n)])
+        zc = np.array([(diag[j] - np.delete(C[:, j], j).mean()) / (np.delete(C[:, j], j).std(ddof=1) or np.nan)
+                       for j in range(n)])
+        rows.append({"predictor": lbl, "n_genes": P.shape[0], "n_pat": n,
+                     "diag_mean": _r3(float(diag.mean())), "offdiag_mean": _r3(float(off.mean())),
+                     "diag_minus_off": _r3(float(diag.mean() - off.mean())),
+                     "p_diag_vs_off": float(mannwhitneyu(diag, off, alternative="less").pvalue),
+                     "frac_own_beats_own_swaps": _r3(float(np.nanmean(diag < np.array(
+                         [np.delete(C[i], i).mean() for i in range(n)])))),
+                     "mean_z_swap_target": _r3(float(np.nanmean(zr))),
+                     "mean_z_swap_pressure": _r3(float(np.nanmean(zc)))})
+    df = pd.DataFrame(rows)
+    df.to_csv(OUT / f"patient_realization_swap{'_centred' if centre else ''}.tsv", sep="\t", index=False)
+    return df
