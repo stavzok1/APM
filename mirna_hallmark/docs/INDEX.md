@@ -119,6 +119,7 @@
 |--------|------|
 | [archive/](archive/README.md) | **Consumed / superseded.** Nothing here describes current state. 9 docs + a README explaining each. |
 | [derived/](derived/) | Generated renditions (PDF/DOCX) of the canonical docs. Don't edit — regenerate. |
+| [derived/cards/](derived/cards/) | **⭐ THE CARD BROWSER** (generated) — six standalone HTML pages over the five-rung card system. Open `index.html` from a file manager; no server, no network. Search any arm / gene / edge / family and read its card, or search a **column name** to find which card carries it. Every value carries the rung it was MEASURED at, and the three empty states (`0` · `— not scanned` · `— no value`) are rendered distinctly. Don't edit — regenerate: `analyses/ops/gen_cards.py --build`. ⚠ A **VIEW**; `output/learned/*_card.tsv` are the source of truth. |
 | [decisions/](decisions/) | Locked decision memos. ⭐ **Rescued from the gitignored `output/`** — they were untracked. |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | **⭐ THE MAP** (generated) — axes × models × analyses × results, joined by reference. Start here for "how does it all fit". Regenerate: `analyses/ops/gen_architecture.py`. |
 | [ARCHITECTURE_PLAN.md](ARCHITECTURE_PLAN.md) | **The plan for the canonical axes×models×analyses×results map** (2026-07-18). A materialized VIEW over the one-home docs; generated, non-redundant. Draft axis taxonomy inside. |

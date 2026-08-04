@@ -454,6 +454,15 @@ retention 0.76, 1,322 genes.** ⚠ **The magnitude has SHRUNK at every control f
     across sources.
   ⬜ **Still to fold onto the card** (all arm-level, all already built elsewhere): `arm_rung` β +
   identifiability · `rarity_bench` seed rarity · `kd` per-arm κ0. **(→ MH-209)**
+- ✅ **DONE 2026-08-04 — the card system is now READABLE without code.** `analyses/ops/gen_cards.py --build`
+  → `docs/derived/cards/` : six standalone HTML pages (search any arm/gene/edge/family, or a column name to
+  find which card carries it). Four audits ship with it and stand alone — `--check` (registry↔card, two
+  independent signals), `--roundtrip` (lossless encoding, NaN mask exact), `--links` (cross-card referential
+  integrity), `--verify-js` (runs the pages' OWN javascript under node vs the source TSVs). Details in
+  `ANALYSES_CATALOG.md` + the ledger; **no numbers restated here.**
+  ⬜ Follow-ups: rename `CARDS["family"]` → `gene_family` and its file (13 modules / ~30 refs) once no
+  session is live in `realization.py`; re-run `--build` after any card rebuild (the footer stamps every
+  input's sha, and `--check` fails the build if a card drifts from the registry).
 - 🔨 **NEW, SURFACED BY MH-208 — give MH-201's axis scan a PRODUCER.**
   `output/learned/ood_cohort/{ood_cohort_regulator_features,ood_cohort_modifier_scan}.tsv` carry MH-201's
   headline `reg_dose_hhi` (q=2.1e-05) and its entire 82-modifier FDR scan, and **nothing in the repo writes

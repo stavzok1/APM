@@ -2372,3 +2372,280 @@ def nat_preload_summary(df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
               f"(n={len(onc)}) | MW p={mannwhitneyu(tsg, onc).pvalue:.3g}")
     out.to_csv(OUT / "nat_preload_summary.tsv", sep="\t")
     return out
+
+
+# --------------------------------------------------------------------------- #
+# §J7 — PER-PATIENT IDENTITY, BY LEVEL AND BY PROFILE (generalises              #
+#       `patient_nat_identity`, which pools ALL arms and only arms).            #
+#                                                                              #
+# The pooled version is dominated by the bulk of near-invariant features, so a  #
+# patient who retains their own identity in ONE program is invisible in it.     #
+# Run the same own-vs-cohort comparison per (level × feature profile).          #
+# --------------------------------------------------------------------------- #
+
+def _level_matrices(level: str, pts):
+    """(tumour, NAT) feature × patient at `level` ∈ {arm, family, gene}."""
+    if level == "gene":
+        return _matched_state_pair("mrna", pts, None) if False else (
+            ST.state_matrices("01")[1].reindex(columns=list(pts)),
+            ST.state_matrices("11")[1].reindex(columns=list(pts)))
+    xt, xn, _ = _paired_abund()
+    xt, xn = xt.reindex(columns=list(pts)), xn.reindex(columns=list(pts))
+    if level == "family":
+        arms = [a for a in xt.index if a in xn.index]
+        fam = FAM.family_of(arms)
+        return (xt.loc[arms].groupby(fam.to_numpy()).mean(),
+                xn.loc[arms].groupby(fam.to_numpy()).mean())
+    return xt, xn
+
+
+def _identity_profiles() -> dict:
+    """Named feature subsets to slice patient identity by — the 'profiles' axis."""
+    from mirna_hallmark import gene_roles as GR
+    _, host = _arm_context()
+    he = LD.D.high_evidence_edges()
+    prof = {"arm": {}, "family": {}, "gene": {}}
+    prof["arm"]["all"] = None
+    prof["arm"]["HE_only"] = sorted(set(he["miRNA"]))
+    prof["arm"]["14q32_imprinted"] = [a for a, h in host.items() if h in _IMPRINT_HOSTS]
+    rp = OUT / "mirna_nat_retention.tsv"
+    if rp.exists():
+        r = pd.read_csv(rp, sep="\t").dropna(subset=["r_adj"])
+        hi, lo = r.r_adj.quantile(0.75), r.r_adj.quantile(0.25)
+        prof["arm"]["retention_TOP_quartile"] = list(r.arm[r.r_adj >= hi])
+        prof["arm"]["retention_BOTTOM_quartile"] = list(r.arm[r.r_adj <= lo])
+    prof["arm"]["let7_family"] = [a for a in set(he["miRNA"]) if "let-7" in str(a)]
+    prof["family"]["all"] = None
+    prof["family"]["HE_only"] = sorted(set(FAM.family_of(sorted(set(he["miRNA"]))).dropna()))
+    prof["gene"]["all"] = None
+    prof["gene"]["HE_targets"] = sorted(set(he["gene"]))
+    gr = GR.load_gene_roles()
+    prof["gene"]["cancer_genes"] = sorted(set(gr.gene[gr.role.isin(["tsg", "oncogene", "oncogene/tsg"])]))
+    prof["gene"]["TSG_only"] = sorted(set(gr.gene[gr.role == "tsg"]))
+    return prof
+
+
+def _ident_per_patient(xt: pd.DataFrame, xn: pd.DataFrame, idx, pts, min_feat: int):
+    """(own − cohort) profile-similarity per patient over feature set `idx`."""
+    T, N = xt.loc[idx], xn.loc[idx]
+    coh = N.median(axis=1).to_numpy(float)
+    out = []
+    for p in pts:
+        t, no = T[p].to_numpy(float), N[p].to_numpy(float)
+        ok = np.isfinite(t) & np.isfinite(no) & np.isfinite(coh)
+        if ok.sum() < min_feat:
+            continue
+        so = spearmanr(t[ok], no[ok]).correlation
+        sc = spearmanr(t[ok], coh[ok]).correlation
+        if np.isfinite(so) and np.isfinite(sc):
+            out.append(so - sc)
+    return np.asarray(out)
+
+
+def patient_identity_panel(*, min_feat: int = 15, n_rand: int = 50, seed: int = 0) -> pd.DataFrame:
+    """§J7. `patient_nat_identity` run per (level × profile): is the patient's OWN NAT a better reference
+    for their tumour than the cohort median — in SOME program, even if not overall?
+
+    ⚠ `frac_own_wins` RISES MECHANICALLY AS THE FEATURE SET SHRINKS (both similarities get noisier, so the
+    difference drifts toward a coin flip). Every named profile therefore carries an **n_feat-MATCHED random
+    subset control** drawn from the same level's own universe — a profile only counts if it beats that."""
+    _, _, pts = ST.paired_delta_matrices()
+    pts = list(pts)
+    prof = _identity_profiles()
+    rng = np.random.default_rng(seed)
+    rows = []
+    for level in ("arm", "family", "gene"):
+        xt, xn = _level_matrices(level, pts)
+        universe = [f for f in xt.index if f in xn.index]
+        for name, feats in prof[level].items():
+            idx = [f for f in (xt.index if feats is None else feats)
+                   if f in xt.index and f in xn.index]
+            if len(idx) < min_feat:
+                continue
+            per = _ident_per_patient(xt, xn, idx, pts, min_feat)
+            if len(per) < _MIN_PAIRS:
+                continue
+            r = {"level": level, "profile": name, "n_feat": len(idx), "n_pat": len(per),
+                 "med_own_minus_cohort": _r3(float(np.median(per))),
+                 "frac_own_wins": _r3(float(np.mean(per > 0))),
+                 "p_wilcoxon": float(wilcoxon(per).pvalue),
+                 "frac_rand_matched": np.nan, "p_vs_rand": np.nan}
+            if feats is not None and n_rand:
+                # ⚠⚠ The control MUST be EXPRESSION-MATCHED, not merely n-matched. A plain random draw
+                # from the full universe gives frac_own_wins 0.011 at n=1436 while an expression-matched
+                # draw gives 0.275 — so an unmatched control makes ANY well-expressed set look like a
+                # 23× win. Every named profile here (HE targets, cancer genes, TSGs) is well-expressed.
+                lvl = xn.loc[universe].mean(axis=1)
+                strata = pd.qcut(lvl.rank(method="first"), 20, labels=False)
+                by_s = {s: list(np.asarray(universe)[strata.to_numpy() == s]) for s in range(20)}
+                want = strata.reindex(idx).dropna().astype(int).value_counts()
+                fr = []
+                for _ in range(n_rand):
+                    pick = []
+                    for s, k in want.items():
+                        pool = [f for f in by_s[s] if f not in set(idx)]
+                        if pool:
+                            pick += list(rng.choice(pool, size=min(k, len(pool)), replace=False))
+                    pr = _ident_per_patient(xt, xn, pick, pts, min_feat) if len(pick) >= min_feat else []
+                    if len(pr):
+                        fr.append(float(np.mean(pr > 0)))
+                if fr:
+                    fr = np.asarray(fr)
+                    r["frac_rand_matched"] = _r3(float(fr.mean()))
+                    r["p_vs_rand"] = float((np.sum(fr >= r["frac_own_wins"]) + 1) / (len(fr) + 1))
+            rows.append(r)
+    df = pd.DataFrame(rows)
+    df.to_csv(OUT / "patient_identity_panel.tsv", sep="\t", index=False)
+    return df
+
+
+# --------------------------------------------------------------------------- #
+# §J8 — THE TRANSPOSE: WITHIN-PATIENT, ACROSS-GENE REALIZATION.                 #
+#                                                                              #
+# `_realize` correlates pred against dy OVER THE 103 PATIENTS, so every ρ in    #
+# the lane is a CROSS-patient quantity — the pairing cancels the baseline and   #
+# then discards the patient as the replicate. Transposing it gives ONE score    #
+# PER PATIENT: "how much of THIS patient's transcriptome shift is explained by  #
+# their own miRNA acquisition", turning 103 patients into 103 observations.     #
+#                                                                              #
+# ⚠ Each gene must be CENTRED ACROSS PATIENTS first. Without it the within-     #
+# patient correlation is dominated by cross-gene structure (genes with a large  #
+# Σ|M| have large |pred| for everyone), which is identical in every patient and #
+# is not a personal signal.                                                     #
+# ⚠ Per-patient confounders (batch, purity) are CONSTANT within a patient and   #
+# cannot drive this directly — but composition still can, through gene-specific #
+# loadings: dy ≈ Δcomp_p·loading_g and pred ≈ Δcomp_p·L_g. That is exactly what #
+# the site-free DECOY absorbs, so REAL − DECOY is the reportable quantity.      #
+# --------------------------------------------------------------------------- #
+
+def patient_realization(genes: Optional[Sequence[str]] = None, *, m_ref: str = "complement") -> pd.DataFrame:
+    """§J8. One realization score PER PATIENT: ρ across genes between predicted Δpressure and actual
+    Δ-mRNA, for the REAL regulators and for their Hungarian-matched site-free DECOYS."""
+    from mirna_hallmark.eval import decoy_bench as DB
+    dX, dY, pts_l = ST.paired_delta_matrices()
+    pts = list(pts_l)
+    ed = LD.D.high_evidence_edges()
+    genes = list(genes) if genes is not None else sorted(set(ed["gene"]))
+    fake = {(r.gene, r.real_arm): r.fake_arm for r in DB.build_decoys(genes).itertuples()}
+    PR, PD, YY, kept = [], [], [], []
+    for g in genes:
+        if g not in dY.index:
+            continue
+        try:
+            M = M_reference(g, m_ref)
+        except Exception:
+            continue
+        regs = [a for a in M[M > 0].index if a in dX.index]
+        if not regs:
+            continue
+        dreg = [fake.get((g, a)) for a in regs]
+        if any(f is None or f not in dX.index for f in dreg):     # fair comparison = same arm COUNT
+            continue
+        y = dY.loc[g, pts].to_numpy(float)
+        if not np.isfinite(y).all():
+            continue
+        w = M[regs].to_numpy(float)
+        PR.append(dX.loc[regs, pts].fillna(0.0).T.to_numpy(float) @ w)
+        PD.append(dX.loc[dreg, pts].fillna(0.0).T.to_numpy(float) @ w)
+        YY.append(y)
+        kept.append(g)
+    Rm, Dm, Ym = np.array(PR), np.array(PD), np.array(YY)
+    Rc, Dc, Yc = (A - A.mean(1, keepdims=True) for A in (Rm, Dm, Ym))   # centre each GENE across patients
+    rows = []
+    for i, p in enumerate(pts):
+        rows.append({"patient": p, "n_genes": len(kept),
+                     "rho_real": _r3(spearmanr(Rc[:, i], Yc[:, i]).correlation),
+                     "rho_decoy": _r3(spearmanr(Dc[:, i], Yc[:, i]).correlation),
+                     "rho_uncentred": _r3(spearmanr(Rm[:, i], Ym[:, i]).correlation)})
+    df = pd.DataFrame(rows)
+    df["gap"] = (df.rho_real - df.rho_decoy).round(3)
+    df["subtype"] = ST._pam50().reindex(df.patient).to_numpy()
+    fl = _nat_field().reindex(df.patient)
+    df["nat_field"] = fl.to_numpy()
+    dC = _delta_C().reindex(df.patient)
+    df["dC_norm"] = np.linalg.norm(dC.fillna(0.0).to_numpy(float), axis=1).round(3) if len(dC.columns) else np.nan
+    OUT.mkdir(parents=True, exist_ok=True)
+    df.to_csv(OUT / "patient_realization.tsv", sep="\t", index=False)
+    return df
+
+
+def patient_realization_summary(df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+    """§J8 verdict: is the per-patient score real (beats its decoy), and does it track anything?"""
+    if df is None:
+        df = pd.read_csv(OUT / "patient_realization.tsv", sep="\t")
+    g = df.gap.dropna()
+    print(f"[J8] {len(df)} patients × {int(df.n_genes.iloc[0])} genes | rho_real med {df.rho_real.median():+.4f} "
+          f"· rho_decoy med {df.rho_decoy.median():+.4f} · uncentred med {df.rho_uncentred.median():+.4f}")
+    print(f"  REAL vs 0:       Wilcoxon p={wilcoxon(df.rho_real.dropna()).pvalue:.3g}")
+    print(f"  REAL−DECOY gap:  med {g.median():+.4f}, mean {g.mean():+.4f}, Wilcoxon p={wilcoxon(g).pvalue:.4g}, "
+          f"frac<0 {float((g < 0).mean()):.3f}")
+    print(f"  SPREAD across patients: sd(gap) {g.std():.4f}, range [{g.min():+.3f}, {g.max():+.3f}] "
+          f"— is there real between-patient variation to explain?")
+    for cov in ("nat_field", "dC_norm"):
+        m = df[[cov, "gap"]].dropna()
+        if len(m) >= 30:
+            s = spearmanr(m[cov], m.gap)
+            print(f"  gap vs {cov:9s}: rho={s.correlation:+.3f} p={s.pvalue:.3g}")
+    sub = df.dropna(subset=["subtype"]).groupby("subtype").agg(n=("gap", "size"), gap=("gap", "median")).round(4)
+    print(sub[sub.n >= 8].to_string())
+    # ⚠ realization predicts ρ<0, so a MORE NEGATIVE gap = real beats decoy = MORE realized. nsmallest.
+    return df.nsmallest(8, "gap")[["patient", "subtype", "rho_real", "rho_decoy", "gap", "nat_field"]]
+
+
+def patient_realization_reliability(*, n_split: int = 30, seed: int = 0,
+                                    m_ref: str = "complement") -> dict:
+    """§J8b. SPLIT-HALF RELIABILITY of the decoy-corrected per-patient score — **MH-162A's explicitly
+    untested object**. MH-162A killed a per-patient trait because a site-free decoy matched its
+    reliability; it never tested the reliability of `real − decoy`, which is a different quantity.
+    Split the GENES in half, recompute the gap on each half, correlate across patients."""
+    from mirna_hallmark.eval import decoy_bench as DB
+    dX, dY, pts_l = ST.paired_delta_matrices()
+    pts = list(pts_l)
+    genes = sorted(set(LD.D.high_evidence_edges()["gene"]))
+    fake = {(r.gene, r.real_arm): r.fake_arm for r in DB.build_decoys(genes).itertuples()}
+    PR, PD, YY = [], [], []
+    for g in genes:
+        if g not in dY.index:
+            continue
+        try:
+            M = M_reference(g, m_ref)
+        except Exception:
+            continue
+        regs = [a for a in M[M > 0].index if a in dX.index]
+        dreg = [fake.get((g, a)) for a in regs]
+        if not regs or any(f is None or f not in dX.index for f in dreg):
+            continue
+        y = dY.loc[g, pts].to_numpy(float)
+        if not np.isfinite(y).all():
+            continue
+        w = M[regs].to_numpy(float)
+        PR.append(dX.loc[regs, pts].fillna(0.0).T.to_numpy(float) @ w)
+        PD.append(dX.loc[dreg, pts].fillna(0.0).T.to_numpy(float) @ w)
+        YY.append(y)
+    Rm, Dm, Ym = np.array(PR), np.array(PD), np.array(YY)
+    Rc, Dc, Yc = (A - A.mean(1, keepdims=True) for A in (Rm, Dm, Ym))
+    n = Rc.shape[0]
+    rng = np.random.default_rng(seed)
+
+    def _gap(rows):
+        return np.array([spearmanr(Rc[rows, i], Yc[rows, i]).correlation
+                         - spearmanr(Dc[rows, i], Yc[rows, i]).correlation for i in range(len(pts))])
+    rs = []
+    for _ in range(n_split):
+        perm = rng.permutation(n)
+        a, b = perm[: n // 2], perm[n // 2:]
+        ga, gb = _gap(a), _gap(b)
+        ok = np.isfinite(ga) & np.isfinite(gb)
+        if ok.sum() >= _MIN_PAIRS:
+            rs.append(spearmanr(ga[ok], gb[ok]).correlation)
+    rs = np.array(rs)
+    r_half = float(np.nanmean(rs))
+    r_full = 2 * r_half / (1 + r_half) if r_half > -1 else np.nan       # Spearman–Brown
+    out = {"n_genes": n, "n_patients": len(pts), "n_splits": len(rs),
+           "r_split_half": round(r_half, 3), "r_full_SpearmanBrown": round(r_full, 3),
+           "sd_of_split_r": round(float(np.nanstd(rs)), 3)}
+    print(f"[J8b RELIABILITY of (real−decoy)] split-half r = {r_half:+.3f} (sd {out['sd_of_split_r']}) "
+          f"⇒ Spearman–Brown full-length r = {r_full:+.3f} over {n} genes / {len(pts)} patients")
+    print(f"  ⇒ {'the per-patient trait is REPRODUCIBLE' if r_full > 0.4 else 'the BETWEEN-PATIENT spread is mostly NOISE — the score is a set-level quantity, not a personal trait'}")
+    pd.DataFrame([out]).to_csv(OUT / "patient_realization_reliability.tsv", sep="\t", index=False)
+    return out
