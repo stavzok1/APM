@@ -92,7 +92,7 @@ card's key**:
 - **An arm-rung column must be constant within arm ACROSS genes.** If it varies by gene it is not an arm
   property, whatever its name suggests (MH-214).
 
-## 6. Which rung is my question on? — and the two rungs with no taxonomy
+## 6. Which rung is my question on? — full coverage
 
 | rung | question taxonomy | status |
 |---|---|---|
