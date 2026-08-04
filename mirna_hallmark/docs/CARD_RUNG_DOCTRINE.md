@@ -99,22 +99,15 @@ card's key**:
 | edge | `EDGE_QUESTION_TAXONOMY.md` | ✅ + skill `apm-edge-question` |
 | gene | `GENE_QUESTION_TAXONOMY.md` | ✅ + skill `apm-gene-question` |
 | patient *(orthogonal axis)* | `PATIENT_QUESTION_TAXONOMY.md` | ✅ + skill `apm-patient-question` |
-| **arm** | — | ⬜ **none** |
-| **seed_family** | — | ⬜ **none** |
+| **arm** | `ARM_QUESTION_TAXONOMY.md` | ✅ + skill `apm-arm-question` |
+| **seed_family** | `ARM_QUESTION_TAXONOMY.md` §6 | ✅ covered as rung **C** there |
 | family_edge | — | ⬜ none, and probably not needed |
 
-**ARM** — genuine gap. Arm-rung questions are: is this arm detectable/abundant enough to carry a claim
-(`detection`, `arm_pct_floor`, `arm_med_rpm`, `spiker`); does its genomic context matter (`mir_class`,
-`host`, `strand_rel` — `MIRNA_GENOMIC_CONTEXT_AXIS.md`); is it AGO-loaded (`ago_loading`); is the 5p/3p
-or isomiR split real (`ISOMIR_AWARE_MODELING.md`); is it resolvable from its family-mates
-(`arm_resolvable`, `arm_sep_z`, `oof_drho` — the `arm-in-family` rung). Doctrine exists but is scattered
-across two docs, the arm card and the `within-family-structure` memory. **A taxonomy here would earn its
-place**; it does not exist yet.
-
-**SEED_FAMILY** — smaller surface: family size, seed heterogeneity (the 17 seed-heterogeneous families),
-whether collapse is valid for that family, member composition. Mostly covered by
-`ISOMIR_AWARE_MODELING.md` + the `within-family-structure` memory. **Probably a section of an arm/family
-taxonomy rather than its own doc.**
+**ARM / SEED_FAMILY — now covered** by `ARM_QUESTION_TAXONOMY.md`, as one doc rather than two: its
+organising lemma is that **the arm is a measured but not an estimated unit** (`M` is fit per seed family
+and only broadcast down), which partitions the rung into **A** arm-alone · **B** arm-in-family · **C** the
+family itself. They were kept together because the `arm-in-family` resolvability machinery belongs to
+neither pole alone.
 
 **FAMILY_EDGE** — measured (MH-241) to carry *less* per-patient structure than the edge rung and to be
 largely the edge question at a coarser grain. **Not obviously worth its own taxonomy.**
