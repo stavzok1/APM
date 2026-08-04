@@ -548,7 +548,7 @@ gene-specific component is significant (Δ=−0.085, p=0.038) while abundance's 
 ## E. Discovery lane
 
 - ✅ **DONE 2026-07-18 — the per-EDGE card is built as the CANONICAL two-block card** (`learned/canonical_card.py`
-  → `output/learned/canonical_card.tsv`, 5,650 (gene,arm) rows / 1,421 genes / 3,941 both-block). One `(gene,arm)`
+  → `output/learned/edge_card_base.tsv`, 5,650 (gene,arm) rows / 1,421 genes / 3,941 both-block). One `(gene,arm)`
   key, two provenance-tagged estimator blocks joined: **ATTRIBUTION** (Gibbs β/`identity`/`beta_frac`/`pip`, from
   `readouts_arm_edges.tsv`) + **PROGRESSION** (regime `arm_med_rpm`/`arm_pct_floor`/`spiker`; budget
   `states.budget_shift` rank/share + GTEx→NAT→tumour Δ; composition `retention_rho`; 3-state coupling

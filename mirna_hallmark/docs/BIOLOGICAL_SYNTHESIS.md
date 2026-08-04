@@ -513,7 +513,7 @@ the curated, recognizable ones. **Bottom line:** abundance-sum tells you *how mu
 
 ## 12. ★ The progression landscape — cross-state trajectory biology (characterization, 2026-07-18)
 
-The descriptive biological map of the GTEx→NAT→tumour landscape, read off the integrated `progression_edge_card`
+The descriptive biological map of the GTEx→NAT→tumour landscape, read off the integrated `edge_card`
 (MH-158/160) + arm trajectory (`mirna_state_class`) + genomic context. **⚠ DESCRIPTIVE** — `shift_class` per-edge
 FDR labels rest on the MH-124 null (3–4× too narrow); role annotations are incomplete. Read the *structural
 patterns* (cluster co-movement, convergence), not per-edge significance. Module:

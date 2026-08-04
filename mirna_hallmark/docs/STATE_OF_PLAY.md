@@ -632,7 +632,7 @@ null). Own-retaining 7% not clinically distinct (fragile purity hit, n=5). Detai
 realization, ordered by repression-LIVENESS not dose — live-in-NAT edges {constitutive, field_established}
 realize more than acquired-only ones (Δ −0.039, gene-clustered) despite LOWER dose; anti-dose (dose+coupling_tum
 controlled −0.032), decoy-arbitrated (direct paired diff −0.024, p=0.01); partial circularity (ρ=0.234 with the
-defining coupling_nat) quantified + defused. Enabled by the integrated `progression_edge_card`.
+defining coupling_nat) quantified + defused. Enabled by the integrated `edge_card`.
 ✅ **`shift_class` REBUILT → CALIBRATED TWO-AXIS (MH-166, 2026-07-19):** the old coupling-only −0.1 label is
 SUPERSEDED by a two-axis annotation = per-state **calibrated** coupling (`site_free_null` per state, replaces −0.1;
 tumour null 2.67× reproduces MH-123) × **same-platform** `arm_lfc_NAT_TUM` dose (replaces the soft QN healthy leg).

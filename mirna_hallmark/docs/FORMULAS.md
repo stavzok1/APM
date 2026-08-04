@@ -771,7 +771,7 @@ Output: `gene_acquired_pressure.tsv` (sorted by `acquired_vs_gtex`).
 ### 11f. Card `shift_class` — the CALIBRATED two-axis progression annotation (MH-166)
 
 The per-edge progression class emitted by `learned/card.py::_shift_class` (flows into
-`canonical_card.tsv` → `progression_edge_card`). This is the **learned successor** to the §11c
+`canonical_card.tsv` → `progression_edge_card` → **now `edge_card.tsv`**, MH-181). This is the **learned successor** to the §11c
 heuristic `joint_edge_class` (which routes through the §6b-RETIRED pressure spine — do not read
 the two as the same object). It is built from **two orthogonal axes**, deliberately separating
 *when repression engages* from *when dose rises* (the old label thresholded coupling ONLY, at a
@@ -830,7 +830,7 @@ tumour_realized           (not h) and (not n) and not dose_gain  (tumour-only co
 nat_decoupled             h and not n                            (coupled healthy, dropped by NAT, back in tumour)
 ```
 
-Census (genome-wide `progression_edge_card`, MH-166): `undetectable` 1145 · `uncoupled` 1104 ·
+Census (genome-wide `edge_card`, MH-166): `undetectable` 1145 · `uncoupled` 1104 ·
 `dose_acquired_uncoupled` **571** · `acquired_realized` 484 · `tumour_realized` 183 · `lost` 162 ·
 `composition_explained` 161 · `field_established_realized` 77 · `nat_decoupled` 52 · `constitutive` **6**
 (collapsed from 127 under calibration).
