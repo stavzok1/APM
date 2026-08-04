@@ -170,4 +170,4 @@ the predictor. Remaining untested moves are estimator/design-side and now lower-
 3. **E5 — paired-delta** over the matched-NAT subset (low power; n≈111 noise-dominated, per E4′).
 
 The productive direction has moved to the **gene level**, where (unlike the edge) construction is
-consequential — see `GENE_QUESTION_TAXONOMY.md`.
+consequential — see `GENE_QUESTION_TAXONOMY.md` (and `PATIENT_QUESTION_TAXONOMY.md` for the per-patient rung).

@@ -11,6 +11,9 @@ effect) ⇒ this is the FINAL malignant step, conservative. n≈104 ⇒ read SET
 M-reference (user-flagged): default **complement** = M fit on the ~900 NON-matched tumours (leak-free +
 powered); **full** = canonical_M incl. matched (leak, sensitivity); **matched** = n≈104 (circular ceiling).
 
+⭐ **Per-patient / personalisation questions: read `docs/PATIENT_QUESTION_TAXONOMY.md` FIRST** — it fixes the
+P-across vs P-each rung, the two senses of "retention", the three nulls, and what is already a dead end.
+
 Engine only (pure, memoized reads). Sharded CLI driver: `analyses/progression/realize_run.py`.
 Design: plan `i-think-we-can-fluffy-walrus`; reuses `states`/`families`/`attribution`/`decoy_bench`.
 """

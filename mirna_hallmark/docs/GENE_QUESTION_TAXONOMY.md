@@ -3,7 +3,7 @@
 > **Scope: the GENE.** A target gene `g`, its **aggregate incoming pressure**
 > `P_agg(g,s) = Σ_{m∈R(g)} c(m,g,s)`, vs its own expression `y_g`, across samples. Question:
 > *"is `g` net-repressed by its miRNA stack, and which construction best detects it?"* Companion to
-> `EDGE_QUESTION_TAXONOMY.md` (single edges) and one rung below the **program** level
+> `EDGE_QUESTION_TAXONOMY.md` (single edges), `PATIENT_QUESTION_TAXONOMY.md` (the per-patient rung) and one rung below the **program** level
 > (`hallmark_interaction`, out of scope here). Numbers/claims live in modules + `DISCOVERY_REGISTRY.md`.
 
 ## 1. The aggregation lemma — *the edge lemma flips here*
