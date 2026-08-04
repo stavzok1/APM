@@ -819,6 +819,13 @@ def _finish_card(path, built: pd.DataFrame, annotate: bool) -> None:
     if annotate:
         from mirna_hallmark.learned import card_context as CC
         CC.annotate()
+        # ⚠ SECOND PASS (MH-227). `card_ladders` is a separate annotation step; MH-222 wired only
+        # `card_context`, and skipping ladders silently cost 37 columns on the tumour-only rebuild.
+        try:
+            from mirna_hallmark.learned import card_ladders as CL
+            CL.annotate()
+        except Exception as e:
+            print(f"  ⚠ card_ladders annotation skipped ({e}) — run `card_ladders --annotate` manually")
         return
     try:
         prev_cols = set(pd.read_csv(path, sep="\t", nrows=0).columns)

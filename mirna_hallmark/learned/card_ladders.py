@@ -331,11 +331,25 @@ def _annotate(card_path: Path, blocks: list) -> None:
           f"{len(out):,} rows, pre-existing columns bit-identical")
 
 
+def annotate() -> None:
+    """Build the ladder/subtype blocks and JOIN them onto the cards.
+
+    ⭐ Callable, not CLI-only (MH-227): this is a SECOND annotation pass, separate from
+    `card_context.annotate()`, and only the latter was wired into the card builders by MH-222. Skipping it
+    silently costs **37 columns** (20 edge `adm_*`/`echim_*`/`esub_*`, 17 gene `greal_*`/`lit_*`) — measured
+    when the tumour-only rebuild dropped them and nothing errored. `realization._finish_card` now calls both.
+    """
+    _run(annotate_cards=True)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--annotate", action="store_true", help="join the blocks onto the cards")
     a = ap.parse_args()
+    _run(annotate_cards=a.annotate)
 
+
+def _run(*, annotate_cards: bool) -> None:
     gl = gene_realization_ladder()
     st = edge_subtype()
     if len(gl):
@@ -347,7 +361,7 @@ def main() -> None:
               f"| median gated frac_c10 {gl.greal_frac_c10.median():.3f}")
     if len(st):
         print(f"[edge subtype] {len(st):,} (gene,arm) rows")
-    if not a.annotate:
+    if not annotate_cards:
         print("\n(report only — pass --annotate to join onto the cards)")
         return
     print("\n[annotate]")

@@ -48,7 +48,9 @@ _READOUTS = ("beta", "beta_sd", "z", "identified", "identity", "identity_deconv"
              "beta_frac_reliable", "beta_sd_deconv", "beta_frac_deconv", "retention_reliable",
              "m_nnls", "pip_dense", "pip_discovery", "prior_pi", "beta_deconv", "retention_beta",
              "composition_class", "net_pressure", "identity_allocated")
-_GENE_DESC = ("n", "p_fam", "role", "n_arms", "n_fam")
+# ⭐ `w_max` added MH-227: `card_context.ATLAS_COLS` now carries the gene_atlas block to EVERY card
+# (it was silently filtered before), so the edge card gained a gene-rung `w_max` broadcast to its rows.
+_GENE_DESC = ("n", "p_fam", "role", "n_arms", "n_fam", "w_max")
 _ARM_DESC = ("arm_med_rpm", "arm_pct_floor", "arm_iqr", "arm_id_status", "ago_loading",
              # ⭐ MH-214: ARM rung like the column it qualifies — derived from the arm alone, so it is
              # constant within arm across genes. A DOMAIN entry alone is not enough: domain says WHERE a
