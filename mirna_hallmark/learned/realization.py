@@ -2802,11 +2802,15 @@ def patient_realization_profile_grid(*, m_ref: str = "complement", a: str = "pre
     eye = ~np.eye(n, dtype=bool)
 
     def _c(idx):
+        """⚠ Returns BOTH. The REAL-only column is `diag − offdiag` with the real predictor and needs NO
+        assumption about the decoy — the swap null is assumption-free. `REAL − DECOY` additionally
+        subtracts the decoy, which here is built from REAL miRNAs whose Δ co-vary across patients, so it
+        can OVER-correct by an unknown amount (see `decoy_predictor_leak`). Report the REAL-only column."""
         o = {}
         for lbl, P in (("REAL", Rm), ("DECOY", Dm)):
             C = _rank_z(P[idx]).T @ _rank_z(Ym[idx]) / len(idx)
             o[lbl] = float(np.diag(C).mean() - C[eye].mean())
-        return o["REAL"] - o["DECOY"]
+        return o["REAL"], o["REAL"] - o["DECOY"]
     labs = [f"{n_bin}q{i+1}" for i in range(n_bin)]
     arch = arch.assign(_A=pd.qcut(arch[a].rank(method="first"), n_bin, labels=labs))
     rows = []
@@ -2816,8 +2820,89 @@ def patient_realization_profile_grid(*, m_ref: str = "complement", a: str = "pre
         bb = pd.qcut(sub[b].rank(method="first"), n_bin, labels=labs)
         for lb in labs:
             idx = sub.i[bb == lb].to_numpy()
-            r[f"{b}_{lb}"] = round(_c(idx), 4) if len(idx) >= 60 else np.nan
+            cr, cd = _c(idx) if len(idx) >= 60 else (np.nan, np.nan)
+            r[f"{b}_{lb}"] = round(cr, 4) if cr == cr else np.nan          # REAL-only (primary)
+            r[f"{b}_{lb}_mD"] = round(cd, 4) if cd == cd else np.nan       # minus decoy (secondary)
         rows.append(r)
     df = pd.DataFrame(rows)
     df.to_csv(OUT / f"patient_realization_grid_{a}_x_{b}.tsv", sep="\t", index=False)
     return df
+
+
+def gene_personal_outcome(*, m_ref: str = "complement") -> pd.Series:
+    """Per-GENE decoy-corrected realization: ρ(pred_real, dy) − ρ(pred_decoy, dy) across the 103 patients.
+    The per-gene analogue of §J8's swap contrast, so it can go through `gene_axes.scan` (axiom 8)."""
+    Rm, Dm, Ym, genes, _pts = _pr_matrices(m_ref)
+    r = np.array([spearmanr(Rm[i], Ym[i]).correlation for i in range(len(genes))])
+    d = np.array([spearmanr(Dm[i], Ym[i]).correlation for i in range(len(genes))])
+    return pd.Series(r - d, index=list(genes), name="rho_real_minus_decoy")
+
+
+def personal_signal_axes(*, m_ref: str = "complement") -> tuple:
+    """§J8f. What GENE PROFILE predicts the decoy-corrected per-gene personal signal — via
+    `learned/gene_axes.py` (the ~100-axis FDR-scanned machinery), **not** a hand-rolled tertile split.
+    Carries the REGULATOR-ENSEMBLE axes (incl. abundance-orthogonal PROMISCUITY), the weight/Shapley
+    axes, the target's own axes, and the card's real β-share / dose / categorical blocks.
+    ⚠ `mask_degenerate` is applied: with one regulator a weighted estimator IS the unweighted one."""
+    from mirna_hallmark.learned import gene_axes as GA
+    y = gene_personal_outcome(m_ref=m_ref)
+    xt, xn, pts = _paired_abund()
+    dX, dY, _ = ST.paired_delta_matrices()
+    Yn = ST.state_matrices("11")[1]
+    rows = {}
+    for g in y.index:
+        try:
+            M = M_reference(g, m_ref)
+        except Exception:
+            continue
+        regs = [a for a in M[M > 0].index if a in xn.index]
+        if not regs:
+            continue
+        dose = xn.loc[regs, pts].to_numpy(float)                       # NAT arm LEVELS (signed Δ breaks hhi)
+        ax = {}
+        ax |= GA.regulator_axes(dose, arms=regs)
+        ax |= GA.weight_axes(M[regs].to_numpy(float))
+        if g in Yn.index:
+            ax |= GA.self_axes(Yn.loc[g, pts].to_numpy(float))
+        ax["acq_sd"] = float(np.nanstd(dX.loc[[a for a in regs if a in dX.index], pts]
+                                       .fillna(0.0).T.to_numpy(float) @ M[regs].to_numpy(float), ddof=1))
+        rows[g] = ax
+    A = pd.DataFrame(rows).T
+    card = pd.read_csv(OUT / "gene_card.tsv", sep="\t").set_index("gene")
+    num = [c for c in ("top_beta_frac", "concentration", "frac_identified", "n_identified",
+                       "ctx_dose_max", "ctx_dose_med", "max_beta_frac_sd", "n_fam", "n_arms")
+           if c in card.columns]
+    A = A.join(card[num].reindex(A.index).apply(pd.to_numeric, errors="coerce"))
+    keep = GA.mask_degenerate(A["reg_n"]) if "reg_n" in A.columns else pd.Series(True, index=A.index)
+    yk, Ak = y.reindex(A.index)[keep], A[keep]
+    print(f"[J8f] {len(A)} genes → {int(keep.sum())} after mask_degenerate (one-regulator genes dropped: "
+          f"{int((~keep).sum())})")
+    sc = GA.scan(yk, Ak)
+    cats = [c for c in ("ctx_apriori_class", "dominant_edge_shift_class", "gene_repression_class")
+            if c in card.columns]
+    ck = card[cats].reindex(Ak.index)
+    cat = GA.scan_categorical(yk, ck)
+    sc.to_csv(OUT / "personal_signal_axes.tsv", sep="\t", index=False)
+    cat.to_csv(OUT / "personal_signal_axes_categorical.tsv", sep="\t", index=False)
+    return sc, cat
+
+
+def decoy_predictor_leak(*, m_ref: str = "complement") -> pd.DataFrame:
+    """⚠ **IS THE DECOY A VALID CONTROL HERE AT ALL?** (user challenge, 2026-08-04). `pred_decoy` is built
+    from REAL miRNAs — site-free for this gene, but real arms whose Δ co-vary strongly with the true
+    regulators' Δ across patients. If `corr(pred_real, pred_decoy)` is high, the decoy carries much of the
+    real predictor and `REAL − DECOY` OVER-corrects by an unknown amount. The **cross-patient swap null
+    needs no such assumption**, which is why it is the primary readout."""
+    Rm, Dm, Ym, genes, pts = _pr_matrices(m_ref)
+    r = np.array([spearmanr(Rm[i], Dm[i]).correlation for i in range(len(genes))])
+    ry = np.array([spearmanr(Rm[i], Ym[i]).correlation for i in range(len(genes))])
+    dy = np.array([spearmanr(Dm[i], Ym[i]).correlation for i in range(len(genes))])
+    q = np.nanpercentile(r, [10, 25, 50, 75, 90])
+    print(f"[decoy leak] corr(pred_real, pred_decoy) across {len(genes)} genes — "
+          f"p10 {q[0]:+.3f} · q1 {q[1]:+.3f} · MEDIAN {q[2]:+.3f} · q3 {q[3]:+.3f} · p90 {q[4]:+.3f}")
+    print(f"   frac |r|>0.3: {np.nanmean(np.abs(r) > 0.3):.3f} · >0.5: {np.nanmean(np.abs(r) > 0.5):.3f}")
+    print(f"   per-gene ρ(pred,dy): REAL med {np.nanmedian(ry):+.4f} · DECOY med {np.nanmedian(dy):+.4f}")
+    out = pd.DataFrame({"gene": list(genes), "corr_real_decoy": np.round(r, 3),
+                        "rho_real": np.round(ry, 3), "rho_decoy": np.round(dy, 3)})
+    out.to_csv(OUT / "decoy_predictor_leak.tsv", sep="\t", index=False)
+    return out
