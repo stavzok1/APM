@@ -1,0 +1,120 @@
+# Card & rung doctrine — what unit does this number live on?
+
+> **Scope: every column on every card.** The canonical source is the `learned/card_rungs.py` module
+> docstring and `CARDS` dict; this doc is its doc-level home and the entry point for "which rung am I on".
+> Verdicts live in `DISCOVERY_REGISTRY.md` (MH-179, 187, 188, 191, 214, 222, 226, 227).
+
+## 0. The one rule
+
+> **⛔ THE RUNG IS A PROPERTY OF `(CARD, COLUMN)` — NEVER OF THE COLUMN NAME.**
+
+`beta` means a different thing on each card:
+
+| card | what `beta` is |
+|---|---|
+| `edge_card.tsv` | **EDGE** rung — `readouts.run(level="arm")`, the SS8 collapse **REMOVED** |
+| `family_card.tsv` | **FAMILY** rung — `readouts.run(level="family")`, the SS8 collapse **APPLIED** |
+
+Same name, same estimator, different unit. A single shared prefix map cannot express that, which is why
+each card carries its own map and why `domain_of(col, card)` is **card-scoped** — prefixes were once
+matched globally and silently attached one card's caveat to another's columns (three bugs; `sub_` on the
+arm card vs the edge card, fixed by renaming to `esub_`).
+
+**Four defects in one day came from not knowing the unit:** MH-179 (a FAMILY-estimated β applied to RAW
+ARM abundance) · MH-187 (a family weight beside an arm correlation, unmarked) · MH-188 (a within-cell
+Shapley compared against a GENE-level OOF statistic) · MH-191 (β labelled `family` when the fit was
+per-arm). All the same error.
+
+## 1. The five cards
+
+| rung | card | key | expresses |
+|---|---|---|---|
+| **edge** | `realization/edge_card.tsv` | `[gene, arm]` | one (miRNA, gene) pair |
+| **family_edge** | `family_card.tsv` | `[gene, family]` | one (seed family, gene) pair |
+| **gene** | `realization/gene_card.tsv` | `[gene]` | the gene's total incoming regulation |
+| **arm** | `arm_card.tsv` | `[arm]` | the arm itself, gene-free |
+| **seed_family** | `seed_family_card.tsv` | `[seed_family]` | the family itself, gene-free |
+
+⚠ **`family_card` is keyed `[gene, family]` — it is the GENE×FAMILY card and CANNOT express a property of
+the family itself.** That is exactly why `seed_family_card` was split off as the 5th rung. If your
+quantity is a property of the family alone (size, seed heterogeneity, member composition), it belongs on
+`seed_family_card`, not `family_card`.
+
+## 2. Two orthogonal facts per column — do not conflate them
+
+- **`rung`** — the unit the value is **defined on**: `key` / `gene` / `family` / `arm` / `edge` /
+  `arm-in-family`.
+- **`agg_of`** — if the value **summarises a lower unit**, which one. E.g. on the gene card
+  `cptac_prosp_agg_rho_prot` is `rung=gene, agg_of=arm`: one row per gene, but computed by summing
+  `β·X` over the gene's ARMS, so **it inherits the arm rung's caveats**.
+
+⚠ **A `domain` entry is not a rung.** Domain says *where a column is defined*; rung says *what unit it
+lives on*. `--check` needs both (MH-214).
+
+## 3. ⭐ The labels are TESTED, not asserted
+
+`card_rungs.verify(card)` checks each declared rung against the data's actual invariance **given that
+card's key**:
+
+| card key | gene | family | arm | edge |
+|---|---|---|---|---|
+| `[gene, arm]` | constant within gene | constant within (gene, seed_family) | constant within arm **across genes** | free |
+| `[gene, family]` | constant within gene | **free — it IS the grain** | — | — |
+| `[gene]` | one row per gene ⇒ **nothing checkable**; `agg_of` carries the meaning | | | |
+
+**A declared rung the data contradicts is a mislabel** — that is how MH-191's wrong labels and the
+`dose_rank_*` / `family_role` errors were caught. Run it:
+
+```
+.venv/bin/python3 -m mirna_hallmark.learned.card_rungs           # full report
+.venv/bin/python3 -m mirna_hallmark.learned.card_rungs --check   # non-zero exit on any gap
+```
+
+## 4. Adding a column — the checklist
+
+1. **Name the rung and the `agg_of`** before writing the column.
+2. **Register it** in `CARDS[<card>]["explicit"]` (or a card-scoped prefix). Unregistered columns are
+   flagged unassigned by `--check`.
+3. **Run `--check`.** If the invariance fails, the label is wrong — fix the label, not the test.
+4. **Both annotation passes run.** `realization.edge_card()`/`gene_card()` call `card_context.annotate()`
+   **and** `card_ladders.annotate()` by default (MH-222/227). Writing a card without them silently drops
+   ~57 columns.
+5. ⚠ **`family_card.tsv` has no `_finish_card` call site** — adding columns there means extending
+   `readouts.py`'s promotion or adding one, **plus** registering in `CARDS["family"]["explicit"]`.
+
+## 5. Traps with a recorded cost
+
+- **`w_max` is the max curated EVIDENCE weight**, not a β or dose share (`top_beta_frac` /
+  `concentration` are the shares). It is gene-rung on the gene card and family-rung on the family card.
+- **The gene card is `realization/gene_card.tsv`.** `learned/gene_card.tsv` does not exist; looking there
+  and concluding the atlas block is missing has already happened once.
+- **`retention` names two unrelated quantities** — see `PATIENT_QUESTION_TAXONOMY.md` §5.
+- **An arm-rung column must be constant within arm ACROSS genes.** If it varies by gene it is not an arm
+  property, whatever its name suggests (MH-214).
+
+## 6. Which rung is my question on? — and the two rungs with no taxonomy
+
+| rung | question taxonomy | status |
+|---|---|---|
+| edge | `EDGE_QUESTION_TAXONOMY.md` | ✅ + skill `apm-edge-question` |
+| gene | `GENE_QUESTION_TAXONOMY.md` | ✅ + skill `apm-gene-question` |
+| patient *(orthogonal axis)* | `PATIENT_QUESTION_TAXONOMY.md` | ✅ + skill `apm-patient-question` |
+| **arm** | — | ⬜ **none** |
+| **seed_family** | — | ⬜ **none** |
+| family_edge | — | ⬜ none, and probably not needed |
+
+**ARM** — genuine gap. Arm-rung questions are: is this arm detectable/abundant enough to carry a claim
+(`detection`, `arm_pct_floor`, `arm_med_rpm`, `spiker`); does its genomic context matter (`mir_class`,
+`host`, `strand_rel` — `MIRNA_GENOMIC_CONTEXT_AXIS.md`); is it AGO-loaded (`ago_loading`); is the 5p/3p
+or isomiR split real (`ISOMIR_AWARE_MODELING.md`); is it resolvable from its family-mates
+(`arm_resolvable`, `arm_sep_z`, `oof_drho` — the `arm-in-family` rung). Doctrine exists but is scattered
+across two docs, the arm card and the `within-family-structure` memory. **A taxonomy here would earn its
+place**; it does not exist yet.
+
+**SEED_FAMILY** — smaller surface: family size, seed heterogeneity (the 17 seed-heterogeneous families),
+whether collapse is valid for that family, member composition. Mostly covered by
+`ISOMIR_AWARE_MODELING.md` + the `within-family-structure` memory. **Probably a section of an arm/family
+taxonomy rather than its own doc.**
+
+**FAMILY_EDGE** — measured (MH-241) to carry *less* per-patient structure than the edge rung and to be
+largely the edge question at a coarser grain. **Not obviously worth its own taxonomy.**

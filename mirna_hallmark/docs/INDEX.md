@@ -38,6 +38,7 @@
 | [GENE_QUESTION_TAXONOMY.md](GENE_QUESTION_TAXONOMY.md) | active | A gene's total incoming regulation. Backs `apm-gene-question`. |
 | [PATIENT_QUESTION_TAXONOMY.md](PATIENT_QUESTION_TAXONOMY.md) | active | What "personalised" can mean on the 103 paired patients: the P-across/P-each rung split, the per-patient measures and which are orthogonal, the two senses of "retention", and the three nulls. Read before adding any per-patient quantity. |
 | [STRATIFICATION_PLAYBOOK.md](STRATIFICATION_PLAYBOOK.md) | active | Which axes to profile a result against, per rung (arm/edge/gene), with the actual column names; the six mandatory controls; the orthogonal-control test for reliability-vs-biology; and how to characterise the TAIL rather than quote a median. Read before any "where does this effect live?" analysis. |
+| [CARD_RUNG_DOCTRINE.md](CARD_RUNG_DOCTRINE.md) | active | What UNIT a number lives on — a property of (CARD, COLUMN), never of the column name. The five cards and their keys, rung vs agg_of, the invariance each rung implies, the `--check` workflow, and the add-a-column checklist. Read before adding or cross-card-comparing any column. |
 | [MIRNA_GENOMIC_CONTEXT_AXIS.md](MIRNA_GENOMIC_CONTEXT_AXIS.md) | active | Strand-aware host classification; the per-edge host-gene lens. |
 
 ## 2. The learned model
