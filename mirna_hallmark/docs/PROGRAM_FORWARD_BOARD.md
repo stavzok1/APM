@@ -723,6 +723,38 @@ gene-specific component is significant (Δ=−0.085, p=0.038) while abundance's 
 
 ## J. ⭐ WHAT IS ALREADY WRITTEN IN A PATIENT'S NAT — the paired lane's unoccupied axis (planned 2026-08-03)
 
+> ## ✅ §J RAN IN FULL 2026-08-04 — all six items closed (MH-228 … MH-233). **Verdict below; the item text
+> that follows is the ORIGINAL PLAN, kept for provenance. Read this box first.**
+>
+> **The answer to the section's title: LESS than it assumed — at the LEVEL axis. What the paired design
+> actually buys is the CHANGE axis, and there it holds up.**
+>
+> | item | verdict |
+> |---|---|
+> | **J1** | ⛔ premise **INVERTED** — tumours do not converge, **both layers DIVERGE** (mRNA +0.670, miRNA +0.329 log2), and the output diverges ~2× harder than the input ⇒ **the miRNA layer is not the dominant source of tumour individuality**. PAM50 explains ~nothing. |
+> | **J2** | ⛔ the tumour does **not** exaggerate the patient — `b` = 0.183/0.137, **>1 for 0.0%/0.1%**, r² ≈ 2%/0.8%. Amplification **excluded**, not merely unobserved. The tumour's individuality is **NEW, not inherited**. |
+> | **J3** | ⬜ headroom **not established** (p=0.058; the internal dose-response control fails). MH-162B stands. Power-limited; the design is the deliverable. |
+> | **J4** | ⛔ pre-loading **does not survive its decoy** (REAL p=3.7e-06 → REAL−DECOY p=0.061). **No TSG enrichment.** Centrepiece closed negative. |
+> | **J5** | ✅✅ **losses DO de-repress** — dy_gain −0.017 (p=9e-18), dy_loss +0.023 (p=4e-28), separation p=1.2e-24. **The lane's central quantity survives its own sign test.** The one clear win. |
+> | **J6** | ✅ the (small) personal signal is **not** field/reverse causation (no gradient in `Cancer Epithelial`); ⚠ but 14q32 is where the constitutional setpoint is most **overwritten**, so that lever cannot adjudicate. |
+>
+> **⚠⚠ THE METHODOLOGICAL FINDING, and the most reusable thing here: THREE of the six items had a
+> proposed estimator that was MECHANICALLY BIASED, and each would have shipped a false headline.**
+> J2's `corr(nat_dev, own_shift)` shares `N` across both sides (+0.556 real vs +0.626 null, 100% of arms
+> positive — reads as "the tumour amplifies the person in every arm"); J3's `corr(dy, head)` shares `N`
+> too and is biased **toward** its own hypothesis, so it **could not fail**; J4's un-decoyed ρ is
+> p=3.7e-06 and dies at p=0.061 against its matched decoy. ⇒ **on a paired design, write out the algebra
+> of any statistic that touches both `N` and `T−N` before running it, and never report a per-patient
+> quantity without its decoy.**
+>
+> **⛔ AND: FIVE of six items show NO role dependence** (J1 p=0.573 · J2 p=0.71 · J5 p=0.110 · J6 n/a ·
+> J4 p=0.333). The "read it through the gene's cancer role" lens is **consistently null in this arc** —
+> treat a role split here as a control that has already failed to fire, not as a live hypothesis.
+>
+> **⬜ What is genuinely still open:** the per-PATIENT lost set (J5 did the gene-level sign test only);
+> Δpromoter-methylation as J6's third lever (70/103, staged); and MH-162A's untested object — the
+> *reliability* of `eff_real − eff_decoy`, as opposed to its effect, which MH-233 has now measured as null.
+
 **The structural fact that motivates this section.** NAT enters this codebase in exactly THREE roles: a
 differencing reference (`dX = Xt − Xn`), a nuisance (`dC`, residualised out of every ρ), and a cohort
 median. **Never as a description of the patient.** And `_realize` correlates `pred` against `dy` over the
@@ -784,7 +816,15 @@ patient's field determines *which route to cancer is already open in them*.
   symmetrically everywhere. ⚠ `ctx_ceiling` is a FALSE FRIEND (an OOF R², not an expression level). ⭐ This
   **re-opens MH-162B's "acquired-but-unrealized = detection power" null with a competing mechanism** — keep
   MH-162B's power control in the design so the two explanations compete fairly.
-- ⬜ **J4. The per-patient cancer-gene vulnerability map (the centrepiece).** Per patient × cancer gene:
+- ✅ **J4. The per-patient vulnerability map — CLOSED, NEGATIVE (MH-233, 2026-08-04). Do not rebuild it
+  on this cohort.** Sharpened onto the one surviving question (J2 voided the level axis; J5 validated the
+  change axis): does a patient's own NAT pre-loading predict how that gene moves in THEIR tumour?
+  3,298 matched REAL/DECOY edge pairs: **REAL +0.0103 (p=3.7e-06) · DECOY +0.0040 · REAL−DECOY +0.0063,
+  p=0.061, frac<0 0.491.** ⇒ **the un-decoyed statistic would have shipped a p=3.7e-06 headline the matched
+  control removes** — MH-162A's failure mode re-run, and why that condition governs §J. ⛔ **No TSG
+  enrichment** (board question 1 answered NO, and backwards: TSG gap −0.0040, n=380, real edges *below*
+  their own decoys, vs oncogene +0.0060, n=555, MW p=0.333).
+  Original text: **J4. The per-patient cancer-gene vulnerability map (the centrepiece).** Per patient × cancer gene:
   **pre-loading** (NAT pressure) · **headroom** (NAT level) · **acquisition** · **realization**, split by
   `gene_roles`. Is the patient-specific component of NAT pressure enriched on **TSGs**? Does NAT
   pre-loading predict that TSG's realized repression in that patient's tumour? ⛔ **MH-162A's condition
