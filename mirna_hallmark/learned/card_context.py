@@ -112,6 +112,18 @@ ANNOT_PREFIXES = ("ctx_", "cptac_", "tcga_", "comp_", "cal_")
 # `arm_iqr`, `arm_id_status`, …) — the card went 104 -> 96 base columns. The additivity check could NOT
 # catch it: it compares against `before`, which had already been stripped. A prefix is a blunt instrument
 # on a 140-column table; name what you own.
+# ⭐ ATLAS COLUMNS (MH-226). `gene_context` builds `g = atlas[["gene","n_fam","n_arms","w_max",…]]` from
+# `gene_atlas`, but `_annotate` only carries a block's columns if they match `ANNOT_PREFIXES` or an explicit
+# owned-name list — so these UNPREFIXED atlas columns were silently filtered out of every card.
+# ⚠ Measured: the family card came out 59 cols with `n_arms` present but `n_fam`/`w_max` absent — a 2-of-3
+# split from ONE block, which looks like a join bug and is not: `n_arms` survives because the READOUTS BASE
+# already carries that name, not because `_annotate` added it.
+# ⛔ `n_arms` is deliberately NOT listed here. The base's `n_arms` and the atlas's `n_arms` are different
+# quantities on the family card (arms in THIS family vs arms for the whole gene); adding it would make
+# `_annotate` strip the base column and silently substitute the atlas one — and the additivity control
+# could not catch it, because a stripped column is no longer in `before` to compare against.
+ATLAS_COLS = ("n_fam", "w_max")
+
 ARM_RUNG_COLS = ("n_arm_in_cell", "beta_arm", "sd_arm", "z_arm", "arm_dbeta", "arm_sep_z",
                  "oof_rho_arm", "oof_rho_fam", "oof_drho", "arm_resolvable", "coupling_fam",
                  "arm_credit_share")
@@ -213,7 +225,7 @@ def _annotate(card_path: Path, blocks: list, keys: list) -> None:
     card = pd.read_csv(card_path, sep="\t")
     # ⚠ strip EVERY annotated prefix, not just ctx_ — otherwise a re-run appends `_x`/`_y` duplicates
     # of the CPTAC block instead of replacing it, and the additivity control below would pass anyway.
-    _owned = set(ARM_RUNG_COLS)
+    _owned = set(ARM_RUNG_COLS) | set(ATLAS_COLS)
     before = card.drop(columns=[c for c in card.columns
                                 if c.startswith(ANNOT_PREFIXES) or c in _owned], errors="ignore")
     out = before.copy()
