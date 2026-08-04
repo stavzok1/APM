@@ -279,3 +279,111 @@ def verify_gtex_constant(genes: Optional[Sequence[str]] = None, *, n_genes: int 
     return {"genes_checked": n_ok, "all_1d": n_1d == n_ok, "len_matches_regs": bool(lens_match),
             "repeat_call_identical": n_stable == n_ok, "arms_with_finite_HLY": n_arms,
             "PASS": bool(n_ok > 0 and n_1d == n_ok and lens_match and n_stable == n_ok)}
+
+
+# --------------------------------------------------------------------------- #
+# The three referenced deviations
+# --------------------------------------------------------------------------- #
+
+def _reference_ranks(gene: str, regs, Mv, codes, n_fam, *, healthy_repaired: bool = True) -> dict:
+    """The two CONSTANT reference vectors a per-patient rank can be read against.
+
+    ⭐ `HLY` is the clean one: `_healthy_level` has **no patient axis at all**, so each patient's
+    deviation from it is unambiguous. `NAT_cohort` is the median-abundance NAT rank — ⚠ estimated from
+    the SAME patients, which is the shared-term structure that makes `own_specific_frac` not a fraction
+    (taxonomy §10). Both are returned so the two can be contrasted."""
+    out = {}
+    try:
+        hl = ST._healthy_level(regs, repaired=healthy_repaired)
+        _c, _s, rk = _budget_matrix(pd.Series(hl).reindex(regs).to_numpy(float)[:, None],
+                                    Mv, codes, n_fam, "zero")
+        out["HLY"] = rk[:, 0]
+    except Exception:
+        out["HLY"] = np.full(len(regs), np.nan)
+    try:
+        lv = ST.state_matrices("11")[0].reindex(regs).median(axis=1).to_numpy(float)[:, None]
+        _c, _s, rk = _budget_matrix(lv, Mv, codes, n_fam, "zero")
+        out["NATcoh"] = rk[:, 0]
+    except Exception:
+        out["NATcoh"] = np.full(len(regs), np.nan)
+    return out
+
+
+def budget_deviation(genes: Optional[Sequence[str]] = None, *, m_source: str = "canonical",
+                     arm_level: bool = True, nan_policy: str = "zero",
+                     paired_only: bool = True, persist: bool = True) -> pd.DataFrame:
+    """Per (gene, unit, patient): the within-gene rank in each state and its deviation from each of the
+    three references. `d_rank_own` is defined only for patients with BOTH states."""
+    from mirna_hallmark.learned import realization as R
+    pts_paired = list(R._paired_abund()[2])
+    genes = list(genes) if genes is not None else list(_he_genes())
+    rows = []
+    for g in genes:
+        try:
+            M = _M_for(g, m_source, arm_level)
+            regs = list(M[M > 0].index)
+            if len(regs) < 2:                       # share/rank undefined for a single regulator
+                continue
+            Mv = M.reindex(regs).to_numpy(float)
+            codes, n_fam = _fam_codes(regs, arm_level)
+            ref = _reference_ranks(g, regs, Mv, codes, n_fam)
+        except Exception:
+            continue
+        per_state = {}
+        for st in ("01", "11"):
+            X = ST.state_matrices(st)[0]
+            if not arm_level:
+                X = _family_levels(X, regs)
+            cols = [p for p in (pts_paired if paired_only else X.columns) if p in X.columns]
+            if not cols:
+                continue
+            A = X.reindex(index=regs, columns=cols).to_numpy(float)
+            _c, sh, rk = _budget_matrix(A, Mv, codes, n_fam, nan_policy)
+            per_state[st] = (cols, sh, rk)
+        for st, (cols, sh, rk) in per_state.items():
+            d = pd.DataFrame({"gene": g, "unit": np.repeat(regs, len(cols)),
+                              "patient": np.tile(cols, len(regs)), "state": st,
+                              "share": sh.ravel(), "rank": rk.ravel()})
+            d["d_rank_HLY"] = rk.ravel() - np.repeat(ref["HLY"], len(cols))
+            d["d_rank_NATcoh"] = rk.ravel() - np.repeat(ref["NATcoh"], len(cols))
+            rows.append(d)
+        if "01" in per_state and "11" in per_state:          # own-NAT paired Δ
+            c1, _s1, r1 = per_state["01"]
+            c0, _s0, r0 = per_state["11"]
+            shared = [p for p in c1 if p in set(c0)]
+            if shared:
+                i1 = [c1.index(p) for p in shared]
+                i0 = [c0.index(p) for p in shared]
+                own = pd.DataFrame({"gene": g, "unit": np.repeat(regs, len(shared)),
+                                    "patient": np.tile(shared, len(regs)), "state": "own",
+                                    "share": np.nan, "rank": np.nan,
+                                    "d_rank_HLY": np.nan, "d_rank_NATcoh": np.nan})
+                own["d_rank_own"] = (r1[:, i1] - r0[:, i0]).ravel()
+                rows.append(own)
+    df = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
+    if persist and len(df):
+        OUT.mkdir(parents=True, exist_ok=True)
+        rung = "edge" if arm_level else "family_edge"
+        df.to_parquet(OUT / f"budget_deviation_{rung}.parquet", index=False)
+    return df
+
+
+def budget_dispersion(df: Optional[pd.DataFrame] = None, *, arm_level: bool = True) -> pd.DataFrame:
+    """P-across summary — **is there anything to explain?** Across-patient sd of the within-gene share,
+    rank, and each referenced Δ, per unit. MH-236 showed the acquisition-variance axis is what carries
+    per-patient structure, so this is the gate on everything downstream."""
+    if df is None:
+        rung = "edge" if arm_level else "family_edge"
+        df = pd.read_parquet(OUT / f"budget_deviation_{rung}.parquet")
+    g = df.groupby(["gene", "unit", "state"])
+    out = g.agg(n_pat=("patient", "size"), share_med=("share", "median"), share_sd=("share", "std"),
+                rank_med=("rank", "median"), rank_sd=("rank", "std"),
+                dHLY_med=("d_rank_HLY", "median"), dHLY_sd=("d_rank_HLY", "std"),
+                dNATcoh_sd=("d_rank_NATcoh", "std")).reset_index()
+    if "d_rank_own" in df.columns:
+        own = df[df.state == "own"].groupby(["gene", "unit"]).agg(
+            dOwn_med=("d_rank_own", "median"), dOwn_sd=("d_rank_own", "std")).reset_index()
+        out = out.merge(own, on=["gene", "unit"], how="left")
+    out.to_csv(OUT / f"budget_dispersion_{'edge' if arm_level else 'family_edge'}.tsv",
+               sep="\t", index=False)
+    return out
