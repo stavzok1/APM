@@ -51,6 +51,18 @@ quantity is a property of the family alone (size, seed heterogeneity, member com
 ⚠ **A `domain` entry is not a rung.** Domain says *where a column is defined*; rung says *what unit it
 lives on*. `--check` needs both (MH-214).
 
+⚠⚠ **AND `domain` IS NOT A DESCRIPTION OF WHAT THE COLUMN MEANS.** It is a **row-applicability**
+statement — *which rows the column is defined on* — e.g. *"multi-arm cells only (n_arm_in_cell > 1) —
+20.3% of edges"*, *"edges with a matched NAT leg (n~104 paired participants)"*. ⇒ **a column with NO
+domain entry is defined on EVERY row, which is the correct default, not a gap.** Measured 2026-08-04:
+no-domain columns are **91–100%** populated (arm card 1.000, edge 0.995, gene_family 0.985) while
+with-domain columns are **44–77%** — exactly what the definition predicts.
+⛔ **Do not "fill in the missing domains".** Reading the field name rather than its values made me
+report a nonexistent "179 undescribed columns" gap twice; the check that refuted it was one query.
+**There is separately NO per-column MEANING documentation anywhere** — not in the registry, not in the
+generated `docs/derived/cards/*.html` viewer (which carries `rung` but zero `domain`/`description`).
+That meaning lives only in the producing modules' docstrings. It is a real gap; `domain` is not it.
+
 ## 3. ⭐ The labels are TESTED, not asserted
 
 `card_rungs.verify(card)` checks each declared rung against the data's actual invariance **given that
