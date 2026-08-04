@@ -198,3 +198,66 @@ computed:
 ⭐ **The infrastructure is already half-built:** `dose_shift_edge` and `dose_shift_arm` both
 CONSTRUCT the per-patient vector (linear-RPM share matrices, `nat_dev`) and then **collapse it to a
 per-edge/per-arm mean without persisting it**. Persisting those vectors is most of the work.
+
+## 12. RETENTION — the consolidated result (MH-239, MH-243…MH-247)
+
+**Definition.** `retention` = `r_own − r_perm`, where `r_own` = **Spearman(tumour LEVEL, NAT LEVEL) across
+patients** — level-vs-level, **no differencing and no centring** (`r_perm` ≈ −0.002). The deviation-based
+sibling is MH-229's slope, related exactly by `b = r · sd_T/sd_N`. `r_adj` = each state residualised on
+its **own** CIBERSORTx block. ⚠ **Quote the ADJUSTED figure** — composition costs **16.2%** (share) /
+**11.8%** (level), paired per cell. And `median(raw) − median(adj) ≠ median(raw − adj)`: for `r_level` the
+medians move the *wrong* way while the paired cost is +0.0152. **Quote the paired cost.**
+
+### The ladder (strongest first, composition-adjusted where marked)
+
+| | value | note |
+|---|---|---|
+| **let-7 arms** | **+0.219** med, p90 **0.407** | adjusted; **2× background, SURVIVES adjustment** |
+| **multi-arm-family cells** | **+0.141** med, p90 0.31 | adjusted; 1-arm cells 0.101 |
+| P-each landscape diagonal | +0.143 | *different object* — across units within a patient |
+| all-cell `r_share` / `r_budget_raw` / `r_level` | +0.134 / +0.133 / +0.129 | **raw** |
+| **all-cell `r_share_adj`** | **+0.111** | ⭐ **the honest headline** |
+| pre-session arm-rung `r_own` / `r_adj` | +0.110 / +0.105 | 571 arms |
+| stranger-swap baseline | +0.035 | the floor |
+
+**⚠ The tail is ~4× the median and every "≈0.13" above is a median:** `r_share_adj` p90 **0.256**, p95
+**0.311**, p99 **0.404**, **max 0.456** (raw max 0.547).
+
+### Where it is prominent — ⭐ persisted, not prose: `output/learned/realization/retention_atlas_top.tsv`
+
+125 ranked entries across 3 rungs / 4 metrics. Highlights:
+
+- **EDGE:** RB1|miR-335-5p **0.456** · NAMPT|miR-26b-5p 0.439 · NAMPT|miR-34a-5p 0.439 ·
+  CCND2|let-7a-5p 0.436 · TGIF2|miR-34a 0.431 · ROCK1|miR-335-5p 0.430 · MYC|miR-335-5p 0.409
+- **ARM** (median over the genes it regulates): miR-335-5p **0.419** · let-7e-5p 0.353 · miR-152-3p 0.333 ·
+  miR-222-3p 0.303
+- **ARM, pre-session independent estimator** (`mirna_nat_retention.r_adj`): miR-412-5p **0.665** ·
+  miR-2355-5p 0.429 · let-7f-5p 0.416 · miR-335-5p 0.412
+- **GENE** (β-weighted): NAMPT 0.439 · TRIB2 0.426 · VEGFC 0.346 · FASLG 0.338 · STAT5A 0.328 · CDKN1C
+  0.325 · HMGA1 0.326 · BTG2 0.309
+- ⭐ **miR-335-5p (host MEST, imprinted 7q32) takes 3 of the top 10 edges AND tops the arm rung AND is 4th
+  on the independent pre-session estimator.** The most reproducible single entity on this axis.
+- ⚠ **"Imprinted" is not one class** — MEST-hosted miR-335 is top; the 14q32 DLK1–DIO3 cluster is at the
+  BOTTOM (MH-232, p=0.0097).
+
+### ⛔ The ceiling — read before citing any of the above
+
+**Retention is graded by how well an arm is MEASURED, not by what it does (MH-247).** The arm-covariate
+scan is a pure detection signature (`detection` +0.356 q=5.8e-08, `arm_pct_floor` +0.375, `arm_med_rpm`
++0.362, `grank_TUM` +0.359, `wshift_sd_dGlobalRank` −0.348), and the **designed orthogonal control
+settles it**: `promiscuity` — the one axis documented and here confirmed abundance-orthogonal (corr with
+abundance −0.011) — correlates with retention at **−0.010, p=0.87**, while abundance does at **+0.339**.
+Every strong predictor is abundance-correlated; the one that provably is not predicts nothing.
+
+**And importance does NOT select retained arms (MH-247), under any weighting:** unweighted +0.1128 ·
+β-only +0.1106 (p=0.116) · abundance-fraction +0.1096 (p=0.628) · budget-share +0.1154 (p=0.104).
+⚠ I predicted the abundance weighting would gain mechanically from the +0.339 gradient; it did not —
+**a global covariate gradient does not imply a within-unit weighting gain** (the weighting acts inside one
+gene's 2–8 arms). Per-gene the two weightings *can* diverge sharply — **BTG2 0.205 unweighted / 0.307
+β-weighted / −0.029 abundance-weighted** — but that is an exemplar, not a population effect.
+
+### Artifacts
+
+`retention_atlas_top.tsv` (ranked entities) · `retention_variants_edge.tsv` (1,032 cells × 4 variants +
+fam_size/host/nat_lvl) · `gene_weighted_retention_3ways.tsv` (211 genes × 3 weightings) ·
+`mirna_nat_retention{,_compadj}.tsv` (571 arms, pre-session) · `budget_vs_level_retention_edge.tsv`.
