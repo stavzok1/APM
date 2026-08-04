@@ -1744,3 +1744,151 @@ def hallmark_realization(*, n_perm: int = 3000, seed: int = 0) -> pd.DataFrame:
     print(show[["hallmark", "n_genes", "mean_rho_adj", "q_raw", "mean_class_adj", "p_class", "mean_power_adj",
                 "p_power", "mean_classpower_adj", "mean_real_minus_decoy", "q_decoy"]].to_string(index=False))
     return df
+
+
+# --------------------------------------------------------------------------- #
+# §J1 — CONVERGENCE vs DIVERGENCE.  Does the malignant state COMPRESS the       #
+#       output while it SPREADS the input?  (board §J item J1)                  #
+#                                                                               #
+# The two numbers on the board (mRNA sd 0.600→0.237, miRNA 0.682→0.947) are     #
+# incidental by-products of MH-102d's scale-floor bug report: n-UNMATCHED       #
+# (~1000 vs ~104), different feature sets, post-C residual. This re-measures    #
+# them on the SAME 103 patients / SAME features, with the four controls that    #
+# can each flip a leg on their own: per-sample centring (library depth is a     #
+# COLUMN effect), composition residualisation on the state's OWN CIBERSORTx     #
+# block, a level-neutral subset (log2(x+1) couples mean to variance), and a     #
+# within-patient state-label permutation null.                                  #
+# --------------------------------------------------------------------------- #
+
+_LEVEL_NEUTRAL = 0.25          # |mean_tum − mean_NAT| below this ⇒ the feature does not move in LEVEL
+
+
+def _matched_state_pair(kind: str, pts, feats):
+    """(tumour, NAT) feature × patient matrices, SAME patients and SAME features, complete-case.
+    ⚠ complete-case, never `.fillna(0)` — a missing miRNA is an abstention, not a measurement (§J trap 4)."""
+    Xt, Yt = ST.state_matrices("01")
+    Xn, Yn = ST.state_matrices("11")
+    pts = list(pts)
+    src_t, src_n = (Xt, Xn) if kind == "mirna" else (Yt, Yn)
+    feats = [f for f in feats if f in src_t.index and f in src_n.index]
+    T = src_t.reindex(index=feats, columns=pts)
+    N = src_n.reindex(index=feats, columns=pts)
+    keep = T.notna().all(axis=1) & N.notna().all(axis=1)
+    return T[keep], N[keep]
+
+
+def _sample_centre(M: pd.DataFrame) -> pd.DataFrame:
+    """Remove the per-sample offset (library depth / normalisation). This is a COLUMN effect: left in,
+    it inflates EVERY feature's cross-patient sd in whichever state has the noisier depth."""
+    return M.sub(M.median(axis=0), axis=1)
+
+
+def _resid_composition_pair(T: pd.DataFrame, N: pd.DataFrame):
+    """Residualise BOTH states on their OWN CIBERSORTx block (§J fold 'field': composition is a
+    per-patient property, and TCGA QC'd tumour cellularity but never NAT's).
+    ⚠ residualised JOINTLY on the patients covered in BOTH states — otherwise the two states end up on
+    different patient sets and the within-patient permutation is no longer a pairing."""
+    cov = {"01": ST._cibersortx_state_cov(list(T.columns), "01"),
+           "11": ST._cibersortx_state_cov(list(N.columns), "11")}
+    if cov["01"] is None or cov["11"] is None:
+        return T, N
+    ok = [p for p in T.columns
+          if np.isfinite(cov["01"].loc[p].to_numpy(float)).all()
+          and np.isfinite(cov["11"].loc[p].to_numpy(float)).all()]
+    if len(ok) < _MIN_PAIRS:
+        return T, N
+    out = []
+    for M, st in ((T, "01"), (N, "11")):
+        A = np.column_stack([np.ones(len(ok)), cov[st].reindex(ok).to_numpy(float)])
+        V = M.reindex(columns=ok).to_numpy(float)
+        beta, *_ = np.linalg.lstsq(A, V.T, rcond=None)
+        out.append(pd.DataFrame(V - (A @ beta).T, index=M.index, columns=ok))
+    return out[0], out[1]
+
+
+def _sd_pair(T: pd.DataFrame, N: pd.DataFrame) -> pd.DataFrame:
+    sd_t = T.std(axis=1, ddof=1)
+    sd_n = N.std(axis=1, ddof=1)
+    out = pd.DataFrame({"sd_tum": sd_t, "sd_nat": sd_n,
+                        "mean_tum": T.mean(axis=1), "mean_nat": N.mean(axis=1)})
+    out["lr"] = np.log2(out.sd_tum / out.sd_nat)                # >0 = DIVERGES in tumour
+    return out.replace([np.inf, -np.inf], np.nan).dropna(subset=["lr"])
+
+
+def _lr_stats(d: pd.DataFrame, label: str, *, n_perm: int = 0, T=None, N=None, seed: int = 0) -> dict:
+    lr = d["lr"].to_numpy(float)
+    p = float(wilcoxon(d.sd_tum, d.sd_nat).pvalue) if len(d) >= 10 else np.nan
+    r = {"subset": label, "n_feat": len(d), "med_sd_tum": _r3(d.sd_tum.median()),
+         "med_sd_nat": _r3(d.sd_nat.median()), "med_log2_ratio": _r3(np.median(lr)),
+         "frac_nat_gt_tum": _r3(float(np.mean(lr < 0))), "p_wilcoxon": p, "p_perm": np.nan}
+    if n_perm and T is not None:
+        rng = np.random.default_rng(seed)
+        Tv, Nv = T.reindex(d.index).to_numpy(float), N.reindex(d.index).to_numpy(float)
+        obs = float(np.median(lr))
+        null = np.empty(n_perm)
+        for i in range(n_perm):
+            fl = rng.random(Tv.shape[1]) < 0.5                  # flip T/N WITHIN patient
+            A = np.where(fl, Nv, Tv); B = np.where(fl, Tv, Nv)
+            null[i] = np.median(np.log2(A.std(axis=1, ddof=1) / B.std(axis=1, ddof=1)))
+        r["p_perm"] = float((np.sum(np.abs(null) >= abs(obs)) + 1) / (n_perm + 1))
+        r["null_sd"] = _r3(float(null.std(ddof=1)))
+    return r
+
+
+def state_variance(*, n_perm: int = 500, seed: int = 0) -> pd.DataFrame:
+    """§J1. Cross-patient sd of every HE arm and every HE target gene, tumour vs NAT, on the SAME 103
+    paired patients and the SAME features. `lr = log2(sd_tum/sd_nat)`: >0 DIVERGES in tumour, <0 CONVERGES.
+
+    Four nested control levels per modality — raw · sample-centred · +composition-residualised ·
+    +level-neutral — because each can flip a leg alone. Null: state labels flipped WITHIN patient."""
+    _, _, pts = ST.paired_delta_matrices()
+    he = LD.D.high_evidence_edges()
+    feat = {"mirna": sorted(set(he["miRNA"])), "mrna": sorted(set(he["gene"]))}
+    rows, per_feat = [], {}
+    for kind in ("mirna", "mrna"):
+        T0, N0 = _matched_state_pair(kind, pts, feat[kind])
+        Tc, Nc = _sample_centre(T0), _sample_centre(N0)
+        Tr, Nr = _resid_composition_pair(Tc, Nc)
+        d_raw, d_cen, d_res = _sd_pair(T0, N0), _sd_pair(Tc, Nc), _sd_pair(Tr, Nr)
+        # level-neutral uses the RAW means: what matters is whether the feature sits at a DIFFERENT
+        # point of the log2(x+1) compression curve in the two states — that is the artifact.
+        lvl = ((d_raw.mean_tum - d_raw.mean_nat).abs() < _LEVEL_NEUTRAL).reindex(d_res.index).fillna(False)
+        for lab, d, TT, NN in (("raw", d_raw, T0, N0), ("sample_centred", d_cen, Tc, Nc),
+                               ("+composition", d_res, Tr, Nr), ("+level_neutral", d_res[lvl], Tr, Nr)):
+            r = _lr_stats(d, lab, n_perm=n_perm, T=TT, N=NN, seed=seed)
+            r["modality"] = kind
+            rows.append(r)
+        per_feat[kind] = d_res.assign(level_neutral=lvl)
+    df = pd.DataFrame(rows)[["modality", "subset", "n_feat", "med_sd_tum", "med_sd_nat",
+                             "med_log2_ratio", "frac_nat_gt_tum", "p_wilcoxon", "p_perm", "null_sd"]]
+    OUT.mkdir(parents=True, exist_ok=True)
+    df.to_csv(OUT / "state_variance.tsv", sep="\t", index=False)
+    for k, v in per_feat.items():
+        v.reset_index(names="feature").to_csv(OUT / f"state_variance_{k}.tsv", sep="\t", index=False)
+    return df
+
+
+def state_variance_by_role(*, n_perm: int = 500, seed: int = 0) -> pd.DataFrame:
+    """§J1 role split — is the mRNA sd shift ROLE-DEPENDENT? (TSG / oncogene / dual / unknown)."""
+    from mirna_hallmark import gene_roles as GR
+    p = OUT / "state_variance_mrna.tsv"
+    d = pd.read_csv(p, sep="\t").set_index("feature")
+    roles = GR.load_gene_roles(genes=list(d.index)).set_index("gene")["role"]
+    d["role"] = roles.reindex(d.index).fillna("unknown")
+    rows = []
+    for role, sub in d.groupby("role"):
+        for lab, s in (("+composition", sub), ("+level_neutral", sub[sub.level_neutral])):
+            if len(s) < 8:
+                continue
+            r = _lr_stats(s, lab, n_perm=0)
+            r.update(role=role, n_genes=len(s))
+            rows.append(r)
+    out = pd.DataFrame(rows)
+    # is the ROLE contrast itself significant? TSG vs oncogene, on the composition-adjusted lr
+    tsg = d.loc[d.role == "tsg", "lr"].dropna(); onc = d.loc[d.role == "oncogene", "lr"].dropna()
+    if len(tsg) >= 8 and len(onc) >= 8:
+        u = mannwhitneyu(tsg, onc)
+        print(f"[role contrast] TSG med lr {np.median(tsg):+.3f} (n={len(tsg)}) vs oncogene "
+              f"{np.median(onc):+.3f} (n={len(onc)}) | Mann-Whitney p={u.pvalue:.3g}")
+    out.to_csv(OUT / "state_variance_by_role.tsv", sep="\t", index=False)
+    return out

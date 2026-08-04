@@ -118,6 +118,16 @@ def beta_table(cohort: str, genes: Optional[Sequence[str]] = None, *, n_boot: in
     the raw-`r` scale and the gauge silently absorbs the cohort's Y-scale: median sd(residual Y) is
     **TCGA 0.237 vs NAT 0.600 / GTEx 0.612** — the normal tissues are ~2.5× more variable — and that whole
     factor was being read as "composition attenuation" (measured: a_raw/a_zY = 2.25 ≈ the sd ratio 2.58).
+    ⚠⚠ **THE TCGA LEG OF THAT PAIR DOES NOT REPRODUCE, AND THE ORDERING IS INVERTED (MH-228, 2026-08-04).**
+    Re-measured on THIS function's own path with `build_C`: **sd(Y) tcga 0.839 / nat 0.596** (the NAT leg
+    reproduces exactly; the TCGA leg does not) and **sd(resid Y) tcga 0.647 / nat 0.381** ⇒ **tumour is MORE
+    variable than NAT at both levels**, so "the normal tissues are ~2.5× more variable" is false today and
+    `a_raw/a_zY = 2.25` cannot follow from a measured sd ratio of 0.59. Cause: `cohort_matrices` builds
+    TCGA's Y from `LD._load()["Y"]` but NAT's from `states.state_matrices("11")` — **different objects** —
+    and the same number pair is labelled `sd(Y)` below and `sd(resid Y)` here. ✅ **`zscore_y=True` stays the
+    DEFAULT and MH-102d's verdict is UNTOUCHED**: z-scoring is what makes β cross-cohort-comparable
+    regardless of which cohort is more variable — only the *explanation* above is retired.
+    ⬜ `a_raw/a_zY` itself has NOT been re-measured (needs a two-config `fit_gauge` re-run).
     ⚠ The model's own posterior runs on raw-`r`; this convention is for the GAUGE only.
 
     permute=True → SHUFFLE the miRNA sample labels within this cohort (breaking the miRNA↔mRNA pairing
@@ -125,6 +135,8 @@ def beta_table(cohort: str, genes: Optional[Sequence[str]] = None, *, n_boot: in
 
     ⚠ **`min_sd_rel` replaces an ABSOLUTE `min_sd=0.2`, which was a SCALE-DEPENDENT BUG** (found by the CPTAC
     session, 2026-07-12). Cohort median sd(Y): **TCGA 0.233 · NAT 0.595 · GTEx 0.612 · CPTAC 1.058** — the
+    ⚠ (**TCGA 0.233 is STALE — re-measured 0.839 on this path, MH-228; the relative floor below is computed
+    at RUNTIME from `_sds`, so the LOGIC is unaffected and only this illustration is wrong**) —
     cohorts are on different scales, so a fixed 0.2 dropped **34% of TCGA genes but 0% of CPTAC**. Because
     `fit_gauge` merges on the SHARED (gene, family) keys, the gauge was therefore fit on "TCGA's high-variance
     third" — a biased subset selected by an absolute threshold on a cohort-specific scale. The filter is now

@@ -745,12 +745,19 @@ subtraction:**
 through the target gene's **role in cancer** (TSG/oncogene/dual), because that is where the impact is: a
 patient's field determines *which route to cancer is already open in them*.
 
-- ⬜ **J1. Convergence vs divergence, n-matched.** Two numbers already on disk (MH-102d), recorded as a
-  *scale-floor bug report* and never read as biology: **mRNA targets CONVERGE in tumour (sd 0.600→0.237)
-  while miRNA regulators DIVERGE (0.682→0.947)**. ⚠ n-unmatched. My n-matched read on the same 103
-  patients / 396 HE arms: sd tumour **0.875** vs NAT **0.714**, sd_NAT>sd_TUM for 28%. If it holds: the
-  regulatory *input* becomes more heterogeneous while the *output* becomes more uniform — routes funnelling
-  to one state. Split by target role. Null: permuted state labels.
+- ✅ **J1. Convergence vs divergence, n-matched — DONE, and the PREMISE INVERTED (MH-228, 2026-08-04).**
+  There is **no convergence**. On the matched design (same 103 patients, same features, complete-case)
+  **BOTH layers DIVERGE in tumour**, and the *output* diverges ~2× harder than the *input*:
+  `log2(sd_tum/sd_nat)` = **mRNA +0.670** (1.59×, 1,436 genes) vs **miRNA +0.329** (1.26×, 221 arms), both
+  outside all 500 within-patient label permutations. Only 8.1% of genes / 16.7% of arms are more variable
+  in NAT. **PAM50 explains ~nothing** (within-subtype +0.640 / +0.308) ⇒ it is *within-subtype* dispersion.
+  **No role dependence** (TSG +0.741 vs oncogene +0.807, p=0.573). ⛔ The old "sd 0.600→0.237" was a
+  **naming collision + a per-cohort OBJECT mismatch** in `gauge.cohort_matrices`, not biology — the NAT leg
+  reproduces, the TCGA leg does not, and the ordering is inverted (see MH-228; MH-102d's *verdict* is
+  untouched because the state channel runs on z-scored β). ⇒ **retire "routes funnelling to one state"
+  wherever it appears**, and note the consequence for the rest of §J: **the miRNA input cannot be the
+  dominant source of the tumour's expression individuality**, so J4 must ask how *much* of the personal
+  signal it carries, not merely whether it survives.
 - ⬜ **J2. Does the tumour exaggerate who the patient already was?** `realization.py:280` computes
   `nat_dev = nat_cohort_mean − own_NAT` — the personal offset — then **collapses it to a variance ratio
   (`own_specific_frac`, median 0.46) and never persists the per-patient vector.** The sign test
