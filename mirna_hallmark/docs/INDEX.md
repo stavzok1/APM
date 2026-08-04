@@ -36,6 +36,7 @@
 | [DECOY_PREMISE_REGISTER.md](DECOY_PREMISE_REGISTER.md) | active | ⭐ **Is the decoy control sound?** One table of every ASSUMPTION the site-free negative control rests on (fake validity · matching · scoring · what the result may be used for), each with a verdict (HOLDS / INERT / BOUND / OPEN / CLOSED-BY-DATA) and a pointer to the `MH-##` row that tested it. **A map, not a source — it deliberately carries no numbers**; construction lives in the `eval/decoy_bench.py` docstring, the headline in `STATE_OF_PLAY` Axis 4. |
 | [EDGE_QUESTION_TAXONOMY.md](EDGE_QUESTION_TAXONOMY.md) | active | What a single miRNA→target edge can be asked. Backs `apm-edge-question`. |
 | [GENE_QUESTION_TAXONOMY.md](GENE_QUESTION_TAXONOMY.md) | active | A gene's total incoming regulation. Backs `apm-gene-question`. |
+| [PATIENT_QUESTION_TAXONOMY.md](PATIENT_QUESTION_TAXONOMY.md) | active | What "personalised" can mean on the 103 paired patients: the P-across/P-each rung split, the per-patient measures and which are orthogonal, the two senses of "retention", and the three nulls. Read before adding any per-patient quantity. |
 | [MIRNA_GENOMIC_CONTEXT_AXIS.md](MIRNA_GENOMIC_CONTEXT_AXIS.md) | active | Strand-aware host classification; the per-edge host-gene lens. |
 
 ## 2. The learned model

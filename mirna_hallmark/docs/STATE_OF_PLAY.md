@@ -15,6 +15,8 @@ registry-runs-ahead lag the "How to read this" section warns about, caught 2026-
 
 ---
 
+> ⭐ **The PAIRED / per-patient axis ran in full 2026-08-04 (§J, MH-228…MH-239). Before asking or building ANY per-patient question, read [PATIENT_QUESTION_TAXONOMY.md](PATIENT_QUESTION_TAXONOMY.md)** — it defines the P-across vs P-each rung split, which measures are orthogonal (dose vs retention, ρ=−0.081), the TWO unrelated senses of "retention", why the site-free decoy is **not** a null set (p<0.05 at 9.2%), and the four things not to rebuild on this cohort.
+
 ## How to read this
 
 **The `DISCOVERY_REGISTRY.md` is the source of truth.** It is append-only and current. Every other
