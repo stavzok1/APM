@@ -134,3 +134,67 @@ Spearman the choice is immaterial (symmetric); under covariate adjustment it is 
    is not a patient trait.
 5. **Check circularity** — `gene_axes.scan_categorical(controls=…)` now emits `p_resid` against
    `p_matched`; compare to `p_matched`, never to `p` (different row sets).
+
+## 10. ⚠ `own_specific_frac` IS NOT A FRACTION — and MH-158(A)'s wording does not follow
+
+`nat_cohort` is a **per-arm constant**, so `var(cohort_mean − N) ≡ var(N)` and therefore
+
+```
+own_specific_frac  ≡  var(own NAT)  /  var(tumour − NAT)
+```
+
+verified identical to machine precision (max |diff| = 3.3e-16 over 571 arms; median 0.450, matching the
+recorded 0.46). It is a **baseline-to-shift VARIANCE RATIO**, not a share:
+**0.5% of arms exceed 1.0**, and **corr(own_NAT, own_shift) = −0.596** — the two components are far from
+orthogonal (`cov(N, T−N) = cov(N,T) − var(N)`, negative whenever `cov(N,T) < var(N)`, i.e. almost always
+at `r_own ≈ 0.11`). ⇒ **MH-158(A)'s "46% of the per-patient NAT→tumour dose-shift variance IS the
+patient's own NAT baseline" is an invalid variance decomposition.** The quantity is real and usable;
+the *share* reading is not. Same shared-term structure as the rest of this arc — `N` in both numerator
+and denominator (memory `paired-design-shared-term-algebra`).
+
+`r_own` for contrast is exactly what it looks like: raw `Spearman(tumour level, own-NAT level)` across
+patients, **no covariates**; `r_adj` residualises each state on its own CIBERSORTx block.
+
+## 11. Coverage map — what exists, at which rung, and the systematic gap
+
+**Structural constraint first: COUPLING needs ≥2 samples, so coupling is inherently P-across.** There is
+no within-one-patient coupling. Every "per-patient coupling" (`efficiency`, `rho_real`) is *across genes
+within a patient* — a different rung, not a coupling. **Only LEVEL quantities can be genuinely per-patient.**
+
+### LEVEL
+
+| rung | within-state (NAT / tumour) | trans NAT→tumour | trans from constant GTEx ref |
+|---|---|---|---|
+| **arm** | `grank_*`, `arm_med_rpm`, `arm_iqr` — cohort | ✅ `own_specific_frac`, `mean_own_shift`, `r_own`/`r_adj`, `b`, `mean_dGlobalRank` | `dGlobal_HLY_NAT`, `dGlobal_HLY_TUM` — cohort |
+| **family** | — | ✅ `_fam_own_specific_frac` only | ⬜ |
+| **edge** | `share_NAT/TUM`, `rank_NAT/TUM`, `dose_rank_*` — cohort | ✅ `dShare_M_own`, `dShare_raw_own` — per-patient internally, **collapsed to a per-edge mean** | `share_HLY`, `rank_HLY`, `d_rank_HLY_NAT`, `d_rank_HLY_TUM` — cohort |
+| **family_edge** | ⬜ | ⬜ | ⬜ |
+
+### COUPLING (all P-across)
+
+| rung | within-NAT | within-tumour | trans (Δ) | NAT→tumour cross |
+|---|---|---|---|---|
+| **edge** | ✅ `coupling_p_nat`/`z_nat`; §J9 `mode=nat` | ✅ `coupling_p_tum`; §J9 `mode=tumour` (**strongest, p=3.3e-16**) | ✅ `edge_rho_adj`; §J9 `mode=delta` | ✅ §J9 `mode=cross` — **null, 0 FDR edges** |
+| **gene** | — | — | ✅ `realized_rho_adj` | ⬜ |
+| **family** | — | — | ✅ `family_rho_adj`, `realize_family` | ⬜ |
+| **family_edge** | ⬜ | ⬜ | ⬜ | ⬜ |
+| **patient** (P-each) | — | — | ✅ `efficiency`, `rho_real` | — |
+
+### ⬜ THE SYSTEMATIC GAP
+
+**Every `share_*` / `rank_*` / `dose_rank_*` / `grank_*` / `d_rank_*` is a function of EXPRESSION
+evaluated at the COHORT aggregate.** Each has a well-defined per-patient version that has never been
+computed:
+
+1. per-patient **budget share** (`β·exp` normalised within gene) per state
+2. per-patient **budget rank** within gene, per state
+3. per-patient **Δrank NAT→tumour** (only the cohort `d_rank_NAT_TUM` exists)
+4. ⭐ per-patient **Δrank from the GTEx reference** — the cleanest of the four, because **GTEx is a
+   CONSTANT reference for every sample**, so `rank_HLY` is a genuine fixed baseline and each patient's
+   deviation from it is unambiguous — unlike the cohort NAT mean, which is estimated *from the same 103
+   patients* and is precisely what makes `own_specific_frac` a shared-term quantity (§10)
+5. **family and family_edge** versions of all of the above — the `family_edge` rung is empty throughout
+
+⭐ **The infrastructure is already half-built:** `dose_shift_edge` and `_within_patient_shift` both
+CONSTRUCT the per-patient vector (linear-RPM share matrices, `nat_dev`) and then **collapse it to a
+per-edge/per-arm mean without persisting it**. Persisting those vectors is most of the work.
