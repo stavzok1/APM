@@ -3042,3 +3042,42 @@ def paired_edge_permutation_summary(df: Optional[pd.DataFrame] = None) -> pd.Dat
     print(S.to_string(index=False))
     S.to_csv(OUT / "paired_edge_permutation_summary.tsv", sep="\t", index=False)
     return S
+
+
+def paired_edge_permutation_strata(mode: str = "delta") -> pd.DataFrame:
+    """§J9c. Stratify the §J9 patient-permutation REAL-vs-DECOY gap by the two axes MH-158 showed the
+    signal LOCALISES to — **compartment ORIENTATION** (same/opposite; the site-mediated increment lives in
+    `opposite`, where composition arithmetic cannot fake it) and **edge `shift_class`** (MH-158: the own-NAT
+    advantage is repression-specific for `constitutive` edges, p=0.013, and absent for `acquired_realized`,
+    p=1.0). ⚠ A POOLED gap averages these and can read as null — which is exactly what §J9's first pass did."""
+    f = OUT / f"paired_edge_permutation{'' if mode == 'delta' else '_' + mode}.tsv"
+    d = pd.read_csv(f, sep="\t")
+    d["gene"] = d.edge.str.split("|").str[0]
+    d["arm"] = d.edge.str.split("|").str[1]
+    w = d.pivot_table(index=["gene", "arm"], columns="group", values="rho", aggfunc="mean").dropna().reset_index()
+    w["gap"] = w.REAL - w.DECOY
+    # orientation, recomputed exactly as realize_null does it (Δ axis vs ΔCAF)
+    dX, dY, pts_l = ST.paired_delta_matrices()
+    pts = list(pts_l)
+    dC = _delta_C()
+    dCAF = dC["CAFs"].reindex(pts).to_numpy(float) if "CAFs" in dC.columns else np.full(len(pts), np.nan)
+    tgtL = {g: _corr(dY.loc[g, pts].to_numpy(float), dCAF) for g in set(w.gene) if g in dY.index}
+    armL = {a: _corr(dX.loc[a, pts].to_numpy(float), dCAF) for a in set(w.arm) if a in dX.index}
+    w["orientation"] = [orientation(armL.get(a, np.nan), tgtL.get(g, np.nan)) for g, a in zip(w.gene, w.arm)]
+    ec = pd.read_csv(OUT / "edge_card.tsv", sep="\t")
+    if "shift_class" in ec.columns:
+        w = w.merge(ec[["gene", "arm", "shift_class"]], on=["gene", "arm"], how="left")
+    rows = []
+    for axis in ("orientation", "shift_class"):
+        if axis not in w.columns:
+            continue
+        for lev, g in w.groupby(axis):
+            if len(g) < 25:
+                continue
+            rows.append({"mode": mode, "axis": axis, "stratum": str(lev), "n": len(g),
+                         "REAL": _r3(float(g.REAL.median())), "DECOY": _r3(float(g.DECOY.median())),
+                         "gap": _r3(float(g.gap.median())), "frac_gap_neg": _r3(float((g.gap < 0).mean())),
+                         "p_wilcoxon": float(wilcoxon(g.gap).pvalue)})
+    S = pd.DataFrame(rows).sort_values(["axis", "gap"])
+    S.to_csv(OUT / f"paired_edge_permutation_strata_{mode}.tsv", sep="\t", index=False)
+    return S
