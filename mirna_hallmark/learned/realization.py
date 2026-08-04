@@ -2131,3 +2131,87 @@ def headroom_summary(df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
         print(f"  ⇒ {'HEADROOM SUPPORTED' if wilcoxon(d).pvalue < 0.05 else 'NOT ESTABLISHED — direction right, significance absent'}")
     out.to_csv(OUT / "headroom_summary.tsv", sep="\t", index=False)
     return out
+
+
+# --------------------------------------------------------------------------- #
+# §J5 — THE OPPOSITE-SIGN CONTROL: do LOSSES de-repress?                        #
+#                                                                              #
+# The lane reports ONE pooled ρ(pred, dy) < 0 and calls it "realization". That  #
+# label asserts a mechanism with a SIGN: gaining a repressor lowers the target, #
+# so LOSING one must raise it. If gains repress but losses do not de-repress,   #
+# the pooled ρ is not measuring what its name says. This is the strongest       #
+# internal control the paired design can supply and it has never been run.      #
+# Within-gene centring removes the gene's own global tumour-vs-NAT shift, so    #
+# the two halves are compared against the SAME per-gene reference.              #
+# --------------------------------------------------------------------------- #
+
+def lost_repertoire(genes: Optional[Sequence[str]] = None, *, m_ref: str = "complement",
+                    n_perm: int = 200, seed: int = 0) -> pd.DataFrame:
+    """§J5. Per gene, split the paired patients on the sign of Δpressure and ask whether the target moves
+    in OPPOSITE directions: gains should push `dy` below the gene's own median, losses above it."""
+    dX, dY, pts = ST.paired_delta_matrices()
+    dC = _delta_C()
+    Cm = dC.reindex(pts).to_numpy(float) if len(dC.columns) else None
+    ed = LD.D.high_evidence_edges()
+    genes = list(genes) if genes is not None else sorted(set(ed["gene"]))
+    rng = np.random.default_rng(seed)
+    rows = []
+    for g in genes:
+        if g not in dY.index:
+            continue
+        try:
+            M = M_reference(g, m_ref)
+        except Exception:
+            continue
+        regs = [a for a in M[M > 0].index if a in dX.index]
+        if not regs:
+            continue
+        pred = dX.loc[regs, pts].fillna(0.0).T.to_numpy(float) @ M[regs].to_numpy(float)
+        dy = dY.loc[g, pts].to_numpy(float)
+        ok = np.isfinite(pred) & np.isfinite(dy)
+        if ok.sum() < _MIN_PAIRS:
+            continue
+        p_, d_ = pred[ok], dy[ok]
+        if Cm is not None and Cm.shape[1]:
+            d_ = _resid_on(d_, Cm[ok])
+            p_ = _resid_on(p_, Cm[ok])
+        d_ = d_ - np.median(d_)                       # the gene's OWN reference — removes its global shift
+        gs, ls = pred[ok] > 0, pred[ok] < 0           # split on the RAW pressure sign, not the residual
+        if gs.sum() < 10 or ls.sum() < 10:
+            continue
+
+        def _split(mask_g, mask_l):
+            return float(np.median(d_[mask_g])), float(np.median(d_[mask_l]))
+        mg, ml = _split(gs, ls)
+        nu = [_split(*(lambda s: (s > 0, s < 0))(pred[ok][rng.permutation(int(ok.sum()))]))
+              for _ in range(max(0, n_perm // 5))]
+        rows.append({"gene": g, "n_gain": int(gs.sum()), "n_loss": int(ls.sum()),
+                     "dy_gain": _r3(mg), "dy_loss": _r3(ml), "opposite": bool(mg < 0 < ml),
+                     "sep": _r3(ml - mg),
+                     "sep_null": _r3(float(np.median([b - a for a, b in nu]))) if nu else np.nan})
+    df = pd.DataFrame(rows)
+    OUT.mkdir(parents=True, exist_ok=True)
+    df.to_csv(OUT / "lost_repertoire.tsv", sep="\t", index=False)
+    return df
+
+
+def lost_repertoire_summary(df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+    """The §J5 verdict — and the role split (losing pressure on an ONCOGENE is the relevant direction)."""
+    from mirna_hallmark import gene_roles as GR
+    if df is None:
+        df = pd.read_csv(OUT / "lost_repertoire.tsv", sep="\t")
+    e = (df.sep - df.sep_null).dropna()
+    print(f"[J5] n={len(df)} genes | median dy_gain {df.dy_gain.median():+.4f} (expect <0) | "
+          f"median dy_loss {df.dy_loss.median():+.4f} (expect >0)")
+    print(f"  gain half Wilcoxon p={wilcoxon(df.dy_gain.dropna()).pvalue:.3g} | "
+          f"loss half p={wilcoxon(df.dy_loss.dropna()).pvalue:.3g}")
+    print(f"  separation (loss−gain) OBS {df.sep.median():+.4f} vs NULL {df.sep_null.median():+.4f} | "
+          f"paired Wilcoxon p={wilcoxon(e).pvalue:.4g} | opposite-sign in "
+          f"{100*df.opposite.mean():.1f}% of genes (chance 25%)")
+    df = df.assign(role=GR.load_gene_roles(genes=list(df.gene)).set_index("gene")["role"]
+                   .reindex(df.gene).to_numpy())
+    out = df.groupby("role").agg(n=("sep", "size"), dy_gain=("dy_gain", "median"),
+                                 dy_loss=("dy_loss", "median"), sep=("sep", "median")).round(4)
+    print(out.to_string())
+    out.to_csv(OUT / "lost_repertoire_summary.tsv", sep="\t")
+    return out

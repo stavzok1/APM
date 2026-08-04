@@ -771,7 +771,15 @@ patient's field determines *which route to cancer is already open in them*.
   extra dispersion is NEW variance, not amplified personality — partially preserve + REPLACE.**
   ⚠ This is a level-axis result and does **not** touch the *change* axis: `b<1` means high-NAT patients are
   pulled DOWN toward a common tumour level, which is **J3's headroom mechanism in disguise.**
-- ⬜ **J3. Headroom.** A repressor gained where the target is already at floor **cannot** realize;
+- ⬜➡️ **J3. Headroom — RUN, NOT ESTABLISHED (MH-230, 2026-08-04). MH-162B stands; do not re-run on this
+  cohort.** ⚠ The test as stated below **could not fail** (headroom IS `N`, the outcome is `T−N`);
+  replaced with ANCOVA `T ~ N + pred + pred×N_c + ΔC`. The discriminator (power is sign-SYMMETRIC,
+  headroom is sign-ASYMMETRIC) points the right way — `a3_gain −0.148 < 0 < a3_loss +0.269`, `disc`
+  −0.614 vs a clean split-permutation null of −0.059 — but the **pre-registered test gives p=0.058**, pooled
+  `a3` is **+0.176 (wrong sign)**, and ⛔ **the internal dose-response control FAILS**: the effect does not
+  scale with `nat_spread` (narrow −1.288 · mid −0.067 · wide −0.532, MW p=0.753) and narrow is strongest.
+  Power-limited (an interaction on ~50 patients/half/gene; needs ≈970 genes with both halves, have 638).
+  **The design is the deliverable.** Original text: **J3. Headroom.** A repressor gained where the target is already at floor **cannot** realize;
   repression needs the target present, de-repression needs transcription to resume — yet the lane treats Δ
   symmetrically everywhere. ⚠ `ctx_ceiling` is a FALSE FRIEND (an OOF R², not an expression level). ⭐ This
   **re-opens MH-162B's "acquired-but-unrealized = detection power" null with a competing mechanism** — keep
