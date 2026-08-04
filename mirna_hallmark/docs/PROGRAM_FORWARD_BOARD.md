@@ -758,11 +758,19 @@ patient's field determines *which route to cancer is already open in them*.
   wherever it appears**, and note the consequence for the rest of §J: **the miRNA input cannot be the
   dominant source of the tumour's expression individuality**, so J4 must ask how *much* of the personal
   signal it carries, not merely whether it survives.
-- ⬜ **J2. Does the tumour exaggerate who the patient already was?** `realization.py:280` computes
-  `nat_dev = nat_cohort_mean − own_NAT` — the personal offset — then **collapses it to a variance ratio
-  (`own_specific_frac`, median 0.46) and never persists the per-patient vector.** The sign test
-  `corr(nat_dev, own_shift)` has never been run. ⚠ **J1 and J2 are entangled in that one statistic**:
-  `own_specific_frac = 1` IS the perfect-convergence case. Report them separately.
+- ✅ **J2. Does the tumour exaggerate who the patient already was? — DONE. NO (MH-229, 2026-08-04).**
+  ⛔ **And `corr(nat_dev, own_shift)`, the test this board asked for, is MECHANICALLY BIASED** — `N` sits on
+  both sides with opposite sign, so it is positive by construction. Measured **+0.556 arms / +0.484 genes,
+  100% / 99.9% of features positive — with a broken-pairing null of +0.626 / +0.537 and p_perm = 1.000.**
+  It would have shipped "the tumour amplifies the person in every arm". **Do not use it anywhere.**
+  ✅ The unbiased form is the LEVEL-on-LEVEL slope `T_dev = b·N_dev + e`: **b = 0.183 arms / 0.137 genes**
+  (null ≈0, p_perm 0.005), **>1 for 0.0% / 0.1%**, median r 0.141/0.092 ⇒ the person's own NAT explains
+  **r² ≈ 2% / 0.8%** of where their tumour sits. ⭐ Amplification is **excluded, not unobserved**: b plateaus
+  at 0.22 by the 4th NAT-expression quintile, so `b_true=1` would need 78% noise in the best-measured arms,
+  and genes show **no** dilution signature at all. No role dependence (p=0.71). ⇒ with J1: **the tumour's
+  extra dispersion is NEW variance, not amplified personality — partially preserve + REPLACE.**
+  ⚠ This is a level-axis result and does **not** touch the *change* axis: `b<1` means high-NAT patients are
+  pulled DOWN toward a common tumour level, which is **J3's headroom mechanism in disguise.**
 - ⬜ **J3. Headroom.** A repressor gained where the target is already at floor **cannot** realize;
   repression needs the target present, de-repression needs transcription to resume — yet the lane treats Δ
   symmetrically everywhere. ⚠ `ctx_ceiling` is a FALSE FRIEND (an OOF R², not an expression level). ⭐ This

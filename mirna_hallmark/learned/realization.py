@@ -1892,3 +1892,94 @@ def state_variance_by_role(*, n_perm: int = 500, seed: int = 0) -> pd.DataFrame:
               f"{np.median(onc):+.3f} (n={len(onc)}) | Mann-Whitney p={u.pvalue:.3g}")
     out.to_csv(OUT / "state_variance_by_role.tsv", sep="\t", index=False)
     return out
+
+
+# --------------------------------------------------------------------------- #
+# §J2 — DOES THE TUMOUR EXAGGERATE WHO THE PATIENT ALREADY WAS?  (board §J2)   #
+#                                                                              #
+# ⚠ The board proposed `corr(nat_dev, own_shift)` with nat_dev = mean(N) − N   #
+# and own_shift = T − N.  N is on BOTH sides with opposite sign, so            #
+#   cov(N − mean N, T − N) = cov(N,T) − var(N)  →  −var(N)  under independence #
+# — the statistic is MECHANICALLY NEGATIVE and would report "the tumour erases #
+# the personal offset" in a world where T and N are unrelated. It is computed  #
+# here ONLY next to its own broken-pairing null, to show it measures nothing.  #
+#                                                                              #
+# The unbiased question is a LEVEL-on-LEVEL regression: T_dev = b·N_dev + e.   #
+#   b>1 amplify · 0<b<1 survive-but-shrink · b≈0 replace.                      #
+# This is what separates the two readings J1 left entangled: sd(T) > sd(N) can #
+# come from an amplified person OR from a replaced person plus new variance.   #
+# --------------------------------------------------------------------------- #
+
+def _dev_pair(T: pd.DataFrame, N: pd.DataFrame):
+    """Row-centred (T_dev, N_dev) as float arrays — deviation from the COHORT mean, per feature."""
+    Tv, Nv = T.to_numpy(float), N.to_numpy(float)
+    return Tv - Tv.mean(axis=1, keepdims=True), Nv - Nv.mean(axis=1, keepdims=True)
+
+
+def _slope_corr(Tc: np.ndarray, Nc: np.ndarray):
+    """Per-row OLS slope of T_dev on N_dev, and their correlation. Vectorised over features."""
+    snn = (Nc * Nc).sum(axis=1)
+    stt = (Tc * Tc).sum(axis=1)
+    snt = (Nc * Tc).sum(axis=1)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        b = np.where(snn > 0, snt / snn, np.nan)
+        r = np.where((snn > 0) & (stt > 0), snt / np.sqrt(snn * stt), np.nan)
+    return b, r
+
+
+def _naive_stat(T: pd.DataFrame, N: pd.DataFrame) -> np.ndarray:
+    """The board's proposed corr(mean(N)−N, T−N) — kept ONLY to demonstrate its mechanical bias."""
+    Tv, Nv = T.to_numpy(float), N.to_numpy(float)
+    dev = -(Nv - Nv.mean(axis=1, keepdims=True))                  # mean(N) − N
+    sh = Tv - Nv
+    sh = sh - sh.mean(axis=1, keepdims=True)
+    num = (dev * sh).sum(axis=1)
+    den = np.sqrt((dev * dev).sum(axis=1) * (sh * sh).sum(axis=1))
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return np.where(den > 0, num / den, np.nan)
+
+
+def offset_amplification(*, n_perm: int = 200, seed: int = 0, min_sd: float = 0.05) -> pd.DataFrame:
+    """§J2. Per feature, regress the patient's TUMOUR deviation on their own NAT deviation across the 103
+    paired patients: `b` (amplify/shrink/replace), `r` (how much of the tumour position the person explains),
+    each against a **broken-pairing null**, and the board's biased `corr(nat_dev, own_shift)` beside them.
+    Composition-residualised within state, so 'the person' is not 'the person's stroma'."""
+    _, _, pts = ST.paired_delta_matrices()
+    he = LD.D.high_evidence_edges()
+    rng = np.random.default_rng(seed)
+    rows, per_feat = [], {}
+    for kind, feats in (("mirna", sorted(set(he["miRNA"]))), ("mrna", sorted(set(he["gene"])))):
+        T0, N0 = _matched_state_pair(kind, pts, feats)
+        T, N = _resid_composition_pair(_sample_centre(T0), _sample_centre(N0))
+        Tc, Nc = _dev_pair(T, N)
+        keep = (Nc.std(axis=1) > min_sd) & (Tc.std(axis=1) > min_sd)
+        Tc, Nc = Tc[keep], Nc[keep]
+        idx = T.index[keep]
+        b, r = _slope_corr(Tc, Nc)
+        nai = _naive_stat(T[keep], N[keep])
+        # broken-pairing null: permute the patient labels of ONE state (preserves both marginals)
+        nb = np.empty((n_perm, len(idx))); nr = np.empty_like(nb); nn = np.empty_like(nb)
+        for i in range(n_perm):
+            pm = rng.permutation(Nc.shape[1])
+            b_, r_ = _slope_corr(Tc, Nc[:, pm])
+            nb[i], nr[i] = b_, r_
+            nn[i] = _naive_stat(T[keep], N[keep].iloc[:, pm].set_axis(N.columns, axis=1))
+        lvl = N0.reindex(idx).mean(axis=1)
+        per_feat[kind] = pd.DataFrame({"feature": idx, "b": b, "r": r, "naive": nai,
+                                       "b_null": nb.mean(0), "r_null": nr.mean(0), "naive_null": nn.mean(0),
+                                       "nat_level": lvl.to_numpy(float),
+                                       "sd_nat": N0.reindex(idx).std(axis=1).to_numpy(float)})
+        for nm, obs, nul in (("b", b, nb), ("r", r, nr), ("naive", nai, nn)):
+            med = float(np.nanmedian(obs))
+            nulmed = np.nanmedian(nul, axis=1)
+            rows.append({"modality": kind, "stat": nm, "n_feat": len(idx), "median": _r3(med),
+                         "median_null": _r3(float(np.nanmedian(nulmed))),
+                         "p_perm": float((np.sum(np.abs(nulmed) >= abs(med)) + 1) / (n_perm + 1)),
+                         "frac_gt0": _r3(float(np.nanmean(obs > 0))),
+                         "frac_gt1": _r3(float(np.nanmean(obs > 1))) if nm == "b" else np.nan})
+    df = pd.DataFrame(rows)
+    OUT.mkdir(parents=True, exist_ok=True)
+    df.to_csv(OUT / "offset_amplification.tsv", sep="\t", index=False)
+    for k, v in per_feat.items():
+        v.to_csv(OUT / f"offset_amplification_{k}.tsv", sep="\t", index=False)
+    return df
