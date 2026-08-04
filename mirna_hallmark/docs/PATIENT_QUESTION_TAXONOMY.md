@@ -26,7 +26,7 @@ sampling choice (per-edge SE ≈ 0.10 at n=103), **not** a fact about the data.
 
 | name | definition | module | estimates |
 |---|---|---|---|
-| `own_specific_frac` | `var(cohort_NAT_mean − own_NAT) / var(own tumour−NAT shift)` | `realization._within_patient_shift` | how much of the patient's **dose shift** is their own baseline |
+| `own_specific_frac` | `var(cohort_NAT_mean − own_NAT) / var(own tumour−NAT shift)` ⇒ **≡ `var(N)/var(T−N)`, see §10** | `realization.dose_shift_arm` | how much of the patient's **dose shift** is their own baseline |
 | `r_own` | `Spearman(tumour level, own-NAT level)` across patients | `mirna_nat_retention` | does the arm's **level persist** NAT→tumour within a patient |
 | `r_perm` | same, patients permuted (15 draws); `retention = r_own − r_perm` | ″ | the pairing's contribution (`r_perm` ≈ 0.002) |
 | `r_adj` | `r_own` with **each state residualised on its OWN CIBERSORTx block** | ″ | the composition-free version |
@@ -195,6 +195,6 @@ computed:
    patients* and is precisely what makes `own_specific_frac` a shared-term quantity (§10)
 5. **family and family_edge** versions of all of the above — the `family_edge` rung is empty throughout
 
-⭐ **The infrastructure is already half-built:** `dose_shift_edge` and `_within_patient_shift` both
+⭐ **The infrastructure is already half-built:** `dose_shift_edge` and `dose_shift_arm` both
 CONSTRUCT the per-patient vector (linear-RPM share matrices, `nat_dev`) and then **collapse it to a
 per-edge/per-arm mean without persisting it**. Persisting those vectors is most of the work.
