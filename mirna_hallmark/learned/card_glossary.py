@@ -539,16 +539,15 @@ COLUMNS: dict[tuple[str, str], str] = {
                           " ⭐⭐ **AND THE TWO CARDS' `beta` DIFFER EVEN WHERE THE COLLAPSE IS A NO-OP.** Measured 2026-08-19: on **SINGLETON** cells — one arm, nothing to collapse — `beta_edge == beta_family` on only **21.6%** (median |diff| 0.0004, max 0.2444); on multi-arm cells, **0.2%** (median 0.0100, max 0.9680). The family fit re-designs the WHOLE gene, so collapsing a gene's OTHER families changes this one's competitors and moves its beta. ⇒ **never mix the two cards' beta, not even for singleton families.** ✅ Edge-rung verified: beta varies across arms in **467 of 467** multi-arm cells.",
     ("edge", "identified"): "`|z| > 2` on the UNCALIBRATED posterior SD, where `z = beta / beta_sd` "
                             "(MH-83 records precision 0.86 / recall 0.89 against a held-out standard). "
-                            "⚠ The posterior SD is measured 1.18–1.34× too NARROW, so this over-admits: "
-                            "`cal_identified` is the honest version (19.9% [18.1–22.4] vs 24.8%). "
-                            "⚠ The `abs()` is vestigial — the half-normal slab makes β strictly positive, "
-                            "so `z` never goes below 0 (observed range 0.47…22.33).",
-    ("edge", "z"): "`beta / beta_sd` for the EDGE-level fit (`readouts.run(level='arm')`, the whole gene's "
-                   "arms as separate predictors). ⚠⚠ NOT the same as `z_arm`, which is a DIFFERENT fit — "
-                   "restricted to one (gene, seed_family) cell (`arm_rung.py`). They correlate 0.971 on the "
-                   "1,147 edges carrying both, but they answer different questions: `z` is 'is this arm "
-                   "identified against the gene's whole design', `z_arm` is 'is it separable from its "
-                   "same-seed mates'. Both are strictly positive (β cannot be negative).",
+                            "**True on 24.8% of edges.** ⚠ The posterior SD is measured 1.18–1.34× too "
+                            "NARROW, so this OVER-ADMITS — `cal_identified` is the honest version at "
+                            "**19.9% [18.1–22.4]**. ⚠ The `abs()` is vestigial: the half-normal slab makes "
+                            "β strictly positive, so `z` never goes below 0 (observed 0.47…22.33).",
+    ("edge", "z"): "`beta / beta_sd` for the EDGE-level fit (`readouts.run(level=\'arm\')`, the whole "
+                   "gene's arms as separate predictors), on the UNCALIBRATED posterior SD. ⚠⚠ **NOT the "
+                   "same as `z_arm`**, which is the within-cell fit. ⛔ The per-edge theoretical null is "
+                   "3–4× too narrow (memory `edge-null-is-miscalibrated`) ⇒ **use `cal_z`** for the honest "
+                   "width. Median 1.233.",
     ("edge", "arm_med_rpm"): "Median linear RPM of this ARM across the cohort. Arm-rung, so it REPEATS "
                              "across the arm's genes. Fill 0.686 — the gap is arms with no expression "
                              "record, not zeros.",
@@ -712,12 +711,11 @@ COLUMNS: dict[tuple[str, str], str] = {
     ("gene", "disc_n_gold_edges"): "How many of the 157 discovery-queue edges name this gene (max 4). "
                                    "⛔ Only **39 of the 90** gold genes appear on this card, so this "
                                    "accounts for **63 of 157** edges — a 0 is NOT evidence of absence.",
-    ("gene", "n_arms"): "Arms in the LEARNED MODEL's design — `X.shape[1]` from `assemble_gene`, carried "
-                        "via `gene_atlas`. This is the width the Gibbs actually fit. ⚠⚠ **NOT the same as "
-                        "`n_regulators`**, which counts distinct arms in the RETIRED heuristic lane's edge "
-                        "table: they agree on 1,103 genes and differ on 306, in BOTH directions (ABCA1 13 "
-                        "vs 12, ABCC1 7 vs 8). Both read as 'how many regulators'; only this one describes "
-                        "the fit.",
+    ("gene", "n_arms"): "Arms in the LEARNED MODEL\'s design — `X.shape[1]` from `assemble_gene`, "
+                        "carried via `gene_atlas`. **This is the width the Gibbs actually fit** (median 2, "
+                        "max 90). ⚠⚠ **NOT `heur_n_regulators`** — that is the §6b-RETIRED heuristic "
+                        "lane\'s count and the two differ on 306 of 1,409 genes IN BOTH DIRECTIONS. ⚠ Nor "
+                        "`n_fam` (median 2, max 64), which is the same design collapsed to seed families.",
     ("", "heur_"): "⛔⛔ **THE RETIRED-HEURISTIC BLOCK — provenance, not model.** All five columns come from "
                    "`analyses/misc/mirna_comovement.py` → `tissue_reference/mirna_comovement/"
                    "gene_corepression.tsv`, i.e. the **§6b-RETIRED pressure heuristic**, NOT the learned "
@@ -768,17 +766,22 @@ COLUMNS: dict[tuple[str, str], str] = {
                                  "**w-CONTAMINATED** by construction (`pip_discovery` rides the evidence "
                                  "prior), so any 'do canonical regulators score higher' test on it is "
                                  "CIRCULAR.",
-    ("gene", "n_cell_intrinsic"): "Edges whose coupling SURVIVES the composition block (retention ≥ 0.7). "
-                                  "⚠ With `n_composition_explained` it does NOT partition the gene's edges — "
-                                  "verified: the two sum to ≤ `n_arms` on 100% of genes (median sum 1 vs "
-                                  "n_arms 2), because the middle class `partial` belongs to neither.",
-    ("gene", "n_composition_explained"): "Edges whose coupling does NOT survive composition adjustment "
-                                         "(retention < 0.4). ⚠ See `n_cell_intrinsic`: the two are the ENDS "
-                                         "of a three-way classification, not a partition. ⚠⚠ And a "
-                                         "composition-explained edge is not necessarily an artifact — a "
-                                         "miRNA acting in CAFs on a CAF gene is removed by conditioning on "
-                                         "CAF fraction and then labelled this (axiom 8's stratified-retention "
-                                         "warning). Pair it with a specificity control.",
+    ("gene", "n_cell_intrinsic"): "FAMILIES whose coupling SURVIVES the composition block (retention ≥ "
+                                  "0.7). ⛔ **THE UNIT IS FAMILIES, NOT EDGES** — this entry said *edges* "
+                                  "until 2026-08-19. Verified: both are `composition_class` counts over the "
+                                  "FAMILY-level frame (`readouts.py:438`), and `n_cell_intrinsic + "
+                                  "n_composition_explained` never exceeds `n_fam`, equalling it exactly on "
+                                  "**900 of 1,549 genes**. ⚠ It does NOT partition: on the other 649 the sum "
+                                  "falls short because the middle class `partial` belongs to neither.",
+    ("gene", "n_composition_explained"): "FAMILIES whose coupling does NOT survive the composition "
+                                         "block (retention < 0.4). ⚠ **0 on 1,133 of 1,549 genes (73%)** — "
+                                         "a rare-event count, not a continuous covariate. ⚠ See "
+                                         "`n_cell_intrinsic`: the two are the ENDS of a three-way "
+                                         "classification, not a partition. ⚠⚠ And a composition-explained "
+                                         "edge is not necessarily an artifact — a miRNA acting in CAFs on a "
+                                         "CAF gene is removed by conditioning on CAF fraction and then "
+                                         "labelled this (axiom 8\'s stratified-retention warning). Pair it "
+                                         "with a specificity control.",
     ("gene", "n_hallmark_sets"): "How many MSigDB Hallmark programs contain this gene (1–10, median 2). "
                                  "Membership only — it says nothing about regulation.",
     ("gene", "w_max"): "The MAXIMUM curated evidence weight `w` over the gene's regulators "
@@ -822,8 +825,11 @@ COLUMNS: dict[tuple[str, str], str] = {
                               "load-bearing conditioning variable: genes whose curated edges are ALL "
                               "seedless show a decoy gap of exactly zero (+0.0006) vs -0.0325 for "
                               "all-seeded genes.",
-    ("edge", "cal_identified"): "Is the edge identified (|z| > 2) under the CALIBRATED posterior width. "
-                                "19.9% [18.1–22.4] of arm-edges — down from 24.8% on the uncalibrated SD.",
+    ("edge", "cal_identified"): "Is the edge identified (`|cal_z| > 2`) under the CALIBRATED posterior "
+                                "width — the honest version of `identified`: **1,110 vs 1,375 edges**, i.e. "
+                                "**19.9% [18.1–22.4]** against 24.8%. ⭐ `cal_identified_hi` / `_lo` are the "
+                                "calibration INTERVAL (990 / 1,234) ⇒ quote the band, not the point: the "
+                                "count is uncertain by roughly ±12%.",
     ("gene", "top_identity"): "The largest `identity` share among the gene's families. ⛔⛔ **UNGATED AND "
                               "UNBOUNDED — it still reaches +740.007, with 80 genes above 1.** `identity` "
                               "is a SIGNED share (~10% negative), so its max has no upper bound; the "
@@ -850,11 +856,13 @@ COLUMNS: dict[tuple[str, str], str] = {
                                      "'undefined', which the magnitude answer cannot express.",
     ("gene", "top_family_magnitude"): "The family with the largest beta. ⚠ This is argmax over a quantity "
                                       "that is never zero, so it always returns SOMETHING.",
-    ("gene", "lit_agrees_identity"): "Does `identity` name the same family as the **most-published** one for "
-                                     "this gene. True for 100/323. ⛔ NOT an accuracy measure — the reference "
-                                     "is a study count (see the `lit_` block). Against `magnitude` (96/329) "
-                                     "the contrast is **14 vs 9 discordant genes, McNemar exact p=0.405 — "
-                                     "a tie**.",
+    ("gene", "lit_agrees_identity"): "Does `identity` name the same family as the **most-published** "
+                                     "one for this gene — **True on 100 of 323 (31%)**. ⛔ **NOT an accuracy "
+                                     "measure**: the reference is a STUDY COUNT, not an independent ground "
+                                     "truth (memory `definitional-harness-control`), and fill is only "
+                                     "**20.9%**. ⇒ a disagreement here is not evidence the model is wrong. "
+                                     "⭐ Gate on `lit_margin` first — its median is **1.00 PMID**, so the "
+                                     "literature\'s winner is usually decided by a single paper.",
     ("edge", "shift_class"): "Cross-state class for the edge. ⚠ Its per-edge FDR labels rest on the "
                              "uncalibrated null (3–4x too narrow); read the classes, not their counts.",
     ("gene", "gene_repression_class"): "Cross-state repression class for the gene (never_repressed / "
@@ -879,9 +887,6 @@ COLUMNS.update({
     ("gene_family", "p_fam"): "\u26d4\u26d4 **NOT A P-VALUE** \u2014 the number of family predictors in the gene's "
                               "fit. **Bit-identical to `n_fam` on this card** (integers 1..12), so it is also "
                               "a redundant column.",
-    ("edge", "z"): "beta / beta_sd on the UNCALIBRATED posterior SD. Use `cal_z` for the honest width.",
-    ("edge", "identified"): "|z| > 2 on the UNCALIBRATED SD (24.8%). `cal_identified` is the honest "
-                            "version (19.9%).",
     ("edge", "pip_dense"): "\u26a0 CONSTANT by construction \u2014 the coupling readout is called with \u03c0\u22611, so "
                            "every edge has the same value. Carries no information; `pip_discovery` is the "
                            "one that varies. (Bit-identical to `net_pressure` on this card.)",
@@ -964,17 +969,42 @@ COLUMNS.update({
     ("gene", "disc_n_gold_edges"): "How many of the 157 discovery-queue edges name this gene (max 4). "
                                    "⛔ Only **39 of the 90** gold genes appear on this card, so this "
                                    "accounts for **63 of 157** edges — a 0 is NOT evidence of absence.",
-    ("gene", "n_arms"): "How many miRNA arms regulate this gene (median 2).",
-    ("gene", "n_regulators"): "Regulator count used by the realization lane.",
-    ("gene", "n_identified"): "How many of the gene's families are identified (|z|>2). Median 1.",
-    ("gene", "n_discovered"): "Families passing the evidence-pi discovery readout. \u26d4 Per-edge and "
-                              "per-family discovery are EMPTY under the honest FDR \u2014 read this as a "
-                              "ranked queue, never as a set of findings.",
-    ("gene", "n_composition_explained"): "Edges whose coupling does NOT survive the composition block.",
-    ("gene", "n_cell_intrinsic"): "Edges whose coupling DOES survive composition adjustment.",
-    ("gene", "n_hallmark_sets"): "How many MSigDB Hallmark programs this gene belongs to.",
-    ("edge", "n_HLY_meas"): "How many of the gene's arms have a MEASURED (not imputed, not "
-                            "multi-mapping-collapsed) healthy level. Read before any `share_HLY`/`rank_HLY`.",
+    # ── UNIT 23 (2026-08-19) — edge `esub_`/`dose_`/`cal_`, arm `bc_`/`surv_`/`hly_`, gene `lit_`/`n_`.
+    ("edge", "esub_rho_best"): "Coupling in the arm's BEST PAM50 subtype. ⛔⛔ **A MAX-OF-4 STATISTIC — "
+        "NEVER read it as an effect size.** Verified it is exactly `min` over the four subtype ρ on "
+        "**100.0%** of 5,518 edges. Median **−0.0944** against `esub_rho_pool`'s **−0.0135** — and the "
+        "whole gap is selection: ⭐ **a RANDOM-subtype control (same machinery, no picking) gives −0.0123, "
+        "so selection explains 101% of the −0.0809 gap.** ⇒ **use `esub_q_adj`**, which fires on only "
+        "**1.6%** (93 of 5,529) — the FDR gate is what makes this block honest.",
+    ("edge", "esub_rho_pool"): "Coupling pooled across subtypes — the unselected reference for "
+        "`esub_rho_best` (median −0.0135, indistinguishable from a random-subtype draw at −0.0123). "
+        "⚠ Pooled ≠ subtype-free: memory `null-design-and-shared-confounds`.",
+    ("edge", "esub_q_adj"): "BH-adjusted q for the best-subtype contrast — ⭐ **the only honest readout in "
+        "this block**, because it prices the max-of-4 selection that makes `esub_rho_best` look 7× "
+        "stronger than pooled. Significant on **93 edges (1.6%)**.",
+    ("edge", "dose_confounded"): "Is this edge's NAT→tumour dose a composition/proliferation artifact "
+        "(either gated retention < 0.4)? ⭐ **CONSTANT `False` — 0 of 4,079 edges.** That is a MEASURED "
+        "NULL, not a broken column: for real doses both retentions sit at ≈1.00, i.e. the dose "
+        "acquisitions are cell-intrinsic. ⚠ It was masked 2026-08-19 (MH-256) — it previously read False "
+        "on 207 arms where neither retention existed, which is the same claim for the opposite reason.",
+    ("arm", "surv_dfi_q_adj"): "BH q for the arm's DFI hazard ratio. ⛔ **CONSTANT 0.9965 across all 145 "
+        "arms** — every p collapsed to the same adjusted value, i.e. **the DFI axis is entirely null**. "
+        "That is a result, not a defect (memory `outcome-prognostic-arc-verdict`: pressure magnitude is "
+        "non-prognostic). Contrast `surv_os_q_adj`, which has 28 distinct values ⇒ OS carries some "
+        "structure where DFI carries none. ⚠ n=145 arms (5.9% fill) — an underpowered axis either way.",
+    ("arm", "surv_dfi_hr_adj"): "Adjusted DFI hazard ratio per arm — range **[0.84, 1.16]**, median "
+        "**1.00**. The whole distribution sits within ±16% of no effect. See `surv_dfi_q_adj`.",
+    ("arm", "hly_nat_detect_n"): "In how many of the ~104 matched NAT samples this arm is detected above "
+        "the floor. ⛔⛔ **MEDIAN 0 — 51.2% of arms are detected in ZERO NAT samples**, and only **25.0%** "
+        "reach 10 or more. ⇒ **the NAT leg is far thinner than `hly_nat_median`'s 74% fill suggests**: a "
+        "NAT median is emitted for arms with no NAT detections at all (it is the floor). **Gate on this "
+        "column before any NAT-based claim.**",
+    ("arm", "hly_nat_median"): "Median NAT abundance (fill 74.0%). ⚠⚠ **The fill is misleading — read "
+        "`hly_nat_detect_n` first**: for 51.2% of arms it is a floor value with zero underlying "
+        "detections. Feeds `fst_share_NAT` and the NAT trajectory columns.",
+    ("gene", "lit_margin"): "Gap between the top and second literature family, in PMIDs — **median 1.00**, "
+        "i.e. the literature's 'winner' is usually decided by a SINGLE paper. ⇒ **gate on this before "
+        "reading `lit_agrees_*`**: a 1-PMID margin is a coin flip dressed as ground truth.",
     # ── UNIT 22 (2026-08-19) — arm `attr_` (14), arm `real_` (11), gene `greal_` (10).
     ("arm", "attr_max_joint_share"): "Largest JOINT attribution share among this arm's edges. ⚠ **Looks "
         "redundant with `attr_max_nested_share` and is NOT** — I suspected a duplicate from identical "
@@ -1302,8 +1332,6 @@ COLUMNS.update({
                        "gene's edges by construction. beta is mathematically inert where it is 1.",
     ("edge", "w_max"): "Maximum curated EVIDENCE weight over the gene's regulators. Gene-rung repeat. "
                        "\u26d4 Not a beta and not a dose share.",
-    ("edge", "n_arm_in_cell"): "How many arms were collapsed into this edge's family cell. >1 for 20.3% of "
-                               "edges \u2014 outside those, the arm rung IS the family rung by construction.",
     ("edge", "kd_affinity_pct"): "Is this gene among the arm's strongest predicted targets \u2014 a "
                                  "WITHIN-ARM percentile, **higher = stronger target**. Climbs with coupling "
                                  "(rho=\u22120.090 within seeded edges, p=1.3e\u221207), which is one rung of the "
@@ -1356,8 +1384,6 @@ COLUMNS.update({
     ("edge", "arm_resolvable"): "Are the cell's arms separable AND does splitting them help out-of-fold. "
                                 "True for 31.7% of edges in multi-arm cells. ⚠⚠ **A CELL verdict, constant "
                                 "within all 467 cells** — not a property of the individual arm.",
-    ("edge", "z_arm"): "beta_arm / sd_arm \u2014 the ARM-resolved z inside the family cell, as opposed to the "
-                       "family-level `z`.",
 })
 
 
