@@ -167,16 +167,16 @@ BLOCKS: dict[tuple[str, str], str] = {
                      "⚠ P-ACROSS rung: one value per arm computed ACROSS patients, not per patient.",
     ("", "real_"): "Realization rollup for the ARM — how many of its edges are scored, and its median and "
                    "best realized coupling.",
-    ("", "garm_"): "⭐ IS THIS GENE MODELABLE AT ARM RESOLUTION — the gene-level roll-up of arm "
+    ("", "armres_"): "⭐ IS THIS GENE MODELABLE AT ARM RESOLUTION — the gene-level roll-up of arm "
                    "identifiability (`card_ladders.gene_arm_resolution`, 2026-08-19). ⚠ THE DENOMINATOR IS "
                    "THE POINT: only the **273 of 1,549 genes (17.6%)** with at least one MULTI-ARM cell can "
-                   "be asked; elsewhere the arm rung IS the family rung by construction, so `garm_class` is "
+                   "be asked; elsewhere the arm rung IS the family rung by construction, so `armres_class` is "
                    "`not_applicable` — a design fact, not a negative. ⚠ Strongly BIMODAL among those 273 — "
                    "ALL cells resolvable in 68 genes, NONE in 168 — so never read its mean.",
-    ("gene", "garm_class"): "`arm_modelable` (every multi-arm cell resolvable, 68 genes) · `partial` (37) · "
+    ("gene", "armres_class"): "`arm_modelable` (every multi-arm cell resolvable, 68 genes) · `partial` (37) · "
                             "`family_only` (no cell resolvable, 168). Absent = the gene has no multi-arm "
                             "cell at all, so the question is undefined.",
-    ("gene", "garm_med_drho"): "Median `oof_drho` over the gene's multi-arm cells — negative means arm "
+    ("gene", "armres_med_drho"): "Median `oof_drho` over the gene's multi-arm cells — negative means arm "
                                "resolution predicts repression better out of fold. Median across genes "
                                "−0.0012, best −0.206: the gain is a TAIL, concentrated in the miR-29 family.",
     ("", "fst_"): "⭐ THE ARM'S SHARE OF ITS OWN SEED FAMILY, ACROSS STATES — gene-free "

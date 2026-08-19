@@ -94,11 +94,11 @@ def gene_arm_resolution() -> pd.DataFrame:
 
     ⚠ THE DENOMINATOR IS THE POINT. Only genes with at least one MULTI-ARM cell can be asked: elsewhere the
     arm rung IS the family rung by construction and the question is undefined, not negative. Measured:
-    **273 of 1,549 genes (17.6%)** have any multi-arm cell — so `garm_class` is `not_applicable` for 82%,
+    **273 of 1,549 genes (17.6%)** have any multi-arm cell — so `armres_class` is `not_applicable` for 82%,
     and that is a design fact, not a failure.
 
-    Among the 273: `garm_frac_resolvable` **median 0.00**, ALL cells resolvable in **68** genes and NONE in
-    **168** ⇒ the distribution is strongly BIMODAL, so do not read its mean. `garm_med_drho` median
+    Among the 273: `armres_frac_resolvable` **median 0.00**, ALL cells resolvable in **68** genes and NONE in
+    **168** ⇒ the distribution is strongly BIMODAL, so do not read its mean. `armres_med_drho` median
     −0.0012 with a best of −0.206 — the gain is a TAIL, concentrated in the miR-29 family.
     """
     p = OUT / "realization/edge_card.tsv"
@@ -115,15 +115,15 @@ def gene_arm_resolution() -> pd.DataFrame:
         return pd.DataFrame()
     cells = multi.drop_duplicates(["gene", "seed_family"])
     out = pd.DataFrame({
-        "garm_n_multi_cells": cells.groupby("gene").size(),
-        "garm_n_arms_split": multi.groupby("gene")["arm"].nunique(),
-        "garm_frac_resolvable": multi.groupby("gene")["arm_resolvable"].apply(lambda s: num(s).mean()),
-        "garm_med_sep_z": multi.groupby("gene")["arm_sep_z"].apply(lambda s: num(s).median()),
-        "garm_best_drho": multi.groupby("gene")["oof_drho"].apply(lambda s: num(s).min()),
-        "garm_med_drho": multi.groupby("gene")["oof_drho"].apply(lambda s: num(s).median()),
+        "armres_n_multi_cells": cells.groupby("gene").size(),
+        "armres_n_arms_split": multi.groupby("gene")["arm"].nunique(),
+        "armres_frac_resolvable": multi.groupby("gene")["arm_resolvable"].apply(lambda s: num(s).mean()),
+        "armres_med_sep_z": multi.groupby("gene")["arm_sep_z"].apply(lambda s: num(s).median()),
+        "armres_best_drho": multi.groupby("gene")["oof_drho"].apply(lambda s: num(s).min()),
+        "armres_med_drho": multi.groupby("gene")["oof_drho"].apply(lambda s: num(s).median()),
     })
-    fr = out["garm_frac_resolvable"]
-    out["garm_class"] = np.where(fr >= 0.999, "arm_modelable",
+    fr = out["armres_frac_resolvable"]
+    out["armres_class"] = np.where(fr >= 0.999, "arm_modelable",
                         np.where(fr <= 0.001, "family_only", "partial"))
     return out.reset_index()
 
@@ -168,10 +168,22 @@ def family_state_shift() -> pd.DataFrame:
     cannot. It is **5–8× rarer** the moment both legs come from TCGA. ⇒ the missing-sibling story was wrong;
     the defect is the platform boundary itself, and no membership guard can repair it.
 
-    ✅ **WHAT IS DEFENSIBLE:** the same-platform malignant step. `fst_d_share_NAT_TUM` — median **+0.032**,
-    |Δ| > 0.10 for **43.8%** of multi-member arms, and the family's dominant member changes in **26.7%**
-    (56/210). Within-family dominance genuinely moves across the malignant step, and — unlike the gene-level
-    `regulatory_handoff` — it cannot be a design-width artifact, because the denominator is the family.
+    ⛔⛔ **AND THE RAW 26.7% SWITCH RATE IS MOSTLY MINOR ARMS — GATE IT (user-caught, measured).** The
+    unfiltered NAT→TUM dominance switch is 56/210 = 26.7%, but it is an axiom-5 threshold count sitting
+    exactly where the mass piles up:
+      * switching arms have median **log2 RPM 0.80 vs 3.30** for stable ones, and **73% sit BELOW the
+        expression floor** (log2 11 ≈ 3.46) vs 51%;
+      * they sit a median **0.133 from the 0.5 boundary**, with **29% within 0.05** — coin flips;
+      * the rate is monotone in abundance, arm tertile **38.0% → 26.8% → 14.7%**, and monotone in the
+        FAMILY's own abundance, **47.1% → 20.0% → 12.9%**.
+    ✅ **GATED — both arms above the floor AND the switch margin > 0.10 — the rate is 10.7% (8 of 75).**
+    Quote **~11%**, never 26.7%. The eight survivors are legible and include a clean RECIPROCAL pair
+    (miR-196b-5p 0.75→0.32 against miR-196a-5p 0.25→0.68, both well above floor), plus
+    miR-30e-3p 0.29→1.00 (RPM 12.4), miR-200a-3p 0.28→1.00, miR-96-5p, miR-19a-3p, miR-190b, miR-193a-3p.
+
+    ✅ **WHAT IS DEFENSIBLE:** the same-platform malignant step, gated as above. Within-family dominance
+    moves for ~11% of well-measured multi-member arms — and unlike the gene-level `regulatory_handoff` it
+    cannot be a design-width artifact, because the denominator is the family.
     ⚠ Still DESCRIPTIVE: no decoy, no null. A registry CANDIDATE.
     """
     try:
