@@ -171,7 +171,14 @@ def add_reliability(d: pd.DataFrame) -> pd.DataFrame:
         with np.errstate(divide="ignore", invalid="ignore"):
             d["identity_coherence"] = (1.0 / ia.replace(0, np.nan)).clip(0, 1)
             d["identity_abs"] = (d["identity"].abs() / ia.replace(0, np.nan)).clip(0, 1)
-        d["identity_reliable"] = (d["identity_coherence"] >= 0.5) & (d["identity"].abs() <= 1.0)
+        # ⛔⛔ MASKED 2026-08-19 (column review unit 19): a bare `&` of two comparisons cannot say "unknown"
+        # — `NaN >= 0.5` and `NaN <= 1.0` are both False, so an edge whose `identity` was NEVER COMPUTED read
+        # as "unreliable". Measured: **218 of the 377 False rows (57.8%) had NaN identity** ⇒ anyone filtering
+        # `identity_reliable == False` to study unreliable attribution got a set that was 58% "not computed",
+        # and the unreliable RATE was overstated 2.3× (6.7% -> 2.9% on the measurable set). Fifth instance of
+        # this class in one session. **A three-state quantity needs three states: True / False / NaN.**
+        _ic, _id = d["identity_coherence"], d["identity"]
+        d["identity_reliable"] = ((_ic >= 0.5) & (_id.abs() <= 1.0)).where(_id.notna() & _ic.notna())
     return d
 
 

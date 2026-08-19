@@ -403,7 +403,13 @@ def _identity_gate(d: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
     out = d[keys].copy()
     out["identity_coherence"] = coh.round(4)
     out["identity_abs"] = iab.round(4)
-    out["identity_reliable"] = (coh >= 0.5) & (i.abs() <= 1.0)
+    # ⛔⛔ MASKED 2026-08-19 (column review unit 19): a bare `&` of two comparisons cannot say "unknown"
+    # — `NaN >= 0.5` and `NaN <= 1.0` are both False, so an edge whose `identity` was NEVER COMPUTED read
+    # as "unreliable". Measured: **218 of the 377 False rows (57.8%) had NaN identity** ⇒ anyone filtering
+    # `identity_reliable == False` to study unreliable attribution got a set that was 58% "not computed",
+    # and the unreliable RATE was overstated 2.3× (6.7% -> 2.9% on the measurable set). Fifth instance of
+    # this class in one session. **A three-state quantity needs three states: True / False / NaN.**
+    out["identity_reliable"] = ((coh >= 0.5) & (i.abs() <= 1.0)).where(i.notna() & coh.notna())
     return out
 
 

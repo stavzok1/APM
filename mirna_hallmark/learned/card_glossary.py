@@ -975,8 +975,47 @@ COLUMNS.update({
     ("gene", "n_hallmark_sets"): "How many MSigDB Hallmark programs this gene belongs to.",
     ("edge", "n_HLY_meas"): "How many of the gene's arms have a MEASURED (not imputed, not "
                             "multi-mapping-collapsed) healthy level. Read before any `share_HLY`/`rank_HLY`.",
-    ("edge", "identity_allocated"): "Family identity with phantom minor arms forced to 0 \u2014 the allocation "
-                                    "actually used downstream.",
+    # ── UNIT 19 (2026-08-19) — edge `identity_` (5) + arm `ago_` (4) + arm `cur_` (2).
+    ("edge", "identity_reliable"): "Is this edge's Shapley `identity` trustworthy — `identity_coherence` "
+        "≥ 0.5 AND |identity| ≤ 1? ⛔⛔ **MASKED 2026-08-19: it could not say 'unknown'.** A bare `&` of "
+        "two comparisons returns False on NaN, so an edge whose identity was NEVER COMPUTED read as "
+        "*unreliable* — **218 of the 377 False rows (57.8%)**. Anyone filtering `== False` to study "
+        "unreliable attribution got a set that was 58% *not computed*, and the unreliable RATE was "
+        "overstated **2.3×: 6.7% → 2.9%** on the measurable set. Now three-state: **True 5,272 · False 159 "
+        "· NaN 218.**",
+    ("edge", "identity_abs"): "|identity| as a fraction of the gene's total |identity|, **clipped to "
+        "[0,1]**. ⚠⚠ **THE CLIP IS LOSSY AND HIDES THE TAIL: 550 rows (9.7%) sit at exactly 1.000**, which "
+        "may be a genuine 1.0 or a clipped 740. ⇒ read `identity_reliable` beside it; a clipped row is by "
+        "construction one the gate rejects.",
+    ("edge", "identity_deconv"): "Shapley identity recomputed under the composition-adjusted design. "
+        "⛔⛔ **UNGATED AND UNBOUNDED — range [−540.3, +541.3].** `identity` is a SIGNED share, so it "
+        "explodes wherever the gene's Σ|identity| approaches 0 (axiom 5). **Never quote it raw**; gate on "
+        "`identity_reliable` or use `identity_abs`.",
+    ("edge", "identity_allocated"): "**Family identity with phantom minor arms forced to 0 — the "
+        "allocation actually used downstream.** ⛔ **Ungated — "
+        "range [−180.4, +166.0]**, same signed-share pathology as `identity_deconv`. Gate before use.",
+    ("edge", "identity_coherence"): "`1 / Σ|identity|` over the gene, clipped to (0,1] — how much the "
+        "gene's identity shares CANCEL. Median **0.996**, i.e. the shares nearly sum to 1 for most genes; "
+        "the low tail is where the signed shares fight and the ratio columns blow up. The `≥ 0.5` half of "
+        "`identity_reliable`.",
+    ("arm", "ago_dom_src"): "Provenance of `ago_dom` — which CLIP dataset the AGO-loading dominance came "
+        "from. ⚠ **CONSTANT: `manakov` on all 678 rows**, because only one source is wired. KEPT rather "
+        "than pruned for the same reason as `pip_dense`: it records a PROVENANCE choice, and it would "
+        "start varying the moment a second dataset is added. A constant column is not automatically dead — "
+        "ask whether it names a design decision or a defunct check.",
+    ("arm", "ago_dom"): "Fraction of the arm's Manakov AGO-CLIP reads assigned to it rather than its "
+        "sibling arm — the loading dominance. Median 0.658 on the 27.7% of arms with CLIP coverage. "
+        "⚠ MH-record: this axis is **coupling-INERT** — its value is identity/QC, not prediction.",
+    ("arm", "ago_reads"): "Raw AGO-CLIP read count (median 6, max 210,722). ⚠ Fill **60.0%** against "
+        "`ago_dom`'s 27.7% — a read count exists for many arms whose dominance is undefined, because "
+        "dominance needs BOTH arms of the hairpin. Do not infer coverage of one from the other.",
+    ("arm", "cur_he_degree"): "How many HE genes this arm regulates in the curated design — the arm's "
+        "curation degree (median 3, max 125).",
+    ("arm", "cur_he_degree_expr"): "As `cur_he_degree` but counting only targets above the expression "
+        "floor. ⛔ **NOT redundant with it, though it looks it** — identical on only **57.4%** of the 875 "
+        "arms, differing on **373** (max 18 targets), spearman 0.974. The gap IS the unexpressed-target "
+        "fraction; a degree that shrinks under the expression filter is an arm whose curated targets are "
+        "largely silent in this cohort.",
     # ── UNIT 18 (2026-08-19) — the `comp_` block (16 cols, IDENTICAL on the gene and gene_family cards).
     ("", "comp_tcga_mrna_driver_share"): "Share of the gene's mRNA coupling attributable to the single "
         "compartment that most changes it — **axiom 8's composition GATE**, the axis that separates the "
