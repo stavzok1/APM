@@ -1045,3 +1045,43 @@ patients**: ~514 genes are needed for the mRNA-sized effect, and no cohort suppl
 and a large patient count (RPPA 180×866; CPTAC ~880×105). The honest options are (a) a gene-powered proteome
 cohort, or (b) accepting the protein layer is **bounded** — |gap| ≲ 0.006 — which is itself a real constraint
 and far cheaper than chasing it.
+
+---
+
+## ⬜ Ingest the versioned COSMIC Cancer Gene Census as a real annotation (user-directed, 2026-08-19)
+
+**Why now.** Column-review unit 14 (MH-250) measured what `role` actually covers: **`unknown` on 1,262 of
+1,420 genes — 11.1% coverage**. The source is `gene_roles._builtin_table()`, **232 genes hardcoded as Python
+sets**. Per `gene_roles.py` it is a **COSMIC-CGC / OncoKB consensus, breast-cancer-prioritised** — so the
+problem is *not* that the list is arbitrary. The problem is that it is **frozen, unversioned and subset**:
+no census version, no download date, no refresh path, and no way to tell what a newer census would add.
+
+**What to do.**
+1. **Download the CGC** (`cancer_gene_census.csv`) from the COSMIC download portal. ⚠ **Requires a free
+   academic registration and carries a non-commercial licence** — record the **census version and download
+   date** in `docs/DATA_SOURCES.md`, which is half the point of the exercise.
+2. **Ingest to `annotations/cosmic_cgc.tsv`** with a builder under `scripts/annotations/`, following the
+   `_build_tf_census.py` / `humantfs_lambert2018_tf.tsv` pattern already used for the Lambert TF census —
+   that is the in-repo precedent for a licensed curated list, so do not invent a new shape.
+3. **Map CGC's `Role in Cancer` field** (`oncogene` / `TSG` / `fusion`, comma-separated and often multiple)
+   onto the existing 3-value vocabulary. ⚠ **`fusion` has no home in the current scheme** and must not be
+   silently folded into `oncogene`. **Keep Tier 1 and Tier 2 distinguishable** — Tier 2 is weaker evidence
+   and a reader must be able to gate on it.
+4. **Wire it as the OVERRIDE, not a code edit** — `config.GENE_ROLES_OVERRIDE` already exists for exactly
+   this and `load_gene_roles` merges it on top (override wins). No change to `gene_roles.py` is needed.
+
+**⛔ Before adopting it, run these two checks — a bigger list is not automatically a better one.**
+- **CONCORDANCE ON THE OVERLAP.** Where the built-in and CGC both call a gene, do they agree? Report the
+  disagreement rate and the disagreeing genes **by name**. The built-in is BC-prioritised and CGC is
+  pan-cancer, so a systematic split is plausible and would be a finding, not a nuisance.
+- ⭐⭐ **AND RE-RUN EVERY `role`-STRATIFIED RESULT ON BOTH ANNOTATIONS.** Coverage goes from 158 genes to
+  whatever CGC supplies, which changes the *universe* of every oncogene-vs-TSG contrast — so a moved result
+  is confounded between "better annotation" and "different genes". **Report both, and treat a result that
+  appears under only one of them as unresolved.** This is axiom 4: state what the change would do to the
+  test before running it.
+
+**Downstream to re-check** (grep `malignancy_sign` / `load_gene_roles`): `geneset_architecture`
+(`sum_mal_pro_tumor`, `sum_mal_pro_tumor_cont`), `mal_pro_tumor_hier`, and the edge card's `role` column.
+⚠ The **continuous** counterpart `load_gene_dependency` (DepMap, ~18.5k genes) is unaffected and is the
+better instrument where a binary role is not required — **CGC does not replace it.**
+
