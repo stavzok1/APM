@@ -977,6 +977,26 @@ COLUMNS.update({
                             "multi-mapping-collapsed) healthy level. Read before any `share_HLY`/`rank_HLY`.",
     ("edge", "identity_allocated"): "Family identity with phantom minor arms forced to 0 \u2014 the allocation "
                                     "actually used downstream.",
+    # ── UNIT 16 (2026-08-19) — the `arb_` block. Internally clean; its UNIVERSE is the story.
+    ("arm", "arb_n_edges"): "Edges this arm carries in the LEARNED MODEL's own readouts. ⛔⛔ **DOES NOT "
+        "RECONCILE WITH THE EDGE CARD, BY DESIGN AND BY VINTAGE — do not treat a mismatch as a bug.** The "
+        "whole `arb_` block rolls up **`readouts_arm_edges.tsv` (2026-08-03)**, not "
+        "`realization/edge_card.tsv`. Measured: Σ`arb_n_edges` = **5,792** vs **5,649** edge-card rows, "
+        "disagreeing on **58 arms** (miR-124-3p 108 vs 87). ⭐ **The cause is a GENE-universe gap, not an "
+        "edge filter: the 158 extra pairs sit on 129 genes that have ZERO rows on the edge card** — and all "
+        "129 are on the GENE card. ⇒ `arb_` is the wider, model-native universe; the edge card is the "
+        "narrower delivered one. ✅ Internally the block is consistent: threshold nesting holds on **0 "
+        "violations**, every `_ident` count is a proper subset, and `arb_frac_identified` = "
+        "`arb_n_identified / arb_n_edges` on **100%** of rows.",
+    ("arm", "arb_frac_identified"): "`arb_n_identified / arb_n_edges` (verified exact on 100% of rows). "
+        "⚠ `identified` is `|z| > 2` on the **UNCALIBRATED** posterior SD, which over-admits (24.8% vs "
+        "`cal_identified`'s 19.9%) ⇒ this fraction inherits the loose bar. ⚠ Its denominator is the "
+        "model-native universe, not the edge card's — see `arb_n_edges`.",
+    ("arm", "arb_max_abs_beta"): "Largest |β| among the arm's edges. ⛔ **Identical to `arb_mean_abs_beta` "
+        "on the 229 arms (9.3%) that carry exactly ONE edge** — a max over one unit is that unit (axiom 8's "
+        "degeneracy trap). Gate on `arb_n_edges > 1` before comparing the two.",
+    ("arm", "arb_mean_abs_beta"): "Mean |β| over the arm's edges. See `arb_max_abs_beta` for the one-edge "
+        "degeneracy (9.3% of arms, where the two are equal by construction).",
     # ── UNIT 15 (2026-08-19) — the `fst_` block, audited against itself. A defect I shipped.
     ("arm", "fst_d_share_NAT_TUM"): "Change in the arm's share of its seed family's linear dose, matched "
         "NAT → tumour, **re-normalised over the members measured in BOTH states**. ⛔⛔ **THIS COLUMN WAS "
