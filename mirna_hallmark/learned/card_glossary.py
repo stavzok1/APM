@@ -20,6 +20,15 @@ as authority. Fill gaps from the producing module, not from the column name.
 
 ⚠ **THE RUNG STILL TRAVELS SEPARATELY.** A description here never states the unit — read `card_registry`
 for that. `beta` is described once, and it is edge-rung on `edge` and family-rung on `gene_family`.
+
+⛔⛔ **DUPLICATE KEYS ARE CHECKED, BECAUSE A DICT LITERAL SWALLOWS THEM SILENTLY.** A repeated key is
+resolved at construction with the LAST one winning — no error, no warning. On 2026-08-19 that killed four
+freshly-written `gene_family` entries (superseded stubs sat later in `COLUMNS`), and the guard written in
+response IMMEDIATELY found a second, older instance nobody had noticed: a circular stub
+*"Shapley/LMG identity attribution — see the `identity_` block"* had been overwriting the real `identity_`
+description for every `identity_*` column. **A silent overwrite in a documentation table is worse than a
+missing entry, because the stale text still reads as authoritative.** `duplicate_keys()` parses this
+file's own AST and `main()` refuses to stay quiet about it — validated by injecting a known duplicate.
 """
 from __future__ import annotations
 
@@ -312,7 +321,6 @@ BLOCKS: dict[tuple[str, str], str] = {
     ("", "sd_"): "Standard deviation of the named quantity.",
     ("", "rho_"): "A Spearman correlation; read the suffix for what against what.",
     ("", "edge_"): "An edge-rung quantity carried onto this row.",
-    ("", "identity_"): "Shapley/LMG identity attribution — see the `identity_` block.",
     ("", "spiker"): "Flag: the arm's abundance is carried by a few spiking samples rather than a broad "
                     "distribution \u2014 a measurement-reliability warning, not biology.",
     ("", "detection"): "Detection status of the arm against the expression floor.",
@@ -605,8 +613,54 @@ def coverage() -> pd.DataFrame:
     return annotate(reg)
 
 
+def duplicate_keys() -> list[tuple[str, str, int, int]]:
+    """⛔ THE DUPLICATE-KEY GUARD — a dict literal SILENTLY accepts a repeated key and the LAST one wins.
+
+    This cost a real error on 2026-08-19: four freshly-written `gene_family` entries were dead on arrival
+    because superseded stubs for the same keys sat LATER in `COLUMNS`. Nothing complained — the module
+    imported, `--emit` reported 100% coverage, and the only symptom was that the new text did not appear
+    in `--col`. **A silent overwrite in a documentation table is worse than a missing entry**, because the
+    stale text still reads as authoritative.
+
+    Python gives no runtime hook for this (the duplicate is resolved at literal construction), so the
+    check is on the SOURCE: parse this file's AST and report any key repeated inside `BLOCKS` or
+    `COLUMNS`, with both line numbers. Runs in `main()`, so it can never recur unnoticed.
+    """
+    import ast
+
+    src = pathlib.Path(__file__).read_text()
+    tree = ast.parse(src)
+    dups: list[tuple[str, str, int, int]] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.AnnAssign | ast.Assign):
+            continue
+        targets = [node.target] if isinstance(node, ast.AnnAssign) else node.targets
+        names = [t.id for t in targets if isinstance(t, ast.Name)]
+        if not ({"BLOCKS", "COLUMNS"} & set(names)) or not isinstance(node.value, ast.Dict):
+            continue
+        seen: dict[str, int] = {}
+        for k in node.value.keys:
+            try:
+                lit = ast.literal_eval(k)
+            except Exception:
+                continue
+            tag = repr(lit)
+            if tag in seen:
+                dups.append((names[0], tag, seen[tag], k.lineno))
+            else:
+                seen[tag] = k.lineno
+    return dups
+
+
 def main() -> None:
     args = sys.argv[1:]
+
+    dups = duplicate_keys()
+    if dups:
+        print(f"⛔ {len(dups)} DUPLICATE KEY(S) — the LATER one silently wins and the earlier text is DEAD:")
+        for where, key, first, second in dups:
+            print(f"   {where}[{key}]  defined at line {first}, OVERWRITTEN at line {second}")
+        print("   fix: delete the superseded entry, then re-run.\n")
     if "--col" in args:
         col = args[args.index("--col") + 1]
         reg = pd.read_csv(OUT / "card_registry.tsv", sep="\t", dtype=str).fillna("")
