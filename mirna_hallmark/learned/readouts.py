@@ -154,6 +154,16 @@ def add_reliability(d: pd.DataFrame) -> pd.DataFrame:
         d["net_pressure"] = (sb.abs() / sa.replace(0, np.nan)).clip(0, 1)
         d["beta_frac_abs"] = (d["beta"].abs() / sa.replace(0, np.nan)).clip(0, 1)
     d["beta_frac_reliable"] = (d["net_pressure"] >= 0.5) & (d["beta_frac_sd"].abs() <= 1.0)
+    # ⭐ A CONSTANT GUARD IS A SILENT GUARD — turn it into an ACTIVE one (column review unit 7, 2026-08-19).
+    # `beta_frac_reliable` is True on 100% of rows and CORRECTLY so: MH-124 fixed the `_rtnorm_pos` sampler
+    # bug behind the negative βs, so β is strictly positive and `beta_frac` can no longer explode. The
+    # column therefore carries no information and is PRUNED FROM THE CARDS — but pruning a guard silently
+    # would lose the alarm, so the condition is asserted here instead. If β ever goes negative again this
+    # prints; a constant column would not have.
+    _bad = int((~d["beta_frac_reliable"].fillna(True)).sum())
+    if _bad:
+        print(f"  ⚠⚠ beta_frac_reliable is FALSE on {_bad} row(s) — β sign-cancellation has RETURNED. "
+              f"The MH-119 explosion is possible again; re-check the sampler before reading `beta_frac`.")
     if "retention" in d.columns:
         d["retention_reliable"] = d.get("identified", pd.Series(False, index=d.index)).astype(bool)
     if "identity" in d.columns:
@@ -439,7 +449,8 @@ def run(genes: Optional[Sequence[str]] = None, *, workers: int = 8, limit: Optio
         # DESIGN DIMENSION — and on this card it is bit-identical to `n_fam` (both = the family count).
         # `n` -> `n_samples` because it is constant (1,040) and is provenance of the fit, not data.
         # The rename/drop is applied to the CARD only; `readouts_edges.tsv` keeps the estimator's own names.
-        E = (E.drop(columns=[c for c in ("p_fam",) if c in E.columns])
+        E = (E.drop(columns=[c for c in ("p_fam", "beta_frac_reliable", "net_pressure")
+                             if c in E.columns])
               .rename(columns={"n": "n_samples"}))
         E.to_csv(fc, sep="\t", index=False, float_format="%.5f")
         print(f"[readouts:{level}] -> {fc.name} (BASE, {E.shape[1]} cols; "

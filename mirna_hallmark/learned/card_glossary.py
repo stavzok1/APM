@@ -83,7 +83,21 @@ BLOCKS: dict[tuple[str, str], str] = {
                    "⚠ This is DRIVER-SHARE, not the gene's own expression LOADING on a compartment — "
                    "`gene_axes` measured only the former to predict anything.",
     ("", "cov_"): "Coverage flags — was this row ever SCANNED by the named source. ⛔ Read before reading "
-                  "the block it gates: a blank in a gated block means `— not scanned`, which is not a zero.",
+                  "the block it gates: a blank in a gated block means `— not scanned`, which is NOT a zero. "
+                  "⭐ **THE FLAG→BLOCK MAP IS MEASURED, NEVER CURATED** (`gen_cards.cov_map`), requiring "
+                  "`flag False ⟺ block entirely blank` in BOTH directions at ≥0.995. **All 16 bound "
+                  "mappings hold at precision 1.000 / recall 1.000** — exact, not approximate. "
+                  "⛔⛔ **AND THE NAMES LIE, WHICH IS WHY IT IS MEASURED (verified 2026-08-19).** A "
+                  "hand-written table would bind by name and be WRONG for most of them: `cov_famrole` vs "
+                  "`famrole_` recall **0.911** · `cov_attr` vs `attr_` **0.750** · `cov_ago_dom` vs `ago_` "
+                  "**0.461** · `cov_comp` vs `cload_` **0.139** · `cov_meth` vs `bc_` **0.354** — all fail "
+                  "the bar. `attr_` is in fact governed by **`cov_beta`** (1.000/1.000), not by `cov_attr`. "
+                  "⚠⚠ **COVERAGE OF THE GUARANTEE IS PARTIAL: only 16 of the arm card's 42 blocks have a "
+                  "governing flag, and 8 of the 21 flags govern nothing** (`cov_ago_dom`, `cov_attr`, "
+                  "`cov_comp`, `cov_cptac`, `cov_expr`, `cov_famrole`, `cov_meth`, `cov_subtype`). ⇒ **for "
+                  "the other 26 blocks — including `fame_`, `adm_`, `chim_`, and the new `fst_` and "
+                  "`disc_` — a blank CANNOT be distinguished from a measured zero.** Do not read the "
+                  "three-empty-states promise as covering the whole card.",
 
     # ---- the model ----
     ("", "beta_"): "Posterior summaries of the coupling coefficient from the dense Gibbs fit "
@@ -504,7 +518,7 @@ COLUMNS: dict[tuple[str, str], str] = {
                               "that predicts the `beta_frac` vs `beta_frac_abs` gap (ρ=+0.809). "
                               "⚠ MH-94's PTEN miR-141/200a case (0.77 ± 0.41) is the reason this column "
                               "exists: a point Shapley hid a genuinely unidentified split.",
-    ("edge", "beta_frac_reliable"): "`net_pressure ≥ 0.5 AND |beta_frac_sd| ≤ 1`. ⛔⛔ **CONSTANT TRUE on "
+    ("_retired", "beta_frac_reliable"): "`net_pressure ≥ 0.5 AND |beta_frac_sd| ≤ 1`. ⛔⛔ **CONSTANT TRUE on "
                                     "all 5,644 rows — and that is the CORRECT answer, not a broken gate.** "
                                     "MH-119 built it because `beta_frac` exploded to 999% when a gene's βs "
                                     "cancelled; MH-124 then found those negative βs were a SAMPLER BUG and "
@@ -718,8 +732,7 @@ COLUMNS.update({
                            "one that varies. (Bit-identical to `net_pressure` on this card.)",
     ("gene_family", "pip_dense"): "\u26a0 CONSTANT by construction (\u03c0\u22611 dense readout). Bit-identical to "
                                   "`net_pressure`.",
-    ("edge", "net_pressure"): "\u26a0 CONSTANT on this card and bit-identical to `pip_dense`.",
-    ("gene_family", "net_pressure"): "\u26a0 CONSTANT on this card and bit-identical to `pip_dense`.",
+    ("_retired", "net_pressure"): "\u26a0 CONSTANT on this card and bit-identical to `pip_dense`.",
     ("edge", "n_samples"): "Samples the edge was fit on \u2014 CONSTANT (1,040) across the card.",
     ("gene_family", "n"): "Samples the cell was fit on \u2014 CONSTANT (1,040) across the card.",
     ("gene", "n_dense_included"): "Families entering the dense (\u03c0\u22611) readout. \u26a0 **Bit-identical to "

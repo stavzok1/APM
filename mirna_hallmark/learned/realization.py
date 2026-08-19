@@ -852,7 +852,13 @@ _EDGE_RENAME = {"detection": "arm_detection", "spiker": "arm_spiker", "n": "n_sa
 #: ⛔ PRUNED: `p_fam` is NOT a p-value — it is the design dimension, and on THIS card it is bit-identical to
 #: the gene's `n_arms` (measured: 0/1,420 mismatches, corr 1.0000). On `gene_family` it is bit-identical to
 #: `n_fam`. It never carries anything the card does not already hold under an honest name.
-_EDGE_DROP = ("p_fam",)
+# ⛔ PRUNED 2026-08-19 (column review unit 7): both are CONSTANT on the delivered card and carry no
+#: information. `beta_frac_reliable` is a vestigial guard — the defect it watches (β sign-cancellation)
+#: was fixed by MH-124, so it is True everywhere; the condition is now ASSERTED in `add_reliability`
+#: instead, which is louder than a constant column. `net_pressure` (=|Σβ|/Σ|β|) is identically 1.0 for the
+#: same reason and is bit-identical to `pip_dense`. ⚠ `pip_dense` is KEPT: it is also constant, but it
+#: records the π≡1 design choice rather than a defunct check.
+_EDGE_DROP = ("p_fam", "beta_frac_reliable", "net_pressure")
 
 
 def _normalise_edge_names(card: pd.DataFrame) -> pd.DataFrame:
