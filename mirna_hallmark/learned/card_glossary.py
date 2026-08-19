@@ -975,6 +975,37 @@ COLUMNS.update({
     ("gene", "n_hallmark_sets"): "How many MSigDB Hallmark programs this gene belongs to.",
     ("edge", "n_HLY_meas"): "How many of the gene's arms have a MEASURED (not imputed, not "
                             "multi-mapping-collapsed) healthy level. Read before any `share_HLY`/`rank_HLY`.",
+    # ── UNIT 22 (2026-08-19) — arm `attr_` (14), arm `real_` (11), gene `greal_` (10).
+    ("arm", "attr_max_joint_share"): "Largest JOINT attribution share among this arm's edges. ⚠ **Looks "
+        "redundant with `attr_max_nested_share` and is NOT** — I suspected a duplicate from identical "
+        "distinct-value counts (231) and checked: they agree on only **35.4%** of 362 arms, max difference "
+        "**0.628**. ⛔ But **spearman +0.962**, so as a RANKING AXIS they are near-interchangeable — "
+        "distinct enough to keep, too correlated to scan both.",
+    ("arm", "attr_max_nested_share"): "Largest NESTED attribution share. See `attr_max_joint_share`: "
+        "different values (agree on 35.4%), one axis (spearman +0.962).",
+    ("arm", "attr_max_within_share"): "Largest WITHIN-cell attribution share for this arm. ⛔⛔ **= 1.000 "
+        "on 338 of 362 arms (93.4%) — but only HALF of that is degeneracy.** For **156** of them "
+        "`attr_n_reliable == 1`, so the share is 1.0 **by construction**; the other **182 have >1 reliable "
+        "edge and still sit at 1.0**, which is genuine total dominance and a real finding. ⇒ **split on "
+        "`attr_n_reliable > 1` before reading this column** — pooled, the two halves say opposite things.",
+    ("arm", "attr_n_reliable"): "Reliable edges behind this arm's `attr_*` shares (median 2). ⭐ **The mask "
+        "that separates construction from dominance in `attr_max_within_share`** — not optional.",
+    ("arm", "attr_med_dose_share"): "Median dose share of this arm within its family cells. ⚠ **= 1.000 on "
+        "419 of 714 (58.7%)** — the single-member-cell degeneracy again (axiom 8). Mask on cell size.",
+    ("arm", "real_frac_c10"): "Fraction of this arm's scored genes coupling below −0.10. ⭐ **Deliberately "
+        "gated where too few genes were scored: defined on 215 arms against `real_n_c10`'s 590** (the "
+        "gated-out arms have a median `real_n_scored` of **2**). ✅ Verified exact "
+        "(`n_c10/n_scored`) on 100% of the rows where it exists.",
+    ("gene", "greal_frac_c10"): "Gene-rung twin of `real_frac_c10` — defined on 446 genes against "
+        "`greal_n_c10`'s 1,289; gated-out genes have a median `greal_n_scored` of **1**. Exact on 100%.",
+    ("gene", "greal_n_scored"): "Genes/edges scored for realized coupling (median 2, max 59) — the "
+        "DENOMINATOR of every `greal_frac_*`. ✅ The `greal_n_c05 … n_c30` ladder is properly nested: "
+        "**0 monotonicity violations and 0 rows where a threshold count exceeds `n_scored`** (verified).",
+    ("arm", "real_n_scored"): "Genes scored for this arm's realized coupling (median 3). ✅ Its `n_c05 … "
+        "n_c30` ladder is properly nested — **0 violations** (verified).",
+    ("arm", "real_best_coupling"): "Most negative realized coupling among this arm's scored genes "
+        "(median −0.08, min −0.56). ⚠ A MIN over a set whose size ranges 1→68, so it partly measures how "
+        "many genes were scored; read `real_n_scored` beside it.",
     # ── UNIT 21 (2026-08-19) — arm `sdsz_`/`gctx_`/`cnv_`/`seq_`/`foc_`/`ts_`/`bc_meth_`, edge `echim_`.
     ("arm", "seq_n_genes_any"): "Genes with ANY scanMiR K_D site — ⛔⛔ **median 10,485 of ~12,700, i.e. "
         "this arm 'targets' 83% of the transcriptome.** It is a sequence-scan ceiling, not a targetome. "
