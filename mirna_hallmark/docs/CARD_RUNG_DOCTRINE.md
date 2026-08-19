@@ -119,6 +119,55 @@ python3 -m mirna_hallmark.learned.card_glossary --col beta # one column, every c
 ⚠ Still true, and the reason the glossary is a THIRD field rather than a rename: `domain` is
 row-applicability, `rung` is the unit, `description` is the meaning. Three orthogonal facts.
 
+## 2b. ⭐ WHEN IS A BLOCK "THE SAME BLOCK AT ANOTHER RUNG"? — THE NO-OP TEST
+
+*(Added 2026-08-19, user-asked: "you say cptac can be inherited from edge to gene? in what way?")*
+
+Two blocks sharing a prefix on two cards can stand in three different relations, and **the review shortcut
+of closing one by inheritance is only valid for the first**:
+
+| relation | test | example |
+|---|---|---|
+| **SUBSET** — same columns, same rungs | name-set inclusion + rung equality | `ctx_` on gene/gene_family ⊂ edge (units 6/7, closed by inheritance) |
+| **AGGREGATE** — same estimand, coarser unit | ⭐ **the NO-OP TEST below** | `cptac_` edge → gene |
+| **UNRELATED** — one prefix, two quantities | read the values | `arm_` on the edge card (unit 12) |
+
+⛔ **`cptac_` shares ZERO column names between the edge and gene cards, so it cannot be closed by
+inheritance — but it is NOT unrelated either.** The gene card inserts an infix naming the aggregation:
+
+```
+edge   cptac_{cohort}_rho_{layer}[_raw]        ← ONE arm vs the gene's protein/RNA
+gene   cptac_{cohort}_agg_rho_{layer}[_raw]    ← the β-WEIGHTED SUM over the gene's arms
+gene   cptac_{cohort}_abund_rho_{layer}        ← the UNWEIGHTED abundance-sum reference
+```
+
+⇒ **the gene value is NOT derivable from the edge values**, because `ρ(Σβx, y) ≠ mean ρ(xᵢ, y)`. Measured:
+spearman **+0.870** (prospective) / **+0.782** (t105) against the per-gene mean, and the aggregate is
+**~40% STRONGER** (median |ρ| 0.0838 vs 0.0588) — which is the point of aggregating, not a discrepancy.
+
+### ⭐ THE NO-OP TEST — the check that makes an aggregate relation falsifiable
+
+> **On units where the aggregation is a NO-OP, the two rungs MUST agree exactly.** For `cptac_` that is
+> genes with exactly one arm: a weighted sum of one term IS that term.
+
+It is the only cheap check that distinguishes *"a coarser view of the same estimand"* from *"a different
+quantity that happens to share a prefix"* — and it immediately found a defect:
+
+| cohort | true no-op genes | disagree | median \|diff\| | max |
+|---|---|---|---|---|
+| **prospective** | 466 | **0 (0.0%)** | — | — |
+| **tcga105** | 389 | **112 (28.8%)** | 0.0587 | **0.6446** |
+
+⛔⛔ **The prospective cohort proves the identity SHOULD hold exactly. TCGA-105 breaks it on 29% of genes
+where the aggregate is mathematically the single edge, by up to 0.64.** Ruled out: it is not a sample-count
+difference (edge-side n = 105 on both the matching and mismatching sets) and not a mis-specified no-op set
+(all 112 have `n_arms == 1` *and* exactly one scored edge). ⬜ **UNDIAGNOSED — the cause is somewhere in
+`cptac_card`'s t105 path.** Until it is resolved, **do not cross-reference edge-rung and gene-rung
+`cptac_*` values on the tcga105 cohort.** (MH-262, `PROGRAM_FORWARD_BOARD.md`.)
+
+**RULE: whenever you add a block at a second rung, write down its no-op set and assert the identity there.**
+An aggregate that cannot reproduce itself on a one-element set is not an aggregate.
+
 ## 3. ⭐ The labels are TESTED, not asserted
 
 `card_rungs.verify(card)` checks each declared rung against the data's actual invariance **given that

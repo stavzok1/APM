@@ -1127,3 +1127,28 @@ posterior is the *finding*: it says the design cannot separate these two arms, w
 identifiability, not noise. ⇒ this is a candidate for the **arm-resolution** machinery
 (`armres_*`, `arm_sep_z`) and for the within-family refit that is default-OFF.
 
+---
+
+## ⬜ DIAGNOSE: `cptac_t105` breaks the edge→gene no-op identity on 29% of single-arm genes
+
+**Found 2026-08-19** by the no-op test (`CARD_RUNG_DOCTRINE.md` §2b), which exists because of this question.
+
+On a gene with exactly one arm, `cptac_{cohort}_agg_rho_prot` (gene card, a β-weighted sum over the gene's
+arms) is a weighted sum of ONE term and must equal `cptac_{cohort}_rho_prot` (edge card) **exactly**.
+
+- **prospective: 0 of 466 disagree** — the identity holds perfectly, so it is the correct expectation.
+- **tcga105: 112 of 389 disagree (28.8%)**, median |diff| **0.0587**, p90 0.2374, **max 0.6446**.
+
+**Already ruled out** — do not re-test these:
+- Not a sample-count difference: edge-side n is **105** on both the matching and mismatching sets.
+- Not a mis-specified no-op set: all 112 have `n_arms == 1` **and** exactly one scored edge.
+- Not a general cptac defect: the prospective cohort, same code path, is exact on all 466.
+
+**Where to look:** `learned/cptac_card.py`'s tcga105 branch — specifically whether the gene-level and
+edge-level scorers see the same patient set, the same C block, and the same layer matrix. The asymmetry
+against `prospective` is the strongest clue: whatever differs is **cohort-specific**, not estimand-level.
+
+⚠ **Until resolved: do not cross-reference edge-rung and gene-rung `cptac_*` values on tcga105.** The
+prospective cohort is unaffected. ⚠ Note this is *separate* from MH-253 (the `NaN < NaN` mask on
+`agg_beats_abund_prot`) and from the 2026-08-04 card staleness — both were checked and neither explains it.
+
