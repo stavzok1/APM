@@ -489,6 +489,45 @@ COLUMNS: dict[tuple[str, str], str] = {
                           "honest 'undefined', not missing data.",
     ("edge", "m_nnls"): "Bagged-NNLS weight. Exactly 0 in 31.7% of families — this is what lets `identity` "
                         "say a regulator contributes nothing, which `beta` structurally cannot.",
+    ("edge", "beta_frac_abs"): "|E[β_f]| / Σ|E[β]| — the share computed from the POINT ESTIMATES. "
+                               "⚠⚠ **NOT the same as `beta_frac`, and the difference is JENSEN, not a "
+                               "bug.** `beta_frac` is the mean over Gibbs DRAWS of (β_f/Σβ) — E[ratio] — "
+                               "while this is the ratio of E. They differ on **4,985 of 5,644 rows**, and "
+                               "the gap IS the posterior width: **spearman(beta_frac_sd, |gap|) = +0.809**, "
+                               "median |gap| rising 0.00005 (tight) → 0.00844 (very wide), max **0.112**. "
+                               "⇒ use `beta_frac` + `beta_frac_sd` when uncertainty matters; use this when "
+                               "you need a plain bounded share of the point estimates. ✅ Verified: it "
+                               "reconstructs β/Σβ over the gene's ARMS to 5e-4 (rounding), and both sum to "
+                               "1 within gene on 100% of genes.",
+    ("edge", "beta_frac_sd"): "Posterior SD of the per-draw fraction β_f/Σβ. ⭐ It is what makes "
+                              "`beta_frac` an honest share rather than a point ratio — and it is the axis "
+                              "that predicts the `beta_frac` vs `beta_frac_abs` gap (ρ=+0.809). "
+                              "⚠ MH-94's PTEN miR-141/200a case (0.77 ± 0.41) is the reason this column "
+                              "exists: a point Shapley hid a genuinely unidentified split.",
+    ("edge", "beta_frac_reliable"): "`net_pressure ≥ 0.5 AND |beta_frac_sd| ≤ 1`. ⛔⛔ **CONSTANT TRUE on "
+                                    "all 5,644 rows — and that is the CORRECT answer, not a broken gate.** "
+                                    "MH-119 built it because `beta_frac` exploded to 999% when a gene's βs "
+                                    "cancelled; MH-124 then found those negative βs were a SAMPLER BUG and "
+                                    "fixed it, so β is now strictly positive (min +0.00096) and `beta_frac` "
+                                    "is properly bounded [0.0015, 1.0000] with 0 rows above 1. **The defect "
+                                    "it guards can no longer occur.** ⚠ Vestigial — it carries no "
+                                    "information and is a prune candidate; do NOT read it as evidence that "
+                                    "a gate was applied to something that needed one. (Contrast "
+                                    "`identity_reliable`, which guards the cancellation that DOES still "
+                                    "occur — in `identity`, not in β.)",
+    ("edge", "beta_deconv"): "β refit on the DECONV design (core C + the 8 non-malignant Wu-major "
+                             "lineages, Cancer-Epithelial held out). ⚠ Not 'more controlled = better': a "
+                             "miRNA acting through a cell-STATE shift PRODUCES a composition change, so "
+                             "the composition is partly the MECHANISM. Read `retention_beta` beside it.",
+    ("edge", "beta_sd_deconv"): "Posterior SD on the deconv design. ⚠ Genuinely different from `beta_sd` — "
+                                "they differ on 5,597 of 5,644 rows (corr 0.999), so do not treat one as a "
+                                "stand-in for the other.",
+    ("edge", "beta_frac_deconv"): "`beta_frac` recomputed on the deconv design — the composition-adjusted "
+                                  "share of the gene's budget.",
+    ("edge", "beta_arm"): "The arm's OWN β from the within-cell fit (`arm_rung.py`), defined only in "
+                          "multi-arm cells (fill 0.203). ⚠ Distinct from `beta`, which is the edge-level "
+                          "readout over the gene's whole design. ⭐ Genuinely varies per arm inside a cell "
+                          "(467/467 cells), unlike `arm_dbeta`/`arm_sep_z`, which are cell constants.",
     ("edge", "beta_frac"): "MAGNITUDE share (beta_f / sum beta). ⛔ Renamed from `share`: for an additive "
                            "aggregate Shapley(f) == beta_f, so this splits NOTHING. It is not identity.",
     ("gene", "concentration"): "`beta.max() / beta.sum()` — the TOP FAMILY's share of the gene's total β; median **0.954**, i.e. most genes are dominated by one family. "
