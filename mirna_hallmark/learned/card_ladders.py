@@ -183,6 +183,21 @@ def normalise_gene_card() -> None:
     for _old, _new in HEUR_RENAME.items():
         if _old in g.columns and _new not in g.columns:
             g = g.rename(columns={_old: _new})
+    # ⛔⛔ REPAIR THE CPTAC "beats abundance" FLAGS IN PLACE (column review unit 17, 2026-08-19).
+    # `cptac_card` built them with a bare `rp < ab`, and `NaN < NaN` is **False**, not NaN — so a gene whose
+    # protein coupling was never computed read as "beta does NOT beat abundance". Fixed at source, but the
+    # source is an expensive CPTAC re-scoring, and the repair is a PURE DERIVATION over columns already on
+    # disk: mask wherever either input is missing. ✅ The comparison itself was correct on measurable rows
+    # (verified 100% match), so only the mask changes.
+    for _pref in ("cptac_prosp", "cptac_t105"):
+        _f, _a, _g = f"{_pref}_agg_beats_abund_prot", f"{_pref}_abund_rho_prot", f"{_pref}_agg_rho_prot"
+        if _f in g.columns and _a in g.columns and _g in g.columns:
+            _ok = pd.to_numeric(g[_a], errors="coerce").notna() & pd.to_numeric(g[_g], errors="coerce").notna()
+            _was = g[_f].notna().sum()
+            g[_f] = g[_f].where(_ok)
+            if g[_f].notna().sum() != _was:
+                print(f"  ✅ {_f}: {_was} -> {g[_f].notna().sum()} defined "
+                      f"({_was - g[_f].notna().sum()} unmeasurable rows unmasked from a silent False)")
     if g.shape[1] != before or "n_pip_disc_gt50" in g.columns:
         g.to_csv(GENE_CARD, sep="\t", index=False)
         print(f"  ✅ gene_card normalised: {before} -> {g.shape[1]} cols "

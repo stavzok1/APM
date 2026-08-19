@@ -321,7 +321,17 @@ def build_gene() -> pd.DataFrame:
         rp, rr = res[f"{pref}_agg_rho_prot"], res[f"{pref}_agg_rho_prot_raw"]
         res[f"{pref}_agg_ret_prot"] = np.where(rr.abs() >= RHO_GATE, rp / rr, np.nan)
         # ⚠ a FLOOR, not a control — see the docstring
-        res[f"{pref}_agg_beats_abund_prot"] = rp < res[f"{pref}_abund_rho_prot"]
+        # ⛔⛔ FIXED 2026-08-19 (column review unit 17): this was a BARE `<`, and `NaN < NaN` is **False**,
+        # not NaN — so a gene whose protein coupling was never computed read as "beta does NOT beat
+        # abundance". It was defined on all 1,420 genes while its two inputs cover 1,127 (prospective) and
+        # 932 (tcga105); **ALL 293 / 488 unmeasurable rows read False, none True.** That silently deflated
+        # the headline rate: prospective **25.1% -> 31.7%**, tcga105 **21.1% -> 32.1%** once the denominator
+        # is the measurable set. Fourth instance of this failure class in one session (`echim_any`,
+        # `fst_is_dominant_*`, `arb_max_identity`'s inert gate) — **a boolean built by comparing two
+        # possibly-missing numbers MUST be masked, because `<` can never return "unknown".**
+        # ✅ Verified: on rows where both inputs exist the logic itself was already correct (100% match).
+        _ab = res[f"{pref}_abund_rho_prot"]
+        res[f"{pref}_agg_beats_abund_prot"] = (rp < _ab).where(rp.notna() & _ab.notna())
         print(f"[cptac_gene] {cohort:12s} n={len(samples)} · "
               f"{int(res[f'{pref}_n_arms'].notna().sum()):,}/{len(genes):,} genes scored")
 

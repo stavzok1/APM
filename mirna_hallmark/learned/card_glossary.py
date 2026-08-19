@@ -977,6 +977,38 @@ COLUMNS.update({
                             "multi-mapping-collapsed) healthy level. Read before any `share_HLY`/`rank_HLY`.",
     ("edge", "identity_allocated"): "Family identity with phantom minor arms forced to 0 \u2014 the allocation "
                                     "actually used downstream.",
+    # ── UNIT 17 (2026-08-19) — the `cptac_` block (24 cols, two cohorts × three layers).
+    ("", "cptac_prosp_agg_beats_abund_prot"): "Does the learned β-weighted aggregate couple more negatively "
+        "to PROTEIN than a plain abundance sum, in the CPTAC prospective cohort? ⛔⛔ **THIS COLUMN WAS "
+        "WRONG UNTIL 2026-08-19.** It was a bare `rho_agg < rho_abund`, and **`NaN < NaN` is False, not "
+        "NaN** — so it was defined on all **1,420** genes while its inputs cover **1,127**, and **all 293 "
+        "unmeasurable rows read False, none True.** ⇒ the headline rate was deflated **25.1% → 31.7%** once "
+        "the denominator is the measurable set. ✅ The comparison itself was always correct where both "
+        "inputs exist (100% match). ⚠⚠ **AND IT IS A REFERENCE, NOT A CONTROL** — a FITTED β against an "
+        "UNFITTED abundance sum; the fitted-fake decoy is the control (`eval/decoy_bench.py`).",
+    ("", "cptac_t105_agg_beats_abund_prot"): "As the prospective twin, on the TCGA-105 overlap cohort. Same "
+        "`NaN < NaN → False` defect, fixed 2026-08-19: **488** unmeasurable rows had read False, deflating "
+        "the rate **21.1% → 32.1%** (299 of 932 measurable). ⭐ **Note what the fix did to the cohort "
+        "comparison: 25.1% vs 21.1% became 31.7% vs 32.1% — the two cohorts AGREE, and the 4-point gap was "
+        "manufactured entirely by unequal missingness.**",
+    ("", "cptac_prosp_agg_ret_prot"): "`rho_prot(composition-adjusted) / rho_prot_raw` — the ADJUSTMENT "
+        "sense of retention, on the prospective cohort. ✅ **The denominator is ALREADY GATED** at "
+        "`RHO_GATE` in `cptac_card.py:322`, so values outside [0,1] are NOT the vanishing-denominator "
+        "artifact of axiom 5 (verified: 0 rows with |raw| < 0.02). They are real. Of **912** defined rows: "
+        "**56.7% attenuate (0–1, the expected case)**, **21.8% FLIP SIGN (<0)**, **21.5% AMPLIFY (>1)**. "
+        "⚠ The flips sit on WEAKER raw coupling (|ρ_raw| median **0.127 vs 0.164**), so read them as "
+        "noise-driven sign instability, not systematic reversal. Gated to |ρ_raw| ≥ 0.10 the median is "
+        "**+0.450**. ⚠ Runs WITH a composition block — MH-107's defect (no composition variant at all) is "
+        "fixed here; see memory `cptac-protein-composition-confound`.",
+    ("", "cptac_t105_agg_ret_prot"): "As the prospective twin, TCGA-105. Of **649** defined rows: **59.8% "
+        "attenuate**, **10.3% flip sign**, **29.9% amplify**; median gated to |ρ_raw| ≥ 0.10 is **+0.748** "
+        "— markedly higher retention than prospective's +0.450, on half the sample. ⚠ Do not read that as "
+        "a cohort biology difference without an n-matched comparison.",
+    ("", "cptac_prosp_n_arms"): "Arms contributing to this gene's prospective-cohort aggregate (median 2, "
+        "max 61). ⚠ The DENOMINATOR behind every `prosp_agg_*` column — a ρ built on 2 arms is not the "
+        "same statement as one built on 61.",
+    ("", "cptac_t105_n_arms"): "Arms behind the TCGA-105 aggregate (median 2, max 57). See the prospective "
+        "twin.",
     # ── UNIT 16 (2026-08-19) — the `arb_` block. Internally clean; its UNIVERSE is the story.
     ("arm", "arb_n_edges"): "Edges this arm carries in the LEARNED MODEL's own readouts. ⛔⛔ **DOES NOT "
         "RECONCILE WITH THE EDGE CARD, BY DESIGN AND BY VINTAGE — do not treat a mismatch as a bug.** The "
