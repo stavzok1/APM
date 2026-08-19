@@ -427,11 +427,8 @@ COLUMNS: dict[tuple[str, str], str] = {
     ("arm", "disc_n_gold_edges"): "How many of the 157 discovery-queue edges name this arm. Concentrated: "
                                   "miR-106b-5p **39** · miR-20a-5p 25 · miR-93-5p 25 · miR-19a-3p 19 · "
                                   "miR-18a-5p 9. ⚠ 18 arms carry the whole queue.",
-    ("", "disc_gold_families"): "Which seed families this row's discovery-queue edges belong to, "
-                                "semicolon-separated. Usually ONE at the arm rung (an arm has one seed). "
-                                "⚠ The whole queue is 11 families and **61% is miR-17/20/93/106/519** — "
-                                "the honest unit is ~one oncogenic polycistron's realized target set, not "
-                                "157 independent findings.",
+    ("arm", "disc_gold_families"): "Which seed families this row's discovery-queue edges belong to, semicolon-separated. Usually ONE at the arm rung (an arm has one seed). \u26a0 The whole queue is 11 families and **61% is miR-17/20/93/106/519** \u2014 the honest unit is ~one oncogenic polycistron's realized target set, not 157 independent findings.",
+    ("gene", "disc_gold_families"): "Which seed families this row's discovery-queue edges belong to, semicolon-separated. Usually ONE at the arm rung (an arm has one seed). \u26a0 The whole queue is 11 families and **61% is miR-17/20/93/106/519** \u2014 the honest unit is ~one oncogenic polycistron's realized target set, not 157 independent findings.",
     ("gene", "disc_n_gold_edges"): "How many of the 157 discovery-queue edges name this gene (max 4). "
                                    "⛔ Only **39 of the 90** gold genes appear on this card, so this "
                                    "accounts for **63 of 157** edges — a 0 is NOT evidence of absence.",
@@ -648,11 +645,8 @@ COLUMNS.update({
     ("arm", "disc_n_gold_edges"): "How many of the 157 discovery-queue edges name this arm. Concentrated: "
                                   "miR-106b-5p **39** · miR-20a-5p 25 · miR-93-5p 25 · miR-19a-3p 19 · "
                                   "miR-18a-5p 9. ⚠ 18 arms carry the whole queue.",
-    ("", "disc_gold_families"): "Which seed families this row's discovery-queue edges belong to, "
-                                "semicolon-separated. Usually ONE at the arm rung (an arm has one seed). "
-                                "⚠ The whole queue is 11 families and **61% is miR-17/20/93/106/519** — "
-                                "the honest unit is ~one oncogenic polycistron's realized target set, not "
-                                "157 independent findings.",
+    ("arm", "disc_gold_families"): "Which seed families this row's discovery-queue edges belong to, semicolon-separated. Usually ONE at the arm rung (an arm has one seed). \u26a0 The whole queue is 11 families and **61% is miR-17/20/93/106/519** \u2014 the honest unit is ~one oncogenic polycistron's realized target set, not 157 independent findings.",
+    ("gene", "disc_gold_families"): "Which seed families this row's discovery-queue edges belong to, semicolon-separated. Usually ONE at the arm rung (an arm has one seed). \u26a0 The whole queue is 11 families and **61% is miR-17/20/93/106/519** \u2014 the honest unit is ~one oncogenic polycistron's realized target set, not 157 independent findings.",
     ("gene", "disc_n_gold_edges"): "How many of the 157 discovery-queue edges name this gene (max 4). "
                                    "⛔ Only **39 of the 90** gold genes appear on this card, so this "
                                    "accounts for **63 of 157** edges — a 0 is NOT evidence of absence.",
