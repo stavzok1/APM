@@ -76,6 +76,15 @@ BLOCKS: dict[tuple[str, str], str] = {
                   "gene by distinct low-throughput functional PMID count, its margin over the runner-up, "
                   "and its tier. sha256-stamped and mechanical — no hand curation. ⚠ Defined on 329 genes "
                   "(21%) only; and PMID depth is a FAME axis, so any comparison against it needs a fame null.",
+    ("arm", "fame_npmid"): "Distinct PMIDs citing this arm. \u26a0 Bit-identical to `fame_led_n_pmid`. "
+                           "\u26d4 A FAME axis \u2014 control for it, never read it as biology.",
+    ("arm", "fame_assay_perturbation_studies"): "\u26d4 ALL ZERO \u2014 miRTarBase carries no perturbation-assay "
+                                                "class for these arms. Four sibling `perturbation__*` columns "
+                                                "and `binding__nonfunctional_mti_weak_studies` are also all "
+                                                "zero and bit-identical. Dead columns, kept for shape.",
+    ("arm", "arb_n_edges"): "Edges this arm regulates. \u26a0 **Bit-identical to `arb_n_genes` AND "
+                            "`arb_n_identity_reliable`** \u2014 all three are the same vector, so two of them "
+                            "are not measuring what their names say. Suspected producer defect (2026-08-19).",
     ("", "fame_"): "Study-attention axis for the arm — distinct PMIDs and distinct curated genes. "
                    "⛔ NOT a targetome measure: it correlates +0.75 with the curated degree and only +0.12 "
                    "with a sequence targetome (MH-208). Use it as a CONFOUND to control, never as biology.",
@@ -104,9 +113,13 @@ BLOCKS: dict[tuple[str, str], str] = {
     ("", "chim_"): "Chimeric-evidence ROLLUP for the arm (aggregated over its edges). ⚠ Distinct from "
                    "`echim_`, which is the per-edge form — they were one prefix until MH-220 and the "
                    "collision destroyed a 5-column block.",
-    ("", "kd_"): "scanMiR RBNS binding affinity for the duplex — `kd_affinity_pct` is the percentile "
-                 "(lower = tighter) and `kd_repression` the predicted repression. Sequence-only, so "
-                 "a-priori and non-circular with respect to expression.",
+    ("", "kd_"): "scanMiR RBNS binding affinity. \u2b50 `kd_affinity_pct` answers *is this gene among "
+                 "THIS ARM's strongest targets* \u2014 a WITHIN-ARM percentile over the arm's genome-wide "
+                 "K_D targetome, so **HIGHER = a stronger target for this arm**. \u26a0 Being a within-arm "
+                 "rank it says nothing about ABSOLUTE affinity: a promiscuous arm's 99th percentile and a "
+                 "specialist's 99th percentile are not comparable in K_D \u2014 `kd_repression` (the raw "
+                 "scanMiR value) ships beside it for exactly that reason. Sequence-only, so a-priori and "
+                 "non-circular with respect to expression.",
 
     # ---- expression / abundance ----
     ("", "abund_"): "The arm's own abundance profile across the cohort — median, SD, IQR, detection "
@@ -347,13 +360,27 @@ for _c in ("arm", "edge", "gene", "gene_family", "seed_family"):
 COLUMNS.update({
     ("edge", "n"): "Number of samples the edge's coupling was fit on.",
     ("gene_family", "n"): "Number of samples the (gene, family) cell was fit on.",
-    ("edge", "p_fam"): "p-value of the family-level fit this edge sits in. \u26a0 The per-edge null is 3\u20134x "
-                       "too narrow \u2014 do not read as per-edge significance.",
-    ("gene_family", "p_fam"): "p-value of this (gene, family) cell's fit. Same null caveat.",
+    ("edge", "p_fam"): "\u26d4\u26d4 **NOT A P-VALUE.** `p` here is the model's DESIGN DIMENSION \u2014 the NUMBER "
+                       "of family predictors in this gene's fit (integers 1..90). The name reads as a "
+                       "p-value and is a genuine collision; verified 2026-08-19 against the values.",
+    ("gene_family", "p_fam"): "\u26d4\u26d4 **NOT A P-VALUE** \u2014 the number of family predictors in the gene's "
+                              "fit. **Bit-identical to `n_fam` on this card** (integers 1..12), so it is also "
+                              "a redundant column.",
     ("edge", "z"): "beta / beta_sd on the UNCALIBRATED posterior SD. Use `cal_z` for the honest width.",
     ("gene_family", "z"): "beta / beta_sd for the family cell, uncalibrated.",
     ("edge", "identified"): "|z| > 2 on the UNCALIBRATED SD (24.8%). `cal_identified` is the honest "
                             "version (19.9%).",
+    ("edge", "pip_dense"): "\u26a0 CONSTANT by construction \u2014 the coupling readout is called with \u03c0\u22611, so "
+                           "every edge has the same value. Carries no information; `pip_discovery` is the "
+                           "one that varies. (Bit-identical to `net_pressure` on this card.)",
+    ("gene_family", "pip_dense"): "\u26a0 CONSTANT by construction (\u03c0\u22611 dense readout). Bit-identical to "
+                                  "`net_pressure`.",
+    ("edge", "net_pressure"): "\u26a0 CONSTANT on this card and bit-identical to `pip_dense`.",
+    ("gene_family", "net_pressure"): "\u26a0 CONSTANT on this card and bit-identical to `pip_dense`.",
+    ("edge", "n"): "Samples the edge was fit on \u2014 CONSTANT (1,040) across the card.",
+    ("gene_family", "n"): "Samples the cell was fit on \u2014 CONSTANT (1,040) across the card.",
+    ("gene", "n_dense_included"): "Families entering the dense (\u03c0\u22611) readout. \u26a0 **Bit-identical to "
+                                  "`n_fam`** \u2014 redundant; do not treat as an independent axis.",
     ("gene_family", "identified"): "|z| > 2 for the family cell, uncalibrated.",
     ("gene_family", "identity"): "Shapley/LMG identity at the FAMILY rung \u2014 same estimator as the edge "
                                  "card's `identity`, different unit.",
@@ -389,6 +416,14 @@ COLUMNS.update({
                        "\u26d4 Not a beta and not a dose share.",
     ("edge", "n_arm_in_cell"): "How many arms were collapsed into this edge's family cell. >1 for 20.3% of "
                                "edges \u2014 outside those, the arm rung IS the family rung by construction.",
+    ("edge", "kd_affinity_pct"): "Is this gene among the arm's strongest predicted targets \u2014 a "
+                                 "WITHIN-ARM percentile, **higher = stronger target**. Climbs with coupling "
+                                 "(rho=\u22120.090 within seeded edges, p=1.3e\u221207), which is one rung of the "
+                                 "convergent-evidence ladder. \u26d4 Not an absolute affinity and not "
+                                 "comparable across arms of different promiscuity.",
+    ("edge", "echim_any"): "Does this edge carry ANY chimeric duplex evidence. \u26a0\u26a0 It is never False \u2014 "
+                           "only True (1,065 edges) or NaN. A blank means 'no chimeric record', which "
+                           "conflates *not scanned* with *scanned and absent*; test `!= 1`, never `== 0`.",
     ("edge", "z_arm"): "beta_arm / sd_arm \u2014 the ARM-resolved z inside the family cell, as opposed to the "
                        "family-level `z`.",
 })
