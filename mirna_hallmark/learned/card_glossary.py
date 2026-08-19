@@ -493,14 +493,39 @@ COLUMNS.update({
     ("gene", "n_dense_included"): "Families entering the dense (\u03c0\u22611) readout. \u26a0 **Bit-identical to "
                                   "`n_fam`** \u2014 redundant; do not treat as an independent axis.",
     ("gene_family", "identified"): "|z| > 2 for the family cell, uncalibrated.",
-    ("gene_family", "identity"): "Shapley/LMG identity at the FAMILY rung \u2014 same estimator as the edge "
-                                 "card's `identity`, different unit.",
-    ("gene_family", "m_nnls"): "Bagged-NNLS weight for the family cell. Exactly 0 in 31.7% of families.",
-    ("gene_family", "arms"): "The arms collapsed into this family cell.",
-    ("gene_family", "n_arms"): "How many arms were collapsed into this family cell.",
-    ("gene_family", "retention"): "Fraction of the cell's coupling surviving composition adjustment "
-                                  "(adjusted / raw) \u2014 the ADJUSTMENT sense of retention, not the "
-                                  "patient-baseline one.",
+    ("gene_family", "n_arms"): "How many arms of THIS family sit in THIS gene's design. ✅ FAMILY rung, "
+                               "VERIFIED (2026-08-19): it varies within gene for 241 of 1,549 genes, and "
+                               "the per-gene SUM of these equals the gene card's `n_arms` exactly — a clean "
+                               "cross-rung consistency check. ⚠ Do NOT confuse with the family's TOTAL "
+                               "membership, which is `famrole_n_members` / the seed_family card; a gene "
+                               "sees a median 0.67 of its family (MH-248).",
+    ("gene_family", "arms"): "The arms collapsed into this (gene, family) cell, **semicolon-separated** "
+                             "(`hsa-miR-17-5p;hsa-miR-20a-5p`). ⚠ Verified: splitting on `;` reproduces "
+                             "`n_arms` for EVERY row. It is a plain string, NOT a Python list literal and "
+                             "NOT comma-separated — both mis-parses were made while writing this entry.",
+    ("gene_family", "retention"): "`beta_deconv / beta_core` at the family grain — the ADJUSTMENT sense of "
+                                  "retention (what fraction of the coupling survives the composition "
+                                  "block), never the patient-baseline sense. ⚠⚠ **41.4% of rows exceed 1** "
+                                  "(adjustment INCREASED the effect) and it reaches **9.24** — a ratio whose "
+                                  "denominator can vanish. ✅ **`retention_reliable` is the gate and it "
+                                  "WORKS**: it admits 27.1% of rows, and among those only **8.9% exceed 1** "
+                                  "versus **53.5%** of the rest. Read `retention` ONLY where "
+                                  "`retention_reliable` is true.",
+    ("gene_family", "m_nnls"): "Bagged-NNLS weight for this (gene, family) cell. **Exactly 0 in 30.1%** of "
+                               "rows — this is what lets `identity` say a family contributes nothing, which "
+                               "`beta` structurally cannot (the half-normal slab has a strictly positive "
+                               "mean, so `beta` is exactly 0 in 0 rows).",
+    ("gene_family", "identity"): "Shapley/LMG identity at the FAMILY rung — same estimator as the edge "
+                                 "card's `identity`, different unit. ⛔⛔ **CARRIES THE SAME UNBOUNDED "
+                                 "SIGNED-SHARE PROBLEM, AND IS NOT YET GATED HERE.** Measured 2026-08-19: "
+                                 "range **−739.01 … +740.01**, **9.5% negative** (legitimate suppressor "
+                                 "contributions), 83 rows above 1, summing to exactly 1 per gene. "
+                                 "⏳ `identity_reliable` / `identity_coherence` / `identity_abs` were added "
+                                 "to `readouts.add_reliability` in the unit-1 review and this card DOES take "
+                                 "that path (it already carries their siblings `beta_frac_reliable` and "
+                                 "`retention_reliable`) — but the card regenerates only via a **Gibbs "
+                                 "refit**, so they are ABSENT until then. **Until the refit, gate manually: "
+                                 "`|identity| <= 1` and `1/sum|identity| per gene >= 0.5`.**",
     ("gene_family", "n_fam"): "How many families compete at this gene. beta is mathematically INERT at 1.",
     ("gene", "n_fam"): "How many seed families regulate this gene. \u2b50 48% of genes have exactly ONE, where "
                        "beta \u2261 uniform by construction \u2014 'does the learning add anything' is UNDEFINED "
