@@ -399,10 +399,55 @@ COLUMNS: dict[tuple[str, str], str] = {
                         "say a regulator contributes nothing, which `beta` structurally cannot.",
     ("edge", "beta_frac"): "MAGNITUDE share (beta_f / sum beta). ⛔ Renamed from `share`: for an additive "
                            "aggregate Shapley(f) == beta_f, so this splits NOTHING. It is not identity.",
-    ("gene", "concentration"): "How concentrated the gene's pressure is on its top family. Median 0.954 — "
-                               "most genes are dominated by one regulator family. ⚠ A concentration index "
-                               "is bounded below by 1/k, so it is mechanically anti-correlated with design "
-                               "width; use the normalised form before reading it as biology.",
+    ("gene", "concentration"): "`beta.max() / beta.sum()` — the TOP FAMILY's share of the gene's total β; median **0.954**, i.e. most genes are dominated by one family. "
+                               "⛔⛔ **BOUNDED BELOW BY 1/n_fam, so it falls as designs widen WHATEVER the "
+                               "biology does** — the moving-support trap (axiom 8) at its most extreme here: "
+                               "**spearman(concentration, n_fam) = −0.9399**, versus **−0.2028** once the "
+                               "floor is removed. The data sits ON the floor: at `n_fam==1` it is exactly "
+                               "1.0000 for all **730 genes (47%)**, and at `n_fam==2` the minimum is 0.5005 "
+                               "against a floor of 0.5000. ⇒ **never correlate it with anything that tracks "
+                               "design width; use `concentration_adj`, or report it with `n_fam` beside it.**",
+    ("gene", "concentration_adj"): "`(concentration − 1/n_fam) / (1 − 1/n_fam)` ∈ [0,1] — how concentrated "
+                                   "the gene is RELATIVE to the most diffuse its own design allows. Removes "
+                                   "the 1/k floor: spearman vs `n_fam` falls from **−0.9399 to −0.2028**. "
+                                   "⚠ **NaN at `n_fam == 1` (730 genes) and that is CORRECT** — with one "
+                                   "family there is nothing to concentrate, so the question does not exist; "
+                                   "the NaN is the honest answer, not a gap (`gene_axes.mask_degenerate`).",
+    ("gene", "n_arms"): "Arms in the gene's DESIGN (the model's own count, from `gene_atlas`). "
+                        "⚠⚠ **NOT the same as `n_regulators`** — the two come from different sources and "
+                        "**differ on 306 of 1,409 genes, in BOTH directions** (ABCA1 13 vs 12, ABCC1 7 vs 8). "
+                        "Both read as 'how many regulators'; only this one matches the design the model fit.",
+    ("gene", "n_regulators"): "Regulator count from the CO-REPRESSION lane "
+                              "(`tissue_reference/mirna_comovement/gene_corepression.tsv`), not from the "
+                              "model design. ⚠⚠ **Differs from `n_arms` on 306 of 1,409 genes in both "
+                              "directions** — a different pipeline counted a different universe. Use "
+                              "`n_arms` for anything about the FIT; use this only alongside the other "
+                              "co-repression columns it arrived with (`gene_repression_class`, "
+                              "`gene_net_repressed_tumor`, `rho_gene_pressure_tumor`, `delta_tumor_nat`).",
+    ("gene", "n_dense_included"): "Families entering the dense (π≡1) readout. ⛔ **Bit-identical to `n_fam` "
+                                  "on every row** — verified 2026-08-19. Redundant; do not treat as an "
+                                  "independent axis (it silently produced duplicate scan results once).",
+    ("gene", "n_identified"): "Families with |z| > 2 on the UNCALIBRATED SD. ⚠ **691 genes (44.6%) have "
+                              "ZERO** — the identifiability ceiling is the dominant fact about this column, "
+                              "not a data gap. Under the CALIBRATED width it would be lower still.",
+    ("gene", "n_discovered"): "Families passing the evidence-π discovery readout; **>0 for 725 genes "
+                              "(46.8%)**. ⛔⛔ **This is NOT a count of discoveries.** Per-edge and "
+                              "per-family discovery are EMPTY under the honest empirical FDR — the "
+                              "defensible deliverable is a convergent-evidence QUEUE (157 edges / 11 "
+                              "families). Reading 46.8% of genes as 'having discoveries' inverts the axis.",
+    ("gene", "n_cell_intrinsic"): "Edges whose coupling SURVIVES the composition block (retention ≥ 0.7). "
+                                  "⚠ With `n_composition_explained` it does NOT partition the gene's edges — "
+                                  "verified: the two sum to ≤ `n_arms` on 100% of genes (median sum 1 vs "
+                                  "n_arms 2), because the middle class `partial` belongs to neither.",
+    ("gene", "n_composition_explained"): "Edges whose coupling does NOT survive composition adjustment "
+                                         "(retention < 0.4). ⚠ See `n_cell_intrinsic`: the two are the ENDS "
+                                         "of a three-way classification, not a partition. ⚠⚠ And a "
+                                         "composition-explained edge is not necessarily an artifact — a "
+                                         "miRNA acting in CAFs on a CAF gene is removed by conditioning on "
+                                         "CAF fraction and then labelled this (axiom 8's stratified-retention "
+                                         "warning). Pair it with a specificity control.",
+    ("gene", "n_hallmark_sets"): "How many MSigDB Hallmark programs contain this gene (1–10, median 2). "
+                                 "Membership only — it says nothing about regulation.",
     ("gene", "w_max"): "The MAXIMUM curated evidence weight `w` over the gene's regulators "
                        "(`gene_atlas`: `nanmax(w)`), where `w` comes from the same PMID-deduped ledger that "
                        "feeds `lit_` and `fame_`. ⛔ NOT a β and NOT a dose share — `top_beta_frac` and "

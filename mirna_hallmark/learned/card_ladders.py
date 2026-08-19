@@ -128,6 +128,38 @@ def gene_arm_resolution() -> pd.DataFrame:
     return out.reset_index()
 
 
+def gene_concentration_adj() -> pd.DataFrame:
+    """⭐ THE FLOOR-CORRECTED CONCENTRATION — derived, no refit (column review unit 3, 2026-08-19).
+
+    ⛔ **`concentration` = `beta.max() / beta.sum()` is a TOP SHARE, and a top share is BOUNDED BELOW BY
+    1/k** where k = the gene's family count. So it falls as designs widen *whatever the biology does* —
+    this is the moving-support trap (axiom 8), and here it is at its most extreme:
+
+        spearman(concentration, n_fam)                  = −0.9399   almost entirely mechanical
+        spearman(floor-corrected, n_fam)                = −0.2028   the honest number
+
+    The floor is not theoretical — the data sits ON it: at `n_fam == 1` concentration is **exactly 1.0000
+    for all 730 genes (47%)**, and at `n_fam == 2` the minimum is **0.5005** against a floor of 0.5000.
+
+    ⇒ `concentration_adj = (c − 1/k) / (1 − 1/k)` ∈ [0,1] — "how concentrated is this gene RELATIVE to the
+    most diffuse its design allows". **Undefined (NaN) at k = 1**, which is correct and important: with one
+    family there is nothing to concentrate, so the question does not exist for 47% of genes. That NaN is
+    the honest answer, not a gap — `gene_axes.mask_degenerate` exists for exactly this.
+
+    ⚠ Ships BESIDE the raw column, never replacing it (axiom 2a: flag, don't delete). Report the raw value
+    only with `n_fam` next to it; report `concentration_adj` when comparing genes of different widths.
+    """
+    if not GENE_CARD.exists():
+        return pd.DataFrame()
+    g = pd.read_csv(GENE_CARD, sep="\t", low_memory=False)
+    if not {"gene", "concentration", "n_fam"} <= set(g.columns):
+        return pd.DataFrame()
+    c = pd.to_numeric(g["concentration"], errors="coerce")
+    k = pd.to_numeric(g["n_fam"], errors="coerce")
+    adj = ((c - 1.0 / k) / (1.0 - 1.0 / k)).where(k > 1)
+    return pd.DataFrame({"gene": g["gene"], "concentration_adj": adj.clip(0, 1).round(4)})
+
+
 def _identity_gate(d: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
     """⭐ THE IDENTITY GATE, DERIVED — no refit required (user-asked 2026-08-19).
 
@@ -562,7 +594,7 @@ def _run(*, annotate_cards: bool) -> None:
         return
     print("\n[annotate]")
     _annotate(GENE_CARD, [(gl, ["gene"]), (gene_lit_ground_truth(), ["gene"]),
-                          (gene_arm_resolution(), ["gene"])])
+                          (gene_arm_resolution(), ["gene"]), (gene_concentration_adj(), ["gene"])])
     _annotate(EDGE_CARD, [(st, ["gene", "arm"]), (edge_ago_measured(), ["gene", "arm"]),
                           (edge_admissibility(), ["gene", "arm"]),
                           (edge_chimeric(), ["gene", "arm"]), (edge_affinity_pct(), ["gene", "arm"]),
