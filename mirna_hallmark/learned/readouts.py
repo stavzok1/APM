@@ -428,6 +428,12 @@ def run(genes: Optional[Sequence[str]] = None, *, workers: int = 8, limit: Optio
     # MH-222 the card builders call that by default, so the promotion is safe in the normal chain.
     if level == "family":
         fc = oe.with_name("gene_family_card.tsv")
+        # ⛔ PRUNED 2026-08-19 (column review, unit 1): `p_fam` is NOT a p-value — it is `core["p"]`, the
+        # DESIGN DIMENSION — and on this card it is bit-identical to `n_fam` (both = the family count).
+        # `n` -> `n_samples` because it is constant (1,040) and is provenance of the fit, not data.
+        # The rename/drop is applied to the CARD only; `readouts_edges.tsv` keeps the estimator's own names.
+        E = (E.drop(columns=[c for c in ("p_fam",) if c in E.columns])
+              .rename(columns={"n": "n_samples"}))
         E.to_csv(fc, sep="\t", index=False, float_format="%.5f")
         print(f"[readouts:{level}] -> {fc.name} (BASE, {E.shape[1]} cols; "
               f"run `card_context --annotate` — or any card builder — to restore the annotation block)")

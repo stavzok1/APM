@@ -840,6 +840,27 @@ def _finish_card(path, built: pd.DataFrame, annotate: bool) -> None:
               f"Run `card_context --annotate` before reading it.")
 
 
+#: ⭐ THE EDGE CARD'S PUBLIC NAMES (column review, unit 1, 2026-08-19). The build intermediate
+#: `edge_card_base.tsv` inherits whatever its many producers happened to call things; this is the ONE place
+#: the delivered card's vocabulary is decided, so a reader never has to know which module wrote a column.
+#: Applied on read, so the producers are untouched and no consumer of the INTERMEDIATE breaks.
+#:   `detection`/`spiker` -> `arm_*`  : both are ARM-rung properties repeated across the arm's genes, and the
+#:      edge card already owns `arm_med_rpm` / `arm_iqr` / `arm_pct_floor` for exactly this. Bare names hid
+#:      the repeat-by-construction behaviour that MH-179/187/188/191 all turned on.
+#:   `n` -> `n_samples`               : it is constant 1,040 — provenance of the fit, not data.
+_EDGE_RENAME = {"detection": "arm_detection", "spiker": "arm_spiker", "n": "n_samples"}
+#: ⛔ PRUNED: `p_fam` is NOT a p-value — it is the design dimension, and on THIS card it is bit-identical to
+#: the gene's `n_arms` (measured: 0/1,420 mismatches, corr 1.0000). On `gene_family` it is bit-identical to
+#: `n_fam`. It never carries anything the card does not already hold under an honest name.
+_EDGE_DROP = ("p_fam",)
+
+
+def _normalise_edge_names(card: pd.DataFrame) -> pd.DataFrame:
+    card = card.rename(columns={k: v for k, v in _EDGE_RENAME.items() if k in card.columns})
+    drop = [c for c in _EDGE_DROP if c in card.columns]
+    return card.drop(columns=drop) if drop else card
+
+
 def edge_card(*, annotate: bool = True) -> pd.DataFrame:
     """⭐ THE INTEGRATED PROGRESSION EDGE CARD — one row per (gene, arm), folding BOTH progression objects onto
     the attribution card so every cross-resolution question is a column read, not a multi-file join:
@@ -851,6 +872,7 @@ def edge_card(*, annotate: bool = True) -> pd.DataFrame:
     -> edge_card.tsv. (Supersedes `master_edge_patterns.tsv`: same key, + the Phase-2 columns.)"""
     from mirna_hallmark import gene_roles as GR
     card = pd.read_csv(_LEARNED / "edge_card_base.tsv", sep="\t")
+    card = _normalise_edge_names(card)
     de = pd.read_csv(OUT / "dose_shift_edge.tsv", sep="\t")
     da = pd.read_csv(OUT / "dose_shift_arm.tsv", sep="\t")
     lad = pd.read_csv(OUT / "realization_ladder.tsv", sep="\t")

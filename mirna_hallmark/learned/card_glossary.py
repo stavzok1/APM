@@ -167,6 +167,36 @@ BLOCKS: dict[tuple[str, str], str] = {
                      "⚠ P-ACROSS rung: one value per arm computed ACROSS patients, not per patient.",
     ("", "real_"): "Realization rollup for the ARM — how many of its edges are scored, and its median and "
                    "best realized coupling.",
+    ("", "garm_"): "⭐ IS THIS GENE MODELABLE AT ARM RESOLUTION — the gene-level roll-up of arm "
+                   "identifiability (`card_ladders.gene_arm_resolution`, 2026-08-19). ⚠ THE DENOMINATOR IS "
+                   "THE POINT: only the **273 of 1,549 genes (17.6%)** with at least one MULTI-ARM cell can "
+                   "be asked; elsewhere the arm rung IS the family rung by construction, so `garm_class` is "
+                   "`not_applicable` — a design fact, not a negative. ⚠ Strongly BIMODAL among those 273 — "
+                   "ALL cells resolvable in 68 genes, NONE in 168 — so never read its mean.",
+    ("gene", "garm_class"): "`arm_modelable` (every multi-arm cell resolvable, 68 genes) · `partial` (37) · "
+                            "`family_only` (no cell resolvable, 168). Absent = the gene has no multi-arm "
+                            "cell at all, so the question is undefined.",
+    ("gene", "garm_med_drho"): "Median `oof_drho` over the gene's multi-arm cells — negative means arm "
+                               "resolution predicts repression better out of fold. Median across genes "
+                               "−0.0012, best −0.206: the gain is a TAIL, concentrated in the miR-29 family.",
+    ("", "fst_"): "⭐ THE ARM'S SHARE OF ITS OWN SEED FAMILY, ACROSS STATES — gene-free "
+                  "(`card_ladders.family_state_shift`, 2026-08-19). Fills a real gap: every other "
+                  "cross-state share is anchored to a GENE (`share_*`, `rank_*`, `d_rank_*`) or to the whole "
+                  "cohort (`grank_*`, `dGlobal_*`), while the arm's standing inside its own family existed "
+                  "only as a single-state snapshot (`famrole_*`). ⭐ Unlike the gene-level "
+                  "`regulatory_handoff` it CANNOT be a design-width artifact — the denominator is the "
+                  "family, which is fixed. ⚠ MASK `fst_n_members == 1` first: 66.9% of arms are singletons "
+                  "where share ≡ 1 by construction. ⛔⛔ USE THE NAT LEG. The `_HLY` leg crosses GTEx→TCGA "
+                  "and carries a platform artifact — near-total flips (|Δshare|>0.90) run 7.1%, and "
+                  "requiring every sibling to be measured makes it WORSE (11.6%), versus **1.4% on the "
+                  "same-platform NAT→TUM leg**. ✅ Defensible: `fst_d_share_NAT_TUM` median +0.032, "
+                  "|Δ|>0.10 for 43.8%, dominant member changes in **26.7%** (56/210). DESCRIPTIVE — a "
+                  "registry candidate, no decoy and no null yet.",
+    ("arm", "fst_hly_family_measured"): "Do ALL members of this arm's family have a measured GTEx level. "
+                                        "Emitted because it is INFORMATIVE, not because it repairs the "
+                                        "healthy leg: the stricter guard RAISES the near-total-flip rate "
+                                        "(7.1% → 11.6%), which is what localised the defect to the "
+                                        "GTEx→TCGA platform boundary rather than to missing members.",
     ("", "greal_"): "Realization ladder for the GENE — the mirror of `real_`: how many of THIS gene's "
                     "regulators realize at each calibrated-coupling depth (c05/c10/c15/c20/c30). "
                     "✅ Cross-rung control: the gene-side totals reproduce the arm-side exactly.",
@@ -324,15 +354,17 @@ COLUMNS: dict[tuple[str, str], str] = {
                                "total membership: that is `famrole_n_members` on the arm card / the "
                                "seed_family card. >1 for 20.3% of edges; outside those the arm rung IS the "
                                "family rung by construction.",
-    ("edge", "detection"): "Fraction of patients in which this ARM is measured at all (`readouts._detection`). "
+    ("edge", "arm_detection"): "Fraction of patients in which this ARM is measured at all (`readouts._detection`). "
                            "⭐ MH-117: the ONE measurement proxy that arm-level β tracks within a family "
                            "(+0.305, p=4e-3) — abundance (p=0.65) and variance (p=0.95) do not. Emitted so a "
                            "reader can GATE on it; deliberately NOT used to drop arms (axiom 2a: flag, "
                            "don't delete). Arm-rung, so it repeats across the arm's genes.",
-    ("edge", "spiker"): "`arm_pct_floor < 40 AND arm_iqr > 1.5` — the arm sits at/below the detection floor "
+    ("edge", "arm_spiker"): "`arm_pct_floor < 40 AND arm_iqr > 1.5` — the arm sits at/below the detection floor "
                         "in most samples yet swings widely when present. Measured: spiker arms have median "
-                        "`arm_pct_floor` 22 vs 99 for the rest; True on 171 edges. A measurement-reliability "
-                        "warning, not biology — a coupling carried by a few spiking samples is fragile.",
+                        "`arm_pct_floor` 22 vs 99 for the rest; True on 171 edges. ⚠ A MEASUREMENT-RELIABILITY "
+                        "WARNING, NOT BIOLOGY — a coupling carried by a few spiking samples is fragile: it "
+                        "rests on a handful of points, so it is high-variance and easily sign-flipped. Gate "
+                        "on it before reading any coupling on a spiker arm.",
     ("edge", "n_HLY_meas"): "How many of this gene's arms have a MEASURED healthy (GTEx) level — as opposed "
                             "to one manufactured by the multi-mapping collapse. ⛔ Read this BEFORE any "
                             "`share_HLY` / `rank_HLY` / `d_rank_HLY_*`: GTEx v10's uniquely-mappable pipeline "
@@ -437,9 +469,9 @@ for _c in ("arm", "edge", "gene", "gene_family", "seed_family"):
         COLUMNS.setdefault((_c, _k), _t)
 
 COLUMNS.update({
-    ("edge", "n"): "Number of samples the edge's coupling was fit on.",
+    ("edge", "n_samples"): "Number of samples the edge's coupling was fit on.",
     ("gene_family", "n"): "Number of samples the (gene, family) cell was fit on.",
-    ("edge", "p_fam"): "\u26d4\u26d4 **NOT A P-VALUE.** `p` here is the model's DESIGN DIMENSION \u2014 the NUMBER "
+    ("_retired_edge", "p_fam"): "\u26d4\u26d4 **NOT A P-VALUE.** `p` here is the model's DESIGN DIMENSION \u2014 the NUMBER "
                        "of family predictors in this gene's fit (integers 1..90). The name reads as a "
                        "p-value and is a genuine collision; verified 2026-08-19 against the values.",
     ("gene_family", "p_fam"): "\u26d4\u26d4 **NOT A P-VALUE** \u2014 the number of family predictors in the gene's "
@@ -456,7 +488,7 @@ COLUMNS.update({
                                   "`net_pressure`.",
     ("edge", "net_pressure"): "\u26a0 CONSTANT on this card and bit-identical to `pip_dense`.",
     ("gene_family", "net_pressure"): "\u26a0 CONSTANT on this card and bit-identical to `pip_dense`.",
-    ("edge", "n"): "Samples the edge was fit on \u2014 CONSTANT (1,040) across the card.",
+    ("edge", "n_samples"): "Samples the edge was fit on \u2014 CONSTANT (1,040) across the card.",
     ("gene_family", "n"): "Samples the cell was fit on \u2014 CONSTANT (1,040) across the card.",
     ("gene", "n_dense_included"): "Families entering the dense (\u03c0\u22611) readout. \u26a0 **Bit-identical to "
                                   "`n_fam`** \u2014 redundant; do not treat as an independent axis.",

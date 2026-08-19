@@ -182,16 +182,31 @@ def find(text: str) -> None:
 
 
 def warnings() -> None:
-    """Every caveat the registry carries, deduplicated. This is the accumulated 'do not' list."""
+    """Every caveat on a live column, deduplicated — the accumulated 'do not' list.
+
+    ⭐ READS BOTH SOURCES (2026-08-19). It used to read only `domain`, which is a ROW-APPLICABILITY
+    statement — so the caveats that actually matter, the ones written into the per-column DESCRIPTIONS
+    (`card_glossary`), never surfaced here. A warning nobody can list is a warning nobody reads:
+    *"a coupling carried by a few spiking samples is fragile"* lived only in a docstring until this.
+    """
     r = _reg()
-    d = r[r.domain.str.contains("⛔|⚠", regex=True, na=False)]
     seen: dict[str, list] = {}
-    for _, h in d.iterrows():
-        seen.setdefault(h.domain, []).append((h.card, h.column))
-    print(f"\n{RULE}\nCAVEATS ON LIVE COLUMNS — {len(seen)} distinct, over {len(d)} card-columns\n{RULE}")
+    for _, h in r[r.domain.str.contains("⛔|⚠", regex=True, na=False)].iterrows():
+        seen.setdefault(h.domain, []).append((h.card, h.column, "domain"))
+    try:
+        from mirna_hallmark.learned import card_glossary as GL
+        for _, h in r.iterrows():
+            desc = GL.describe(h.column, h.card) or ""
+            if "⛔" in desc or "⚠" in desc:
+                seen.setdefault(desc, []).append((h.card, h.column, "description"))
+    except Exception as ex:                                    # never let the glossary break the listing
+        print(f"  ⚠ glossary caveats unavailable ({ex})")
+    n_cols = len({(c, col) for v in seen.values() for c, col, _ in v})
+    print(f"\n{RULE}\nCAVEATS ON LIVE COLUMNS — {len(seen)} distinct, over {n_cols} card-columns\n{RULE}")
     for dom, cols in sorted(seen.items(), key=lambda kv: -len(kv[1])):
-        cards = sorted({c for c, _ in cols})
-        print(f"\n[{len(cols):>3d} cols on {', '.join(cards)}]")
+        cards = sorted({c for c, _, _ in cols})
+        src = sorted({s for _, _, s in cols})
+        print(f"\n[{len(cols):>3d} cols on {', '.join(cards)}  · from {'+'.join(src)}]")
         print(_wrap(dom, 2))
     print()
 

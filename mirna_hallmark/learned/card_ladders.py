@@ -83,6 +83,139 @@ def gene_realization_ladder() -> pd.DataFrame:
     return out.reset_index()
 
 
+def gene_arm_resolution() -> pd.DataFrame:
+    """⭐ IS THIS GENE MODELABLE AT ARM RESOLUTION? — the gene-level roll-up of arm identifiability, which
+    did not exist (column review, unit 1, user-asked 2026-08-19).
+
+    `arm_rung.py` answers *can these same-seed arms be told apart* per (gene, seed_family) CELL, and
+    `aid_*` rolls it up per ARM. Nobody rolled it up per GENE, so *"can I trust an arm-level answer for
+    THIS gene"* had no column — even though it decides whether an arm-resolved claim about the gene is
+    admissible at all.
+
+    ⚠ THE DENOMINATOR IS THE POINT. Only genes with at least one MULTI-ARM cell can be asked: elsewhere the
+    arm rung IS the family rung by construction and the question is undefined, not negative. Measured:
+    **273 of 1,549 genes (17.6%)** have any multi-arm cell — so `garm_class` is `not_applicable` for 82%,
+    and that is a design fact, not a failure.
+
+    Among the 273: `garm_frac_resolvable` **median 0.00**, ALL cells resolvable in **68** genes and NONE in
+    **168** ⇒ the distribution is strongly BIMODAL, so do not read its mean. `garm_med_drho` median
+    −0.0012 with a best of −0.206 — the gain is a TAIL, concentrated in the miR-29 family.
+    """
+    p = OUT / "realization/edge_card.tsv"
+    if not p.exists():
+        return pd.DataFrame()
+    d = pd.read_csv(p, sep="\t", low_memory=False)
+    need = {"gene", "seed_family", "n_arm_in_cell"}
+    if not need <= set(d.columns):
+        return pd.DataFrame()
+    num = lambda s: pd.to_numeric(s.map({True: 1.0, False: 0.0, "True": 1.0, "False": 0.0})
+                                  if s.dtype == object else s, errors="coerce")
+    multi = d[num(d["n_arm_in_cell"]) > 1]
+    if multi.empty:
+        return pd.DataFrame()
+    cells = multi.drop_duplicates(["gene", "seed_family"])
+    out = pd.DataFrame({
+        "garm_n_multi_cells": cells.groupby("gene").size(),
+        "garm_n_arms_split": multi.groupby("gene")["arm"].nunique(),
+        "garm_frac_resolvable": multi.groupby("gene")["arm_resolvable"].apply(lambda s: num(s).mean()),
+        "garm_med_sep_z": multi.groupby("gene")["arm_sep_z"].apply(lambda s: num(s).median()),
+        "garm_best_drho": multi.groupby("gene")["oof_drho"].apply(lambda s: num(s).min()),
+        "garm_med_drho": multi.groupby("gene")["oof_drho"].apply(lambda s: num(s).median()),
+    })
+    fr = out["garm_frac_resolvable"]
+    out["garm_class"] = np.where(fr >= 0.999, "arm_modelable",
+                        np.where(fr <= 0.001, "family_only", "partial"))
+    return out.reset_index()
+
+
+def family_state_shift() -> pd.DataFrame:
+    """⭐ THE ARM'S SHARE OF ITS OWN FAMILY, ACROSS STATES — gene-free (user-asked 2026-08-19).
+
+    ⛔ THE GAP THIS FILLS. Every cross-state share/rank in the system is anchored to a GENE
+    (`share_HLY/NAT/TUM`, `rank_*`, `d_rank_*`) or to the whole cohort (`grank_*`, `dGlobal_*`). The arm's
+    standing INSIDE ITS OWN SEED FAMILY exists only as a single-state snapshot (`famrole_abund_share`,
+    `famrole_is_dominant`) — verified 2026-08-19: no HLY/NAT/TUM variant of any `famrole_` column exists.
+    So *"does the miR-29 family's dominant member change between healthy and tumour"* had no answer.
+
+    ⭐ WHY IT IS WORTH HAVING, beyond symmetry. The gene-level `regulatory_handoff` is **mechanically
+    monotone in design width** (1.6% at n_fam==1 vs 38.6% at n_fam>=2), so every use of it needs
+    conditioning. A family-internal switch has NO such dependence — the denominator is the family itself,
+    which is fixed regardless of how many genes it regulates. It is the confound-free version of the same
+    question, and it speaks directly to MH-215's structural fact that one member carries ~62% of a typical
+    multi-member family's dose.
+
+    Emits per ARM (arm rung, gene-free): `fst_share_{HLY,NAT,TUM}` — the arm's fraction of its family's
+    total linear dose in each state; `fst_d_share_HLY_TUM` / `_NAT_TUM`; `fst_rank_{HLY,TUM}` within the
+    family; `fst_is_dominant_{HLY,TUM}` (>0.5 of family dose) and `fst_dominance_switch`.
+
+    ⚠ SINGLETON FAMILIES ARE DEGENERATE — share ≡ 1.0 in every state by construction, so the switch flag is
+    structurally False. **66.9% of arms (1,639 of 2,450)** are singletons; pooling them is the degeneracy
+    trap (`gene_axes.mask_degenerate`). Mask on `fst_n_members > 1`.
+
+    ⛔⛔ **USE THE NAT LEG. THE HEALTHY LEG IS CROSS-PLATFORM AND CARRIES AN ARTIFACT — measured, and the
+    obvious guard does NOT fix it.** `_HLY` comes from GTEx while `_TUM` comes from TCGA, so a share
+    computed across them compares two quantification pipelines, on top of MH-210's multi-mapping collapse.
+    I predicted that requiring EVERY family member to have a measured GTEx level would clean it up. **It did
+    not — it made it worse**, which is the useful result:
+
+        guard                      n     dominance switch   near-total flips (|Δshare|>0.90)
+        this arm measured        177          46.3%                 7.1%
+        ALL members measured      68          52.9%                11.6%      <- stricter, WORSE
+        ── same platform ──
+        NAT -> TUM               210          26.7%                 1.4%      <- 5-8x fewer flips
+
+    A near-total flip (share 0.0002 -> 1.0000) is not biology; it is one pipeline seeing an arm the other
+    cannot. It is **5–8× rarer** the moment both legs come from TCGA. ⇒ the missing-sibling story was wrong;
+    the defect is the platform boundary itself, and no membership guard can repair it.
+
+    ✅ **WHAT IS DEFENSIBLE:** the same-platform malignant step. `fst_d_share_NAT_TUM` — median **+0.032**,
+    |Δ| > 0.10 for **43.8%** of multi-member arms, and the family's dominant member changes in **26.7%**
+    (56/210). Within-family dominance genuinely moves across the malignant step, and — unlike the gene-level
+    `regulatory_handoff` — it cannot be a design-width artifact, because the denominator is the family.
+    ⚠ Still DESCRIPTIVE: no decoy, no null. A registry CANDIDATE.
+    """
+    try:
+        from mirna_hallmark.learned import data as LD, families as FAM
+        from mirna_hallmark import healthy_anchor as HA          # noqa: F401  (presence check)
+    except Exception as ex:
+        print(f"  ⚠ family_state_shift unavailable ({ex})")
+        return pd.DataFrame()
+    a_path = OUT / "arm_card.tsv"
+    if not a_path.exists():
+        return pd.DataFrame()
+    A = pd.read_csv(a_path, sep="\t", low_memory=False)
+    num = lambda s: pd.to_numeric(s, errors="coerce")
+    lev = {"TUM": "arm_med_rpm", "NAT": "hly_nat_median", "HLY": "hly_gtex_median"}
+    have = {k: v for k, v in lev.items() if v in A.columns}
+    if "TUM" not in have or "seed_family" not in A.columns:
+        return pd.DataFrame()
+    d = A[["arm", "seed_family"] + list(have.values())].copy()
+    d = d[d.seed_family.notna()]
+    for st, col in have.items():
+        lin = np.power(2.0, num(d[col])) - 1.0        # log2 RPM -> linear, matching the dose convention
+        lin = lin.clip(lower=0)
+        tot = lin.groupby(d.seed_family).transform("sum")
+        d[f"fst_share_{st}"] = (lin / tot.replace(0, np.nan)).round(4)
+        d[f"fst_rank_{st}"] = lin.groupby(d.seed_family).rank(ascending=False, method="min")
+    d["fst_n_members"] = d.groupby("seed_family")["arm"].transform("size")
+    if "HLY" in have:
+        d["fst_hly_measured"] = num(d[have["HLY"]]).notna()
+        # the stricter guard, emitted because it is INFORMATIVE even though it does not repair the leg:
+        # requiring every sibling to be measured RAISES the flip rate (7.1% -> 11.6%), which is what
+        # localised the defect to the platform boundary rather than to missing members.
+        d["fst_hly_family_measured"] = d.groupby(d["seed_family"])["fst_hly_measured"].transform("all")
+        d["fst_d_share_HLY_TUM"] = (d["fst_share_TUM"] - d["fst_share_HLY"]).round(4)
+        d["fst_is_dominant_HLY"] = d["fst_share_HLY"] > 0.5
+        d["fst_is_dominant_TUM"] = d["fst_share_TUM"] > 0.5
+        # ⚠ a switch is only MEANINGFUL where the family has >1 member AND the healthy leg is measured
+        ok = (d["fst_n_members"] > 1) & d["fst_hly_measured"]
+        d["fst_dominance_switch"] = np.where(
+            ok, d["fst_is_dominant_HLY"].ne(d["fst_is_dominant_TUM"]), np.nan)
+    if "NAT" in have:
+        d["fst_d_share_NAT_TUM"] = (d["fst_share_TUM"] - d["fst_share_NAT"]).round(4)
+    return d.drop(columns=list(have.values()) + ["seed_family"])
+
+
 def edge_subtype() -> pd.DataFrame:
     """Per (gene, arm): which PAM50 subtype the edge couples in.
 
@@ -365,11 +498,13 @@ def _run(*, annotate_cards: bool) -> None:
         print("\n(report only — pass --annotate to join onto the cards)")
         return
     print("\n[annotate]")
-    _annotate(GENE_CARD, [(gl, ["gene"]), (gene_lit_ground_truth(), ["gene"])])
+    _annotate(GENE_CARD, [(gl, ["gene"]), (gene_lit_ground_truth(), ["gene"]),
+                          (gene_arm_resolution(), ["gene"])])
     _annotate(EDGE_CARD, [(st, ["gene", "arm"]), (edge_ago_measured(), ["gene", "arm"]),
                           (edge_admissibility(), ["gene", "arm"]),
                           (edge_chimeric(), ["gene", "arm"]), (edge_affinity_pct(), ["gene", "arm"])])
-    _annotate(OUT / "arm_card.tsv", [(arm_admissibility_rollup(), ["arm"])])
+    _annotate(OUT / "arm_card.tsv", [(arm_admissibility_rollup(), ["arm"]),
+                                     (family_state_shift(), ["arm"])])
     # ⭐ MH-218: give MH-217's candidates a FILE, not just a count in a chat log.
     cand = seedless_chimeric_candidates()
     if len(cand):
