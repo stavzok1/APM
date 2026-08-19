@@ -975,6 +975,45 @@ COLUMNS.update({
     ("gene", "n_hallmark_sets"): "How many MSigDB Hallmark programs this gene belongs to.",
     ("edge", "n_HLY_meas"): "How many of the gene's arms have a MEASURED (not imputed, not "
                             "multi-mapping-collapsed) healthy level. Read before any `share_HLY`/`rank_HLY`.",
+    # ── UNIT 20 (2026-08-19) — arm `fame_` (28) + arm `adm_` (4).
+    ("arm", "adm_n_admissible"): "Edges of this arm that pass admissibility (`adm_has_site` + the "
+        "evidence bar) — MH-216's single most load-bearing conditioning variable, rolled up per arm. "
+        "⛔⛔ **THE EDGE VIEW AND THE ARM VIEW OF THIS FILTER DIFFER 2×, and only the edge one is usually "
+        "quoted.** Measured: **60.4% of EDGES** are admissible (2,981/4,937) but **69.9% of ARMS have ZERO** "
+        "— **211 arms (30.1%) carry every admissible edge**, led by the high-degree famous arms "
+        "(miR-21-5p 70, miR-125b-5p 60, miR-29b-3p 59). ⇒ **an ARM-level statement conditioned on "
+        "admissibility is about a heavily selected 30%, not the 60% the edge figure suggests.** State which "
+        "rung your denominator is on (`CARD_RUNG_DOCTRINE` §2, the broadcast-cost rule).",
+    ("arm", "adm_frac_with_site"): "`adm_n_with_site / adm_n_edges`. ⭐ **Deliberately emitted ONLY where "
+        "`adm_n_edges >= 3`** — over 1–2 edges a fraction can take only {0, ½, 1} and carries no "
+        "information (axiom 8's degeneracy trap). ⚠ **This is why it reads as a coverage hole: defined on "
+        "346 of the 702 arms with edges (49.3%), and the 356 'missing' arms all have 1–2 edges.** It is "
+        "recomputable for every one of them and deliberately is not — do not 'repair' it. ✅ Verified exact "
+        "(`n_with_site/n_edges`) on 100% of the rows where it exists. Note the SAME degeneracy gate is "
+        "**absent** from `concentration` (unit 10) and the `fst_share_*` singletons — one discipline, "
+        "applied inconsistently across the codebase.",
+    ("arm", "adm_n_with_site"): "Edges of this arm whose target carries a seed site — **89.9% of edges "
+        "(4,436/4,937)**, so the site requirement is NOT the binding constraint; the evidence bar is "
+        "(admissible drops it to 60.4%). 19.7% of arms have none.",
+    ("arm", "fame_assay_unique_targets"): "Distinct TARGET GENES this arm has in the curated literature "
+        "(`gene.nunique()`). ⛔ **NOT interchangeable with `fame_assay_total_studies` as a NAME, but "
+        "effectively identical as an AXIS: spearman 1.0000, equal on 89.9% of arms, max difference 6.** "
+        "⇒ **never scan both in an FDR sweep** — they are one axis and would double-count the evidence "
+        "(the `comp_*_driver_share`/`_ret` lesson, MH-254). Quote whichever the question is about, not both.",
+    ("arm", "fame_assay_total_studies"): "Distinct STUDIES (`study_id.nunique()`) behind this arm's curated "
+        "edges — median 57, max 930. See `fame_assay_unique_targets`: different definitions, one axis "
+        "(spearman 1.0000). ⚠ A study count is FAME, not evidence depth — memory "
+        "`definitional-harness-control`.",
+    ("arm", "fame_assay_binding_studies"): "Studies whose assay class is BINDING (the marginal of the "
+        "assay × functional-class cross-tab). ⚠ **99.49% identical to "
+        "`fame_assay_binding__functional_mti_weak_studies`** (max difference 6) — because nearly every "
+        "binding study lands in the `functional_mti_weak` cell. ⭐ **The 0.51% where they differ IS the "
+        "information**: those are binding studies with a stronger functional class. Not redundant, but do "
+        "not treat them as two independent counts.",
+    ("arm", "fame_led_n_classes"): "How many distinct evidence CLASSES this arm's curated edges span (1–7). "
+        "⛔ **Bimodal, not continuous: 1 on 1,466 arms (62.5%) and 5–6 on 487** — the middle is nearly "
+        "empty, so a median or a mean over it is meaningless (axiom 5's mass-location rule). Use it as a "
+        "categorical single-class-vs-broad split.",
     # ── THE RATIO SWEEP (MH-257, 2026-08-19) — columns whose denominator was never gated.
     ("edge", "sd_arm"): "Posterior SD of the arm-level β. ⚠ **No upper bound, and the tail is real, not a "
         "division artifact: max 1.302 against a median of 0.0036 — 360×.** The six extreme rows are "
