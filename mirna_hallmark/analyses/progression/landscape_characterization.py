@@ -141,7 +141,7 @@ def regulatory_handoffs(gc: pd.DataFrame) -> pd.DataFrame:
         h[c] = h[c].str.replace("hsa-", "", regex=False)
     h["handoff"] = h["dominant_HLY"] + " → " + h["dominant_TUM"]
     keep = [c for c in ["gene", "dominant_HLY", "dominant_NAT", "dominant_TUM", "realized_rho_adj",
-                        "acquired_vs_nat", "gene_repression_class"] if c in h.columns]
+                        "acquired_vs_nat", "heur_repression_class", "gene_repression_class"] if c in h.columns]
     out = h[keep].sort_values("acquired_vs_nat", ascending=False)
     out.to_csv(OUT / "landscape_regulatory_handoffs.tsv", sep="\t", index=False)
     return out
@@ -155,8 +155,8 @@ def dose_realization_quadrants(gc: pd.DataFrame) -> pd.DataFrame:
     g["quadrant"] = np.select([acq & real, acq & ~real, ~acq & real], ["DRIVER", "BUFFERED", "PRE-SET"], "INERT")
     cen = g.groupby("quadrant").agg(n_genes=("gene", "size"), mean_dose=("acquired_vs_nat", "mean"),
                                     mean_realization=("realized_rho_adj", "mean"),
-                                    frac_net_repressed=("gene_net_repressed_tumor", "mean")).round(3)
-    g[["gene", "quadrant", "acquired_vs_nat", "realized_rho_adj", "n_regulators", "gene_net_repressed_tumor"]].to_csv(
+                                    frac_net_repressed=(("heur_net_repressed_tumor" if "heur_net_repressed_tumor" in g.columns else "gene_net_repressed_tumor"), "mean")).round(3)
+    g[[c for c in ["gene", "quadrant", "acquired_vs_nat", "realized_rho_adj", "heur_n_regulators", "n_regulators", "heur_net_repressed_tumor", "gene_net_repressed_tumor"] if c in g.columns]].to_csv(
         OUT / "landscape_dose_realization_quadrants.tsv", sep="\t", index=False)
     cen.attrs["drivers_top"] = ", ".join(g[g.quadrant == "DRIVER"].sort_values("realized_rho_adj").gene.head(10))
     cen.attrs["buffered_top"] = ", ".join(g[g.quadrant == "BUFFERED"].sort_values("acquired_vs_nat", ascending=False).gene.head(10))

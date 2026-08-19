@@ -37,7 +37,7 @@ for k, s in d.groupby("cbin"):
 
 print("\n" + "="*90); print("⭐ THE TAILS — the 20 genes where curation beats the fake MOST"); print("="*90)
 cols = ["gene","ctx_gap_core","ctx_gap_deconv","ctx_ceiling","n_fam","n_arms","top_family_magnitude",
-        "median_retention","gene_repression_class"]
+        "median_retention","heur_repression_class"]
 lo = d.nsmallest(20, "ctx_gap_core")[cols]
 print(lo.to_string(index=False, float_format=lambda v: f"{v:+.4f}"))
 print("\n" + "="*90); print("⛔ THE OTHER TAIL — the 20 genes where the FAKE beats curation"); print("="*90)

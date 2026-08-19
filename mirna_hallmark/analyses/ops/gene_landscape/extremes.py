@@ -52,8 +52,8 @@ t21 = h[h.dominant_TUM=="hsa-miR-21-5p"]
 print(f"genes where miR-21-5p becomes dominant in tumour: {len(t21)}")
 print(f"  they were dominated in HEALTHY by: {t21.dominant_HLY.value_counts().head(8).to_dict()}")
 print(f"  named: {', '.join(t21.gene.head(24))}")
-print(f"\n  their repression class: {t21.gene_repression_class.value_counts().to_dict()}")
-print(f"  vs all handoff genes:   {h.gene_repression_class.value_counts().to_dict()}")
+print(f"\n  their repression class: {t21.heur_repression_class.value_counts().to_dict()}")
+print(f"  vs all handoff genes:   {h.heur_repression_class.value_counts().to_dict()}")
 lost = h[h.dominant_HLY=="hsa-miR-26a-5p"]
 print(f"\ngenes miR-26a-5p LOSES: {len(lost)} -> {', '.join(lost.gene.head(18))}")
 print(f"  handed to: {lost.dominant_TUM.value_counts().head(6).to_dict()}")

@@ -54,6 +54,27 @@ SUBTYPE = OUT / "subtype_edge_heterogeneity.tsv"
 # the SAME cuts the arm card uses — a ladder is only comparable across rungs if the rungs agree on it
 COUPLING_CUTS = (-0.05, -0.10, -0.15, -0.20, -0.30)
 
+#: ⛔ THE RETIRED-HEURISTIC BLOCK ON THE GENE CARD. All five arrive from
+#: `analyses/misc/mirna_comovement.py` -> `tissue_reference/mirna_comovement/gene_corepression.tsv`, i.e.
+#: the **§6b-RETIRED pressure heuristic**, NOT the learned model. `heur_n_regulators` in particular is a
+#: different count from the model's `n_arms` (they differ on 306 of 1,409 genes, in both directions).
+#: Prefixing them makes the provenance visible at a glance and groups them as ONE block.
+HEUR_RENAME = {"n_regulators": "heur_n_regulators",
+               "gene_repression_class": "heur_repression_class",
+               "gene_net_repressed_tumor": "heur_net_repressed_tumor",
+               "rho_gene_pressure_tumor": "heur_rho_pressure_tumor",
+               "delta_tumor_nat": "heur_delta_tumor_nat"}
+
+
+def heur_col(d, name: str):
+    """Tolerant accessor for the retired-heuristic block — accepts either the old or the `heur_` name.
+    Lets a consumer work against a card written before or after the 2026-08-19 rename."""
+    new = HEUR_RENAME.get(name, name)
+    for c in (new, name):
+        if c in getattr(d, "columns", []):
+            return d[c]
+    return None
+
 
 def gene_realization_ladder() -> pd.DataFrame:
     """Per GENE: how many of its regulators realize at each coupling depth (the arm ladder's mirror).
@@ -154,11 +175,14 @@ def normalise_gene_card() -> None:
     # it is `edges.groupby('gene')['miRNA'].nunique()` from `mirna_comovement`, i.e. the §6b-RETIRED
     # heuristic pressure lane's edge table. `n_arms` is the fit's own width, and the two differ on 306 of
     # 1,409 genes IN BOTH DIRECTIONS. Two counts reading as one name is axiom 6's collision class.
-    # ⚠ Its FOUR siblings arrive from the same retired lane and are NOT renamed here, because their names
-    # do not collide with a model column: `gene_repression_class`, `gene_net_repressed_tumor`,
-    # `rho_gene_pressure_tumor`, `delta_tumor_nat`. They inherit the same provenance caveat.
-    if "n_regulators" in g.columns and "heur_n_regulators" not in g.columns:
-        g = g.rename(columns={"n_regulators": "heur_n_regulators"})
+    # ⭐ AND ITS FOUR SIBLINGS TOO (user-directed 2026-08-19) — they arrive from the SAME retired lane, so
+    # the whole block is renamed together and reads as one provenance unit rather than five loose columns.
+    # ⚠ RENAMED ON THE CARD ONLY. `gene_corepression.tsv` and its direct readers
+    # (`pressure_attribution_validation`, `decoupling_validation`) keep the original names — the rename is
+    # about what the CARD delivers, not about rewriting a retired lane's own outputs.
+    for _old, _new in HEUR_RENAME.items():
+        if _old in g.columns and _new not in g.columns:
+            g = g.rename(columns={_old: _new})
     if g.shape[1] != before or "n_pip_disc_gt50" in g.columns:
         g.to_csv(GENE_CARD, sep="\t", index=False)
         print(f"  ✅ gene_card normalised: {before} -> {g.shape[1]} cols "

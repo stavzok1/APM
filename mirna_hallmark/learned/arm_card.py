@@ -605,10 +605,47 @@ def _curation_profile() -> pd.DataFrame:
     # biology. Dropping CONSTANT columns is measured, not curated, so a class that gains rows later
     # reappears automatically.
     d = d[keep]
-    dead = [c for c in d.columns if d[c].nunique(dropna=True) <= 1]
-    if dead:
-        print(f"  fame_assay: dropping {len(dead)} constant column(s): {', '.join(c[2:] for c in dead)}")
-        d = d.drop(columns=dead)
+    # ⛔ THREE MEASURED DROP RULES (column review unit 4, 2026-08-19; user chose the conservative cut).
+    # All three are MEASURED, never a hardcoded name list — so a class that gains signal later reappears
+    # on its own. The block is 31 columns with ZERO consumers in any module (verified), and the user
+    # elected to prune only what is provably dead rather than the whole cross-tabulation.
+    #   (1) CONSTANT            — carries no information at all.
+    #   (2) NEAR-DEGENERATE     — >95% zero or <=4 distinct values. Eight qualify, e.g.
+    #       `binding__nonfunctional_mti` (99.9% zero, 2 values) and `protein__nonfunctional_mti_weak`
+    #       (99.8%, 2 values). A count that is zero for 99% of arms cannot separate anything.
+    #   (3) REDUNDANT at r>=0.9999 — keep the MARGINAL, drop the cell. Two pairs qualify:
+    #       `unique_targets` ≡ `total_studies` (⚠ and `unique_targets` is a MISNOMER — it tracks a STUDY
+    #       count, not a target count, which is exactly the kind of name that gets cited wrongly), and
+    #       `binding_studies` ≡ `binding__functional_mti_weak_studies`.
+    # ⚠ NOTE these escaped the exact-equality duplicate audit: they correlate at 1.00000 without being
+    # bit-identical, so an `equals()` check cannot see them. Near-duplicates need a correlation rule.
+    dropped: dict[str, str] = {}
+    for c in list(d.columns):
+        s = pd.to_numeric(d[c], errors="coerce").dropna()
+        if not len(s) or s.nunique() <= 1:
+            dropped[c] = "constant"
+        elif (s == 0).mean() > 0.95 or s.nunique() <= 4:
+            dropped[c] = f"degenerate ({(s == 0).mean():.0%} zero, {s.nunique()} distinct)"
+    alive = [c for c in d.columns if c not in dropped]
+    # prefer MARGINALS (no `__`) as the survivor of a redundant pair; `n_total_studies` beats the misnomer
+    order = sorted(alive, key=lambda c: ("__" in c, c != "n_total_studies", c))
+    for i, c1 in enumerate(order):
+        if c1 in dropped:
+            continue
+        for c2 in order[i + 1:]:
+            if c2 in dropped:
+                continue
+            m = pd.to_numeric(d[c1], errors="coerce").notna() & pd.to_numeric(d[c2], errors="coerce").notna()
+            if m.sum() < 100:
+                continue
+            r = pd.to_numeric(d.loc[m, c1], errors="coerce").corr(pd.to_numeric(d.loc[m, c2], errors="coerce"))
+            if pd.notna(r) and abs(r) >= 0.9999:
+                dropped[c2] = f"redundant with {c1[2:]} (r={r:.5f})"
+    if dropped:
+        print(f"  fame_assay: dropping {len(dropped)} of {len(d.columns)} column(s)")
+        for c, why in sorted(dropped.items()):
+            print(f"      {c[2:]:<46} {why}")
+        d = d.drop(columns=list(dropped))
     return d.rename(columns={c: f"fame_assay_{c[2:]}" for c in d.columns})
 
 

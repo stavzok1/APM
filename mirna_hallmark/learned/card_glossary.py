@@ -100,6 +100,16 @@ BLOCKS: dict[tuple[str, str], str] = {
                             "'ground truth' rests on a handful of papers per gene.",
     ("gene", "lit_margin"): "PMID count of `lit_family` minus the runner-up. Median **1** — for half the "
                             "admitted genes the canonical family is decided by a SINGLE paper.",
+    ("arm", "fame_assay_total_studies"): "Total curated studies for this arm across all assay classes. "
+                                         "⚠ Its twin `fame_assay_unique_targets` was PRUNED 2026-08-19 as "
+                                         "redundant (r=1.00000) — and that name was a MISNOMER: it tracked "
+                                         "a STUDY count, not a target count. For targets read "
+                                         "`fame_n_genes_curated` (curated) or `seq_n_genes_strong` "
+                                         "(sequence, the abundance-orthogonal one).",
+    ("arm", "fame_assay_binding_studies"): "Curated studies with BINDING evidence for this arm. ⚠ Its cell "
+                                           "`binding__functional_mti_weak_studies` was PRUNED as redundant "
+                                           "(r=1.00000) — nearly all binding evidence is functional-weak, "
+                                           "so the cell carried the marginal.",
     ("arm", "fame_npmid"): "Distinct PMIDs citing this arm. \u26d4 A FAME axis \u2014 control for it, never "
                            "read it as biology. (Its bit-identical twin `fame_led_n_pmid` was PRUNED "
                            "2026-08-19; this is the surviving name.)",
@@ -438,6 +448,25 @@ COLUMNS: dict[tuple[str, str], str] = {
                         "table: they agree on 1,103 genes and differ on 306, in BOTH directions (ABCA1 13 "
                         "vs 12, ABCC1 7 vs 8). Both read as 'how many regulators'; only this one describes "
                         "the fit.",
+    ("", "heur_"): "⛔⛔ **THE RETIRED-HEURISTIC BLOCK — provenance, not model.** All five columns come from "
+                   "`analyses/misc/mirna_comovement.py` → `tissue_reference/mirna_comovement/"
+                   "gene_corepression.tsv`, i.e. the **§6b-RETIRED pressure heuristic**, NOT the learned "
+                   "Gibbs. They were renamed as a BLOCK on 2026-08-19 so the provenance is visible at a "
+                   "glance and they read as one unit. ⚠ Renamed **on the card only** — the source TSV and "
+                   "its direct readers keep the original names. ⚠ Do not mix them with model columns in one "
+                   "statement without saying which lane each came from.",
+    ("gene", "heur_repression_class"): "Cross-state repression class from the RETIRED heuristic lane "
+                                       "(never_repressed / lost_repression / gained_repression / "
+                                       "constitutive_repressed). 867 of 1,409 genes are `never_repressed`.",
+    ("gene", "heur_net_repressed_tumor"): "Is the gene net-repressed in tumour, per the RETIRED heuristic "
+                                          "lane. True for 282 of 1,409 genes.",
+    ("gene", "heur_rho_pressure_tumor"): "Spearman of the gene's HEURISTIC aggregate pressure against its "
+                                         "mRNA in tumour. ⛔ The heuristic is retired — the learned "
+                                         "equivalent is `realized_rho_adj`. Do not present this as the "
+                                         "model's coupling.",
+    ("gene", "heur_delta_tumor_nat"): "Tumour-minus-NAT change in the heuristic pressure correlation. "
+                                      "⛔ Retired lane; the learned paired-design equivalent lives in the "
+                                      "`realization` columns.",
     ("gene", "heur_n_regulators"): "⚠⚠ **A DIFFERENT PIPELINE'S COUNT — not the model's.** It is "
                               "`edges.groupby('gene')['miRNA'].nunique()` inside "
                               "`analyses/misc/mirna_comovement.py`, i.e. distinct arms in the **heuristic "
