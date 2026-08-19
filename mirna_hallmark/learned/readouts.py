@@ -122,6 +122,30 @@ def add_reliability(d: pd.DataFrame) -> pd.DataFrame:
       `beta_frac_abs`      |β_f|/Σ|β_f| ∈ [0,1] — a BOUNDED companion to `beta_frac`, always well-defined.
       `beta_frac_reliable` the signed fraction is meaningful (net_pressure ≥ 0.5 AND beta_frac_sd ≤ 1).
       `retention_reliable`  the core β is identified (|z|>2), so the ratio has a real denominator.
+      `identity_coherence`  1/Σ|identity| ∈ (0,1] — IDENTITY's own sign coherence (see below).
+      `identity_reliable`   the identity share is meaningful (identity_coherence ≥ 0.5 AND |identity| ≤ 1).
+
+    ⛔⛔ **`beta_frac_reliable` IS INERT, AND HAS BEEN SINCE MH-124 — MEASURED 2026-08-19, NOT INFERRED.**
+    It admits **100.0% of 5,802 rows**, and excludes **0 of the 124 rows whose `identity` is outside [−1,1]**.
+    The mechanism is a flag outliving its condition: this gate watches **β** sign-cancellation
+    (`net_pressure = |Σβ|/Σ|β| ≥ 0.5`), but MH-124 fixed the `_rtnorm_pos` sampler bug that produced the
+    negative βs, so the half-normal slab now makes β **strictly positive** (measured: min +0.00096,
+    **0 negatives / 5,802**) ⇒ `Σβ ≡ Σ|β|` ⇒ **`net_pressure ≡ 1.0` for every row**, and the second leg
+    never binds either (max |beta_frac_sd| = 0.29 against a threshold of 1.0). *Fixing the bug removed the
+    cause the gate was built to catch, and nobody re-checked whether the gate still had work to do.*
+
+    ⭐ **THE RATIO STILL EXPLODES — via a DIFFERENT variable.** `identity` (Shapley/LMG on R²) is a **signed**
+    share summing to exactly 1 per gene, and **9.9% of its values are negative** — legitimate *suppressor*
+    contributions under a non-additive value function. So one family at −739 forces its partner to +740:
+    the column spans **−739.0 … +740.0**, and `top_identity` / `arb_max_identity` inherit that unbounded
+    range (`arb_max_identity` reaches **+740.0**, and its docstring claims the inert gate protects it).
+    The blow-ups concentrate where the denominator vanishes — 75.0% of the affected genes have
+    `ctx_ceiling ≤ 0.02` vs 31.5% of the rest (MWU p=9.1e−16), i.e. axiom 5, again.
+
+    ⇒ `identity_coherence` gates the variable that actually cancels. Since Σidentity ≡ 1 per gene,
+    `|Σidentity|/Σ|identity|` reduces to **1/Σ|identity|**: 1.0 when nothing cancels, → 0 as cancellation
+    grows. Read `top_identity` / `arb_max_identity` **only on `identity_reliable` rows**, or report
+    `identity_abs` (the bounded companion) instead — exactly the `beta_frac` → `beta_frac_abs` pattern.
     """
     g = d.groupby("gene")["beta"]
     sb = g.transform("sum")
@@ -132,6 +156,12 @@ def add_reliability(d: pd.DataFrame) -> pd.DataFrame:
     d["beta_frac_reliable"] = (d["net_pressure"] >= 0.5) & (d["beta_frac_sd"].abs() <= 1.0)
     if "retention" in d.columns:
         d["retention_reliable"] = d.get("identified", pd.Series(False, index=d.index)).astype(bool)
+    if "identity" in d.columns:
+        ia = d.groupby("gene")["identity"].transform(lambda s: s.abs().sum())
+        with np.errstate(divide="ignore", invalid="ignore"):
+            d["identity_coherence"] = (1.0 / ia.replace(0, np.nan)).clip(0, 1)
+            d["identity_abs"] = (d["identity"].abs() / ia.replace(0, np.nan)).clip(0, 1)
+        d["identity_reliable"] = (d["identity_coherence"] >= 0.5) & (d["identity"].abs() <= 1.0)
     return d
 
 

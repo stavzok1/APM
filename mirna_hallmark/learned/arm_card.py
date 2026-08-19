@@ -582,6 +582,10 @@ def _ledger_assay_profile() -> pd.DataFrame:
     out["fame_led_frac_ltfunc"] = out["fame_led_n_ltfunc_pmid"] / out["fame_led_n_pmid"].replace(0, np.nan)
     if "weak" in L.columns:
         out["fame_led_n_weak"] = L[L["weak"].astype(bool)].groupby("arm").size()
+    # ⛔ PRUNED 2026-08-19: `fame_led_n_pmid` was BIT-IDENTICAL to `fame_npmid` from `_curation_and_fame`
+    # — the same `groupby("arm")["pmid"].nunique()` on the same ledger, computed twice. It is still needed
+    # as the denominator of `fame_led_frac_ltfunc` above, so it is computed and then dropped.
+    out = out.drop(columns=["fame_led_n_pmid"])
     return out.rename_axis("arm")
 
 
@@ -594,7 +598,18 @@ def _curation_profile() -> pd.DataFrame:
     kcol = "miRNA" if "miRNA" in d.columns else d.columns[0]
     d = _key_index(d, kcol, src="mirtar_summary")
     keep = [c for c in d.columns if c.startswith("n_") and "json" not in c.lower()]
-    return d[keep].rename(columns={c: f"fame_assay_{c[2:]}" for c in keep})
+    # ⛔ PRUNED 2026-08-19: this block took EVERY `n_*` column, and five of them are ALL-ZERO and
+    # bit-identical — miRTarBase carries no `perturbation` assay class for these arms, nor any
+    # `binding__nonfunctional_mti_weak` row. They were 5 dead columns on the largest card (the `fame_`
+    # block is 43 of the arm card's 297) for an axis the doctrine calls a confound-to-control, never
+    # biology. Dropping CONSTANT columns is measured, not curated, so a class that gains rows later
+    # reappears automatically.
+    d = d[keep]
+    dead = [c for c in d.columns if d[c].nunique(dropna=True) <= 1]
+    if dead:
+        print(f"  fame_assay: dropping {len(dead)} constant column(s): {', '.join(c[2:] for c in dead)}")
+        d = d.drop(columns=dead)
+    return d.rename(columns={c: f"fame_assay_{c[2:]}" for c in d.columns})
 
 
 def _model_footprint() -> pd.DataFrame:
@@ -602,8 +617,9 @@ def _model_footprint() -> pd.DataFrame:
     from mirna_hallmark.learned.evidence import ledger as LG
     he = LG.pooled_he_edges()
     g = he.groupby("miRNA")
-    return pd.DataFrame({"model_n_genes": g["gene"].nunique(),
-                         "model_n_edges": g.size()}).rename_axis("arm")
+    # ⛔ PRUNED 2026-08-19: `model_n_edges` was bit-identical to `model_n_genes` — same structural reason
+    # as `arb_n_genes`: one row per (arm, gene), so `size()` == `gene.nunique()` by construction.
+    return pd.DataFrame({"model_n_genes": g["gene"].nunique()}).rename_axis("arm")
 
 
 def _beta_rollup() -> pd.DataFrame:
@@ -621,9 +637,12 @@ def _beta_rollup() -> pd.DataFrame:
     d = d.assign(_k=d[kcol].map(lambda v: _arm_key(v, src="readouts_arm_edges")))
     d = d[d._k.notna()]
     g = d.groupby("_k")
+    # ⛔ PRUNED 2026-08-19: `arb_n_genes` was BIT-IDENTICAL to `arb_n_edges`. Not a bug in the arithmetic —
+    # `readouts_arm_edges.tsv` holds exactly one row per (arm, gene) (verified: 0 duplicate pairs), so
+    # `size()` and `gene.nunique()` are the same number BY CONSTRUCTION. The column promised a second
+    # quantity and delivered the first.
     out = pd.DataFrame({
         "arb_n_edges": g.size(),
-        "arb_n_genes": g["gene"].nunique() if "gene" in d.columns else np.nan,
         "arb_mean_abs_beta": g["beta"].apply(lambda s: s.abs().mean()) if "beta" in d.columns else np.nan,
         "arb_max_abs_beta": g["beta"].apply(lambda s: s.abs().max()) if "beta" in d.columns else np.nan,
     })
@@ -633,11 +652,25 @@ def _beta_rollup() -> pd.DataFrame:
     if "composition_class" in d.columns:
         out["arb_n_comp_explained"] = d[d.composition_class.eq("composition_explained")].groupby("_k").size()
         out["arb_n_comp_explained"] = out["arb_n_comp_explained"].fillna(0)
-    if {"identity", "beta_frac_reliable"} <= set(d.columns):
-        rel = d[d["beta_frac_reliable"].astype(bool)]
+    if "identity" in d.columns:
+        # ⛔⛔ FIXED 2026-08-19 — THIS GATE WAS INERT AND THE DOCSTRING ABOVE RELIED ON IT.
+        # It used `beta_frac_reliable`, which watches **β** sign-cancellation. MH-124 fixed the
+        # `_rtnorm_pos` sampler bug that produced negative βs, so β is now strictly positive
+        # (0 negatives / 5,802) ⇒ `net_pressure ≡ 1.0` ⇒ the gate admitted **100.0%** of rows and
+        # excluded **0 of the 124** rows with |identity| > 1. `arb_max_identity` therefore reached
+        # **+740.0** while its docstring claimed it was protected. The live cancellation is in
+        # **identity** (9.9% negative — legitimate suppressor contributions), so gate on THAT.
+        # `readouts.add_reliability` now emits `identity_reliable`; recomputed here so the card is
+        # correct against artifacts written before that change.
+        if "identity_reliable" in d.columns:
+            keep = d["identity_reliable"].astype(bool)
+        else:
+            ia = d.groupby("gene")["identity"].transform(lambda s: s.abs().sum())
+            keep = ((1.0 / ia.replace(0, np.nan)) >= 0.5) & (d["identity"].abs() <= 1.0)
+            keep = keep.fillna(False)
+        rel = d[keep]
         out["arb_max_identity"] = rel.groupby("_k")["identity"].max()
-        out["arb_n_identity_reliable"] = rel.groupby("_k").size()
-        out["arb_n_identity_reliable"] = out["arb_n_identity_reliable"].fillna(0)
+        out["arb_n_identity_reliable"] = rel.groupby("_k").size().reindex(out.index).fillna(0)
     # ⭐ THE β LADDER — the second reading of "how many genes does this arm target with such-and-such
     # coupling". `real_*` counts REALIZED (observed bulk) coupling; this counts the MODEL's coupling.
     # They are different estimands and must not be read as one: MH-166 — coupling is REALIZATION, β is
@@ -1089,8 +1122,11 @@ def build() -> pd.DataFrame:
         from mirna_hallmark.coupling_inference import seed_family_map
         fam = pd.Series(seed_family_map(list(card.index)), name="seed_family").reindex(card.index)
         card["seed_family"] = fam
-        # ⚠ NOT `family_size` — the EDGE card owns that name at FAMILY rung over the MODEL DESIGN.
-        card["family_n_arms_card"] = card.groupby("seed_family")["seed_family"].transform("size")
+        # ⛔ PRUNED 2026-08-19: `family_n_arms_card` was bit-identical to `famrole_n_members`, which is
+        # computed below and belongs to a coherent block (the arm's role inside its family). One name
+        # kept, and it is the one that sits with its siblings. Nothing read this column
+        # (grep: written here, read nowhere).
+        # ⚠ Neither is `family_size` — the EDGE card owns that name at FAMILY rung over the MODEL DESIGN.
         fc = _family_context(card.index, fam)
         if len(fc):
             card = card.join(fc)

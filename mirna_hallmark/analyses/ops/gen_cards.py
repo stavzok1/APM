@@ -541,8 +541,12 @@ COLLAPSED = {"fame", "retired", "other"}
 # vocabulary calls the edge card's grain `edge`, not `arm`, and the family card carries MORE
 # gene-rung columns (35) than family-rung ones (24), so "the modal rung" would answer `gene` and be
 # wrong. `build()` asserts each entry is genuinely the grain (never group-compressible).
+# ⛔ FIXED 2026-08-19: these keys said `"family"`, but `card_rungs.CARDS` renamed that card to
+# `"gene_family"` in 6dbd321 — and THIS FILE WAS UNTRACKED at the time, so the rename could not ripple
+# to it. `--build` has raised `KeyError: 'family'` ever since; the shipped HTML predates the rename.
+# The exact failure mode the downstream-ripple axiom exists to catch, hidden by the file being untracked.
 CARD_RUNG = {"arm": "arm", "gene": "gene", "edge": "edge",
-             "family": "family", "seed_family": "family"}
+             "gene_family": "family", "seed_family": "family"}
 
 
 def _block_of(card: str, col: str) -> str:
@@ -698,7 +702,7 @@ def _page(card: str, pay: dict, foot: str) -> str:
 
 def _index(pays: dict, foot: str, link_rows: pd.DataFrame) -> str:
     from mirna_hallmark.analyses.ops._card_assets import INDEX_JS
-    order = ["arm", "gene", "edge", "family", "seed_family"]
+    order = ["arm", "gene", "edge", "gene_family", "seed_family"]
     order = [c for c in order if c in pays]
     total = sum(p["n"] for p in pays.values())
     ncols = sum(len(p["cols"]) for p in pays.values())
