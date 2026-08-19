@@ -379,7 +379,11 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
         med = float(xa.median()) if len(xa) else np.nan
         pct = 100 * float((xa > _FLOOR).mean()) if len(xa) else np.nan
         iqr = float(xa.quantile(.75) - xa.quantile(.25)) if len(xa) else np.nan
-        spiker = bool(pct < 40 and iqr > 1.5) if pct == pct else False
+        # ⛔ MASKED 2026-08-19 (nan_bool_audit, MH-256): the `if pct == pct` guard caught NaN pct but
+        # then returned **False**, so 202 arms with no detection profile read as "not a spiker" —
+        # a guard that detects the missing case and still answers is the same defect as no guard.
+        # ⚠ `iqr` is NaN-checked too: `NaN > 1.5` is False, so a measured pct with a NaN iqr also lied.
+        spiker = (bool(pct < 40 and iqr > 1.5) if (pct == pct and iqr == iqr) else np.nan)
         ct = _edge(arm, Xr, Crm, yrr)
         cd = _edge(arm, Xd, Cdm, yrd)
         ret = float(cd / ct) if (ct and ct == ct) else np.nan
@@ -483,11 +487,19 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
     # (miTED, real repression potential), AND no same-seed surrogate recovered the coupling. A LOW-abundance collapse_blind
     # arm has abundance-bounded potential ⇒ safe; a surrogate-RESOLVED arm is no longer blind (MH-166 follow-up; graded).
     _hi = _healthy_leg_map()[2]
-    card["healthy_uninformative"] = (card["healthy_leg"].eq("collapse_blind") & (card["healthy_potential"] > _hi)
-                                     & card["coupling_p_hly_surrogate"].isna())
+    # ⛔ MASKED 2026-08-19 (nan_bool_audit, MH-256): `NaN > _hi` is False, so 446 edges with no
+    # `healthy_potential` read as "the healthy leg IS informative" — the optimistic direction, and
+    # the one that lets an unusable leg into an analysis unnoticed.
+    _hp = card["healthy_potential"]
+    card["healthy_uninformative"] = (card["healthy_leg"].eq("collapse_blind") & (_hp > _hi)
+                                     & card["coupling_p_hly_surrogate"].isna()).where(_hp.notna())
     # ⚠ dose is a COMPOSITION/PROLIFERATION artifact where either gated retention is low (dose | C ≪ raw dose). Measured:
     # for real doses retention ≈ 1.00 on both ⇒ ~none flagged — the NAT→tumour dose-acquisitions are cell-intrinsic.
-    card["dose_confounded"] = ((card["dose_comp_retention"] < 0.4) | (card["dose_prolif_retention"] < 0.4))
+    # ⛔ MASKED 2026-08-19 (nan_bool_audit, MH-256): a bare comparison reads False on NaN. An `|` of two such comparisons is False when BOTH
+    # inputs are missing, so 207 arms with neither retention read "not confounded" — the most
+    # dangerous direction for a confound flag, since absence of evidence read as evidence of absence.
+    _dc, _dp = card["dose_comp_retention"], card["dose_prolif_retention"]
+    card["dose_confounded"] = ((_dc < 0.4) | (_dp < 0.4)).where(_dc.notna() | _dp.notna())
     # QUANTIFIED companions (the class is categorical; these are the continuous axes)
     card["realization_score"] = -card["coupling_z_tum"]         # calibrated tumour repression strength (>0 = repressive)
     card["dose_class"] = card["arm_lfc_NAT_TUM"].apply(          # SAME-PLATFORM NAT→tumour dose direction

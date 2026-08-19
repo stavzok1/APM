@@ -905,7 +905,11 @@ def edge_card(*, annotate: bool = True) -> pd.DataFrame:
     m["gene_nreg"] = m.gene.map(cp["n_regulators"])
     m["gene_repr_class"] = m.gene.map(cp["gene_repression_class"])
     m["gene_net_repr"] = m.gene.map(cp["gene_net_repressed_tumor"])
-    m["gene_dominated"] = m.groupby("gene").share_TUM.transform("max") > 0.6
+    # ⛔ MASKED 2026-08-19 (nan_bool_audit, MH-256): `NaN > 0.6` is False, so a gene with NO measured
+    # share read as "not dominated" on 154 edges. The max is a GENE property, so the mask is on the
+    # GROUP's max, not the row's own share — an arm with a NaN share in a measured gene is fine.
+    _gmax = m.groupby("gene").share_TUM.transform("max")
+    m["gene_dominated"] = (_gmax > 0.6).where(_gmax.notna())
     _finish_card(OUT / "edge_card.tsv", m, annotate)
     return m
 

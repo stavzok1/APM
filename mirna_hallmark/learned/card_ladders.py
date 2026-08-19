@@ -149,6 +149,68 @@ def gene_arm_resolution() -> pd.DataFrame:
     return out.reset_index()
 
 
+# ⭐⭐ THE NaN-BOOLEAN REPAIR TABLE (MH-256, 2026-08-19). Each entry is (flag, inputs, mode).
+# ⛔ THE CLASS: `NaN < x`, `NaN > x`, `NaN >= x` and `series.eq(v)` on NaN all return **False**, never NaN,
+# so a flag built as a bare comparison of possibly-missing numbers is defined on EVERY row and each
+# unmeasurable row silently joins the NEGATIVE class. Thirteen instances were found in one session; the
+# eight below were found in one pass by `analyses/ops/nan_bool_audit.py` rather than one block at a time.
+# ⚠ Fixed at SOURCE as well — this table exists because several sources (`card.py`) only re-run under the
+# expensive canonical rebuild, while every input is already on the delivered card, so the repair is a pure
+# derivation. `mode="any"` masks where ALL inputs are missing (an `|` of comparisons); `mode="group_max"`
+# masks on the gene-level max, because that flag is a GENE property and a NaN row inside a measured gene is
+# legitimate — testing the row's own value overstated it 10× (1,570 rows vs the true 154).
+_NAN_FLAG_REPAIRS = {
+    "edge": [("gene_dominated", ["share_TUM"], "group_max"),
+             ("healthy_uninformative", ["healthy_potential"], "all"),
+             ("arm_spiker", ["arm_pct_floor", "arm_iqr"], "all"),
+             ("ctx_measurable", ["ctx_ceiling"], "all")],
+    "gene": [("ctx_measurable", ["ctx_ceiling"], "all")],
+    "family": [("ctx_measurable", ["ctx_ceiling"], "all")],
+    "arm": [("famrole_is_dominant", ["famrole_abund_share"], "all"),
+            ("dose_confounded", ["dose_comp_retention", "dose_prolif_retention"], "any"),
+            ("hly_from_seedmate", ["hly_baseline_src"], "all"),
+            ("arm_spiker", ["arm_pct_floor", "arm_iqr"], "all")],
+}
+
+
+def _repair_nan_flags(d: pd.DataFrame, card: str) -> int:
+    """Mask the flags in `_NAN_FLAG_REPAIRS` wherever their inputs are missing. Returns rows unmasked."""
+    moved = 0
+    for flag, ins, mode in _NAN_FLAG_REPAIRS.get(card, []):
+        if flag not in d.columns or not all(i in d.columns for i in ins):
+            continue
+        ok = None
+        for i in ins:
+            col = d[i]
+            s = col.notna() if col.dtype == object else pd.to_numeric(col, errors="coerce").notna()
+            ok = s if ok is None else (ok | s if mode == "any" else ok & s)
+        if mode == "group_max" and "gene" in d.columns:
+            v = pd.to_numeric(d[ins[0]], errors="coerce")
+            ok = v.groupby(d["gene"]).transform("max").notna()
+        was = d[flag].notna().sum()
+        d[flag] = d[flag].where(ok)
+        if d[flag].notna().sum() != was:
+            moved += was - int(d[flag].notna().sum())
+            print(f"  ✅ {card}.{flag}: {was} -> {int(d[flag].notna().sum())} defined "
+                  f"({was - int(d[flag].notna().sum())} unmeasurable rows unmasked from a silent False)")
+    return moved
+
+
+def normalise_flag_cards() -> None:
+    """Apply `_NAN_FLAG_REPAIRS` to the EDGE and ARM cards, which have no name-normaliser of their own.
+
+    ⚠ Kept separate from `normalise_gene_card` / `normalise_family_card` because those also rename and
+    prune; this one ONLY masks flags, so it is safe to run on any card at any time.
+    """
+    for card, rel in (("edge", "realization/edge_card.tsv"), ("arm", "arm_card.tsv")):
+        path = OUT / rel
+        if not path.exists():
+            continue
+        d = pd.read_csv(path, sep="\t", low_memory=False)
+        if _repair_nan_flags(d, card):
+            d.to_csv(path, sep="\t", index=False)
+
+
 def normalise_gene_card() -> None:
     """⭐ THE GENE CARD's PUBLIC NAMES — applied in place, no refit (column review unit 3, 2026-08-19).
 
@@ -189,6 +251,7 @@ def normalise_gene_card() -> None:
     # source is an expensive CPTAC re-scoring, and the repair is a PURE DERIVATION over columns already on
     # disk: mask wherever either input is missing. ✅ The comparison itself was correct on measurable rows
     # (verified 100% match), so only the mask changes.
+    _repair_nan_flags(g, "gene")
     for _pref in ("cptac_prosp", "cptac_t105"):
         _f, _a, _g = f"{_pref}_agg_beats_abund_prot", f"{_pref}_abund_rho_prot", f"{_pref}_agg_rho_prot"
         if _f in g.columns and _a in g.columns and _g in g.columns:
@@ -225,6 +288,7 @@ def normalise_family_card() -> None:
         return
     d = pd.read_csv(p, sep="\t", low_memory=False)
     before = d.shape[1]
+    _repair_nan_flags(d, "family")
     if "n" in d.columns and "n_samples" not in d.columns:
         d = d.rename(columns={"n": "n_samples"})
     if "p_fam" in d.columns:
@@ -858,6 +922,7 @@ def _run(*, annotate_cards: bool) -> None:
     print("\n[annotate]")
     normalise_gene_card()          # rename/prune BEFORE annotating, so the registry sees final names
     normalise_family_card()        # doctrine §4.5: this card has no _finish_card funnel of its own
+    normalise_flag_cards()         # MH-256: mask flags that cannot say 'unknown' (edge + arm)
     _annotate(GENE_CARD, [(gl, ["gene"]), (gene_lit_ground_truth(), ["gene"]),
                           (gene_arm_resolution(), ["gene"]), (gene_concentration_adj(), ["gene"]),
                           (discovery_queue_rollup("gene"), ["gene"]),

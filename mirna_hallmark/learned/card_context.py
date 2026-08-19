@@ -154,7 +154,9 @@ def gene_context() -> pd.DataFrame:
 
     g = atlas[["gene", "n_fam", "n_arms", "w_max", "ceiling_R2_oof_fam_core", "apriori_class"]].copy()
     g = g.rename(columns={"ceiling_R2_oof_fam_core": "ctx_ceiling", "apriori_class": "ctx_apriori_class"})
-    g["ctx_measurable"] = g.ctx_ceiling > CEILING_ROBUST          # ⚠ 0.02, not 0 (MH-144)
+    # ⚠ 0.02, not 0 (MH-144). # ⛔ MASKED 2026-08-19 (nan_bool_audit, MH-256): a bare comparison reads False on NaN. 32 genes / 33 family cells with no
+    # ceiling read as "not measurable", which is a different claim from "we could not tell".
+    g["ctx_measurable"] = (g.ctx_ceiling > CEILING_ROBUST).where(g.ctx_ceiling.notna())
 
     if bench is not None:
         b = bench[["gene", "gap_core", "gap_deconv", "d_dose"]].copy()

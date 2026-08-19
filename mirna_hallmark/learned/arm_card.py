@@ -517,7 +517,10 @@ def _healthy_anchor() -> pd.DataFrame:
     # varies WITHIN seed_family in 38 of 1,959 groups, and correctly so. It records whether
     # THIS ARM fell back to the seed-mate baseline, which differs between members of one
     # family (one measured in GTEx, the other imputed). Arm-native provenance, not inherited.
-    out["hly_from_seedmate"] = src.eq("gtex_family") if src is not None else np.nan
+    # ⛔ MASKED 2026-08-19 (nan_bool_audit, MH-256): a bare comparison reads False on NaN. `.eq()` on NaN is False too, so the 213 arms with NO recorded
+    # baseline source read as "not from a seed-mate" rather than "source unknown".
+    out["hly_from_seedmate"] = (src.eq("gtex_family").where(src.notna())
+                                if src is not None else np.nan)
     return out
 
 
@@ -1052,7 +1055,9 @@ def _family_role(card: pd.DataFrame) -> pd.DataFrame:
     out["famrole_abund_share"] = (d["_lin"] / tot.replace(0, np.nan)).round(4)
     out["famrole_abund_rank"] = g["_lin"].rank(ascending=False, method="min")
     out["famrole_var_rank"] = g["abund_sd"].rank(ascending=False, method="min")
-    out["famrole_is_dominant"] = out["famrole_abund_share"] >= 0.5
+    # ⛔ MASKED 2026-08-19 (nan_bool_audit, MH-256): a bare comparison reads False on NaN. 219 arms with no abundance share read "not dominant".
+    out["famrole_is_dominant"] = (out["famrole_abund_share"] >= 0.5).where(
+        out["famrole_abund_share"].notna())
     out["famrole_class"] = np.where(out["famrole_n_members"] == 1, "sole",
                              np.where(out["famrole_abund_share"] >= 0.5, "dominant",
                                np.where(out["famrole_abund_share"] >= 0.2, "co", "minor")))
