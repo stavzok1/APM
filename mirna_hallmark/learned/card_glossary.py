@@ -318,6 +318,46 @@ BLOCKS: dict[tuple[str, str], str] = {
     ("", "fam_"): "Seed-family structure the arm sits in — membership, affinity and dominance within it. "
                   "⭐ In a typical multi-member family ONE member carries ~62% of the dose, which is the "
                   "structural fact that justifies the arm/family split.",
+    ("seed_family", "fam_single_member"): "⭐⭐ **THE DOMINANT FACT ABOUT THIS ENTIRE CARD: 1,639 of "
+                                          "1,959 families (83.7%) are SINGLETONS.** For those rows every "
+                                          "'family-level' statistic is TRIVIALLY that one arm's value, and "
+                                          "`fam_dominant_share` is forced to exactly 1.0. ⛔ **Mask on this "
+                                          "before ANY family-level comparison** — pooling the singletons is "
+                                          "the degeneracy trap (`gene_axes.mask_degenerate`), and it is "
+                                          "worse here than anywhere else in the card system.",
+    ("seed_family", "fam_n_members"): "Arms in the seed family (median 1, max 22). ⚠ Only **320 families "
+                                      "have more than one**. This is the family's TOTAL membership — not "
+                                      "how many appear in any one gene's design, which is "
+                                      "`n_arm_in_cell` and is a median 0.67 fraction of this (MH-248).",
+    ("seed_family", "fam_dominant_share"): "The top member's share of the family's total dose. ⛔ Median "
+                                           "1.0000 over ALL families is meaningless — singletons force it. "
+                                           "⭐ **On the 320 MULTI-member families the median is 0.6326, "
+                                           "independently reproducing MH-215's recorded 0.619**, and one "
+                                           "member carries >80% of the dose in **28.1%** of them. That "
+                                           "concentration is the structural fact justifying the arm/family "
+                                           "split.",
+    ("", "fam_dose_hhi"): "Concentration of DOSE across the family's members. ✅ **FLOOR-CORRECTED — "
+                          "verified 2026-08-19**: its minimum sits far below the raw 1/k floor at every "
+                          "member count (0.0000 at k=2 where the raw floor is 0.500), and "
+                          "spearman(n_members, hhi) = **+0.1896** rather than the strongly negative value "
+                          "a raw index would give. ⚠⚠ **CONTRAST `concentration` ON THE GENE CARD, which is "
+                          "NOT corrected** and reads −0.9399 against design width. Same trap, two different "
+                          "handlings in one codebase — check which form you have before comparing them.",
+    ("", "fam_targetome_"): "Family-level targetome size. ⛔⛔ **TWO DIFFERENT UNIVERSES, NEVER TO BE "
+                            "BLENDED** (the doctrine gives the four targetome universes four separate "
+                            "axes): `_seed_med` is the MANE 3′UTR seed scan — fill **96.9%**, median "
+                            "**2,040**; `_seq_med` is the scanMiR K_D sequence targetome — fill **30.5%**, "
+                            "median **3,547**. They correlate at spearman 0.828 where both exist but sit "
+                            "**1.78× apart in scale** and differ 3× in coverage, so a mixed statistic over "
+                            "them is meaningless.",
+    ("", "fam_redund_"): "Within-family redundancy — effective member count, over-count fraction, and the "
+                         "median within-family correlation. ⚠ **Fill 4.3% (84 families)** — it requires a "
+                         "correlation fit across members, so it exists only for well-measured multi-member "
+                         "families. Read it as a case series, not a distribution.",
+    ("", "fam_ctx_"): "The family's GENOMIC context, pooled over its members: host-coding fraction, "
+                      "co-transcribed fraction, distinct coding hosts, and whether the members share a "
+                      "context. Fill 29.1%. ⚠ `fam_ctx_context_homogeneous` False for only 47 of 571 — most "
+                      "families that can be assessed are context-homogeneous, so this rarely discriminates.",
     ("", "famrole_"): "The arm's ROLE inside its seed family — member count, its share of family abundance, "
                       "and its rank among members.",
     ("", "family_"): "Family-level properties carried onto this row (size, the arm's dose share of it, and "
