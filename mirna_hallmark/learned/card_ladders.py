@@ -150,10 +150,55 @@ def normalise_gene_card() -> None:
         g = g.rename(columns={"n_discovered": "n_pip_disc_gt50"})
     if "n_dense_included" in g.columns:
         g = g.drop(columns=["n_dense_included"])
+    # ⛔ `n_regulators` -> `heur_n_regulators` (user-directed 2026-08-19). It is NOT the model's count:
+    # it is `edges.groupby('gene')['miRNA'].nunique()` from `mirna_comovement`, i.e. the §6b-RETIRED
+    # heuristic pressure lane's edge table. `n_arms` is the fit's own width, and the two differ on 306 of
+    # 1,409 genes IN BOTH DIRECTIONS. Two counts reading as one name is axiom 6's collision class.
+    # ⚠ Its FOUR siblings arrive from the same retired lane and are NOT renamed here, because their names
+    # do not collide with a model column: `gene_repression_class`, `gene_net_repressed_tumor`,
+    # `rho_gene_pressure_tumor`, `delta_tumor_nat`. They inherit the same provenance caveat.
+    if "n_regulators" in g.columns and "heur_n_regulators" not in g.columns:
+        g = g.rename(columns={"n_regulators": "heur_n_regulators"})
     if g.shape[1] != before or "n_pip_disc_gt50" in g.columns:
         g.to_csv(GENE_CARD, sep="\t", index=False)
         print(f"  ✅ gene_card normalised: {before} -> {g.shape[1]} cols "
               f"(n_discovered->n_pip_disc_gt50, n_dense_included dropped)")
+
+
+def discovery_queue_rollup(level: str) -> pd.DataFrame:
+    """⭐ MAKE THE 157-EDGE DISCOVERY QUEUE VISIBLE FROM THE CARDS (user-asked 2026-08-19).
+
+    ⛔ **WHY IT CANNOT BE AN EDGE FLAG.** The gold set and the curated edge card are **DISJOINT — 0 of the
+    157 pairs appear on the edge card** (verified). They are discovery CANDIDATES on pairs curation never
+    admitted, so there is no edge row to flag; inventing one would put un-curated pairs into the design.
+
+    ⇒ surfaced as a COUNT at the two rungs that do overlap, so a reader of any gene or arm can see that the
+    discovery lane touches it:
+        `disc_n_gold_edges`   how many of the 157 name this gene / this arm
+        `disc_gold_families`  which seed families they belong to (arm rung: usually one)
+
+    ⚠⚠ **COVERAGE IS ASYMMETRIC AND THE GENE SIDE IS BADLY INCOMPLETE.** All **18 of 18** gold arms are on
+    the arm card, but only **39 of the 90** gold genes are on the gene card — the rest have **no curated
+    regulator at all**, which is exactly what makes them discovery candidates (MH-198: 94/157 sit on genes
+    with no curated regulator). ⇒ **a 0 on the gene card means "no gold edge OR this gene's gold edges are
+    invisible here"; it does NOT mean the queue is empty for it.** Read the queue from
+    `discovery_gold_set.tsv`, and treat these columns as a pointer, never as the denominator.
+
+    ⚠ The set is **11 seed families and 61% is ONE family** — always quote the families beside the edges.
+    ⚠ It is a ranked VALIDATION QUEUE, not 157 findings: per-edge FDR is empty by construction.
+    """
+    p = OUT / "discovery_gold_set.tsv"
+    if not p.exists():
+        return pd.DataFrame()
+    gs = pd.read_csv(p, sep="\t")
+    key = "gene" if level == "gene" else "arm"
+    if key not in gs.columns:
+        return pd.DataFrame()
+    out = pd.DataFrame({"disc_n_gold_edges": gs.groupby(key).size()})
+    if "seed_family" in gs.columns:
+        out["disc_gold_families"] = gs.groupby(key)["seed_family"].apply(
+            lambda s: ";".join(sorted(set(s))))
+    return out.reset_index()
 
 
 def gene_concentration_adj() -> pd.DataFrame:
@@ -623,7 +668,8 @@ def _run(*, annotate_cards: bool) -> None:
     print("\n[annotate]")
     normalise_gene_card()          # rename/prune BEFORE annotating, so the registry sees final names
     _annotate(GENE_CARD, [(gl, ["gene"]), (gene_lit_ground_truth(), ["gene"]),
-                          (gene_arm_resolution(), ["gene"]), (gene_concentration_adj(), ["gene"])])
+                          (gene_arm_resolution(), ["gene"]), (gene_concentration_adj(), ["gene"]),
+                          (discovery_queue_rollup("gene"), ["gene"])])
     _annotate(EDGE_CARD, [(st, ["gene", "arm"]), (edge_ago_measured(), ["gene", "arm"]),
                           (edge_admissibility(), ["gene", "arm"]),
                           (edge_chimeric(), ["gene", "arm"]), (edge_affinity_pct(), ["gene", "arm"]),
@@ -632,7 +678,8 @@ def _run(*, annotate_cards: bool) -> None:
     # and the gate needs no refit (it is derived from `identity`, see `_identity_gate`).
     _annotate(OUT / "gene_family_card.tsv", [(family_identity_gate(), ["gene", "family"])])
     _annotate(OUT / "arm_card.tsv", [(arm_admissibility_rollup(), ["arm"]),
-                                     (family_state_shift(), ["arm"])])
+                                     (family_state_shift(), ["arm"]),
+                                     (discovery_queue_rollup("arm"), ["arm"])])
     # ⭐ MH-218: give MH-217's candidates a FILE, not just a count in a chat log.
     cand = seedless_chimeric_candidates()
     if len(cand):

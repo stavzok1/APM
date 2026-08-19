@@ -413,13 +413,35 @@ COLUMNS: dict[tuple[str, str], str] = {
                                    "⚠ **NaN at `n_fam == 1` (730 genes) and that is CORRECT** — with one "
                                    "family there is nothing to concentrate, so the question does not exist; "
                                    "the NaN is the honest answer, not a gap (`gene_axes.mask_degenerate`).",
+    ("", "disc_"): "⭐ THE 157-EDGE DISCOVERY QUEUE, made visible from the cards. ⛔ It CANNOT be an edge "
+                   "flag: the gold set and the curated edge card are **DISJOINT — 0 of 157 pairs are on "
+                   "the edge card** — because they are candidates on pairs curation never admitted. So it "
+                   "is surfaced as a COUNT at the two rungs that overlap. ⚠⚠ **COVERAGE IS ASYMMETRIC:** "
+                   "all **18/18** gold arms are on the arm card (accounting for all 157 edges), but only "
+                   "**39 of 90** gold genes are on the gene card (63 edges) — the rest have **no curated "
+                   "regulator at all**, which is what made them candidates. ⇒ **a 0 on the GENE card means "
+                   "'no gold edge OR invisible here', never 'the queue is empty for this gene'.** Read the "
+                   "queue from `discovery_gold_set.tsv`; treat these as a pointer, never a denominator. "
+                   "⚠ 11 seed families, **61% is ONE family** — quote families beside edges. ⚠ A ranked "
+                   "VALIDATION QUEUE, not 157 findings: per-edge FDR is empty by construction.",
+    ("arm", "disc_n_gold_edges"): "How many of the 157 discovery-queue edges name this arm. Concentrated: "
+                                  "miR-106b-5p **39** · miR-20a-5p 25 · miR-93-5p 25 · miR-19a-3p 19 · "
+                                  "miR-18a-5p 9. ⚠ 18 arms carry the whole queue.",
+    ("", "disc_gold_families"): "Which seed families this row's discovery-queue edges belong to, "
+                                "semicolon-separated. Usually ONE at the arm rung (an arm has one seed). "
+                                "⚠ The whole queue is 11 families and **61% is miR-17/20/93/106/519** — "
+                                "the honest unit is ~one oncogenic polycistron's realized target set, not "
+                                "157 independent findings.",
+    ("gene", "disc_n_gold_edges"): "How many of the 157 discovery-queue edges name this gene (max 4). "
+                                   "⛔ Only **39 of the 90** gold genes appear on this card, so this "
+                                   "accounts for **63 of 157** edges — a 0 is NOT evidence of absence.",
     ("gene", "n_arms"): "Arms in the LEARNED MODEL's design — `X.shape[1]` from `assemble_gene`, carried "
                         "via `gene_atlas`. This is the width the Gibbs actually fit. ⚠⚠ **NOT the same as "
                         "`n_regulators`**, which counts distinct arms in the RETIRED heuristic lane's edge "
                         "table: they agree on 1,103 genes and differ on 306, in BOTH directions (ABCA1 13 "
                         "vs 12, ABCC1 7 vs 8). Both read as 'how many regulators'; only this one describes "
                         "the fit.",
-    ("gene", "n_regulators"): "⚠⚠ **A DIFFERENT PIPELINE'S COUNT — not the model's.** It is "
+    ("gene", "heur_n_regulators"): "⚠⚠ **A DIFFERENT PIPELINE'S COUNT — not the model's.** It is "
                               "`edges.groupby('gene')['miRNA'].nunique()` inside "
                               "`analyses/misc/mirna_comovement.py`, i.e. distinct arms in the **heuristic "
                               "pressure lane's edge table** — and that lane is the **§6b-RETIRED** pressure "
@@ -612,6 +634,28 @@ COLUMNS.update({
     ("gene", "n_fam"): "How many seed families regulate this gene. \u2b50 48% of genes have exactly ONE, where "
                        "beta \u2261 uniform by construction \u2014 'does the learning add anything' is UNDEFINED "
                        "for half the universe, which is a non-question, not a null.",
+    ("", "disc_"): "⭐ THE 157-EDGE DISCOVERY QUEUE, made visible from the cards. ⛔ It CANNOT be an edge "
+                   "flag: the gold set and the curated edge card are **DISJOINT — 0 of 157 pairs are on "
+                   "the edge card** — because they are candidates on pairs curation never admitted. So it "
+                   "is surfaced as a COUNT at the two rungs that overlap. ⚠⚠ **COVERAGE IS ASYMMETRIC:** "
+                   "all **18/18** gold arms are on the arm card (accounting for all 157 edges), but only "
+                   "**39 of 90** gold genes are on the gene card (63 edges) — the rest have **no curated "
+                   "regulator at all**, which is what made them candidates. ⇒ **a 0 on the GENE card means "
+                   "'no gold edge OR invisible here', never 'the queue is empty for this gene'.** Read the "
+                   "queue from `discovery_gold_set.tsv`; treat these as a pointer, never a denominator. "
+                   "⚠ 11 seed families, **61% is ONE family** — quote families beside edges. ⚠ A ranked "
+                   "VALIDATION QUEUE, not 157 findings: per-edge FDR is empty by construction.",
+    ("arm", "disc_n_gold_edges"): "How many of the 157 discovery-queue edges name this arm. Concentrated: "
+                                  "miR-106b-5p **39** · miR-20a-5p 25 · miR-93-5p 25 · miR-19a-3p 19 · "
+                                  "miR-18a-5p 9. ⚠ 18 arms carry the whole queue.",
+    ("", "disc_gold_families"): "Which seed families this row's discovery-queue edges belong to, "
+                                "semicolon-separated. Usually ONE at the arm rung (an arm has one seed). "
+                                "⚠ The whole queue is 11 families and **61% is miR-17/20/93/106/519** — "
+                                "the honest unit is ~one oncogenic polycistron's realized target set, not "
+                                "157 independent findings.",
+    ("gene", "disc_n_gold_edges"): "How many of the 157 discovery-queue edges name this gene (max 4). "
+                                   "⛔ Only **39 of the 90** gold genes appear on this card, so this "
+                                   "accounts for **63 of 157** edges — a 0 is NOT evidence of absence.",
     ("gene", "n_arms"): "How many miRNA arms regulate this gene (median 2).",
     ("gene", "n_regulators"): "Regulator count used by the realization lane.",
     ("gene", "n_identified"): "How many of the gene's families are identified (|z|>2). Median 1.",
