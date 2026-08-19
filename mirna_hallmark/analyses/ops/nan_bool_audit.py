@@ -36,6 +36,16 @@ CARDS = {"edge": "realization/edge_card.tsv", "gene": "realization/gene_card.tsv
 EXEMPT = re.compile(r"(^cov_|_measured$|_meas$|^has_|_has_|_present$|^is_(gold|curated)|_src$)")
 GAP = 0.02          # a flag must beat its block by >2 points of fill to be queued
 
+#: ⭐ ORPHAN > 0 that is NOT a defect — the flag's real input lives OUTSIDE its prefix block, so the
+#: "every numeric sibling is NaN" test asks the wrong question. Each entry names the actual input, so the
+#: claim is checkable rather than a mute. ⚠ Never add a flag here without verifying it against that input.
+ACCEPTED = {
+    ("edge", "gene_net_repr"): "a .map() from gene_corepression (independent source), not derived from "
+                               "gene_iqr / gene_lfc_NAT_TUM — verified",
+    ("edge", "gene_dominated"): "masked on the GENE-level max of share_TUM, which is in the `share_` "
+                                "block, not `gene_` — verified 0 bad against that input (MH-256)",
+}
+
 
 def _block(col: str) -> str:
     m = re.match(r"^([a-z]+_)", col)
@@ -74,6 +84,8 @@ def audit(show_all: bool = False) -> pd.DataFrame:
             allnan = pd.concat([pd.to_numeric(d[s], errors="coerce").isna() for s in sibs],
                                axis=1).all(axis=1)
             orphan = int((d[c].notna() & allnan).sum())
+            if (card, c) in ACCEPTED and not show_all:
+                continue
             if fill[c] - ref > GAP or orphan or show_all:
                 rows.append({"card": card, "column": c, "flag_fill": round(float(fill[c]), 4),
                              "block_fill": round(ref, 4), "gap": round(float(fill[c]) - ref, 4),
@@ -92,7 +104,8 @@ def main() -> int:
               f"{GAP:.0%} — nothing queued.")
         return 0
     print(f"⚠ {len(q)} boolean column(s) better-populated than their block's numerics "
-          f"(gap > {GAP:.0%}) — REVIEW QUEUE, not a verdict:\n")
+          f"(gap > {GAP:.0%}) — REVIEW QUEUE, not a verdict."
+          f"  ({len(ACCEPTED)} accepted with a recorded reason; `--all` to list them)\n")
     print(f"  {'card':<12}{'column':<38}{'flag':>7}{'block':>8}{'gap':>8}{'ORPHAN':>8}")
     for r in q.itertuples():
         mark = " ⛔" if r.orphan else ""

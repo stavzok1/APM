@@ -166,7 +166,16 @@ _NAN_FLAG_REPAIRS = {
              ("ctx_measurable", ["ctx_ceiling"], "all")],
     "gene": [("ctx_measurable", ["ctx_ceiling"], "all")],
     "family": [("ctx_measurable", ["ctx_ceiling"], "all")],
-    "arm": [("famrole_is_dominant", ["famrole_abund_share"], "all"),
+    # ⛔ ADDED 2026-08-19 (unit 27): found by re-running the audit on the CURRENT cards. I had asserted
+    # "ORPHAN 0" from an EARLIER run — the cards moved underneath it (prunes, renames, new blocks) and
+    # seven flags had drifted back above zero. **A clean report is only clean for the state it was run on.**
+    # These five are the real ones; `gene_net_repr` / `gene_dominated` are block-assignment false positives
+    # (their inputs live in a different block than their prefix suggests).
+    "edge_extra": [("cal_identified", ["cal_z"], "all"), ("cal_identified_hi", ["cal_z"], "all"),
+                   ("cal_identified_lo", ["cal_z"], "all")],
+    "arm": [("healthy_uninformative", ["healthy_potential"], "all"),
+            ("ctx_arm_abundant", ["ctx_arm_dose"], "all"),
+            ("famrole_is_dominant", ["famrole_abund_share"], "all"),
             ("dose_confounded", ["dose_comp_retention", "dose_prolif_retention"], "any"),
             ("hly_from_seedmate", ["hly_baseline_src"], "all"),
             ("arm_spiker", ["arm_pct_floor", "arm_iqr"], "all")],
@@ -176,7 +185,10 @@ _NAN_FLAG_REPAIRS = {
 def _repair_nan_flags(d: pd.DataFrame, card: str) -> int:
     """Mask the flags in `_NAN_FLAG_REPAIRS` wherever their inputs are missing. Returns rows unmasked."""
     moved = 0
-    for flag, ins, mode in _NAN_FLAG_REPAIRS.get(card, []):
+    _rules = list(_NAN_FLAG_REPAIRS.get(card, []))
+    if card == "edge":
+        _rules += _NAN_FLAG_REPAIRS.get("edge_extra", [])
+    for flag, ins, mode in _rules:
         if flag not in d.columns or not all(i in d.columns for i in ins):
             continue
         ok = None
