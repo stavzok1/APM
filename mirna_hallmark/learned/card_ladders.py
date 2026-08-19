@@ -222,7 +222,18 @@ def discovery_queue_rollup(level: str) -> pd.DataFrame:
     if "seed_family" in gs.columns:
         out["disc_gold_families"] = gs.groupby(key)["seed_family"].apply(
             lambda s: ";".join(sorted(set(s))))
-    return out.reset_index()
+    out = out.reset_index()
+    # ⛔ FIXED 2026-08-19 (column review unit 8): the count was emitted as NaN for rows the gold set does
+    # not name, which is WRONG — **every** row on both cards WAS checked against the set; the join simply
+    # found nothing. A NaN there is indistinguishable from "not scanned", which is the exact ambiguity the
+    # `cov_` flags exist to remove, so this block was manufacturing it. Emit a MEASURED ZERO instead.
+    # ⚠ `disc_gold_families` stays NaN — there is genuinely no family to name, and "" would read as a value.
+    card = GENE_CARD if key == "gene" else OUT / "arm_card.tsv"
+    if card.exists():
+        universe = pd.read_csv(card, sep="\t", usecols=[key], low_memory=False)[key].dropna().unique()
+        out = (pd.DataFrame({key: universe}).merge(out, on=key, how="left"))
+        out["disc_n_gold_edges"] = out["disc_n_gold_edges"].fillna(0).astype(int)
+    return out
 
 
 def edge_hly_leg_concordance() -> pd.DataFrame:
@@ -419,6 +430,11 @@ def family_state_shift() -> pd.DataFrame:
         d[f"fst_share_{st}"] = (lin / tot.replace(0, np.nan)).round(4)
         d[f"fst_rank_{st}"] = lin.groupby(d.seed_family).rank(ascending=False, method="min")
     d["fst_n_members"] = d.groupby("seed_family")["arm"].transform("size")
+    # ⭐ THE BLOCK'S OWN COVERAGE FLAG (column review unit 8). 485 of 2,450 arms have a family share; the
+    # rest were NEVER COMPUTED because the abundance input is absent — that is genuinely UNSCANNED, not a
+    # zero share, and without a flag the two are indistinguishable. ⚠ Only 16 of the arm card's 42 blocks
+    # carry such a flag; this is one of the two added rather than inherited.
+    d["cov_fst"] = d["fst_share_TUM"].notna()
     if "HLY" in have:
         d["fst_hly_measured"] = num(d[have["HLY"]]).notna()
         # the stricter guard, emitted because it is INFORMATIVE even though it does not repair the leg:
@@ -426,8 +442,11 @@ def family_state_shift() -> pd.DataFrame:
         # localised the defect to the platform boundary rather than to missing members.
         d["fst_hly_family_measured"] = d.groupby(d["seed_family"])["fst_hly_measured"].transform("all")
         d["fst_d_share_HLY_TUM"] = (d["fst_share_TUM"] - d["fst_share_HLY"]).round(4)
-        d["fst_is_dominant_HLY"] = d["fst_share_HLY"] > 0.5
-        d["fst_is_dominant_TUM"] = d["fst_share_TUM"] > 0.5
+        # ⛔ FIXED 2026-08-19: `NaN > 0.5` is **False**, not NaN — so an arm with NO measured share was
+        # reading as "measured, and not dominant" on 100% of rows. That is the `echim_any` failure again
+        # (a flag that can never say "unknown"), and it was in a block I had just written. Mask explicitly.
+        d["fst_is_dominant_HLY"] = (d["fst_share_HLY"] > 0.5).where(d["fst_share_HLY"].notna())
+        d["fst_is_dominant_TUM"] = (d["fst_share_TUM"] > 0.5).where(d["fst_share_TUM"].notna())
         # ⚠ a switch is only MEANINGFUL where the family has >1 member AND the healthy leg is measured
         ok = (d["fst_n_members"] > 1) & d["fst_hly_measured"]
         d["fst_dominance_switch"] = np.where(

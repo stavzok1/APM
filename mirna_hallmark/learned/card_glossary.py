@@ -263,6 +263,14 @@ BLOCKS: dict[tuple[str, str], str] = {
                   "same-platform NAT→TUM leg**. ✅ Defensible: `fst_d_share_NAT_TUM` median +0.032, "
                   "|Δ|>0.10 for 43.8%, dominant member changes in **26.7%** (56/210). DESCRIPTIVE — a "
                   "registry candidate, no decoy and no null yet.",
+    ("arm", "cov_fst"): "Was the family-share block computed for this arm at all — i.e. did it have the "
+                        "abundance input. True for **485 of 2,450** arms; the rest were NEVER COMPUTED, "
+                        "which is genuinely UNSCANNED and not a zero share. ⚠⚠ **One flag CANNOT govern "
+                        "the whole `fst_` block, because the block has THREE coverage strata**: TUM-only, "
+                        "TUM+NAT, and TUM+NAT+HLY (the healthy leg reaches only ~17% of arms). So "
+                        "`gen_cards.cov_map` correctly refuses to bind it — the map assumes a block is "
+                        "homogeneous, and this one is not. Read `cov_fst` for *was it computed*, then "
+                        "`fst_hly_measured` for *does it have a healthy leg*. Two flags, two questions.",
     ("arm", "fst_hly_family_measured"): "Do ALL members of this arm's family have a measured GTEx level. "
                                         "Emitted because it is INFORMATIVE, not because it repairs the "
                                         "healthy leg: the stricter guard RAISES the near-total-flip rate "
@@ -335,8 +343,36 @@ BLOCKS: dict[tuple[str, str], str] = {
     ("", "term_"): "Decomposition of the acquisition score into ABUNDANCE, WIRING and INTERACTION terms.",
     ("", "coupling_"): "Partial-Spearman coupling of arm dose against target mRNA in one state, "
                        "conditioned on C (composition + target CN + proliferation), with its p and z. "
-                       "⚠ The per-edge null is 3–4x too narrow — read these as a distribution, not as "
-                       "per-edge significance.",
+                       "⚠ The per-edge null is 3–4× too narrow — read these as a DISTRIBUTION, not as "
+                       "per-edge significance. ⭐ **THE HONEST SCALE is `coupling_z_tum`, the effect in "
+                       "NULL SDs: median −0.32, with |z|>2 on only 15.5% of edges** (`coupling_p_tum` "
+                       "<0.05 on 16.2%). ⛔⛔ **AND `coupling_tum` IS MISSING ON 27.9% OF EDGES, NOT AT "
+                       "RANDOM — measured 2026-08-19.** Missingness concentrates on **WIDE, WELL-MEASURED** "
+                       "genes (n_fam median 10 vs 6, p=1.2e−32; ceiling 0.124 vs 0.068, p=1.4e−33) and "
+                       "above all on **SEEDLESS edges — 55.7% missing vs ~20% elsewhere** (chi2 "
+                       "p=6.3e−129). ⇒ any statistic over `coupling_tum` is conditioned on a set biased "
+                       "toward NARROW designs and SEEDED edges. ✅ **`coupling_fam` is the coverage-robust "
+                       "stand-in: 99.9% complete, spearman +0.901 with `coupling_tum`, and it supplies an "
+                       "answer for 1,570 edges that have none.** Re-run any coupling claim on it before "
+                       "trusting the margin.",
+    ("edge", "coupling_fam"): "Family-level coupling for the edge's (gene, seed_family) cell. ⭐ **99.9% "
+                              "complete against `coupling_tum`'s 72.1%, and spearman +0.901 where both "
+                              "exist** — so it is the coverage-robust stand-in whenever `coupling_tum`'s "
+                              "non-random missingness could bias a comparison. 1,570 edges have this and "
+                              "no arm-level value.",
+    ("edge", "coupling_z_tum"): "The tumour coupling expressed in NULL SDs — the CALIBRATED effect size, "
+                                "and the scale to quote. Median **−0.32**; |z|>2 on 15.5%, |z|>3 on 6.4%. "
+                                "⚠ Use this rather than the raw ρ when comparing across states, since the "
+                                "null's width differs between them.",
+    ("edge", "coupling_p_tum"): "p against the CALIBRATED site-free null (not a theoretical t-null). "
+                                "Median 0.375; <0.05 on 16.2%. ⛔ Do NOT read a per-edge FDR off this — "
+                                "site-free pairs that CANNOT repress pass at 25–35% under the older "
+                                "uncalibrated null, which is why the defensible claim is a set-level "
+                                "distributional shift.",
+    ("edge", "coupling_hly_surrogate"): "Healthy coupling via a same-seed SURROGATE arm, used where the "
+                                        "arm itself has no GTEx signal. ⚠ Fill only **3.4%** — it rescues "
+                                        "few edges. `coupling_p_hly_resolved` is the direct|surrogate "
+                                        "resolution and reaches 59.3%.",
     ("", "retention_"): "Fraction of an effect surviving covariate adjustment (adjusted / raw). "
                         "⚠⚠ 'Retention' names TWO unrelated quantities in this project — on the CARDS it "
                         "always means this one, NOT the patient-baseline NAT->tumour persistence.",
