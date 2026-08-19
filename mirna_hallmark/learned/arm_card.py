@@ -613,12 +613,18 @@ def _curation_profile() -> pd.DataFrame:
     #   (2) NEAR-DEGENERATE     — >95% zero or <=4 distinct values. Eight qualify, e.g.
     #       `binding__nonfunctional_mti` (99.9% zero, 2 values) and `protein__nonfunctional_mti_weak`
     #       (99.8%, 2 values). A count that is zero for 99% of arms cannot separate anything.
-    #   (3) REDUNDANT at r>=0.9999 — keep the MARGINAL, drop the cell. Two pairs qualify:
-    #       `unique_targets` ≡ `total_studies` (⚠ and `unique_targets` is a MISNOMER — it tracks a STUDY
-    #       count, not a target count, which is exactly the kind of name that gets cited wrongly), and
-    #       `binding_studies` ≡ `binding__functional_mti_weak_studies`.
-    # ⚠ NOTE these escaped the exact-equality duplicate audit: they correlate at 1.00000 without being
-    # bit-identical, so an `equals()` check cannot see them. Near-duplicates need a correlation rule.
+    # ⛔⛔ (3) THE CORRELATION RULE IS REMOVED — it was WRONG, and checking the ingestion is what showed it.
+    #     I dropped two columns at r>=0.9999 (`unique_targets` ~ `total_studies`, `binding_studies` ~
+    #     `binding__functional_mti_weak_studies`) calling them redundant. **Both were DATA COINCIDENCES,
+    #     not definitional identities**, and `pipeline/genes/mirtarbase.py` settles it:
+    #         n_unique_targets  = group["gene"].nunique()          <- DISTINCT GENES
+    #         n_total_studies   = group["study_id"].nunique()      <- DISTINCT STUDIES
+    #     They differ on **293 of 3,039 arms**; they track because most (miRNA, gene) pairs carry exactly
+    #     ONE study. Likewise `binding_studies` vs its functional-weak cell differ on 12 arms.
+    #     ⇒ `unique_targets` was NOT a misnomer — it is the only true TARGET count in this block, and I
+    #     removed it on a rule that cannot tell "identical by definition" from "identical in this pull".
+    #     **A correlation rule prunes columns that will diverge the moment curation changes.** Only EXACT
+    #     equality is safe, and the duplicate audit already covers that.
     dropped: dict[str, str] = {}
     for c in list(d.columns):
         s = pd.to_numeric(d[c], errors="coerce").dropna()
@@ -626,21 +632,6 @@ def _curation_profile() -> pd.DataFrame:
             dropped[c] = "constant"
         elif (s == 0).mean() > 0.95 or s.nunique() <= 4:
             dropped[c] = f"degenerate ({(s == 0).mean():.0%} zero, {s.nunique()} distinct)"
-    alive = [c for c in d.columns if c not in dropped]
-    # prefer MARGINALS (no `__`) as the survivor of a redundant pair; `n_total_studies` beats the misnomer
-    order = sorted(alive, key=lambda c: ("__" in c, c != "n_total_studies", c))
-    for i, c1 in enumerate(order):
-        if c1 in dropped:
-            continue
-        for c2 in order[i + 1:]:
-            if c2 in dropped:
-                continue
-            m = pd.to_numeric(d[c1], errors="coerce").notna() & pd.to_numeric(d[c2], errors="coerce").notna()
-            if m.sum() < 100:
-                continue
-            r = pd.to_numeric(d.loc[m, c1], errors="coerce").corr(pd.to_numeric(d.loc[m, c2], errors="coerce"))
-            if pd.notna(r) and abs(r) >= 0.9999:
-                dropped[c2] = f"redundant with {c1[2:]} (r={r:.5f})"
     if dropped:
         print(f"  fame_assay: dropping {len(dropped)} of {len(d.columns)} column(s)")
         for c, why in sorted(dropped.items()):

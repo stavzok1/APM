@@ -100,16 +100,25 @@ BLOCKS: dict[tuple[str, str], str] = {
                             "'ground truth' rests on a handful of papers per gene.",
     ("gene", "lit_margin"): "PMID count of `lit_family` minus the runner-up. Median **1** — for half the "
                             "admitted genes the canonical family is decided by a SINGLE paper.",
-    ("arm", "fame_assay_total_studies"): "Total curated studies for this arm across all assay classes. "
-                                         "⚠ Its twin `fame_assay_unique_targets` was PRUNED 2026-08-19 as "
-                                         "redundant (r=1.00000) — and that name was a MISNOMER: it tracked "
-                                         "a STUDY count, not a target count. For targets read "
-                                         "`fame_n_genes_curated` (curated) or `seq_n_genes_strong` "
-                                         "(sequence, the abundance-orthogonal one).",
-    ("arm", "fame_assay_binding_studies"): "Curated studies with BINDING evidence for this arm. ⚠ Its cell "
-                                           "`binding__functional_mti_weak_studies` was PRUNED as redundant "
-                                           "(r=1.00000) — nearly all binding evidence is functional-weak, "
-                                           "so the cell carried the marginal.",
+    ("arm", "fame_assay_total_studies"): "`study_id.nunique()` — DISTINCT curated studies for this arm. "
+                                         "⚠⚠ **NOT the denominator of the class marginals**: those are "
+                                         "`has_<class>.sum()`, i.e. ROW counts, so a study spanning k "
+                                         "target genes contributes k to a marginal and 1 here. The "
+                                         "marginals therefore EXCEED this total on 25% of arms (max excess "
+                                         "188). Do not compute class/total as a fraction.",
+    ("arm", "fame_assay_unique_targets"): "`gene.nunique()` — DISTINCT curated TARGET GENES for this arm. "
+                                          "⚠ It correlates with `fame_assay_total_studies` at r=0.999996 "
+                                          "but is a DIFFERENT quantity, differing on **293 of 3,039 arms**; "
+                                          "they track only because most (miRNA, gene) pairs carry exactly "
+                                          "ONE study. ⛔ It was briefly pruned as 'redundant' on that "
+                                          "correlation and RESTORED once the ingestion was read — a "
+                                          "correlation cannot tell identity-by-definition from "
+                                          "identity-in-this-pull.",
+    ("arm", "fame_assay_binding_studies"): "`has_binding.sum()` — curated ROWS with binding evidence. "
+                                           "⚠ Differs from its `binding__functional_mti_weak` cell on only "
+                                           "12 of 3,039 arms (nearly all binding evidence is "
+                                           "functional-weak), but the two are different quantities and can "
+                                           "diverge as curation changes.",
     ("arm", "fame_npmid"): "Distinct PMIDs citing this arm. \u26d4 A FAME axis \u2014 control for it, never "
                            "read it as biology. (Its bit-identical twin `fame_led_n_pmid` was PRUNED "
                            "2026-08-19; this is the surviving name.)",
