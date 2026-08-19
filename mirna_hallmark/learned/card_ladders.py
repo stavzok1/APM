@@ -407,6 +407,42 @@ def family_identity_gate() -> pd.DataFrame:
     return _identity_gate(pd.read_csv(p, sep="\t", low_memory=False), ["gene", "family"])
 
 
+def _paired_dshare(d: pd.DataFrame, lin: dict, a: str, b: str) -> pd.Series:
+    """⛔⛔ THE SHARE DELTAS HAD A MOVING DENOMINATOR — measured, and it was manufacturing the finding.
+
+    `fst_share_{HLY,NAT,TUM}` come from THREE DIFFERENT arm-card abundance columns with very different
+    fill: `arm_med_rpm` **19.8%**, `hly_nat_median` **74.0%**, `hly_gtex_median` **17.0%**. Each state's
+    share therefore normalises over a DIFFERENT member set, so a naive `share_TUM - share_NAT` differences
+    two fractions with **different denominators**.
+
+    Measured on the 320 multi-member families (2026-08-19): the TUM denominator holds a mean of **0.66**
+    members against NAT's **1.88** (2.8×), only **21.2%** of families use the same member count, and the
+    raw delta came out **mean +0.156 / median +0.032, 67.6% positive, Wilcoxon p=1.2e-12** — i.e. it read
+    as *"arms systematically gain family share in tumour"* when the sparser state simply has fewer members
+    to divide by. **A statistic whose denominator moves with coverage is measuring the coverage** (axiom 5).
+
+    ⇒ both shares are RE-NORMALISED over the members measured in BOTH states before differencing. The
+    delta is NaN where fewer than 2 such members exist, because a one-member common set forces both shares
+    to 1.0 and the difference to a structural 0 (the degeneracy trap, axiom 8) — a fake zero is worse than
+    a blank. `fst_n_common_{A}_{B}` ships alongside so the denominator is visible.
+    """
+    if a not in lin or b not in lin:
+        return pd.Series(np.nan, index=d.index)
+    la, lb = lin[a], lin[b]
+    both = la.notna() & lb.notna()
+    fam = d["seed_family"]
+    n_common = both.groupby(fam).transform("sum")
+    ok = both & (n_common >= 2)
+    out = pd.Series(np.nan, index=d.index)
+    for src, sign in ((lb, 1.0), (la, -1.0)):
+        masked = src.where(ok)
+        tot = masked.groupby(fam).transform("sum")
+        share = masked / tot.replace(0, np.nan)
+        out = out.add(sign * share, fill_value=0.0) if sign > 0 else out.sub(-sign * share)
+    d[f"fst_n_common_{a}_{b}"] = n_common.where(both)
+    return out.where(ok).round(4)
+
+
 def family_state_shift() -> pd.DataFrame:
     """⭐ THE ARM'S SHARE OF ITS OWN FAMILY, ACROSS STATES — gene-free (user-asked 2026-08-19).
 
@@ -482,12 +518,14 @@ def family_state_shift() -> pd.DataFrame:
         return pd.DataFrame()
     d = A[["arm", "seed_family"] + list(have.values())].copy()
     d = d[d.seed_family.notna()]
+    lin_by_state: dict[str, pd.Series] = {}
     for st, col in have.items():
         lin = np.power(2.0, num(d[col])) - 1.0        # log2 RPM -> linear, matching the dose convention
         lin = lin.clip(lower=0)
         tot = lin.groupby(d.seed_family).transform("sum")
         d[f"fst_share_{st}"] = (lin / tot.replace(0, np.nan)).round(4)
         d[f"fst_rank_{st}"] = lin.groupby(d.seed_family).rank(ascending=False, method="min")
+        lin_by_state[st] = lin
     d["fst_n_members"] = d.groupby("seed_family")["arm"].transform("size")
     # ⭐ THE BLOCK'S OWN COVERAGE FLAG (column review unit 8). 485 of 2,450 arms have a family share; the
     # rest were NEVER COMPUTED because the abundance input is absent — that is genuinely UNSCANNED, not a
@@ -500,7 +538,7 @@ def family_state_shift() -> pd.DataFrame:
         # requiring every sibling to be measured RAISES the flip rate (7.1% -> 11.6%), which is what
         # localised the defect to the platform boundary rather than to missing members.
         d["fst_hly_family_measured"] = d.groupby(d["seed_family"])["fst_hly_measured"].transform("all")
-        d["fst_d_share_HLY_TUM"] = (d["fst_share_TUM"] - d["fst_share_HLY"]).round(4)
+        d["fst_d_share_HLY_TUM"] = _paired_dshare(d, lin_by_state, "HLY", "TUM")
         # ⛔ FIXED 2026-08-19: `NaN > 0.5` is **False**, not NaN — so an arm with NO measured share was
         # reading as "measured, and not dominant" on 100% of rows. That is the `echim_any` failure again
         # (a flag that can never say "unknown"), and it was in a block I had just written. Mask explicitly.
@@ -511,7 +549,7 @@ def family_state_shift() -> pd.DataFrame:
         d["fst_dominance_switch"] = np.where(
             ok, d["fst_is_dominant_HLY"].ne(d["fst_is_dominant_TUM"]), np.nan)
     if "NAT" in have:
-        d["fst_d_share_NAT_TUM"] = (d["fst_share_TUM"] - d["fst_share_NAT"]).round(4)
+        d["fst_d_share_NAT_TUM"] = _paired_dshare(d, lin_by_state, "NAT", "TUM")
     return d.drop(columns=list(have.values()) + ["seed_family"])
 
 

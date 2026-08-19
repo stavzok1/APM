@@ -977,6 +977,43 @@ COLUMNS.update({
                             "multi-mapping-collapsed) healthy level. Read before any `share_HLY`/`rank_HLY`.",
     ("edge", "identity_allocated"): "Family identity with phantom minor arms forced to 0 \u2014 the allocation "
                                     "actually used downstream.",
+    # ── UNIT 15 (2026-08-19) — the `fst_` block, audited against itself. A defect I shipped.
+    ("arm", "fst_d_share_NAT_TUM"): "Change in the arm's share of its seed family's linear dose, matched "
+        "NAT → tumour, **re-normalised over the members measured in BOTH states**. ⛔⛔ **THIS COLUMN WAS "
+        "WRONG UNTIL 2026-08-19 AND THE ERROR WAS THE WHOLE SIGNAL.** The three `fst_share_*` come from "
+        "three arm-card abundance columns with very different fill (TUM `arm_med_rpm` **19.8%**, NAT "
+        "`hly_nat_median` **74.0%**, HLY `hly_gtex_median` **17.0%**), so the raw difference subtracted two "
+        "fractions with DIFFERENT denominators — the TUM denominator held a mean **0.66** members against "
+        "NAT's **1.88**, and only **21.2%** of families matched. It read **mean +0.156, 67.6% positive, "
+        "p=1.2e-12** — *'arms gain family share in tumour'* — which was **entirely the coverage**. On a "
+        "common support: **mean +0.0000, 52.6% positive, p=0.75.** ⚠⚠ **AND THE MEAN IS NOW STRUCTURALLY "
+        "ZERO** (shares over a fixed support sum to 1 in both states, so the deltas sum to 0 within family) "
+        "⇒ **never read the level; read the DISPERSION**: |Δ| median **0.0449**, 90th pct **0.2234**, max "
+        "**0.6273**; **23.0%** of arms shift >0.10 of family share, 12 shift >0.25. ⛔ **AND 86 of 135 rows "
+        "sit in 2-member families, where the two arms' deltas are EXACT MIRROR IMAGES by construction** — "
+        "the row count overstates the independent information ~2× in the dominant stratum. Largest genuine "
+        "switches: miR-190b vs miR-190a-5p (±0.627), miR-96-5p vs miR-1271-5p (±0.557), miR-196a vs "
+        "miR-196b-5p (±0.435). NaN where <2 members are measured in both states (a one-member common set "
+        "forces both shares to 1.0 and the delta to a fake 0).",
+    ("arm", "fst_d_share_HLY_TUM"): "As `fst_d_share_NAT_TUM` but GTEx-healthy → tumour, same "
+        "common-support correction. n=68 (HLY is the sparsest leg at 17.0%). Post-fix **mean −0.0000, "
+        "47.1% positive, p=0.93**. ⚠ Cross-platform: it inherits the gauge offset of MH-249, so read it as "
+        "a within-family CONTRAST only. Same structural-zero and mirror-image caveats as its NAT twin.",
+    ("arm", "fst_n_common_NAT_TUM"): "How many of the family's arms are measured in BOTH NAT and tumour — "
+        "the DENOMINATOR behind `fst_d_share_NAT_TUM`, shipped because the column was wrong for want of "
+        "it. **Mode 2 (86 of 135 rows)**; at exactly 2 the family's two deltas are mirror images.",
+    ("arm", "fst_n_common_HLY_TUM"): "Members measured in BOTH GTEx-healthy and tumour — the denominator "
+        "behind `fst_d_share_HLY_TUM`. See `fst_n_common_NAT_TUM`.",
+    ("arm", "fst_share_TUM"): "The arm's fraction of its seed family's total linear dose in tumour, from "
+        "`arm_med_rpm` (fill **19.8%**). ⛔ **Median 1.000 — because `fst_n_members` is 1 for most arms and "
+        "a singleton's share is 1.0 BY CONSTRUCTION** (axiom 8's degeneracy trap). **Mask on "
+        "`fst_n_members > 1` before any family comparison.** ⚠ Its denominator sums only over MEASURED "
+        "members, which is why the deltas need a common support — see `fst_d_share_NAT_TUM`.",
+    ("arm", "fst_share_NAT"): "Share of family dose in matched NAT, from `hly_nat_median` (fill **74.0%** — "
+        "the best-covered leg, 3.7× TUM). Same singleton degeneracy: median 1.000, mask on "
+        "`fst_n_members > 1`.",
+    ("arm", "fst_share_HLY"): "Share of family dose in GTEx-healthy, from `hly_gtex_median` (fill "
+        "**17.0%** — the sparsest leg). Same singleton degeneracy; and cross-platform, so contrast only.",
     # ── UNIT 14 (2026-08-19) — the BARE-name columns, the six that collide across cards.
     ("edge", "role"): "⛔ **NOT the arm's role — the GENE's cancer role** (`oncogene` / `tsg` / "
                       "`oncogene/tsg` / `unknown`), from `gene_roles.load_gene_roles`. Rung is **gene**, "
