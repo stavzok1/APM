@@ -128,6 +128,57 @@ def gene_arm_resolution() -> pd.DataFrame:
     return out.reset_index()
 
 
+def _identity_gate(d: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
+    """⭐ THE IDENTITY GATE, DERIVED — no refit required (user-asked 2026-08-19).
+
+    `readouts.add_reliability` gained `identity_coherence` / `identity_abs` / `identity_reliable` in the
+    unit-1 review, but **that code has never reached a card**: both the edge and gene_family cards are
+    written upstream of it and neither has been regenerated since, so `identity` ships UNGATED on both
+    (verified 2026-08-19 — the columns are absent from each). Reporting the gate as shipped was wrong.
+
+    ⭐ **AND NO REFIT IS NEEDED TO FIX IT.** The gate is a PURE FUNCTION of the `identity` column already
+    on the card plus its per-gene sum — it re-estimates nothing. A Gibbs refit is required only when the
+    ESTIMATES change; here they do not. So this derives the three columns in place, and `annotate()` will
+    keep deriving them after every rebuild.
+
+        identity_coherence = 1 / sum|identity| per gene   in (0,1]; 1 when nothing cancels, -> 0 as
+                                                          suppressor cancellation grows (identity sums
+                                                          to exactly 1 per gene, so |sum| is 1)
+        identity_abs       = |identity| / sum|identity|   the BOUNDED companion, always in [0,1]
+        identity_reliable  = coherence >= 0.5 AND |identity| <= 1
+
+    ⚠ The grouping key is the GENE on both cards, because identity is normalised per gene — NOT per
+    (gene, family) and NOT per arm. Grouping on the card's own key would give every row coherence 1.0.
+    """
+    if "identity" not in d.columns or "gene" not in d.columns:
+        return pd.DataFrame()
+    i = pd.to_numeric(d["identity"], errors="coerce")
+    tot = i.abs().groupby(d["gene"]).transform("sum")
+    with np.errstate(divide="ignore", invalid="ignore"):
+        coh = (1.0 / tot.replace(0, np.nan)).clip(0, 1)
+        iab = (i.abs() / tot.replace(0, np.nan)).clip(0, 1)
+    out = d[keys].copy()
+    out["identity_coherence"] = coh.round(4)
+    out["identity_abs"] = iab.round(4)
+    out["identity_reliable"] = (coh >= 0.5) & (i.abs() <= 1.0)
+    return out
+
+
+def edge_identity_gate() -> pd.DataFrame:
+    """The identity gate for the EDGE card. See `_identity_gate`."""
+    if not EDGE_CARD.exists():
+        return pd.DataFrame()
+    return _identity_gate(pd.read_csv(EDGE_CARD, sep="\t", low_memory=False), ["gene", "arm"])
+
+
+def family_identity_gate() -> pd.DataFrame:
+    """The identity gate for the GENE_FAMILY card. See `_identity_gate`."""
+    p = OUT / "gene_family_card.tsv"
+    if not p.exists():
+        return pd.DataFrame()
+    return _identity_gate(pd.read_csv(p, sep="\t", low_memory=False), ["gene", "family"])
+
+
 def family_state_shift() -> pd.DataFrame:
     """⭐ THE ARM'S SHARE OF ITS OWN FAMILY, ACROSS STATES — gene-free (user-asked 2026-08-19).
 
@@ -514,7 +565,11 @@ def _run(*, annotate_cards: bool) -> None:
                           (gene_arm_resolution(), ["gene"])])
     _annotate(EDGE_CARD, [(st, ["gene", "arm"]), (edge_ago_measured(), ["gene", "arm"]),
                           (edge_admissibility(), ["gene", "arm"]),
-                          (edge_chimeric(), ["gene", "arm"]), (edge_affinity_pct(), ["gene", "arm"])])
+                          (edge_chimeric(), ["gene", "arm"]), (edge_affinity_pct(), ["gene", "arm"]),
+                          (edge_identity_gate(), ["gene", "arm"])])
+    # ⭐ the gene_family card gets its identity gate here too — it is the ONLY annotator that touches it,
+    # and the gate needs no refit (it is derived from `identity`, see `_identity_gate`).
+    _annotate(OUT / "gene_family_card.tsv", [(family_identity_gate(), ["gene", "family"])])
     _annotate(OUT / "arm_card.tsv", [(arm_admissibility_rollup(), ["arm"]),
                                      (family_state_shift(), ["arm"])])
     # ⭐ MH-218: give MH-217's candidates a FILE, not just a count in a chat log.

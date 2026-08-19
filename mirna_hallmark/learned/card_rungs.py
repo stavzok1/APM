@@ -47,7 +47,11 @@ _READOUTS = ("beta", "beta_sd", "z", "identified", "identity", "identity_deconv"
              "identity_eq_magnitude", "beta_frac", "beta_frac_sd", "beta_frac_abs",
              "beta_frac_reliable", "beta_sd_deconv", "beta_frac_deconv", "retention_reliable",
              "m_nnls", "pip_dense", "pip_discovery", "prior_pi", "beta_deconv", "retention_beta",
-             "composition_class", "net_pressure", "identity_allocated")
+             "composition_class", "net_pressure", "identity_allocated",
+             # ⭐ the IDENTITY GATE (2026-08-19). Same rung split as `identity` itself — edge on the edge
+             # card, family on gene_family — because they are derived from it. Normalised per GENE, but
+             # that is the grouping used to COMPUTE them, not the unit they live on.
+             "identity_coherence", "identity_abs", "identity_reliable")
 # ⭐ `w_max` added MH-227: `card_context.ATLAS_COLS` now carries the gene_atlas block to EVERY card
 # (it was silently filtered before), so the edge card gained a gene-rung `w_max` broadcast to its rows.
 # ⛔ 2026-08-19 column review: `p_fam` PRUNED from both cards (not a p-value — the design

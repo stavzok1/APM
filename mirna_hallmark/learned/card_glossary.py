@@ -493,6 +493,20 @@ COLUMNS.update({
     ("gene", "n_dense_included"): "Families entering the dense (\u03c0\u22611) readout. \u26a0 **Bit-identical to "
                                   "`n_fam`** \u2014 redundant; do not treat as an independent axis.",
     ("gene_family", "identified"): "|z| > 2 for the family cell, uncalibrated.",
+    ("", "identity_coherence"): "1 / Σ|identity| per GENE, in (0,1] — identity's own sign coherence. 1.0 "
+                                "when nothing cancels, → 0 as suppressor cancellation grows. ⭐ This is the "
+                                "quantity `beta_frac_reliable` was supposed to watch and could not: it "
+                                "guards **β** cancellation, which MH-124's sampler fix made impossible, "
+                                "while the cancellation that actually occurs is in `identity` (~10% of "
+                                "values are negative).",
+    ("", "identity_abs"): "|identity| / Σ|identity| per gene — the BOUNDED companion to `identity`, always "
+                          "in [0,1] (verified: 0 non-NaN values outside it on either card). Use it when a "
+                          "share is wanted and the sign is not; NaN exactly where `identity` is NaN.",
+    ("", "identity_reliable"): "`identity_coherence ≥ 0.5` AND `|identity| ≤ 1`. Admits **93.3%** of edge "
+                               "rows and **92.6%** of gene_family rows, and excludes **every** row whose "
+                               "|identity| exceeds 1 (119/119 and 118/118). ⛔ `identity`, `top_identity` "
+                               "and `arb_max_identity` are only interpretable on these rows — ungated they "
+                               "reach +166 and +740.",
     ("gene_family", "n_arms"): "How many arms of THIS family sit in THIS gene's design. ✅ FAMILY rung, "
                                "VERIFIED (2026-08-19): it varies within gene for 241 of 1,549 genes, and "
                                "the per-gene SUM of these equals the gene card's `n_arms` exactly — a clean "
@@ -521,11 +535,13 @@ COLUMNS.update({
                                  "range **−739.01 … +740.01**, **9.5% negative** (legitimate suppressor "
                                  "contributions), 83 rows above 1, summing to exactly 1 per gene. "
                                  "⏳ `identity_reliable` / `identity_coherence` / `identity_abs` were added "
-                                 "to `readouts.add_reliability` in the unit-1 review and this card DOES take "
-                                 "that path (it already carries their siblings `beta_frac_reliable` and "
-                                 "`retention_reliable`) — but the card regenerates only via a **Gibbs "
-                                 "refit**, so they are ABSENT until then. **Until the refit, gate manually: "
-                                 "`|identity| <= 1` and `1/sum|identity| per gene >= 0.5`.**",
+                                 "✅ **GATED SINCE 2026-08-19 — and NO refit was needed.** The gate is a "
+                                 "PURE FUNCTION of `identity` and its per-gene sum, so "
+                                 "`card_ladders.family_identity_gate()` derives it in place and re-derives "
+                                 "it after every rebuild. Verified: it admits 92.6% of rows and excludes "
+                                 "**118 of 118** with |identity|>1; gated `top_identity` maxes at exactly "
+                                 "+1.0000 (ungated: +740.0). **Read `identity` only where "
+                                 "`identity_reliable`, or read the bounded `identity_abs` instead.**",
     ("gene_family", "n_fam"): "How many families compete at this gene. beta is mathematically INERT at 1.",
     ("gene", "n_fam"): "How many seed families regulate this gene. \u2b50 48% of genes have exactly ONE, where "
                        "beta \u2261 uniform by construction \u2014 'does the learning add anything' is UNDEFINED "
