@@ -189,6 +189,36 @@ def normalise_gene_card() -> None:
               f"(n_discovered->n_pip_disc_gt50, n_dense_included dropped)")
 
 
+def normalise_family_card() -> None:
+    """⭐ THE GENE_FAMILY CARD's PUBLIC NAMES — and a rename I reported as done that reached ONE of two cards.
+
+    ⛔ **THE DEFECT (found in the bare-column review, 2026-08-19).** Column-review unit C pruned `p_fam` and
+    renamed `n` -> `n_samples`. That landed via `realization._normalise_edge_names`, which funnels the EDGE
+    card only — so the gene_family card still carried BOTH `n` and `p_fam` while I had recorded the change
+    as applied. This is doctrine §4.5 biting exactly as written: **`gene_family_card.tsv` has no
+    `_finish_card` call site**, so it inherits none of the edge card's schema discipline. It now has a
+    funnel of its own, which is the actual fix.
+
+      `n` -> `n_samples`   the sample count the cell was fit on — CONSTANT 1,040 across the card. Bare `n`
+          is the single most overloaded name in the codebase; `n_samples` says which n.
+      `p_fam`  DROPPED     ⛔ it is NOT a p-value. It is the DESIGN DIMENSION (predictor count), and on this
+          card it is bit-identical to `n_fam`. A name that reads as a p-value on a card full of real
+          p-values is axiom 6's collision class, and here it was also redundant.
+    """
+    p = OUT / "gene_family_card.tsv"
+    if not p.exists():
+        return
+    d = pd.read_csv(p, sep="\t", low_memory=False)
+    before = d.shape[1]
+    if "n" in d.columns and "n_samples" not in d.columns:
+        d = d.rename(columns={"n": "n_samples"})
+    if "p_fam" in d.columns:
+        d = d.drop(columns=["p_fam"])
+    if d.shape[1] != before or "n_samples" in d.columns:
+        d.to_csv(p, sep="\t", index=False)
+        print(f"  ✅ gene_family_card normalised: {before} -> {d.shape[1]} cols (n->n_samples, p_fam dropped)")
+
+
 def discovery_queue_rollup(level: str) -> pd.DataFrame:
     """⭐ MAKE THE 157-EDGE DISCOVERY QUEUE VISIBLE FROM THE CARDS (user-asked 2026-08-19).
 
@@ -768,6 +798,7 @@ def _run(*, annotate_cards: bool) -> None:
         return
     print("\n[annotate]")
     normalise_gene_card()          # rename/prune BEFORE annotating, so the registry sees final names
+    normalise_family_card()        # doctrine §4.5: this card has no _finish_card funnel of its own
     _annotate(GENE_CARD, [(gl, ["gene"]), (gene_lit_ground_truth(), ["gene"]),
                           (gene_arm_resolution(), ["gene"]), (gene_concentration_adj(), ["gene"]),
                           (discovery_queue_rollup("gene"), ["gene"]),

@@ -15,7 +15,17 @@
 | `edge_card.tsv` | **EDGE** rung — `readouts.run(level="arm")`, the SS8 collapse **REMOVED** |
 | `gene_family_card.tsv` | **FAMILY** rung — `readouts.run(level="family")`, the SS8 collapse **APPLIED** |
 
-Same name, same estimator, different unit. A single shared prefix map cannot express that, which is why
+Same name, same estimator, different unit.
+
+⭐⭐ **AND THE TWO `beta`s DIFFER EVEN WHERE THE COLLAPSE IS A NO-OP — measured 2026-08-19.** The natural
+reading of the table above is *"they coincide for singleton families, since there is nothing to collapse"*.
+**They do not.** On **SINGLETON** cells `beta_edge == beta_family` on only **21.6%** (median |diff| 0.0004,
+max **0.2444**); on multi-arm cells, **0.2%** (median 0.0100, max **0.9680**). The reason is that the
+family-grain fit **re-designs the WHOLE gene**: collapsing a gene's *other* families changes this family's
+competitors, so its β moves even though the family itself was never collapsed. ⇒ **the rung difference is
+not local to the collapsed cells — never mix the two cards' `beta`, not even for singleton families.**
+✅ And the edge card's `beta` is genuinely EDGE-rung, not a broadcast: it varies across arms in
+**467 of 467** multi-arm cells. A single shared prefix map cannot express that, which is why
 each card carries its own map and why `domain_of(col, card)` is **card-scoped** — prefixes were once
 matched globally and silently attached one card's caveat to another's columns (three bugs; `sub_` on the
 arm card vs the edge card, fixed by renaming to `esub_`).
@@ -150,7 +160,13 @@ card's key**:
    **RULE: after ANY card rebuild — arm included — re-run `card_ladders --annotate`, then
    `card_rungs --check`, then `gen_cards --build`.** The annotator prints
    *"pre-existing columns bit-identical"*, which is the confirmation to look for.
-5. ⚠ **`gene_family_card.tsv` has no `_finish_card` call site** — adding columns there means extending
+5. ⚠ **`gene_family_card.tsv` has no `_finish_card` call site** — ⛔⛔ **AND THIS BIT, EXACTLY AS
+   WRITTEN (2026-08-19).** Column-review unit C pruned `p_fam` and renamed `n`→`n_samples`; that landed via
+   `realization._normalise_edge_names`, which funnels the **edge card only**, so the family card kept BOTH
+   for two weeks while the change was recorded as applied. ⇒ the card now has a funnel of its own,
+   `card_ladders.normalise_family_card()`. **A schema change is not applied until you have checked it on
+   every card that carries the column** (axiom 2, downstream ripple).
+   The original note stands too: — adding columns there means extending
    `readouts.py`'s promotion or adding one, **plus** registering in `CARDS["family"]["explicit"]`.
 
 ## 5. Traps with a recorded cost

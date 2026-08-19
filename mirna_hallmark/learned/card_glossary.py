@@ -531,10 +531,12 @@ BLOCKS: dict[tuple[str, str], str] = {
 COLUMNS: dict[tuple[str, str], str] = {
     ("edge", "beta"): "EDGE-rung coupling coefficient — `readouts.run(level='arm')`, the same-seed collapse "
                       "REMOVED. Posterior mean of the dense Gibbs fit. Never exactly 0: the half-normal "
-                      "slab has a strictly positive mean and cannot zero an un-informed regulator.",
+                      "slab has a strictly positive mean and cannot zero an un-informed regulator."
+                          " ⭐⭐ **AND THE TWO CARDS' `beta` DIFFER EVEN WHERE THE COLLAPSE IS A NO-OP.** Measured 2026-08-19: on **SINGLETON** cells — one arm, nothing to collapse — `beta_edge == beta_family` on only **21.6%** (median |diff| 0.0004, max 0.2444); on multi-arm cells, **0.2%** (median 0.0100, max 0.9680). The family fit re-designs the WHOLE gene, so collapsing a gene's OTHER families changes this one's competitors and moves its beta. ⇒ **never mix the two cards' beta, not even for singleton families.** ✅ Edge-rung verified: beta varies across arms in **467 of 467** multi-arm cells.",
     ("gene_family", "beta"): "FAMILY-rung coupling coefficient — `readouts.run(level='family')`, the "
                              "same-seed collapse APPLIED. Same estimator as the edge card's `beta`, "
-                             "DIFFERENT UNIT. Do not place the two side by side without saying so.",
+                             "DIFFERENT UNIT. Do not place the two side by side without saying so."
+                          " ⭐⭐ **AND THE TWO CARDS' `beta` DIFFER EVEN WHERE THE COLLAPSE IS A NO-OP.** Measured 2026-08-19: on **SINGLETON** cells — one arm, nothing to collapse — `beta_edge == beta_family` on only **21.6%** (median |diff| 0.0004, max 0.2444); on multi-arm cells, **0.2%** (median 0.0100, max 0.9680). The family fit re-designs the WHOLE gene, so collapsing a gene's OTHER families changes this one's competitors and moves its beta. ⇒ **never mix the two cards' beta, not even for singleton families.** ✅ Edge-rung verified: beta varies across arms in **467 of 467** multi-arm cells.",
     ("edge", "identified"): "`|z| > 2` on the UNCALIBRATED posterior SD, where `z = beta / beta_sd` "
                             "(MH-83 records precision 0.86 / recall 0.89 against a held-out standard). "
                             "⚠ The posterior SD is measured 1.18–1.34× too NARROW, so this over-admits: "
@@ -878,7 +880,6 @@ COLUMNS.update({
                               "fit. **Bit-identical to `n_fam` on this card** (integers 1..12), so it is also "
                               "a redundant column.",
     ("edge", "z"): "beta / beta_sd on the UNCALIBRATED posterior SD. Use `cal_z` for the honest width.",
-    ("gene_family", "z"): "beta / beta_sd for the family cell, uncalibrated.",
     ("edge", "identified"): "|z| > 2 on the UNCALIBRATED SD (24.8%). `cal_identified` is the honest "
                             "version (19.9%).",
     ("edge", "pip_dense"): "\u26a0 CONSTANT by construction \u2014 the coupling readout is called with \u03c0\u22611, so "
@@ -891,7 +892,6 @@ COLUMNS.update({
     ("gene_family", "n"): "Samples the cell was fit on \u2014 CONSTANT (1,040) across the card.",
     ("gene", "n_dense_included"): "Families entering the dense (\u03c0\u22611) readout. \u26a0 **Bit-identical to "
                                   "`n_fam`** \u2014 redundant; do not treat as an independent axis.",
-    ("gene_family", "identified"): "|z| > 2 for the family cell, uncalibrated.",
     ("", "identity_coherence"): "1 / Σ|identity| per GENE, in (0,1] — identity's own sign coherence. 1.0 "
                                 "when nothing cancels, → 0 as suppressor cancellation grows. ⭐ This is the "
                                 "quantity `beta_frac_reliable` was supposed to watch and could not: it "
@@ -977,7 +977,28 @@ COLUMNS.update({
                             "multi-mapping-collapsed) healthy level. Read before any `share_HLY`/`rank_HLY`.",
     ("edge", "identity_allocated"): "Family identity with phantom minor arms forced to 0 \u2014 the allocation "
                                     "actually used downstream.",
-    ("edge", "role"): "The arm's role in this gene's regulation, as assigned by the realization lane.",
+    # ── UNIT 14 (2026-08-19) — the BARE-name columns, the six that collide across cards.
+    ("edge", "role"): "⛔ **NOT the arm's role — the GENE's cancer role** (`oncogene` / `tsg` / "
+                      "`oncogene/tsg` / `unknown`), from `gene_roles.load_gene_roles`. Rung is **gene**, "
+                      "verified constant within gene (max 1 distinct value). ⚠⚠ **COVERAGE IS 11.1%: "
+                      "`unknown` on 1,262 of 1,420 genes.** The source is a **hand-curated built-in "
+                      "dictionary of 232 genes** (114 oncogene / 106 tsg / 12 both), NOT COSMIC CGC or any "
+                      "database ⇒ a stratification by `role` runs on 158 genes and inherits whatever that "
+                      "list's author considered canonical. Its purpose is `malignancy_sign`, i.e. scoring "
+                      "the DIRECTION of repressing a node — not a general cancer-gene annotation.",
+    ("gene_family", "n_samples"): "Samples the family cell was fit on — **CONSTANT 1,040** across the card. "
+                                  "Renamed from bare `n` (2026-08-19): unit C applied that rename through "
+                                  "`realization._normalise_edge_names`, which funnels the EDGE card only, "
+                                  "so this card kept `n` for two weeks after I recorded the change as done "
+                                  "(doctrine §4.5 — this card has no `_finish_card` call site). "
+                                  "`card_ladders.normalise_family_card()` is now its funnel.",
+    ("gene_family", "z"): "`beta / beta_sd` for the family cell, on the **UNCALIBRATED** posterior SD. "
+                          "⛔ The per-edge theoretical null is **3-4× too narrow** (memory "
+                          "`edge-null-is-miscalibrated`) ⇒ use `cal_z`. Median 1.261.",
+    ("gene_family", "identified"): "`|z| > 2` on the UNCALIBRATED SD — **27.1%** of cells. `cal_identified` "
+                                   "is the honest version. ⚠ Not a discovery: per-edge discovery is EMPTY "
+                                   "under the empirical FDR (MH-154/155); this flags fit precision only.",
+
     ("edge", "n_fam"): "How many families compete at this edge's GENE. Gene-rung — it repeats across the "
                        "gene's edges by construction. beta is mathematically inert where it is 1.",
     ("edge", "w_max"): "Maximum curated EVIDENCE weight over the gene's regulators. Gene-rung repeat. "
