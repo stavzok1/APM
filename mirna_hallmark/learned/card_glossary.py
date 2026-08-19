@@ -371,6 +371,43 @@ COLUMNS: dict[tuple[str, str], str] = {
                    "1,147 edges carrying both, but they answer different questions: `z` is 'is this arm "
                    "identified against the gene's whole design', `z_arm` is 'is it separable from its "
                    "same-seed mates'. Both are strictly positive (β cannot be negative).",
+    ("edge", "arm_med_rpm"): "Median linear RPM of this ARM across the cohort. Arm-rung, so it REPEATS "
+                             "across the arm's genes. Fill 0.686 — the gap is arms with no expression "
+                             "record, not zeros.",
+    ("edge", "arm_iqr"): "Interquartile range of the arm's abundance — its DYNAMIC RANGE. ⭐ Dispersion is "
+                         "usually the informative half against level (axiom 8), though it did NOT separate "
+                         "diluting from improving mates in MH-248 (q=0.47).",
+    ("edge", "arm_pct_floor"): "Percent of samples in which the arm sits above the detection floor "
+                               "(median 99). Feeds `arm_spiker` together with `arm_iqr`.",
+    ("", "arm_lfc_"): "Log fold-change of the ARM's abundance between two states. ⚠⚠ **ONLY "
+                      "`arm_lfc_NAT_TUM` IS SAME-PLATFORM (TCGA→TCGA). Every `HLY` leg crosses "
+                      "GTEx→TCGA**, and that boundary carries a measured artifact — in the `fst_` work "
+                      "near-total share flips were 5–8× more common across it than within TCGA. ⛔⛔ **AND "
+                      "THE TWO HLY→TUM VARIANTS DISAGREE MATERIALLY: `_QN` vs `_raw` correlate at only "
+                      "spearman +0.544, median |diff| 1.49, and they DISAGREE ON SIGN FOR 23.9% OF "
+                      "EDGES.** Which leg you pick changes the direction for ~1 edge in 4, so state which "
+                      "one you used. ⚠ The QN bridge is CORRECT and settled but carries a standing "
+                      "trust-weighting — prefer rank measures over QN magnitudes for cross-platform work.",
+    ("edge", "arm_credit_share"): "This arm's share of its (gene, seed_family) cell's credit. ✅ Verified "
+                                  "to sum to 1.0000 within every one of the 467 multi-arm cells, and it "
+                                  "genuinely varies PER ARM inside the cell (467/467).",
+    ("edge", "arm_id_status"): "How the arm's identity within its cell was resolved: `resolved_by_dose` "
+                               "2,344 · `singleton` 2,260 · `unvalidated_balanced` 1,045. ⚠ **Fill is 1.0 "
+                               "while its arm-in-family siblings are 0.203** — because `singleton` is a "
+                               "VALID answer for a one-arm cell (95.8% of singletons are), where the "
+                               "siblings are NaN. Same rung, different domain. ⛔ `unvalidated_balanced` "
+                               "means dose CANNOT resolve which arm acts — it needs a breast chimeric-eCLIP "
+                               "or a per-arm knockdown, not more modelling.",
+    ("edge", "arm_dbeta"): "max−min β across the cell's member arms. ⚠⚠ **A CELL quantity REPEATED across "
+                           "the cell's arms — verified constant within all 467 multi-arm cells.** Reading "
+                           "it as a per-arm fact double-counts; the per-arm quantities are `beta_arm` / "
+                           "`z_arm` / `arm_credit_share`, which do vary (467/467).",
+    ("edge", "arm_sep_z"): "`arm_dbeta` in units of the cell's own pooled posterior SD — can these "
+                           "same-seed arms be told apart at all. ⚠⚠ **Also a CELL quantity, constant "
+                           "within all 467 cells.** Median 1.59.",
+    ("edge", "arm_resolvable"): "Are the cell's arms separable AND does splitting them help out-of-fold. "
+                                "True for 31.7% of edges in multi-arm cells. ⚠⚠ **A CELL verdict, constant "
+                                "within all 467 cells** — not a property of the individual arm.",
     ("edge", "z_arm"): "`beta_arm / sd_arm` from the WITHIN-CELL fit (`arm_rung.py`) — the arm's z inside "
                        "its (gene, seed_family) cell only, defined on the 20.3% of edges in multi-arm cells. "
                        "Asks *which COPY of this seed carries the signal*, which is near-collinear by "
@@ -549,9 +586,6 @@ COLUMNS: dict[tuple[str, str], str] = {
     ("gene", "ctx_gap_core"): "Real-minus-decoy coupling gap for this gene. Pooled it is ~-0.012, but the "
                               "per-gene IQR STRADDLES ZERO — this is a set-level distributional shift, not "
                               "a per-gene effect. Do not rank genes by it.",
-    ("edge", "arm_resolvable"): "Is this arm statistically separable from its same-seed mates in this "
-                                "gene's fit. True for 31.7% of edges in multi-arm cells, rising 20% -> 48% "
-                                "from 2-arm to 3+-arm cells.",
     ("edge", "oof_drho"): "Arm-level OOF rho MINUS family-level. Negative = arm resolution predicts better. "
                           "Median only -0.0038, but the tail reaches -0.21 — the median understates it "
                           "~50x. Characterise the tail, never the median.",
@@ -701,7 +735,6 @@ COLUMNS.update({
                             "multi-mapping-collapsed) healthy level. Read before any `share_HLY`/`rank_HLY`.",
     ("edge", "identity_allocated"): "Family identity with phantom minor arms forced to 0 \u2014 the allocation "
                                     "actually used downstream.",
-    ("edge", "arm_id_status"): "Whether the arm's identity could be resolved within its family cell.",
     ("edge", "role"): "The arm's role in this gene's regulation, as assigned by the realization lane.",
     ("edge", "n_fam"): "How many families compete at this edge's GENE. Gene-rung — it repeats across the "
                        "gene's edges by construction. beta is mathematically inert where it is 1.",
@@ -717,6 +750,43 @@ COLUMNS.update({
     ("edge", "echim_any"): "Does this edge carry ANY chimeric duplex evidence. \u26a0\u26a0 It is never False \u2014 "
                            "only True (1,065 edges) or NaN. A blank means 'no chimeric record', which "
                            "conflates *not scanned* with *scanned and absent*; test `!= 1`, never `== 0`.",
+    ("edge", "arm_med_rpm"): "Median linear RPM of this ARM across the cohort. Arm-rung, so it REPEATS "
+                             "across the arm's genes. Fill 0.686 — the gap is arms with no expression "
+                             "record, not zeros.",
+    ("edge", "arm_iqr"): "Interquartile range of the arm's abundance — its DYNAMIC RANGE. ⭐ Dispersion is "
+                         "usually the informative half against level (axiom 8), though it did NOT separate "
+                         "diluting from improving mates in MH-248 (q=0.47).",
+    ("edge", "arm_pct_floor"): "Percent of samples in which the arm sits above the detection floor "
+                               "(median 99). Feeds `arm_spiker` together with `arm_iqr`.",
+    ("", "arm_lfc_"): "Log fold-change of the ARM's abundance between two states. ⚠⚠ **ONLY "
+                      "`arm_lfc_NAT_TUM` IS SAME-PLATFORM (TCGA→TCGA). Every `HLY` leg crosses "
+                      "GTEx→TCGA**, and that boundary carries a measured artifact — in the `fst_` work "
+                      "near-total share flips were 5–8× more common across it than within TCGA. ⛔⛔ **AND "
+                      "THE TWO HLY→TUM VARIANTS DISAGREE MATERIALLY: `_QN` vs `_raw` correlate at only "
+                      "spearman +0.544, median |diff| 1.49, and they DISAGREE ON SIGN FOR 23.9% OF "
+                      "EDGES.** Which leg you pick changes the direction for ~1 edge in 4, so state which "
+                      "one you used. ⚠ The QN bridge is CORRECT and settled but carries a standing "
+                      "trust-weighting — prefer rank measures over QN magnitudes for cross-platform work.",
+    ("edge", "arm_credit_share"): "This arm's share of its (gene, seed_family) cell's credit. ✅ Verified "
+                                  "to sum to 1.0000 within every one of the 467 multi-arm cells, and it "
+                                  "genuinely varies PER ARM inside the cell (467/467).",
+    ("edge", "arm_id_status"): "How the arm's identity within its cell was resolved: `resolved_by_dose` "
+                               "2,344 · `singleton` 2,260 · `unvalidated_balanced` 1,045. ⚠ **Fill is 1.0 "
+                               "while its arm-in-family siblings are 0.203** — because `singleton` is a "
+                               "VALID answer for a one-arm cell (95.8% of singletons are), where the "
+                               "siblings are NaN. Same rung, different domain. ⛔ `unvalidated_balanced` "
+                               "means dose CANNOT resolve which arm acts — it needs a breast chimeric-eCLIP "
+                               "or a per-arm knockdown, not more modelling.",
+    ("edge", "arm_dbeta"): "max−min β across the cell's member arms. ⚠⚠ **A CELL quantity REPEATED across "
+                           "the cell's arms — verified constant within all 467 multi-arm cells.** Reading "
+                           "it as a per-arm fact double-counts; the per-arm quantities are `beta_arm` / "
+                           "`z_arm` / `arm_credit_share`, which do vary (467/467).",
+    ("edge", "arm_sep_z"): "`arm_dbeta` in units of the cell's own pooled posterior SD — can these "
+                           "same-seed arms be told apart at all. ⚠⚠ **Also a CELL quantity, constant "
+                           "within all 467 cells.** Median 1.59.",
+    ("edge", "arm_resolvable"): "Are the cell's arms separable AND does splitting them help out-of-fold. "
+                                "True for 31.7% of edges in multi-arm cells. ⚠⚠ **A CELL verdict, constant "
+                                "within all 467 cells** — not a property of the individual arm.",
     ("edge", "z_arm"): "beta_arm / sd_arm \u2014 the ARM-resolved z inside the family cell, as opposed to the "
                        "family-level `z`.",
 })
