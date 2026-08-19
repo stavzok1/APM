@@ -20,6 +20,17 @@ each card carries its own map and why `domain_of(col, card)` is **card-scoped** 
 matched globally and silently attached one card's caveat to another's columns (three bugs; `sub_` on the
 arm card vs the edge card, fixed by renaming to `esub_`).
 
+⛔⛔ **AND CARD-SCOPING A PREFIX IS NOT SUFFICIENT — A PREFIX CAN BE AMBIGUOUS *WITHIN ONE CARD*.**
+*(Added 2026-08-19, column-review unit 12, after causing a 4th instance of the bug this section describes.)*
+The edge card carries **two unrelated families under `arm_`**: the arm-resolution FIT quantities
+(`arm_sep_z`, `arm_dbeta`, `arm_resolvable`, `arm_credit_share`, `arm_id_status`) **and** seven lifted
+ABUNDANCE/TRAJECTORY columns (`arm_med_rpm`, `arm_pct_floor`, `arm_iqr`, `arm_lfc_*`). A global `arm_`
+glossary block added during the rename unit silently re-described all seven as *"arm-resolved fit
+quantities … 20.3% of edges"* — **wrong meaning, wrong domain, wrong rung, on 7 columns × 2 cards.**
+⇒ **RULE: a prefix block is a DEFAULT, never a guarantee. After adding one, print what it now captures and
+read the list.** Columns a prefix mis-serves get an exact `(card, column)` entry, which outranks every
+prefix on every card.
+
 **Four defects in one day came from not knowing the unit:** MH-179 (a FAMILY-estimated β applied to RAW
 ARM abundance) · MH-187 (a family weight beside an arm correlation, unmarked) · MH-188 (a within-cell
 Shapley compared against a GENE-level OOF statistic) · MH-191 (β labelled `family` when the fit was
@@ -148,6 +159,15 @@ card's key**:
   `concentration` are the shares). It is gene-rung on the gene card and family-rung on the family card.
 - **The gene card is `realization/gene_card.tsv`.** `learned/gene_card.tsv` does not exist; looking there
   and concluding the atlas block is missing has already happened once.
+- ⛔⛔ **GATING THE INPUTS DOES NOT GATE A DERIVED COLUMN — cost: two blow-ups, one found 11 units after
+  the other.** `identity` is a SIGNED share, so any max/sum over it is unbounded. The `identity_reliable`
+  gate shipped to the edge and gene_family cards in the unit-1/2 column review; **11 units later the gene
+  card's `top_identity` still read +740.007 on 80 genes**, because `readouts` had already computed
+  `float(d.identity.max())` from the pre-gate values and nothing recomputed it. Same shape as
+  `arb_max_identity` on the arm card. ⇒ **when you add a gate, grep for every column DERIVED from the
+  gated one and recompute it** — `top_identity_gated` / `arb_max_identity` now do. And ship the gated
+  version BESIDE the raw column, never over it: silently rewriting a value another module wrote is how
+  provenance rots.
 - **`retention` names two unrelated quantities** — see `PATIENT_QUESTION_TAXONOMY.md` §5.
 - **An arm-rung column must be constant within arm ACROSS genes.** If it varies by gene it is not an arm
   property, whatever its name suggests (MH-214).

@@ -297,6 +297,35 @@ def gene_concentration_adj() -> pd.DataFrame:
     return pd.DataFrame({"gene": g["gene"], "concentration_adj": adj.clip(0, 1).round(4)})
 
 
+def gene_top_identity_gated() -> pd.DataFrame:
+    """⭐ THE GENE CARD's `top_identity`, GATED — the last ungated survivor (column review unit 11).
+
+    ⛔ `readouts` computes `top_identity = float(d.identity.max())` per gene, ungated. `identity` is a
+    SIGNED share (≈10% negative), so the max is unbounded: on the gene card it still reaches **+740.007**,
+    and 80 genes exceed 1. The `identity_reliable` gate shipped to the edge and gene_family cards in the
+    unit-1/2 review but **never reached this DERIVED column** — a gate on the inputs does not gate a
+    statistic someone already computed from them.
+
+    ⇒ recompute the max over `identity_reliable` edges only. Pure derivation from the edge card, so no
+    refit. Emits `top_identity_gated` (bounded) and `top_identity_n_reliable` (its denominator — a max over
+    2 families is not the same statement as a max over 12, and axiom 5 says print the denominator).
+    ⚠ Ships BESIDE the raw column rather than replacing it: `readouts` still owns `top_identity`, and
+    silently changing a value another module wrote is how provenance rots.
+    """
+    if not EDGE_CARD.exists():
+        return pd.DataFrame()
+    d = pd.read_csv(EDGE_CARD, sep="\t", low_memory=False)
+    if not {"gene", "identity", "identity_reliable"} <= set(d.columns):
+        return pd.DataFrame()
+    rel = d[d["identity_reliable"].map({True: True, "True": True}).fillna(False)]
+    if rel.empty:
+        return pd.DataFrame()
+    i = pd.to_numeric(rel["identity"], errors="coerce")
+    g = rel.assign(_i=i).groupby("gene")["_i"]
+    return pd.DataFrame({"top_identity_gated": g.max().round(4),
+                         "top_identity_n_reliable": g.size()}).reset_index()
+
+
 def _identity_gate(d: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
     """⭐ THE IDENTITY GATE, DERIVED — no refit required (user-asked 2026-08-19).
 
@@ -741,7 +770,8 @@ def _run(*, annotate_cards: bool) -> None:
     normalise_gene_card()          # rename/prune BEFORE annotating, so the registry sees final names
     _annotate(GENE_CARD, [(gl, ["gene"]), (gene_lit_ground_truth(), ["gene"]),
                           (gene_arm_resolution(), ["gene"]), (gene_concentration_adj(), ["gene"]),
-                          (discovery_queue_rollup("gene"), ["gene"])])
+                          (discovery_queue_rollup("gene"), ["gene"]),
+                          (gene_top_identity_gated(), ["gene"])])
     _annotate(EDGE_CARD, [(st, ["gene", "arm"]), (edge_ago_measured(), ["gene", "arm"]),
                           (edge_admissibility(), ["gene", "arm"]),
                           (edge_chimeric(), ["gene", "arm"]), (edge_affinity_pct(), ["gene", "arm"]),

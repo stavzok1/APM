@@ -377,6 +377,56 @@ BLOCKS: dict[tuple[str, str], str] = {
                  "epigenetic context at the precursor locus.",
     ("", "arb_"): "Per-ARM rollup of its edge set — how many edges and genes it regulates and its mean "
                   "|beta| over them. ⚠ An aggregate: it inherits the edge rung's caveats.",
+    # ── UNIT 12 (2026-08-19) — ⛔ THE `arm_` PREFIX IS AMBIGUOUS *WITHIN* THE EDGE CARD.
+    # It carries BOTH the arm-resolution FIT quantities (arm_sep_z / arm_dbeta / arm_resolvable /
+    # arm_credit_share / arm_id_status) AND seven lifted ABUNDANCE-and-TRAJECTORY columns. A prefix block
+    # cannot serve both, so the seven get exact entries here — which beat any prefix, on every card.
+    ("", "arm_med_rpm"): "The arm's MEDIAN RPM across tumour samples — its abundance level, gene-free. "
+                         "Defined on the 19.8% of arms with tumour expression data.",
+    ("", "arm_pct_floor"): "⛔ **THE NAME READS BACKWARDS.** Computed as `100·mean(x > FLOOR)` — the percent "
+                           "of samples ABOVE the detection floor, i.e. **HIGH = WELL DETECTED**, not "
+                           "'percent at the floor'. Verified: ρ=**+0.917** with `arm_med_rpm`. "
+                           "Median arm sits at **5%**; 162 arms at 0%, 91 at 100%. Feeds `arm_spiker` "
+                           "(`pct_floor < 40 AND arm_iqr > 1.5`).",
+    ("", "arm_iqr"): "Interquartile range of the arm's tumour RPM — its DYNAMIC RANGE. ⭐ Axiom 8: "
+                     "dispersion predicts where coupling is estimable; the MEAN level does not. Pairs with "
+                     "`arm_pct_floor` to define `arm_spiker`.",
+    ("", "arm_lfc_NAT_TUM"): "log-FC of the arm's median abundance, matched NAT → tumour. ⭐ **THE ONLY "
+                             "GAUGE-CLEAN LEG** — same platform, same patients; median **+0.080**, i.e. "
+                             "centred on zero as a fold-change should be. This is the trajectory column "
+                             "`card.py` uses for the dose axis, and the one to prefer.",
+    ("", "arm_lfc_HLY_TUM_QN"): "log-FC GTEx-healthy → TCGA-tumour, on quantile-normalised values. "
+                                "⚠ **CROSS-PLATFORM: median +0.910, NOT zero.** The offset is a gauge "
+                                "constant `c` (memory `cross-cohort-gauge`), not biology. ⇒ **its LEVEL is "
+                                "uninterpretable; only the CONTRAST between arms is.**",
+    ("", "arm_lfc_HLY_TUM_raw"): "As `arm_lfc_HLY_TUM_QN` but against the RAW GTEx median. ⛔⛔ **QN DOES "
+                                 "NOT FIX THE OFFSET — measured 2026-08-19: raw median +1.060 vs QN +0.910, "
+                                 "so quantile normalisation removes only 0.14 of a ~1.0 gauge shift.** And "
+                                 "the two rank-agree at only **ρ=+0.632** on the same 335 arms, so they are "
+                                 "not interchangeable either. Treat BOTH healthy legs as offset.",
+    ("", "arm_lfc_HLY_NAT_raw"): "log-FC GTEx-healthy → TCGA-NAT, raw. ⚠ Same ~+1 cross-platform gauge "
+                                 "offset (median **+0.970**) — and since NAT is *not* tumour, a nonzero "
+                                 "median here is the offset's own fingerprint: two tissues that should "
+                                 "differ least show the same +1 as the tumour leg.",
+    # ── UNIT 13 — the two `site_frac_*` columns have DIFFERENT DENOMINATORS. Nothing in the block said so.
+    ("", "site_frac_8mer"): "8mer share of the arm's **CANONICAL** sites (`site_n_8mer / site_n_canonical`; "
+                            "median 0.150). ⛔ **NOT the same denominator as `site_frac_canonical`** — "
+                            "these two neighbours divide by different things, which is why 8mer share "
+                            "(0.150) reads *larger* than canonical share (0.054). ⚠ And it is TOOL-"
+                            "DEPENDENT: agrees with `ts_frac_8mer` at only ρ=+0.620.",
+    ("", "site_frac_canonical"): "Canonical share of the arm's **TOTAL** sites (`site_n_canonical / "
+                                 "site_n_total`; median 0.054) — a different denominator from "
+                                 "`site_frac_8mer`. Low because non-canonical sites outnumber canonical "
+                                 "~12:1 (medians 5,388 vs 439).",
+    ("", "site_sites_per_gene"): "Canonical sites per targeted gene (median 1.34) — site DENSITY, "
+                                 "separating an arm with many sites on few genes from one spread thin. "
+                                 "`site_n_canonical / site_n_genes_canonical`.",
+    ("", "site_repression_med"): "Median predicted repression score over the arm's sites (all negative by "
+                                 "construction; median −0.316). A PREDICTION from sequence, not a "
+                                 "measurement — never cite it as evidence of observed repression.",
+    ("", "site_repression_min"): "Strongest (most negative) predicted repression among the arm's sites "
+                                 "(median −1.964). ⚠ A MIN over a set whose size varies 450→40,511 — it "
+                                 "partly measures how many sites were drawn, not how strong the best is.",
     ("", "arm_"): "Arm-resolved fit quantities inside a family cell — the arm's own beta, its separation "
                   "z from its same-seed mates, and whether it is `arm_resolvable`. Defined only where a "
                   "family cell holds more than one arm (20.3% of edges).",
@@ -772,6 +822,27 @@ COLUMNS: dict[tuple[str, str], str] = {
                               "all-seeded genes.",
     ("edge", "cal_identified"): "Is the edge identified (|z| > 2) under the CALIBRATED posterior width. "
                                 "19.9% [18.1–22.4] of arm-edges — down from 24.8% on the uncalibrated SD.",
+    ("gene", "top_identity"): "The largest `identity` share among the gene's families. ⛔⛔ **UNGATED AND "
+                              "UNBOUNDED — it still reaches +740.007, with 80 genes above 1.** `identity` "
+                              "is a SIGNED share (~10% negative), so its max has no upper bound; the "
+                              "`identity_reliable` gate shipped to the edge and gene_family cards but "
+                              "**never reached this DERIVED column**, because gating the inputs does not "
+                              "gate a statistic already computed from them. ⇒ **use `top_identity_gated`.** "
+                              "⚠ The blow-ups concentrate where the denominator vanishes: 75% of the "
+                              "affected genes have `ctx_ceiling` ≤ 0.02 vs 31.5% of the rest.",
+    ("gene", "top_identity_gated"): "`top_identity` recomputed over `identity_reliable` edges only — "
+                                    "**max 1.0000, 0 genes above 1** (vs +740.007 ungated). Defined on "
+                                    "1,203 genes. ⭐ Ships BESIDE the raw column rather than replacing it: "
+                                    "`readouts` owns `top_identity`, and silently rewriting another "
+                                    "module's value is how provenance rots.",
+    ("gene", "top_identity_n_reliable"): "How many of the gene's families survive the identity gate — the "
+                                         "DENOMINATOR behind `top_identity_gated`. **Median 2.** ⚠ A max "
+                                         "over 2 families is not the same statement as a max over 12; "
+                                         "axiom 5 says print the denominator, so it is a column.",
+    ("arm", "arb_max_identity"): "Largest `identity` among this arm's edges, over reliable rows only. "
+                                 "✅ Now runs **−0.255 … +1.000** — it reached **+740.0** until the inert "
+                                 "`beta_frac_reliable` gate was replaced (2026-08-19). Read `arb_n_identity_"
+                                 "reliable` beside it for the denominator.",
     ("gene", "top_family_identity"): "The family Shapley/LMG credits with the gene's regulation. NaN for "
                                      "197 genes (12.7%) where NNLS zeroed everything — an honest "
                                      "'undefined', which the magnitude answer cannot express.",

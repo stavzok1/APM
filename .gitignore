@@ -89,3 +89,7 @@ mirna_hallmark/output/
 mirna_hallmark/presentation/talk_files/
 # Third-party software distributions
 mirna_hallmark/cibersortx/*.zip
+
+# CIBERSORTx transfer matrices (1.3G of regenerable inputs; `git add -A` swept
+# these in and GitHub rejected the push at 348 MB. Keep the README + manifests.)
+output/cibersortx_transfer/*.txt
