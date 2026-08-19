@@ -977,6 +977,45 @@ COLUMNS.update({
                             "multi-mapping-collapsed) healthy level. Read before any `share_HLY`/`rank_HLY`.",
     ("edge", "identity_allocated"): "Family identity with phantom minor arms forced to 0 \u2014 the allocation "
                                     "actually used downstream.",
+    # ── UNIT 18 (2026-08-19) — the `comp_` block (16 cols, IDENTICAL on the gene and gene_family cards).
+    ("", "comp_tcga_mrna_driver_share"): "Share of the gene's mRNA coupling attributable to the single "
+        "compartment that most changes it — **axiom 8's composition GATE**, the axis that separates the "
+        "harm tails at p=0.00999 where the ensemble axis gives p=0.10. ⛔⛔ **EXACTLY COMPLEMENTARY TO "
+        "`comp_tcga_mrna_driver_ret`: share ≡ 1 − ret, verified to 4.4e-16 on all 1,027 rows.** They are "
+        "ONE quantity in two orientations — a Spearman scan sees ρ and −ρ, so **scanning both doubles the "
+        "apparent evidence and wastes a test**. ✅ `gene_axes.py` builds only this one; keep it that way.",
+    ("", "comp_tcga_mrna_driver_ret"): "`1 − comp_tcga_mrna_driver_share`, exactly (see there). The "
+        "RETENTION orientation: what fraction of the coupling survives removing the driver compartment. "
+        "⚠ **Denominator gated at `RHO_GATE = 0.05`, and that is too low for a stable readout: 11.3% of "
+        "rows still fall outside [0,1].** At |ρ_raw| ≥ 0.10 that drops to **4.6%** and the median moves "
+        "+0.646 → **+0.720** ⇒ quote the 0.10-gated value (axiom 5c: sweep the threshold, report where the "
+        "arms agree).",
+    ("", "comp_cptac_prot_driver_share"): "Protein-layer twin of `comp_tcga_mrna_driver_share`. Same exact "
+        "complementarity with `_driver_ret` (8.9e-16 on 918 rows). ⚠ Noisier layer: **24.2%** of rows fall "
+        "outside [0,1] even at the 0.05 gate, dropping to **16.2%** at |ρ_raw| ≥ 0.10.",
+    ("", "comp_cptac_prot_driver_ret"): "`1 − comp_cptac_prot_driver_share`, exactly. Median +0.398 raw, "
+        "**+0.469** gated to |ρ_raw| ≥ 0.10 — quote the gated value. See the mRNA twin.",
+    ("", "comp_tcga_mrna_driver"): "WHICH compartment drives the gene's mRNA coupling — the one whose "
+        "removal moves it most (`CAFs` 279 · `purity` 174 · `prolif` 148 · `Endothelial` 122 · `Myeloid` "
+        "109). ⭐⭐ **NOT the same as either `top_` column, and the gap is large: the driver is neither the "
+        "budget's nor the target's top compartment on 36.1% of genes** (protein: 41.9%), and it matches "
+        "`top_budget` on only 39.2% / `top_target` on 41.9%. This is the measured form of `gene_axes.py`'s "
+        "loading-vs-driver trap: *'is this gene expressed by stroma'* is not *'is this gene's "
+        "miRNA-target relationship an artifact of stroma'*.",
+    ("", "comp_tcga_mrna_top_budget"): "The compartment the gene's miRNA BUDGET loads on most — a property "
+        "of the REGULATORS. ⚠ Agrees with `comp_tcga_mrna_top_target` on only **20.4%** of genes (protein "
+        "17.2%), so the two sides of the edge load on different compartments most of the time. Neither is "
+        "the driver — see `comp_tcga_mrna_driver`.",
+    ("", "comp_tcga_mrna_top_target"): "The compartment the TARGET GENE's expression loads on most. ⚠ All "
+        "11 loading axes were NULL under FDR in MH-201 (best q=0.18; CAFs p=0.59 with the sign running the "
+        "opposite way) ⇒ **never report a loading null as if it refuted a composition effect** — the "
+        "driver-share axis is the one that predicts.",
+    ("", "comp_tcga_mrna_rho_raw"): "The gene's UNADJUSTED aggregate mRNA coupling — the DENOMINATOR of "
+        "`comp_tcga_mrna_driver_ret`. Fill 90.2%, median −0.056. Read it beside any retention: a ratio "
+        "whose denominator sits near zero is a coin-flip with decimals (axiom 5).",
+    ("", "comp_cptac_prot_rho_raw"): "Unadjusted aggregate PROTEIN coupling — denominator of "
+        "`comp_cptac_prot_driver_ret`. Fill 73.2%, median −0.018, i.e. **centred much closer to zero than "
+        "the mRNA twin**, which is why the protein retention is the noisier of the two.",
     # ── UNIT 17 (2026-08-19) — the `cptac_` block (24 cols, two cohorts × three layers).
     ("", "cptac_prosp_agg_beats_abund_prot"): "Does the learned β-weighted aggregate couple more negatively "
         "to PROTEIN than a plain abundance sum, in the CPTAC prospective cohort? ⛔⛔ **THIS COLUMN WAS "
