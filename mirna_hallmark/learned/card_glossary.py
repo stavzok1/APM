@@ -975,6 +975,28 @@ COLUMNS.update({
     ("gene", "n_hallmark_sets"): "How many MSigDB Hallmark programs this gene belongs to.",
     ("edge", "n_HLY_meas"): "How many of the gene's arms have a MEASURED (not imputed, not "
                             "multi-mapping-collapsed) healthy level. Read before any `share_HLY`/`rank_HLY`.",
+    # ── THE RATIO SWEEP (MH-257, 2026-08-19) — columns whose denominator was never gated.
+    ("edge", "sd_arm"): "Posterior SD of the arm-level β. ⚠ **No upper bound, and the tail is real, not a "
+        "division artifact: max 1.302 against a median of 0.0036 — 360×.** The six extreme rows are "
+        "miR-302-family arms (miR-302a-3p→LEFTY2 **1.302**, miR-302d-3p→LEFTY2 1.097), where the SD "
+        "approaches the largest β on the card (1.521) ⇒ **those β are effectively UNIDENTIFIED.** Read "
+        "`sd_arm` before quoting any single arm's β; a wide posterior is information, not noise to gate away.",
+    ("gene", "realized_retention"): "Realized-coupling retention, ρ_adjusted / ρ_raw. ⛔ **GATED "
+        "2026-08-19 (MH-257) — it was previously guarded only by `|ρ_raw| > 1e-6`, which prevents division "
+        "by exactly zero and nothing else, and it reached 720.8.** Now gated at the project's own "
+        "`config.RHO_GATE = 0.05`: **max|x| 720.8 → 4.55**, 281 rows (22.3%) dropped, and the median moves "
+        "only **+0.610 → +0.625** — the bulk was always fine, the tail was the defect. ⚠⚠ **RETENTION IS "
+        "STILL NOT BOUNDED TO [0,1]: 41.1% sits outside even after the gate**, because sign flips and "
+        "amplification are real (MH-253). Do not 'fix' that.",
+    ("edge", "own_specific_frac"): "Fraction of the arm's variance that is target-specific. ⛔ **Its name "
+        "promises [0,1] and it reached 164.08 (95 rows outside)** — the denominator was guarded at "
+        "`v_own > 1e-9`, which is not a gate. Fixed at source 2026-08-19 (`>= 1e-3`); ⚠ **the delivered "
+        "card still carries the ungated values until the canonical rebuild**, because the denominator is "
+        "not on the card and cannot be repaired in place.",
+    ("edge", "retention_rho"): "ρ_deconv / ρ_core — ⛔ **distinct from `retention_beta` (β_deconv/β_core); "
+        "two retentions, two estimators** (`canonical_card.py:20`). Reached **1169.0** under a `> 1e-6` "
+        "guard; gated at `config.RHO_GATE` at source 2026-08-19, ⚠ **pending the canonical rebuild** — the "
+        "denominator is not on the card.",
     # ── UNIT 19 (2026-08-19) — edge `identity_` (5) + arm `ago_` (4) + arm `cur_` (2).
     ("edge", "identity_reliable"): "Is this edge's Shapley `identity` trustworthy — `identity_coherence` "
         "≥ 0.5 AND |identity| ≤ 1? ⛔⛔ **MASKED 2026-08-19: it could not say 'unknown'.** A bare `&` of "

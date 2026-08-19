@@ -340,3 +340,24 @@ def ensure_output_dirs() -> None:
         LOGS_DIR,
     ):
         d.mkdir(parents=True, exist_ok=True)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ⭐ RHO_GATE — THE ONE DENOMINATOR GATE FOR EVERY RETENTION RATIO (MH-257, 2026-08-19).
+#
+# ⛔ **WHY THIS MOVED HERE.** `retention = rho_adjusted / rho_raw` is computed in SEVEN places. Four gated
+# the denominator at 0.05 — each declaring its OWN `RHO_GATE = 0.05` constant with the comment *"axiom 5:
+# don't divide by a vanishing raw coupling"* (`cptac_card`, `card_context`, `compartment_card`,
+# `eval/dossier`). The other three guarded only against division by EXACTLY zero (`1e-6`, `1e-9`), which is
+# not a gate at all: `realization.py` produced `realized_retention` reaching **720.8** and `retention_rho`
+# reaching **1169.0**, and `readouts.py` the same for `retention`.
+#
+# ⇒ the same trap, handled correctly in four places and not in three, inside one codebase — the same shape
+# as the floor-corrected `fam_dose_hhi` vs the uncorrected `concentration` (column review unit 10).
+# A threshold that is a POLICY must have ONE home, or it is not a policy.
+#
+# **MEASURED IMPACT** of applying it where it was missing (`realized_retention`, n=1,259):
+#   max|x| **720.8 → 4.55** (158×) · rows dropped **281 (22.3%)** · median **+0.610 → +0.625** — i.e. it
+#   removes the pathological tail and leaves the bulk alone, which is what a correct gate looks like.
+# ⚠ **RETENTION IS NOT BOUNDED TO [0,1]** and gating does not make it so — **41.1%** still sits outside
+#   after the gate. Sign flips and amplification are real (MH-253); only the blow-ups are the artifact.
+RHO_GATE = 0.05

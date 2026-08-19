@@ -59,7 +59,7 @@ CARD = OUT / "edge_card_base.tsv"
 
 COHORTS = {"prospective": "cptac_prosp", "tcga105": "cptac_t105"}
 LAYERS = {"rna_z": "rna", "protein_z": "prot", "protein_resid": "disc"}
-RHO_GATE = 0.05          # axiom 5: below this |RAW rho| the retention ratio is meaningless
+from mirna_hallmark.config import RHO_GATE   # ⭐ ONE home (MH-257); was a local 0.05 here
 
 
 _FAMBETA: dict = {}

@@ -52,7 +52,7 @@ from mirna_hallmark import config as C
 OUT = C.REPO_ROOT / "mirna_hallmark/output/learned"
 LONG = OUT / "compartment_profile.tsv"
 SUMM = OUT / "compartment_summary.tsv"
-RHO_GATE = 0.05          # axiom 5: don't divide by a vanishing raw coupling
+from mirna_hallmark.config import RHO_GATE   # ⭐ ONE home (MH-257); was a local 0.05 here
 
 
 def _sp(a, b):

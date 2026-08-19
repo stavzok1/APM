@@ -103,7 +103,7 @@ INTERMEDIATE = OUT / "edge_card_base.tsv"
 
 _FLOOR = np.log2(11)          # RPM>=10, the canonical arm-expression floor
 GAP_GATE = 0.005              # axiom 5: below this the retention ratio is a coin-flip with decimals
-RHO_GATE = 0.05               # same, for the protein retention denominator
+from mirna_hallmark.config import RHO_GATE   # ⭐ ONE home (MH-257); was a local 0.05 here
 CEILING_ROBUST = 0.02         # MH-144: NOT 0 — the mass piles up at 0
 # every prefix this module writes onto a card; used to strip-before-rejoin AND to select
 ANNOT_PREFIXES = ("ctx_", "cptac_", "tcga_", "comp_", "cal_")

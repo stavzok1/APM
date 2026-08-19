@@ -200,7 +200,13 @@ def _realize(g: str, arms, M: pd.Series, dX: pd.DataFrame, dY: pd.DataFrame,
     Cm = dC.reindex(pts).to_numpy(float)[m] if len(dC.columns) else None
     rho_raw = partial_spearman(pred[m], dy[m])
     rho_adj = partial_spearman(pred[m], dy[m], Cm)
-    ret = float(rho_adj / rho_raw) if (rho_raw and np.isfinite(rho_raw) and abs(rho_raw) > 1e-6) else np.nan
+    # ⛔ GATED 2026-08-19 (MH-257): the old guard was `> 1e-6`, which only prevents division by
+    # EXACTLY zero. It let `realized_retention` reach **720.8** and `retention_rho` **1169.0** while
+    # four other modules gated the identical ratio at 0.05. Applying the project's own constant drops
+    # 22.3% of rows, collapses max|x| 720.8 -> 4.55, and moves the median only +0.610 -> +0.625.
+    from mirna_hallmark.config import RHO_GATE
+    ret = (float(rho_adj / rho_raw)
+           if (rho_raw and np.isfinite(rho_raw) and abs(rho_raw) >= RHO_GATE) else np.nan)
     return {"n_pairs": int(m.sum()), "n_reg": len(regs), "rho_raw": _r3(rho_raw), "rho_adj": _r3(rho_adj),
             "retention": _r2(ret), "composition_explained": bool(ret == ret and ret < 0.4),
             "mean_dPred": _r2(float(np.nanmean(pred[m]))), "mean_dTarget": _r2(float(np.nanmean(dy[m])))}
@@ -282,7 +288,10 @@ def dose_shift_arm() -> pd.DataFrame:
                      "mean_dGlobalRank": _r2(float(drank.mean())),
                      "sd_dGlobalRank": _r2(float(drank.std())),
                      "nat_patient_sd": _r3(float(np.sqrt(v_dev)) if v_dev == v_dev else np.nan),
-                     "own_specific_frac": _r2(v_dev / v_own) if v_own > 1e-9 else np.nan})
+                     # ⛔ GATED 2026-08-19 (MH-257): `v_own > 1e-9` is not a gate. A quantity whose
+                     # NAME promises a fraction reached **164.08** on the edge card (95 rows outside
+                     # [0,1]) because the denominator was allowed arbitrarily close to zero.
+                     "own_specific_frac": _r2(v_dev / v_own) if v_own >= 1e-3 else np.nan})
     return pd.DataFrame(rows)
 
 

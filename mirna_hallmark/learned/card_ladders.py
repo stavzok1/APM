@@ -196,6 +196,28 @@ def _repair_nan_flags(d: pd.DataFrame, card: str) -> int:
     return moved
 
 
+# ⭐ RATIO GATES APPLIED IN PLACE (MH-257) — same reasoning as `_NAN_FLAG_REPAIRS`: fixed at source, but
+# the source only re-runs under the expensive canonical rebuild while the denominator is already on the
+# delivered card, so the repair is a pure derivation. ⚠ Only columns whose DENOMINATOR is on the card can
+# be repaired here — `retention_rho` and `own_specific_frac` cannot, and stay ungated until the rebuild.
+_RATIO_GATE_REPAIRS = {"gene": [("realized_retention", "realized_rho_raw")]}
+
+
+def _repair_ratio_gates(d: pd.DataFrame, card: str) -> None:
+    from mirna_hallmark.config import RHO_GATE
+    for col, den in _RATIO_GATE_REPAIRS.get(card, []):
+        if col not in d.columns or den not in d.columns:
+            continue
+        r = pd.to_numeric(d[den], errors="coerce")
+        x = pd.to_numeric(d[col], errors="coerce")
+        was, wmax = int(x.notna().sum()), float(x.abs().max())
+        d[col] = x.where(r.abs() >= RHO_GATE)
+        now = pd.to_numeric(d[col], errors="coerce")
+        if int(now.notna().sum()) != was:
+            print(f"  ✅ {card}.{col}: gated at |{den}| >= {RHO_GATE} — {was} -> {int(now.notna().sum())} "
+                  f"rows, max|x| {wmax:.1f} -> {float(now.abs().max()):.2f}")
+
+
 def normalise_flag_cards() -> None:
     """Apply `_NAN_FLAG_REPAIRS` to the EDGE and ARM cards, which have no name-normaliser of their own.
 
@@ -252,6 +274,7 @@ def normalise_gene_card() -> None:
     # disk: mask wherever either input is missing. ✅ The comparison itself was correct on measurable rows
     # (verified 100% match), so only the mask changes.
     _repair_nan_flags(g, "gene")
+    _repair_ratio_gates(g, "gene")
     for _pref in ("cptac_prosp", "cptac_t105"):
         _f, _a, _g = f"{_pref}_agg_beats_abund_prot", f"{_pref}_abund_rho_prot", f"{_pref}_agg_rho_prot"
         if _f in g.columns and _a in g.columns and _g in g.columns:

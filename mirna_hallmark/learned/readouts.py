@@ -355,7 +355,12 @@ def gene_readouts(gene: str, *, n_iter: int = N_ITER, burn: int = BURN, seed: in
         d["identity_deconv"] = d[_key].map(pd.Series(idd, index=dec["cols"]))   # ⭐ cell-intrinsic IDENTITY
         d["beta_frac_deconv"] = d[_key].map(pd.Series(shd, index=dec["cols"]))  # cell-intrinsic β-FRACTION
         with np.errstate(divide="ignore", invalid="ignore"):
-            d["retention"] = np.where(d.beta.abs() > 1e-9, d.beta_deconv / d.beta, np.nan)
+            # ⛔ GATED 2026-08-19 (MH-257): `> 1e-9` only blocks division by exactly zero. ⚠ NOTE the
+            # denominator here is **beta**, not rho, so `RHO_GATE` is the wrong scale — β is
+            # strictly positive with a median ~0.02, and a 0.05 cut would drop most of the card.
+            # Gated at the 10th percentile of |β| instead, which is the same INTENT at the right scale.
+            _bmin = float(d.beta.abs().quantile(0.10))
+            d["retention"] = np.where(d.beta.abs() >= _bmin, d.beta_deconv / d.beta, np.nan)
         d["composition_class"] = pd.cut(d.retention, [-np.inf, 0.4, 0.7, np.inf],
                                         labels=["composition_explained", "partial", "cell_intrinsic"])
     return add_reliability(d)          # MH-119: gate the RATIO readouts (share / retention)
