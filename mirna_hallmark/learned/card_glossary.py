@@ -388,6 +388,13 @@ COLUMNS: dict[tuple[str, str], str] = {
                       "EDGES.** Which leg you pick changes the direction for ~1 edge in 4, so state which "
                       "one you used. ⚠ The QN bridge is CORRECT and settled but carries a standing "
                       "trust-weighting — prefer rank measures over QN magnitudes for cross-platform work.",
+    ("edge", "hly_leg_concordant"): "Do the two HLY→TUM legs (`_QN` and `_raw`) at least AGREE ON SIGN. "
+                                    "**Concordant 76.1%, DISCORDANT 23.9%** of the 3,433 edges carrying "
+                                    "both. ⛔ **NOT a correctness flag** — agreement does not make either "
+                                    "leg right; it is a DISAGREEMENT flag, which is what the data "
+                                    "supports. Gate any cross-state claim on it rather than resting on an "
+                                    "arbitrary choice of leg, and remember both legs cross GTEx→TCGA "
+                                    "while only `arm_lfc_NAT_TUM` is same-platform.",
     ("edge", "arm_credit_share"): "This arm's share of its (gene, seed_family) cell's credit. ✅ Verified "
                                   "to sum to 1.0000 within every one of the 467 multi-arm cells, and it "
                                   "genuinely varies PER ARM inside the cell (467/467).",
@@ -767,6 +774,13 @@ COLUMNS.update({
                       "EDGES.** Which leg you pick changes the direction for ~1 edge in 4, so state which "
                       "one you used. ⚠ The QN bridge is CORRECT and settled but carries a standing "
                       "trust-weighting — prefer rank measures over QN magnitudes for cross-platform work.",
+    ("edge", "hly_leg_concordant"): "Do the two HLY→TUM legs (`_QN` and `_raw`) at least AGREE ON SIGN. "
+                                    "**Concordant 76.1%, DISCORDANT 23.9%** of the 3,433 edges carrying "
+                                    "both. ⛔ **NOT a correctness flag** — agreement does not make either "
+                                    "leg right; it is a DISAGREEMENT flag, which is what the data "
+                                    "supports. Gate any cross-state claim on it rather than resting on an "
+                                    "arbitrary choice of leg, and remember both legs cross GTEx→TCGA "
+                                    "while only `arm_lfc_NAT_TUM` is same-platform.",
     ("edge", "arm_credit_share"): "This arm's share of its (gene, seed_family) cell's credit. ✅ Verified "
                                   "to sum to 1.0000 within every one of the 467 multi-arm cells, and it "
                                   "genuinely varies PER ARM inside the cell (467/467).",

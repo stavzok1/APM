@@ -88,13 +88,22 @@ _EDGE_ONLY = (# ⭐ MH-210's un-imputed healthy leg. EDGE rung, NOT arm: `states
               "dose_rank_HLY", "dose_rank_NAT", "dose_rank_TUM",
               "realization_identity", "is_realization_owner",
               # caught empirically: these are fit/computed per (gene, arm), not per arm alone
-              "beta_arm", "sd_arm", "z_arm", "coupling_hly_surrogate")
+              "beta_arm", "sd_arm", "z_arm", "coupling_hly_surrogate",
+              # the HLY-leg disagreement flag (column review unit 5) — per (gene, arm), since the
+              # two legs are compared row-wise; it is NOT an arm property.
+              "hly_leg_concordant")
 _FAMILY_ATTR = ("family_size", "coupling_fam", "family_rho_adj", "seed_family", "arms")
-_ARM_IN_FAM = ("arm_credit_share", "arm_dbeta", "arm_sep_z", "arm_resolvable", "n_arm_in_cell",
-               "oof_rho_arm", "oof_rho_fam", "oof_drho",
-               # caught empirically: these vary INSIDE a (gene, family) cell, so they describe
-               # an ARM WITHIN ITS FAMILY, not the family as a whole (MH-166 allocation work)
-               "arm_id_status", "family_dose_share", "family_role")
+# ⭐ RELABELLED 2026-08-19 (column review unit 5) — and the CHECK found them, not I.
+# `arm-in-family` had NO entry in `verify()`'s group map, so it was the THIRD unfalsifiable rung: every
+# declaration passed untested. Giving it its testable NEGATIVE — an arm-relative quantity must actually
+# VARY inside a (gene, seed_family) cell — immediately flagged SEVEN columns that are constant within
+# every one of the 295 multi-arm cells. They describe the CELL, not the arm within it, so they are
+# `family` rung. ⚠ I had hand-identified only three of the seven; the other four (`n_arm_in_cell` and the
+# three `oof_*`) would have been missed. Build the check, do not hand-move the columns.
+_CELL_LEVEL = ("arm_dbeta", "arm_sep_z", "arm_resolvable", "n_arm_in_cell",
+               "oof_rho_arm", "oof_rho_fam", "oof_drho")
+# these DO vary inside a cell — verified, so they are genuinely arm-relative (MH-166 allocation work)
+_ARM_IN_FAM = ("arm_credit_share", "arm_id_status", "family_dose_share", "family_role")
 _GENE_ROLLUP = ("gene_dominated", "gene_net_repr", "gene_nreg", "gene_repr_class",
                 "gene_lfc_NAT_TUM", "gene_iqr", "gene_med_rpm", "gene_pct_floor")
 
@@ -105,6 +114,7 @@ CARDS = {
                   **{c: "arm" for c in _ARM_DESC},
                   **{c: "family" for c in _FAMILY_ATTR},
                   **{c: "arm-in-family" for c in _ARM_IN_FAM},
+                  **{c: "family" for c in _CELL_LEVEL},
                   **{c: "gene" for c in _GENE_DESC + _GENE_ROLLUP},
                   "gene": "key", "arm": "key"},
         # `esub_` = the per-(gene,arm) PAM50 block annotated by `card_ladders` — EDGE rung: it is fit
@@ -417,6 +427,28 @@ def verify(card: str, sample_genes: int = 900) -> pd.DataFrame:
     #       construction (`n`, `pip_dense`, `net_pressure`, `echim_any`).
     # Neither is an error by itself — both are REPORTED, never failed, because a genuinely gene-constant
     # family property is legitimate. The point is that "CLEAN" must not be read as "tested".
+    # ⭐ `arm-in-family` IS THE THIRD UNFALSIFIABLE RUNG — added 2026-08-19 (column review unit 5).
+    # It has no entry in `grp`, so the invariance loop skipped it entirely and every declaration passed.
+    # Its meaning is *"an arm RELATIVE TO its same-seed mates"*, which implies a testable NEGATIVE: the
+    # column must actually VARY inside a (gene, seed_family) cell. One that is constant there is describing
+    # the CELL, not the arm within it, and belongs at `family` rung. Reported as a MISMATCH, because unlike
+    # the other two blind spots this one is decidable.
+    if card == "edge" and {"gene", "seed_family"} <= set(d.columns):
+        multi = d[pd.to_numeric(d.get("n_arm_in_cell"), errors="coerce") > 1] \
+            if "n_arm_in_cell" in d.columns else d
+        for _, r in R[R.rung == "arm-in-family"].iterrows():
+            c = r["column"]
+            if c not in multi.columns or multi[c].notna().sum() < 50:
+                continue
+            nu = multi.groupby(["gene", "seed_family"], dropna=False)[c].nunique(dropna=True)
+            varying = int((nu > 1).sum())
+            if varying == 0:
+                print(f"      X {c:26s} declared arm-in-family but CONSTANT within every one of "
+                      f"{len(nu)} cells -> it is a CELL (family-rung) quantity")
+                out.append({"card": card, "column": c, "rung": r["rung"], "groups": int(len(nu)),
+                            "violations": int(len(nu)), "rate": 1.0,
+                            "na_rate": float(d[c].isna().mean())})
+
     warn = []
     for _, r in R.iterrows():
         c = r["column"]

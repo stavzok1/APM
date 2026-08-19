@@ -225,6 +225,35 @@ def discovery_queue_rollup(level: str) -> pd.DataFrame:
     return out.reset_index()
 
 
+def edge_hly_leg_concordance() -> pd.DataFrame:
+    """⭐ DO THE TWO HLY→TUM LEGS AGREE? — derived, no refit (column review unit 5, 2026-08-19).
+
+    ⛔ **THE PROBLEM.** `arm_lfc_HLY_TUM_QN` and `arm_lfc_HLY_TUM_raw` are nominally the same comparison,
+    and they are not: spearman **+0.544**, median |diff| **1.49**, and they **DISAGREE ON SIGN FOR 23.9%
+    of edges**. Which leg a reader picks flips the direction for ~1 edge in 4 — silently, because both
+    columns look equally authoritative.
+
+    ⚠ Compounding it, **only `arm_lfc_NAT_TUM` is same-platform (TCGA→TCGA); every HLY leg crosses
+    GTEx→TCGA**, the boundary the `fst_` work measured as producing 5–8× more near-total flips.
+
+    ⇒ `hly_leg_concordant` marks the edges where the two legs at least AGREE ON SIGN, so a cross-state
+    claim can be gated on it instead of resting on an arbitrary choice of leg. **It is not a correctness
+    flag** — agreement does not make either leg right — it is a *disagreement* flag, which is the honest
+    thing the data supports. NaN where either leg is missing.
+    """
+    if not EDGE_CARD.exists():
+        return pd.DataFrame()
+    d = pd.read_csv(EDGE_CARD, sep="\t", low_memory=False)
+    need = {"gene", "arm", "arm_lfc_HLY_TUM_QN", "arm_lfc_HLY_TUM_raw"}
+    if not need <= set(d.columns):
+        return pd.DataFrame()
+    q = pd.to_numeric(d["arm_lfc_HLY_TUM_QN"], errors="coerce")
+    r = pd.to_numeric(d["arm_lfc_HLY_TUM_raw"], errors="coerce")
+    ok = q.notna() & r.notna()
+    conc = (np.sign(q) == np.sign(r)).where(ok)
+    return pd.DataFrame({"gene": d["gene"], "arm": d["arm"], "hly_leg_concordant": conc})
+
+
 def gene_concentration_adj() -> pd.DataFrame:
     """⭐ THE FLOOR-CORRECTED CONCENTRATION — derived, no refit (column review unit 3, 2026-08-19).
 
@@ -697,7 +726,8 @@ def _run(*, annotate_cards: bool) -> None:
     _annotate(EDGE_CARD, [(st, ["gene", "arm"]), (edge_ago_measured(), ["gene", "arm"]),
                           (edge_admissibility(), ["gene", "arm"]),
                           (edge_chimeric(), ["gene", "arm"]), (edge_affinity_pct(), ["gene", "arm"]),
-                          (edge_identity_gate(), ["gene", "arm"])])
+                          (edge_identity_gate(), ["gene", "arm"]),
+                          (edge_hly_leg_concordance(), ["gene", "arm"])])
     # ⭐ the gene_family card gets its identity gate here too — it is the ONLY annotator that touches it,
     # and the gate needs no refit (it is derived from `identity`, see `_identity_gate`).
     _annotate(OUT / "gene_family_card.tsv", [(family_identity_gate(), ["gene", "family"])])
