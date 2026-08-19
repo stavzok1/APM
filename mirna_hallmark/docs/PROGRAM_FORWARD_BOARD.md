@@ -147,6 +147,21 @@ Highest value ÷ cost. ⚠ Two of the original four turned out to be claims that
      Dilution is family-structured and worth a per-family rule: miR-196-5p (4/4 cells dilute), miR-302
      (58%, median 8 added), miR-29-3p (58%), miR-34/449 (65%) vs gainers miR-99/100 (Δ −0.099),
      miR-146-5p (12.5%), miR-141/200a (25%), miR-200bc/429 (7.7%).
+     ⭐⭐ **THE NO-PRE-SCREEN RESULT IS NOW WELL-SUPPORTED: 19 axes scanned, BH-corrected, ONE survives.**
+     Dispersion (`arm_iqr` q=0.47, `abund_sd` q=0.75, `abund_iqr` q=0.75, spiker q=0.47) and EVERY
+     cross-state shift (lfc HLY→TUM q=0.88, field leg q=0.92, `dGlobal_*` q=0.92, family-share shifts
+     q=0.80–0.92) are null. ⚠ Two nominal hits die under multiplicity — lfc NAT→TUM (p=0.016, **q=0.12**)
+     and `detection` (p=0.020, **q=0.12**). Only `own coupling ρ` survives (q=2.6e−21), and it is the
+     outcome. ⇒ **stop looking for an a-priori screen; design (c) around out-of-fold instead.**
+
+   * ⬜ **(e) THE GENE-RUNG QUESTION — NOT YET ASKED (user-queued 2026-08-19).** Everything above is the
+     FAMILY-cell aggregate. The operational quantity is the gene's **total incoming pressure** summed over
+     ALL its families, so the open test is what adding the excluded mates does to **per-gene aggregate
+     anti-coupling** — the rung `gene_card.total_pressure` / `realized_rho_adj` live on. A family-cell wash
+     does NOT imply a gene-level wash: the mates are unevenly distributed across a gene's families, so
+     gene-level effects can concentrate in the wide-design genes even where the per-cell median is zero.
+     ⚠ Use `apm-gene-question` first (aggregation function, prune, gating are all live choices there), and
+     mind the degeneracy — 48% of genes have ONE family, where the gene rung IS the family rung.
    ⚠⚠ **CANDIDATES, NOT EDGES** — no decoy, no null, one cohort. **(→ MH-248, MH-166)**
 
 7. ⬜ **Restore an exogenous existence validation** — see §A. Not cheap, but both `CN_INSTRUMENT.md` and MH-126
