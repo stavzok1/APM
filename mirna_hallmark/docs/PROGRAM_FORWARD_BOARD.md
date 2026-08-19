@@ -113,6 +113,31 @@ Highest value ÷ cost. ⚠ Two of the original four turned out to be claims that
    gate, and MH-147 showed the gap **scales with design width** — so re-check the width axis inside the gated
    set, or the gain is just width. **(→ MH-136, MH-132, MH-147; `ARM_EXPRESSION_FLOOR.md`, `SILENT_ARM_REMOVAL.md`)`**
 
+6b. 🔨 **⭐ THE EXCLUDED SAME-SEED MATES — NEW 2026-08-19 (MH-248), AND IT IS THE CHEAPEST ROUTE INTO ITEM 0.**
+   A gene's design holds a **median 0.67** of its seed family, and since same-seed mates bind the SAME site
+   the absences are curation, not biology. Measured: **~187 excluded mates are above the expression floor,
+   couple below −0.10, AND survive conditioning on their in-design partner** (median −0.1795 → −0.1382, so
+   only 23% was the mate's signal; mates correlate a median 0.479, >0.8 in just 6%). ⭐ **The reason they are
+   absent is the ASSAY LADDER, not a coverage hole: 86.6% of the actionable tail is `HT_ONLY`** — non-weak
+   `ago_clip`/`chimeric`/`qpcr_rna` evidence with **no low-throughput functional assay** — and **LT_FUNC = 0**,
+   so nothing properly evidenced is missing and there is no design-construction defect to fix.
+   ⛔ **NOT explained by fame (75 PMIDs vs 60 for in-design arms), NOR by abundance.**
+   **THE THREE OPEN LEGS, in order of cost:**
+   * ⬜ **(a) COHORT TRANSFER — untested and the cheapest.** Everything above is TCGA-only. Repeat in
+     **Buffa** (n=207, genuinely independent) and **CPTAC prospective** / **GTEx-NAT**. A mate that couples
+     in two cohorts is a different object from one that couples in one.
+   * ⬜ **(b) PUSH THE EVIDENCE AXIS.** Score each excluded mate on chimeric / degradome / CLIP **depth** and
+     **site type**, and test whether HT_ONLY depth predicts its coupling. If it does, the ladder is
+     informative and the exclusion rule can be re-drawn on evidence rather than on assay *kind*.
+   * ⬜ **(c) FOLD THE SURVIVORS IN AND REFIT.** β is a joint per-gene posterior, so a new edge
+     **re-decomposes the whole gene** — this needs a Gibbs refit, not an appended weight. **This is item 0
+     (MH-166) with a concrete, pre-screened candidate list attached**, which is what that item has lacked.
+   ⚠ **Pooled, adding the mates back is a WASH on the family aggregate** (median Δ −0.0002; 56% improve /
+   41% dilute) — the gain is confined to NARROW designs and REVERSES at width ≥3. Do NOT sell this as a
+   uniform improvement. The mean-reversion-immune extremes are CDH1/miR-17~92 (−0.059→−0.315), BCL10
+   (−0.180→−0.342), BRCA1 (−0.012→−0.150), DLC1/miR-141-200a (−0.273→−0.408).
+   ⚠⚠ **CANDIDATES, NOT EDGES** — no decoy, no null, one cohort. **(→ MH-248, MH-166)**
+
 7. ⬜ **Restore an exogenous existence validation** — see §A. Not cheap, but both `CN_INSTRUMENT.md` and MH-126
    name it **the single highest-value open item in the program**, and nothing else changes the program's
    standing as much.
