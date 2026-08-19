@@ -969,6 +969,40 @@ COLUMNS.update({
     ("gene", "disc_n_gold_edges"): "How many of the 157 discovery-queue edges name this gene (max 4). "
                                    "⛔ Only **39 of the 90** gold genes appear on this card, so this "
                                    "accounts for **63 of 157** edges — a 0 is NOT evidence of absence.",
+    # ── UNIT 26 (2026-08-19) — edge `d_`/`share_`/`rank_`/`family_`, gene `tcga_`/`dominant_`, arm `aid_`.
+    ("edge", "family_size"): "Members of this arm's seed family **THAT ARE IN THIS GENE'S DESIGN** — 1 on "
+        "**4,497 of 5,644 edges (79.7%)**. ⛔⛔ **NOT the family's membership**, and the difference is the "
+        "whole of MH-248: a gene's design holds a median 0.67 of its seed family. ⇒ `family_size == 1` with "
+        "`family_role` of `co`/`minor` on **1,077 edges** is NOT a contradiction — it is one design member "
+        "carrying a minority of the FULL family's dose. ✅ Agrees with `n_arm_in_cell` wherever that is "
+        "defined (it is domain-gated to multi-arm cells; this one is defined everywhere).",
+    ("edge", "family_role"): "⛔ **The ARM's DOSE role inside its seed family — NOT the family's role in "
+        "the gene**, which is what the name suggests. Verified against `family_dose_share`: `sole` 1.000 · "
+        "`dominant` 0.940 · `co` 0.430 · `minor` 0.040. ⚠ It is nearly INDEPENDENT of the gene's family "
+        "count — `sole` implies `n_fam == 1` on only **13.7%** of edges. ⇒ read it with `family_size`, and "
+        "see that entry for why size 1 + role `minor` is coherent.",
+    ("edge", "family_dose_share"): "The arm's share of its seed family's TOTAL dose — denominator is the "
+        "**full family**, not the design (median 0.69). The quantity `family_role` is cut from.",
+    ("edge", "share_HLY"): "The arm's share of the gene's healthy (GTEx) pressure budget, median **0.129**. "
+        "⛔⛔ **IMPUTED — invisible arms are ZEROED, not abstained**, which spreads each visible arm's share "
+        "thinner. ⇒ **`share_HLY_meas` is the honest companion (MH-210)**: on the 2,573 edges where both "
+        "exist its median is **0.244, 1.9×** higher, they agree exactly on only **20.1%**, and it is "
+        "defined on 2,573 rather than 4,079 rows. spearman +0.899 — same ordering, different magnitude. "
+        "⇒ **never quote a healthy SHARE from the imputed column**; use `_meas`, and read `n_HLY_meas` "
+        "(median 3) for its denominator.",
+    ("edge", "share_HLY_meas"): "`share_HLY` over ONLY the arms GTEx genuinely measures — invisible arms "
+        "ABSTAIN (NaN) instead of being zeroed (MH-210). Median **0.244** against the imputed 0.129. "
+        "⭐ The column to use for any healthy-budget claim.",
+    ("gene", "tcga_agg_rho_rna"): "Gene-level β-weighted aggregate coupling to mRNA in TCGA (median "
+        "**−0.05**) against `tcga_abund_rho_rna`'s **−0.02** — the abundance-sum reference. ⭐ The margin is "
+        "the mRNA result the program rests on (memory `pressure-heuristic-retired`); `_raw` is the "
+        "unadjusted version at −0.06.",
+    ("gene", "dominant_TUM"): "The arm carrying the largest share of the gene's tumour pressure budget "
+        "(miR-21-5p on 56 genes, miR-200c-3p next). ⚠ An ARGMAX over a budget — MH-158's lesson applies: "
+        "test it against a **within-gene random-owner null**, never a cross-gene name shuffle.",
+    ("arm", "aid_n_cells"): "Multi-arm cells this arm participates in — fill **5.8%** (the arm "
+        "identifiability block is the sparsest on the card). `aid_frac_resolvable` median **0.19** ⇒ even "
+        "among arms that HAVE a multi-arm cell, most cells do not resolve.",
     # ── UNIT 25 (2026-08-19) — arm `isoc_`/`iso_`/`tier_`/`chim_`/`cnvc_`/`field_`/`abund_`, edge `adm_`.
     ("arm", "field_retention"): "⛔⛔ **NOT A RETENTION RATIO — a FIFTH sense of the word in this "
         "codebase.** Measured: it equals **`field_r_own − field_r_perm`** (exact within rounding on 100% "
