@@ -136,6 +136,17 @@ Highest value ÷ cost. ⚠ Two of the original four turned out to be claims that
    41% dilute) — the gain is confined to NARROW designs and REVERSES at width ≥3. Do NOT sell this as a
    uniform improvement. The mean-reversion-immune extremes are CDH1/miR-17~92 (−0.059→−0.315), BCL10
    (−0.180→−0.342), BRCA1 (−0.012→−0.150), DLC1/miR-141-200a (−0.273→−0.408).
+   * ⬜ **(d) THE DILUTION LEG — NEW, AND IT CONSTRAINS (c).** Adding mates back dilutes the family
+     aggregate materially (Δ > +0.05) in **10.2%** of cells — not the 40.9% the raw sign split suggests,
+     most of which is noise. ⭐ **The diluters are identified by ONE axis: their own coupling**
+     (−0.0020 vs −0.0870, p=1.4e−22). **Abundance (p=0.61), fame (p=0.37) and EVIDENCE STATE (p=0.72) all
+     fail to separate them** — the 2×2 is flat in abundance (uncoupled dilute 55.2% sparse / 52.5%
+     abundant; coupled 31.8% / 32.0%). ⛔⛔ **So there is no evidence-based pre-screen for the refit**, and
+     screening on coupling is selection-on-outcome. **(c) must therefore add all mates and accept the wash,
+     or screen on an OUT-OF-FOLD coupling estimate — decide this BEFORE running the refit.**
+     Dilution is family-structured and worth a per-family rule: miR-196-5p (4/4 cells dilute), miR-302
+     (58%, median 8 added), miR-29-3p (58%), miR-34/449 (65%) vs gainers miR-99/100 (Δ −0.099),
+     miR-146-5p (12.5%), miR-141/200a (25%), miR-200bc/429 (7.7%).
    ⚠⚠ **CANDIDATES, NOT EDGES** — no decoy, no null, one cohort. **(→ MH-248, MH-166)**
 
 7. ⬜ **Restore an exogenous existence validation** — see §A. Not cheap, but both `CN_INSTRUMENT.md` and MH-126
