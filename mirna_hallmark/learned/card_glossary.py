@@ -413,28 +413,43 @@ COLUMNS: dict[tuple[str, str], str] = {
                                    "⚠ **NaN at `n_fam == 1` (730 genes) and that is CORRECT** — with one "
                                    "family there is nothing to concentrate, so the question does not exist; "
                                    "the NaN is the honest answer, not a gap (`gene_axes.mask_degenerate`).",
-    ("gene", "n_arms"): "Arms in the gene's DESIGN (the model's own count, from `gene_atlas`). "
-                        "⚠⚠ **NOT the same as `n_regulators`** — the two come from different sources and "
-                        "**differ on 306 of 1,409 genes, in BOTH directions** (ABCA1 13 vs 12, ABCC1 7 vs 8). "
-                        "Both read as 'how many regulators'; only this one matches the design the model fit.",
-    ("gene", "n_regulators"): "Regulator count from the CO-REPRESSION lane "
-                              "(`tissue_reference/mirna_comovement/gene_corepression.tsv`), not from the "
-                              "model design. ⚠⚠ **Differs from `n_arms` on 306 of 1,409 genes in both "
-                              "directions** — a different pipeline counted a different universe. Use "
-                              "`n_arms` for anything about the FIT; use this only alongside the other "
-                              "co-repression columns it arrived with (`gene_repression_class`, "
+    ("gene", "n_arms"): "Arms in the LEARNED MODEL's design — `X.shape[1]` from `assemble_gene`, carried "
+                        "via `gene_atlas`. This is the width the Gibbs actually fit. ⚠⚠ **NOT the same as "
+                        "`n_regulators`**, which counts distinct arms in the RETIRED heuristic lane's edge "
+                        "table: they agree on 1,103 genes and differ on 306, in BOTH directions (ABCA1 13 "
+                        "vs 12, ABCC1 7 vs 8). Both read as 'how many regulators'; only this one describes "
+                        "the fit.",
+    ("gene", "n_regulators"): "⚠⚠ **A DIFFERENT PIPELINE'S COUNT — not the model's.** It is "
+                              "`edges.groupby('gene')['miRNA'].nunique()` inside "
+                              "`analyses/misc/mirna_comovement.py`, i.e. distinct arms in the **heuristic "
+                              "pressure lane's edge table** — and that lane is the **§6b-RETIRED** pressure "
+                              "heuristic. `n_arms` is the LEARNED MODEL's design width (`X.shape[1]` from "
+                              "`assemble_gene`, via `gene_atlas`). ⇒ two counts, two universes, two "
+                              "admission rules. **Measured: they agree on 1,103 genes, the model has MORE "
+                              "on 256, FEWER on 50, range −15…+3**, and 140 gene-card genes have NO "
+                              "`n_regulators` at all (co-repression covers 1,424 of 1,549). **Use `n_arms` "
+                              "for anything about the FIT.** Read this only beside the co-repression "
+                              "columns it arrived with (`gene_repression_class`, "
                               "`gene_net_repressed_tumor`, `rho_gene_pressure_tumor`, `delta_tumor_nat`).",
-    ("gene", "n_dense_included"): "Families entering the dense (π≡1) readout. ⛔ **Bit-identical to `n_fam` "
-                                  "on every row** — verified 2026-08-19. Redundant; do not treat as an "
-                                  "independent axis (it silently produced duplicate scan results once).",
-    ("gene", "n_identified"): "Families with |z| > 2 on the UNCALIBRATED SD. ⚠ **691 genes (44.6%) have "
-                              "ZERO** — the identifiability ceiling is the dominant fact about this column, "
-                              "not a data gap. Under the CALIBRATED width it would be lower still.",
-    ("gene", "n_discovered"): "Families passing the evidence-π discovery readout; **>0 for 725 genes "
-                              "(46.8%)**. ⛔⛔ **This is NOT a count of discoveries.** Per-edge and "
-                              "per-family discovery are EMPTY under the honest empirical FDR — the "
-                              "defensible deliverable is a convergent-evidence QUEUE (157 edges / 11 "
-                              "families). Reading 46.8% of genes as 'having discoveries' inverts the axis.",
+    ("gene", "n_identified"): "Families reaching |z| > 2 on the UNCALIBRATED SD. **Zero for 691 genes "
+                              "(44.6%)** — meaning the model cannot distinguish ANY of that gene's families "
+                              "from zero. ⛔ That is *cannot resolve WHO*, **not** *no regulation*. "
+                              "⭐ It is a MEASURABILITY fact, and both gradients are steep: by design width "
+                              "**66.6% (1 family) → 43.4% → 28.9% → 15.2% → 3.4% (6+)**, and by the "
+                              "a-priori `ctx_ceiling` **84.9% (≤0) → 47.7% → 26.2% → 10.7% → 1.7% (>0.15)**. "
+                              "The ceiling gradient is the cleaner one: it is decoy-independent and never "
+                              "touches β. ⚠ A `total_pressure` split looks even sharper (96.1% → 12.6%) but "
+                              "is PARTLY CIRCULAR — `total_pressure` is Σβ and z is β/β_sd. "
+                              "⚠ Under the CALIBRATED width it would be lower still.",
+    ("gene", "n_pip_disc_gt50"): "Count of the gene's families with `pip_discovery > 0.5` under the "
+                                 "evidence-π readout. ⛔ **RENAMED from `n_discovered` 2026-08-19 because "
+                                 "the old name read as a RESULT**: it is >0 for **725 genes (46.8%)**, while "
+                                 "per-edge and per-family discovery are **EMPTY** under the honest "
+                                 "empirical FDR — the lane's deliverable is a convergent-evidence QUEUE "
+                                 "(157 edges / 11 seed families), not per-gene discoveries. ⛔ Also "
+                                 "**w-CONTAMINATED** by construction (`pip_discovery` rides the evidence "
+                                 "prior), so any 'do canonical regulators score higher' test on it is "
+                                 "CIRCULAR.",
     ("gene", "n_cell_intrinsic"): "Edges whose coupling SURVIVES the composition block (retention ≥ 0.7). "
                                   "⚠ With `n_composition_explained` it does NOT partition the gene's edges — "
                                   "verified: the two sum to ≤ `n_arms` on 100% of genes (median sum 1 vs "
@@ -522,8 +537,6 @@ for _c in ("arm", "edge", "gene", "gene_family", "seed_family"):
         COLUMNS.setdefault((_c, _k), _t)
 
 COLUMNS.update({
-    ("edge", "n_samples"): "Number of samples the edge's coupling was fit on.",
-    ("gene_family", "n"): "Number of samples the (gene, family) cell was fit on.",
     ("_retired_edge", "p_fam"): "\u26d4\u26d4 **NOT A P-VALUE.** `p` here is the model's DESIGN DIMENSION \u2014 the NUMBER "
                        "of family predictors in this gene's fit (integers 1..90). The name reads as a "
                        "p-value and is a genuine collision; verified 2026-08-19 against the values.",
@@ -601,7 +614,6 @@ COLUMNS.update({
                        "for half the universe, which is a non-question, not a null.",
     ("gene", "n_arms"): "How many miRNA arms regulate this gene (median 2).",
     ("gene", "n_regulators"): "Regulator count used by the realization lane.",
-    ("gene", "n_dense_included"): "Families entering the dense (pi=1) coupling readout.",
     ("gene", "n_identified"): "How many of the gene's families are identified (|z|>2). Median 1.",
     ("gene", "n_discovered"): "Families passing the evidence-pi discovery readout. \u26d4 Per-edge and "
                               "per-family discovery are EMPTY under the honest FDR \u2014 read this as a "

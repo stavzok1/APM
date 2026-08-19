@@ -401,7 +401,14 @@ def run(genes: Optional[Sequence[str]] = None, *, workers: int = 8, limit: Optio
                                       else bool(top_id[_u] == top_mag[_u])),   # do WHO and HOW-MUCH agree?
             "top_beta_frac": float(d.beta_frac.max()) if d.beta_frac.notna().any() else np.nan,
             "max_beta_frac_sd": float(d.beta_frac_sd.max()) if d.beta_frac_sd.notna().any() else np.nan,
-            "n_discovered": int((d.pip_discovery > 0.5).sum()),          # DISCOVERY
+            # ⛔⛔ RENAMED 2026-08-19 (column review unit 3). This is `pip_discovery > 0.5` — a
+            # posterior-inclusion COUNT under the evidence-π readout. It is NOT a count of
+            # discoveries: per-edge and per-family discovery are EMPTY under the honest empirical
+            # FDR, and the lane's deliverable is a 157-edge / 11-family convergent-evidence QUEUE.
+            # The old name read as a result and was >0 for 46.8% of genes, which inverts the axis.
+            "n_pip_disc_gt50": int((d.pip_discovery > 0.5).sum()),
+            # ⛔ w-CONTAMINATED by construction (pip_discovery rides the evidence prior), so any
+            # "do canonical regulators score higher" test on this column is CIRCULAR.
             "n_dense_included": int((d.pip_dense > 0.5).sum()),
             "concentration": float(d.beta.max() / d.beta.sum()) if d.beta.sum() > 0 else np.nan,
             # COMPOSITION RETENTION (the tag the design demands — never silently condition it away)

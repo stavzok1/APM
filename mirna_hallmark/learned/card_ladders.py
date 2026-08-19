@@ -128,6 +128,34 @@ def gene_arm_resolution() -> pd.DataFrame:
     return out.reset_index()
 
 
+def normalise_gene_card() -> None:
+    """⭐ THE GENE CARD's PUBLIC NAMES — applied in place, no refit (column review unit 3, 2026-08-19).
+
+    The edge card got `realization._normalise_edge_names` as the ONE place its delivered vocabulary is
+    decided. The gene card had no such funnel, so its two schema debts were wrongly parked behind the
+    Gibbs refit queue — both are **pure derivations** over columns already on disk.
+
+      `n_discovered` -> `n_pip_disc_gt50`   ⛔ the old name reads as a RESULT. It is `pip_discovery > 0.5`,
+          a posterior-inclusion count, and it is >0 for **725 genes (46.8%)** — while per-edge and
+          per-family discovery are EMPTY under the honest empirical FDR. Reading it as "genes with
+          discoveries" inverts the axis. Renamed at source in `readouts.py` too, so the two agree.
+      `n_dense_included`  DROPPED           ⛔ bit-identical to `n_fam` on every row (verified). It once
+          produced duplicate scan results that looked like two independent axes agreeing.
+    """
+    if not GENE_CARD.exists():
+        return
+    g = pd.read_csv(GENE_CARD, sep="\t", low_memory=False)
+    before = g.shape[1]
+    if "n_discovered" in g.columns and "n_pip_disc_gt50" not in g.columns:
+        g = g.rename(columns={"n_discovered": "n_pip_disc_gt50"})
+    if "n_dense_included" in g.columns:
+        g = g.drop(columns=["n_dense_included"])
+    if g.shape[1] != before or "n_pip_disc_gt50" in g.columns:
+        g.to_csv(GENE_CARD, sep="\t", index=False)
+        print(f"  ✅ gene_card normalised: {before} -> {g.shape[1]} cols "
+              f"(n_discovered->n_pip_disc_gt50, n_dense_included dropped)")
+
+
 def gene_concentration_adj() -> pd.DataFrame:
     """⭐ THE FLOOR-CORRECTED CONCENTRATION — derived, no refit (column review unit 3, 2026-08-19).
 
@@ -593,6 +621,7 @@ def _run(*, annotate_cards: bool) -> None:
         print("\n(report only — pass --annotate to join onto the cards)")
         return
     print("\n[annotate]")
+    normalise_gene_card()          # rename/prune BEFORE annotating, so the registry sees final names
     _annotate(GENE_CARD, [(gl, ["gene"]), (gene_lit_ground_truth(), ["gene"]),
                           (gene_arm_resolution(), ["gene"]), (gene_concentration_adj(), ["gene"])])
     _annotate(EDGE_CARD, [(st, ["gene", "arm"]), (edge_ago_measured(), ["gene", "arm"]),
