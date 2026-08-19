@@ -108,6 +108,14 @@ td.k{font-family:var(--mono); font-size:12.5px}
 .small td, .small th{padding:6px 12px}
 
 /* ---------- callouts ---------- */
+pre{
+  background:var(--panel); border:1px solid var(--rule); border-left:3px solid var(--rule);
+  padding:14px 16px; margin:18px 0; overflow-x:auto; border-radius:2px;
+}
+pre code{
+  font-family:var(--mono); font-size:12.5px; line-height:1.75; color:var(--ink-2);
+  background:none; padding:0; white-space:pre;
+}
 .call{border:1px solid var(--rule); border-left:3px solid var(--accent); background:var(--panel);
   padding:14px 18px; margin:20px 0; max-width:var(--measure)}
 .call.warn{border-left-color:var(--open)}
@@ -133,8 +141,13 @@ dl.rules dd{margin:0; color:var(--ink-2); font-size:15.5px}
   padding:6px 10px; border:1px solid var(--rule); background:var(--panel); color:var(--ink-2);
   border-radius:2px; cursor:pointer}
 .filters button[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:#fff}
-:root[data-theme="dark"] .filters button[aria-pressed="true"],
-:root:not([data-theme="light"]) .filters button[aria-pressed="true"]{color:#08110F}
+/* ⛔ FIXED 2026-08-19: the `:not([data-theme="light"])` half sat OUTSIDE any media query, so this
+   near-black also applied in the DEFAULT (un-stamped) light state — dark text on the light teal accent.
+   The system-dark case now lives behind prefers-color-scheme; the explicit toggle stays outside. */
+:root[data-theme="dark"] .filters button[aria-pressed="true"]{color:var(--paper)}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .filters button[aria-pressed="true"]{color:var(--paper)}
+}
 .count{font-family:var(--mono); font-size:12px; color:var(--ink-3); padding:6px 0}
 .bar{display:inline-block; height:7px; background:var(--accent); vertical-align:1px; border-radius:1px; min-width:1px}
 .bartrack{display:inline-block; width:52px; height:7px; background:var(--rule-2); border-radius:1px; margin-right:7px; vertical-align:1px}
@@ -159,6 +172,7 @@ footer p{max-width:var(--measure)}
       <li><a href="#index">Column index</a></li>
       <li><a href="#biology">Biology</a></li>
       <li><a href="#audit">Audit</a></li>
+      <li><a href="#defects">Defect classes</a></li>
       <li><a href="#graveyard">Graveyard</a></li>
       <li><a href="#open">Open work</a></li>
       <li><a href="#ops">Operations</a></li>
@@ -195,12 +209,12 @@ footer p{max-width:var(--measure)}
   <table>
     <thead><tr><th>Document</th><th>Role</th><th class="n">Current through</th><th class="n">Lag</th></tr></thead>
     <tbody>
-      <tr><td class="k">DISCOVERY_REGISTRY.md</td><td>Source of truth, append-only</td><td class="n">MH-247</td><td class="n">&mdash;</td></tr>
-      <tr><td class="k">ANALYSIS_RUN_LEDGER.md</td><td>One row per run</td><td class="n">2026-08-04</td><td class="n">current</td></tr>
-      <tr><td class="k">STATE_OF_PLAY.md</td><td>Per-axis verdicts</td><td class="n">MH-207</td><td class="n">40 rows</td></tr>
-      <tr><td class="k">PROGRAM_FORWARD_BOARD.md</td><td>The single forward doc</td><td class="n">MH-207</td><td class="n">40 rows</td></tr>
+      <tr><td class="k">DISCOVERY_REGISTRY.md</td><td>Source of truth, append-only</td><td class="n">MH-261</td><td class="n">&mdash;</td></tr>
+      <tr><td class="k">ANALYSIS_RUN_LEDGER.md</td><td>One row per run</td><td class="n">2026-08-19</td><td class="n">current</td></tr>
+      <tr><td class="k">STATE_OF_PLAY.md</td><td>Per-axis verdicts</td><td class="n">MH-207</td><td class="n">54 rows</td></tr>
+      <tr><td class="k">PROGRAM_FORWARD_BOARD.md</td><td>The single forward doc</td><td class="n">MH-207 + 3 items</td><td class="n">54 rows</td></tr>
       <tr><td class="k">ARCHITECTURE.md</td><td>Generated axes &times; models map</td><td class="n">180 findings, 2026-07-18</td><td class="n">~67</td></tr>
-      <tr><td class="k">CARD_RUNG_DOCTRINE.md</td><td>What unit a number lives on</td><td class="n">2026-08-04</td><td class="n">current</td></tr>
+      <tr><td class="k">CARD_RUNG_DOCTRINE.md</td><td>What unit a number lives on</td><td class="n">2026-08-19</td><td class="n">current</td></tr>
     </tbody>
   </table>
   </div>
@@ -227,6 +241,9 @@ footer p{max-width:var(--measure)}
     <li><strong>The paired per-patient axis</strong> <span class="mh">MH-228 … MH-247</span> — twenty rows on
       the 103 matched NAT/tumour patients, mostly well-designed negatives, ending on a settled positive:
       NAT&rarr;tumour retention is measurement reliability, not biology.</li>
+    <li><strong>The column review and the two sweeps</strong> <span class="mh">MH-248 … MH-261</span> —
+      a block-by-block audit of all 712 columns that turned into two systematic defect hunts. This is the
+      newest arc and the one <a href="#defects">§07</a> exists to carry.</li>
   </ul>
 </section>
 
@@ -853,6 +870,7 @@ footer p{max-width:var(--measure)}
       <tr><td>gene_family</td><td class="n">61</td><td class="n">61</td><td>2 duplicate pairs left</td></tr>
       <tr><td>seed_family</td><td class="n">33</td><td class="n">33</td><td>clean</td></tr>
       <tr><td><strong>total</strong></td><td class="n">702</td><td class="n"><strong>692</strong></td><td>registry gate CLEAN &middot; glossary 692/692</td></tr>
+      <tr><td colspan="4" class="note">Since this table was written the cards have grown to <strong>712 columns</strong> (new derived blocks: <code>fst_</code>, <code>disc_</code>, <code>armres_</code>, the identity gates, <code>fst_n_common_*</code>). Gate still CLEAN, glossary <strong>712/712</strong>, 0 duplicate keys. Two further prunes: <code>p_fam</code> and <code>echim_any</code>.</td></tr>
     </tbody>
   </table></div>
 
@@ -927,8 +945,131 @@ footer p{max-width:var(--measure)}
   which is the audit's cleanest result: every sparse column explains its own blanks.</p>
 </section>
 
+<section id="defects">
+  <h2><span class="num">07 &mdash; Defect classes</span>Two mistakes the codebase made repeatedly, and the two checks that now catch them</h2>
+  <p class="lede">The column review found the same two bugs over and over. After the fifth hand-found
+  instance of the first one, the useful move stopped being &ldquo;fix it again&rdquo; and became
+  &ldquo;write the check&rdquo;. Both checks are calibrated against cases whose answer was already known,
+  and both refuse to be trusted on faith.</p>
+
+  <h3>Class one &mdash; a boolean that cannot say &ldquo;unknown&rdquo;</h3>
+  <p>In Python <code>NaN &lt; x</code>, <code>NaN &gt;= x</code> and <code>series.eq(v)</code> on NaN all
+  return <strong>False</strong>, never NaN. So a flag built as a bare comparison of possibly-missing numbers
+  is defined on <em>every</em> row, and every unmeasurable row silently joins the <strong>negative</strong>
+  class. Thirteen instances, across five cards.</p>
+
+  <div class="call warn">
+    <p class="h">The direction is not random, and that is what makes it dangerous</p>
+    <p><code>dose_confounded</code> read <em>&ldquo;not confounded&rdquo;</em>. <code>healthy_uninformative</code>
+    read <em>&ldquo;the healthy leg IS informative&rdquo;</em>. In both, absence of evidence was recorded as
+    evidence of absence &mdash; letting unusable rows into an analysis rather than flagging them.</p>
+  </div>
+
+  <div class="tablewrap"><table class="small">
+    <thead><tr><th>Flag</th><th>Card</th><th class="n">rows silently False</th><th>What it distorted</th></tr></thead>
+    <tbody>
+      <tr><td class="k">cptac_*_agg_beats_abund_prot</td><td>gene</td><td class="n">293 + 488</td><td>Headline rate <strong>25.1&rarr;31.7%</strong> and <strong>21.1&rarr;32.1%</strong>; the two cohorts then <em>agree</em>, so a 4-point &ldquo;cohort difference&rdquo; was pure coverage</td></tr>
+      <tr><td class="k">identity_reliable</td><td>edge</td><td class="n">218</td><td>Unreliable rate overstated <strong>2.3&times;</strong> (6.7% &rarr; 2.9%); 58% of the &ldquo;unreliable&rdquo; set was never computed</td></tr>
+      <tr><td class="k">healthy_uninformative</td><td>edge</td><td class="n">446</td><td>An unusable healthy leg read as usable</td></tr>
+      <tr><td class="k">famrole_is_dominant</td><td>arm</td><td class="n">219</td><td>&mdash;</td></tr>
+      <tr><td class="k">dose_confounded</td><td>arm</td><td class="n">207</td><td>A confound flag that read &ldquo;clean&rdquo; when nothing was measured</td></tr>
+      <tr><td class="k">arm_spiker</td><td>edge</td><td class="n">202</td><td>&mdash;</td></tr>
+      <tr><td class="k">gene_dominated</td><td>edge</td><td class="n">154</td><td>&mdash;</td></tr>
+      <tr><td class="k">ctx_measurable</td><td>gene &middot; family &middot; edge</td><td class="n">32 + 33 + 32</td><td>&ldquo;not measurable&rdquo; vs &ldquo;we could not tell&rdquo;</td></tr>
+      <tr><td class="k">fst_is_dominant_*</td><td>arm</td><td class="n">&mdash;</td><td>100% populated because <code>NaN &gt; 0.5</code> is False</td></tr>
+      <tr><td class="k">echim_any</td><td>edge</td><td class="n">&mdash;</td><td>A literal <code>True</code> carrying <strong>0 bits</strong> &mdash; deleted, not masked</td></tr>
+    </tbody>
+  </table></div>
+
+  <p><strong>The check:</strong> <code>analyses/ops/nan_bool_audit.py</code>. Its first version ranked by
+  <em>flag fill &minus; block-median fill</em> and was mostly false positives &mdash; <code>identified</code>
+  topped it at +33.1% and is perfectly correct, deriving from a 99.9%-filled <code>z</code>. It was replaced
+  by a sharp test that needs no knowledge of the producer:</p>
+  <div class="call">
+    <p class="h">ORPHAN</p>
+    <p>Rows where the flag has a value but <em>every</em> numeric sibling in its block is NaN. A flag
+    genuinely derived from that block cannot know anything there &mdash; and the test needs no knowledge of
+    the producer.</p>
+  </div>
+  <p>Validated both directions on known cases: reconstructing the original <code>dose_confounded</code>
+  expression scores <strong>2,159 orphans</strong> against <strong>0</strong> after the mask, while
+  <code>identified</code> scores <strong>0</strong> despite the largest fill-gap. The repo is now
+  <strong>ORPHAN&nbsp;=&nbsp;0 on all 712 columns</strong>.</p>
+
+  <h3>Class two &mdash; a ratio evaluated where its denominator vanishes</h3>
+  <p>Axiom 5&rsquo;s class, and the recorded cost is inverted headlines, not ugly outliers:
+  <code>share</code> once read <strong>999%</strong>; a ratio of two SDs printed <strong>112.86&times;</strong>
+  where the honest gated value was <strong>~1.4&times;</strong>; <code>top_identity</code> reached
+  <strong>+740</strong> on the delivered gene card.</p>
+
+  <p><strong>The check:</strong> <code>analyses/ops/ratio_blowup_audit.py</code>, testing
+  <code>TAIL = max|x| / p99|x|</code> &mdash; a well-behaved quantity&rsquo;s largest value sits near its own
+  99th percentile. Calibrated on columns whose status was already known, and the gap is empty:</p>
+
+  <div class="tablewrap"><table class="small">
+    <thead><tr><th>Known bad</th><th class="n">tail</th><th>Known good</th><th class="n">tail</th></tr></thead>
+    <tbody>
+      <tr><td class="k">top_identity</td><td class="n">134.6</td><td class="k">z &middot; cal_z</td><td class="n">2.3</td></tr>
+      <tr><td class="k">identity_allocated</td><td class="n">94.9</td><td class="k">beta</td><td class="n">2.0</td></tr>
+      <tr><td class="k">identity</td><td class="n">88.0</td><td class="k">ctx_ceiling</td><td class="n">1.5</td></tr>
+      <tr><td class="k">identity_deconv</td><td class="n">61.8</td><td class="k">coupling_tum</td><td class="n">1.3</td></tr>
+      <tr><td class="k">comp_*_driver_ret</td><td class="n"><strong>8.6</strong></td><td class="k">identity_abs</td><td class="n"><strong>1.0</strong></td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Threshold <strong>5.0</strong> sits in the empty space between 2.3 and 8.6.
+  <code>--validate</code> re-runs this calibration, so the threshold cannot rot silently.</p>
+
+  <div class="call">
+    <p class="h">What the sweep found: one policy, seven implementations, four estimands</p>
+    <p><code>retention = &rho;<sub>adj</sub>/&rho;<sub>raw</sub></code> is computed in <strong>ten</strong>
+    places. Four gated the denominator at 0.05 &mdash; <em>each declaring its own identical
+    <code>RHO_GATE</code> constant</em>. Three guarded only against division by exactly zero
+    (<code>1e-6</code>, <code>1e-9</code>), producing <code>realized_retention</code>&nbsp;=&nbsp;<strong>720.8</strong>,
+    <code>retention_rho</code>&nbsp;=&nbsp;<strong>1169.0</strong>, and <code>own_specific_frac</code>&nbsp;=&nbsp;<strong>164.08</strong>
+    on a name that promises a fraction. One (<code>state.py</code>) had <strong>no gate at all</strong>.</p>
+    <p style="margin-top:10px">But the sites are <strong>not one quantity</strong>. They span four estimands
+    &mdash; <code>&beta;<sub>deconv</sub>/&beta;<sub>core</sub></code>,
+    <code>&rho;<sub>adj</sub>/&rho;<sub>raw</sub></code>,
+    <code>gap<sub>deconv</sub>/gap<sub>core</sub></code>, and <code>state.py</code>&rsquo;s
+    <code>&rho;<sub>H</sub>/&rho;<sub>Tsub</sub></code>, which is not adjusted-vs-raw at all. The doctrine
+    says <em>retention</em> names two unrelated quantities; it names <strong>four</strong>. Collapsing them
+    would have deleted the distinction. <code>learned/retention.py</code> therefore makes the
+    <em>logic</em> canon while keeping the <em>estimands</em> distinct.</p>
+  </div>
+
+  <p><strong>And a single gate constant would be wrong.</strong> A gate is a claim about the
+  <em>denominator&rsquo;s scale</em>: <code>RHO_GATE = 0.05</code> is right for a correlation, catastrophic
+  for &beta; (median ~0.02 &mdash; it would drop most of the card), and far too coarse for a gap (~1e-2).
+  Hence per-scale constants plus <code>gate_q</code> for denominators with no natural scale. An ungated
+  division now <strong>raises</strong>.</p>
+
+  <p class="note">Applying the project&rsquo;s own gate to <code>realized_retention</code>:
+  max|x| <strong>720.8 &rarr; 4.55</strong>, 281 rows (22.3%) dropped, median <strong>+0.610 &rarr; +0.625</strong>
+  &mdash; the tail was the defect, not the statistic. All four cards verified <strong>md5-identical</strong>
+  after the refactor.</p>
+
+  <div class="call warn">
+    <p class="h">A correction worth keeping, because it looked obvious and was wrong</p>
+    <p>The audit&rsquo;s first bound rule flagged anything named <code>*_ret*</code> that left [0,1]. That
+    produced 14 false positives at the top of the queue. <strong>Retention is not bounded</strong> &mdash;
+    <strong>41.1%</strong> of <code>realized_retention</code> sits outside [0,1] even <em>after</em> a correct
+    gate, because sign flips and amplification are real. Its pathology lives in the tail, never in a bound.
+    The rule was removed.</p>
+  </div>
+
+  <h3>How to run them</h3>
+  <pre><code>.venv/bin/python3 -m mirna_hallmark.analyses.ops.nan_bool_audit
+.venv/bin/python3 -m mirna_hallmark.analyses.ops.ratio_blowup_audit
+.venv/bin/python3 -m mirna_hallmark.analyses.ops.ratio_blowup_audit --validate   # re-check the calibration
+.venv/bin/python3 -m mirna_hallmark.analyses.ops.dup_keys                        # duplicate dict keys</code></pre>
+  <p class="note">Both emit a <strong>review queue, not a verdict</strong> &mdash; read the producer before
+  changing anything. Each carries an accept-list with a recorded reason per known column, so the report
+  converges on what is actually open rather than becoming a wall nobody reads. Current state: both
+  <strong>0 open</strong>.</p>
+</section>
+
 <section id="graveyard">
-  <h2><span class="num">07 &mdash; The graveyard</span>Do not rebuild these</h2>
+  <h2><span class="num">08 &mdash; The graveyard</span>Do not rebuild these</h2>
   <p class="lede">Each of these cost real time and was closed by measurement. The purpose of this list is that
   nobody spends that time again.</p>
   <div class="tablewrap">
@@ -956,12 +1097,36 @@ footer p{max-width:var(--measure)}
 </section>
 
 <section id="open">
-  <h2><span class="num">08 &mdash; Open work</span>What is actually left, ranked</h2>
+  <h2><span class="num">09 &mdash; Open work</span>What is actually left, ranked</h2>
   <p class="lede">The forward board carries more entries than this, but its own header warns that its stale-entry
   base rate is high — five entries were found stale in a single sweep. These are the ones that survive checking.</p>
 
   <div class="axis s-open">
-    <h3>1 &middot; Restore an exogenous existence validation</h3>
+    <h3>1 &middot; The canonical rebuild &mdash; now the bottleneck, not just debt</h3>
+    <p><code>edge_card_base.tsv</code> is dated <strong>2026-08-04</strong> and
+    <code>readouts_arm_edges.tsv</code> <strong>2026-08-03</strong>, while the annotation layer is current.
+    The delivered edge card is therefore a mix of fresh and stale columns, and the cost is now counted rather
+    than suspected:</p>
+    <ul>
+      <li><strong>129 genes</strong> carry model output with <strong>zero edge rows</strong> — the gene card
+        holds 1,549 genes, the edge card 1,420, so 8.3% of the fitted universe is unreachable at edge rung.
+        <span class="mh">MH-252</span></li>
+      <li><strong>9 arm names do not resolve</strong> to the arm card (<code>hsa-mir-192-5p</code> lowercase,
+        <code>hsa-miR-15a</code> without a suffix, <code>hsa-miR-496</code> vs <code>.1</code>), carrying 16
+        edges with &beta; on 11 but <code>adm_has_site</code> on <strong>0</strong>. They are not
+        double-counts &mdash; every variant pair shares 0 genes &mdash; they are simply un-annotatable.</li>
+      <li>Roughly a dozen source-level fixes made during the column review <strong>only land when it
+        runs</strong>: three ratio gates, several boolean masks, and the <code>own_specific_frac</code> /
+        <code>retention_rho</code> denominators.</li>
+    </ul>
+    <p class="note">Sequence: <code>canonical_card.build()</code> &rarr; <code>realization.edge_card()</code>
+    &rarr; <code>card_ladders --annotate</code> &rarr; <code>card_rungs --check</code> &rarr;
+    <code>gen_cards --build</code>. The arm-name normalisation should go in the same pass, since it is the one
+    change that needs a full refresh anyway.</p>
+  </div>
+
+  <div class="axis s-open">
+    <h3>2 &middot; Restore an exogenous existence validation</h3>
     <p>Named by two independent documents as the single highest-value open item in the program, and nothing else
     changes its standing as much. It is now <em>tested-and-failed</em> rather than aspirational: four designs
     have been closed. The live design work is the target-side seed-site instrument — a seed-disrupting 3&prime;UTR
@@ -971,7 +1136,7 @@ footer p{max-width:var(--measure)}
   </div>
 
   <div class="axis s-open">
-    <h3>2 &middot; Model expansion and refit</h3>
+    <h3>3 &middot; Model expansion and refit</h3>
     <p>User-requested and never run. Fold the externally-validated missed edges into the HE universe and re-run
     the Gibbs — &beta; is a joint per-gene posterior, so a new edge re-decomposes the whole gene and this needs
     a refit, not an appended weight. Priority order: the 21 gold&cap;external edges, then the 134 multi-evidence
@@ -980,15 +1145,52 @@ footer p{max-width:var(--measure)}
   </div>
 
   <div class="axis s-open">
-    <h3>3 &middot; Backfill the four missing registry rows</h3>
+    <h3>4 &middot; Backfill the four missing registry rows</h3>
     <p>MH-222, 225, 226, 227. Cheap, and it closes the only current break in the program's own trust order.</p>
   </div>
 
   <div class="axis s-open">
-    <h3>4 &middot; Refresh the two summary docs</h3>
+    <h3>5 &middot; Refresh the two summary docs</h3>
     <p><code>STATE_OF_PLAY.md</code> and <code>PROGRAM_FORWARD_BOARD.md</code> both stop at MH-207 and are
-    missing two whole arcs. Regenerating <code>ARCHITECTURE.md</code> is a one-command job that picks up ~67
+    missing three whole arcs. Regenerating <code>ARCHITECTURE.md</code> is a one-command job that picks up ~67
     findings.</p>
+  </div>
+
+  <div class="axis s-open">
+    <h3>6 &middot; Ingest the versioned COSMIC Cancer Gene Census</h3>
+    <p>The edge card&rsquo;s <code>role</code> is the <em>gene&rsquo;s</em> cancer role and is
+    <strong>11.1% covered</strong> &mdash; <code>unknown</code> on 1,262 of 1,420 genes. Its source is a
+    232-gene dictionary hardcoded as Python sets. Per <code>gene_roles.py</code> that list <em>is</em> a
+    COSMIC-CGC / OncoKB consensus, so the defect is not that it is arbitrary: it is <strong>frozen,
+    unversioned and subset</strong>, with no census version, no download date and no refresh path. Route a
+    real census through the existing <code>config.GENE_ROLES_OVERRIDE</code> hook.
+    <span class="mh">MH-250</span></p>
+    <p class="note">Two gates before adopting it: report concordance on the overlap (the built-in is
+    breast-prioritised, CGC is pan-cancer), and <strong>re-run every <code>role</code>-stratified result on
+    both annotations</strong> &mdash; coverage going from 158 genes to several hundred changes the
+    <em>universe</em>, so a moved result is confounded between &ldquo;better annotation&rdquo; and
+    &ldquo;different genes&rdquo;.</p>
+  </div>
+
+  <div class="axis s-open">
+    <h3>7 &middot; LEFTY2 / miR-302 &mdash; three readouts, three answers</h3>
+    <p>The smallest useful test case for the magnitude-vs-identity question. LEFTY2 has exactly three edges,
+    all in one seed family, and the three readouts disagree:</p>
+    <div class="tablewrap"><table class="small">
+      <thead><tr><th>arm</th><th class="n">&beta;</th><th class="n">sd_arm</th><th class="n">identity</th><th class="n">coupling_tum</th></tr></thead>
+      <tbody>
+        <tr><td class="k">hsa-miR-302a-3p</td><td class="n">0.91840</td><td class="n"><strong>1.302</strong></td><td class="n">0.0</td><td class="n">&minus;0.154</td></tr>
+        <tr><td class="k">hsa-miR-302d-3p</td><td class="n">0.91885</td><td class="n"><strong>1.097</strong></td><td class="n">0.0</td><td class="n">&minus;0.104</td></tr>
+        <tr><td class="k">hsa-miR-373-3p</td><td class="n">0.03470</td><td class="n">0.014</td><td class="n"><strong>1.0</strong></td><td class="n">+0.103</td></tr>
+      </tbody>
+    </table></div>
+    <p>&beta; says the two miR-302 arms dominate, at values agreeing to four decimals. <code>sd_arm</code>
+    says neither is identified &mdash; the posterior SD <em>exceeds</em> the estimate. <code>identity</code>
+    gives all credit to the arm with a <strong>26&times; smaller</strong> &beta;, whose observed coupling runs
+    the wrong way for repression.</p>
+    <p class="note">First question: Shapley should make two indistinguishable arms <em>split</em> credit
+    (~0.5 each), not score <strong>0.0 each</strong>. That wants explaining before it is trusted. Do not
+    &ldquo;fix&rdquo; it by gating <code>sd_arm</code> &mdash; the wide posterior is the finding.</p>
   </div>
 
   <div class="axis s-open">
@@ -1014,7 +1216,7 @@ footer p{max-width:var(--measure)}
 </section>
 
 <section id="ops">
-  <h2><span class="num">09 &mdash; Operations</span>Where everything lives and how to bring it back</h2>
+  <h2><span class="num">10 &mdash; Operations</span>Where everything lives and how to bring it back</h2>
 
   <h3>Repository state</h3>
   <p>All subproject work is committed. As of today the branch <code>miracle-figures</code> is
