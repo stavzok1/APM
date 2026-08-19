@@ -969,6 +969,48 @@ COLUMNS.update({
     ("gene", "disc_n_gold_edges"): "How many of the 157 discovery-queue edges name this gene (max 4). "
                                    "⛔ Only **39 of the 90** gold genes appear on this card, so this "
                                    "accounts for **63 of 157** edges — a 0 is NOT evidence of absence.",
+    # ── UNIT 24 (2026-08-19) — edge `cptac_`/`gene_`, gene `armres_`, arm `wshift_`/`sub_`/`famrole_`.
+    ("edge", "heur_gene_nreg"): "Regulator count for this gene from the §6b-RETIRED heuristic lane. "
+        "⛔ **RENAMED from `gene_nreg` 2026-08-19: it is 100% BIT-IDENTICAL to the gene card's "
+        "`heur_n_regulators`** (spearman 1.0000, identical on every gene) — the same retired quantity under "
+        "a THIRD name, surviving on another card after the gene copy was renamed. ⚠ It is **not** the fit's "
+        "own width: it differs from `n_arms` on **21.7%** of genes (median 7 vs 2). Never use it as the "
+        "model's design size.",
+    ("edge", "cptac_prosp_comp_class_prot"): "Composition class of this edge's PROTEIN coupling "
+        "(cell_intrinsic / partial / composition_explained) in the prospective cohort. ⛔⛔ **IT DOES NOT "
+        "REPRODUCE ACROSS COHORTS — Cohen's κ = +0.0497 against the tcga105 twin on 1,973 shared edges** "
+        "(38.5% agreement against 35.3% expected by chance), and the modal class INVERTS: prospective calls "
+        "44.2% `composition_explained`, tcga105 only 25.6% (binary κ = **+0.0205**). ⚠ **The threshold is "
+        "not the problem** — the CONTINUOUS `ret_prot` it is cut from reproduces at spearman **+0.0616**. "
+        "⇒ **do not use the per-edge composition class as a filter or a finding**; report it only as the "
+        "axiom-2a FLAG it was designed to be, and prefer the gene rung.",
+    ("edge", "cptac_prosp_rho_prot_raw"): "UNADJUSTED protein coupling, prospective. ⭐ **The most "
+        "reproducible thing in this block: spearman +0.383 against tcga105** (gene rung +0.461) — against "
+        "**+0.151** once composition-adjusted and **+0.062** for the retention ratio. ⇒ **each processing "
+        "layer costs cross-cohort reproducibility.** ⚠ That drop is EXPECTED and already recorded (memory "
+        "`null-design-and-shared-confounds`: the shared CAF-rich stroma IS the reproducible part, +0.263 → "
+        "+0.123 there) — it is corroboration, not a new defect. But it bounds what the adjusted values can "
+        "support.",
+    ("edge", "cptac_prosp_n"): "Patients in the prospective CPTAC cohort — **CONSTANT 101**. Kept as "
+        "provenance, not pruned: it is the n behind every `cptac_prosp_*` value, and MH-103 (the falsified "
+        "protein βᵗ) turns on exactly this number.",
+    ("edge", "cptac_t105_n"): "Patients in the TCGA-overlap CPTAC cohort — **CONSTANT 105**. See the "
+        "prospective twin. ⚠ Also read MH-262: this cohort breaks the edge→gene no-op identity on 29% of "
+        "single-arm genes, undiagnosed.",
+    ("arm", "sub_med_rho_best"): "Median coupling in the arm's BEST subtype. ⛔ **THE SAME MAX-OF-4 "
+        "SELECTION as `esub_rho_best` (MH-263), at arm rung**: median **−0.0758** against "
+        "`sub_med_rho_pool`'s **−0.0064**. ⚠ And after FDR almost nothing survives — **`sub_n_q05` is 0 on "
+        "659 of 728 arms (90.5%)**. ⇒ never quote it as an effect size; read `sub_n_q05`.",
+    ("arm", "sub_med_rho_pool"): "Median pooled-subtype coupling (median −0.0064) — the unselected "
+        "reference for `sub_med_rho_best`.",
+    ("gene", "armres_frac_resolvable"): "Fraction of this gene's multi-arm cells where the arms are "
+        "separable. ⛔ **Median 0.00** — for most genes with a multi-arm cell, NO arm is resolvable. "
+        "Defined on only **17.6%** of genes (those that have a multi-arm cell at all). ⇒ arm-level "
+        "attribution is the exception, not the rule; `armres_class` names it (`family_only` on 168).",
+    ("arm", "famrole_class"): "The arm's role in its seed family — **`sole` on 1,639 of 2,450 (66.9%)**, "
+        "`dominant` 282, `co` and the rest below. ⚠ Together with `famrole_n_members` (median **1**) this "
+        "is the same singleton dominance that makes `famrole_abund_share` median **1.000** by "
+        "construction. Mask on `famrole_n_members > 1` before any family comparison.",
     # ── UNIT 23 (2026-08-19) — edge `esub_`/`dose_`/`cal_`, arm `bc_`/`surv_`/`hly_`, gene `lit_`/`n_`.
     ("edge", "esub_rho_best"): "Coupling in the arm's BEST PAM50 subtype. ⛔⛔ **A MAX-OF-4 STATISTIC — "
         "NEVER read it as an effect size.** Verified it is exactly `min` over the four subtype ρ on "

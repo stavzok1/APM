@@ -857,7 +857,14 @@ def _finish_card(path, built: pd.DataFrame, annotate: bool) -> None:
 #:      edge card already owns `arm_med_rpm` / `arm_iqr` / `arm_pct_floor` for exactly this. Bare names hid
 #:      the repeat-by-construction behaviour that MH-179/187/188/191 all turned on.
 #:   `n` -> `n_samples`               : it is constant 1,040 — provenance of the fit, not data.
-_EDGE_RENAME = {"detection": "arm_detection", "spiker": "arm_spiker", "n": "n_samples"}
+_EDGE_RENAME = {"detection": "arm_detection", "spiker": "arm_spiker", "n": "n_samples",
+                # ⛔ ADDED 2026-08-19 (column review unit 24): `gene_nreg` is **100% bit-identical**
+                # to the gene card's `heur_n_regulators` (spearman 1.0000, identical on every gene)
+                # — it is the §6b-RETIRED heuristic lane's regulator count under a THIRD name. The
+                # gene card's copy was renamed `heur_*` on user instruction; this one survived on
+                # another card, which is precisely the collision the rename existed to remove.
+                # ⚠ It differs from the fit's own width `n_arms` on 21.7% of genes.
+                "gene_nreg": "heur_gene_nreg"}
 #: ⛔ PRUNED: `p_fam` is NOT a p-value — it is the design dimension, and on THIS card it is bit-identical to
 #: the gene's `n_arms` (measured: 0/1,420 mismatches, corr 1.0000). On `gene_family` it is bit-identical to
 #: `n_fam`. It never carries anything the card does not already hold under an honest name.

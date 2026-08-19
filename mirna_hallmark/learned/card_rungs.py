@@ -104,7 +104,10 @@ _CELL_LEVEL = ("arm_dbeta", "arm_sep_z", "arm_resolvable", "n_arm_in_cell",
                "oof_rho_arm", "oof_rho_fam", "oof_drho")
 # these DO vary inside a cell — verified, so they are genuinely arm-relative (MH-166 allocation work)
 _ARM_IN_FAM = ("arm_credit_share", "arm_id_status", "family_dose_share", "family_role")
-_GENE_ROLLUP = ("gene_dominated", "gene_net_repr", "gene_nreg", "gene_repr_class",
+# ⚠ `gene_nreg` was RENAMED `heur_gene_nreg` 2026-08-19 (unit 24) — it is bit-identical to the gene
+# card's `heur_n_regulators`, i.e. the §6b-RETIRED heuristic lane under a third name. Both names are
+# listed so a card built before the rename still validates.
+_GENE_ROLLUP = ("gene_dominated", "gene_net_repr", "gene_nreg", "heur_gene_nreg", "gene_repr_class",
                 "gene_lfc_NAT_TUM", "gene_iqr", "gene_med_rpm", "gene_pct_floor")
 
 CARDS = {

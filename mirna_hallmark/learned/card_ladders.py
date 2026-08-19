@@ -231,6 +231,9 @@ def normalise_flag_cards() -> None:
         d = pd.read_csv(path, sep="\t", low_memory=False)
         moved = _repair_nan_flags(d, card)
         # ⛔ unit 21: drop the pruned constant from the delivered card too
+        if card == "edge" and "gene_nreg" in d.columns and "heur_gene_nreg" not in d.columns:
+            d = d.rename(columns={"gene_nreg": "heur_gene_nreg"}); moved += 1
+            print("  ✅ edge.gene_nreg -> heur_gene_nreg (bit-identical to heur_n_regulators)")
         if card == "edge" and "echim_any" in d.columns:
             d = d.drop(columns=["echim_any"]); moved += 1
             print("  ✅ edge.echim_any DROPPED (constant True, 0 bits beyond echim_n_sources.notna())")
