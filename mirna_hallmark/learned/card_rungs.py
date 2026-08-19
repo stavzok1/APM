@@ -109,7 +109,14 @@ CARDS = {
                   **{c: "gene" for c in _GENE_DESC + _GENE_ROLLUP},
                   "retention": "family",     # beta_deconv/beta_core at the family grain
                   "n_arms": "family",        # arms IN THIS FAMILY (caught empirically: varies within gene)
-                  "w_max": "family",         # max curated evidence weight over the family's arms
+                  # ⛔ RELABELLED 2026-08-19 (column review, unit 1): declared "family" with the comment
+                  # "max over the family's arms" — but MEASURED, **0 of 1,549 genes have >1 distinct
+                  # `w_max` across their families**, so it is the GENE's max, broadcast. `card_context`
+                  # joins it per gene from `gene_atlas` (`ATLAS_COLS`), which is why. It is `gene` on the
+                  # gene and edge cards, and was `family` only here.
+                  # ⚠⚠ `--check` COULD NOT CATCH THIS: on a [gene, family]-keyed card the `family` rung is
+                  # "free — it IS the grain", so a family declaration is UNFALSIFIABLE here. See `verify()`.
+                  "w_max": "gene",
                   "gene": "key", "family": "key"},
         prefix=(("ctx_", "gene"), ("comp_", "gene"), ("cal_", "family"))),
     "gene": dict(
@@ -383,6 +390,35 @@ def verify(card: str, sample_genes: int = 900) -> pd.DataFrame:
         out.append({"card": card, "column": r["column"], "rung": r["rung"],
                     "groups": int(len(nu)), "violations": v, "rate": v / max(len(nu), 1),
                     "na_rate": float(d[r["column"]].isna().mean())})
+
+    # ⚠⚠ THE TWO BLIND SPOTS — a rung can PASS here without ever being TESTED. Added 2026-08-19 after the
+    # column review found `w_max` mislabelled `family` on the gene_family card while `--check` read CLEAN.
+    #   (a) UNFALSIFIABLE GRAIN — on a [gene, family] card the `family` rung IS the grain, so `grp` has no
+    #       entry for it and the loop skips it. Every family declaration there passes vacuously. The tell is
+    #       that the column does NOT vary within gene, i.e. it is a broadcast gene property wearing a family
+    #       label (0 of 1,549 genes had >1 `w_max`).
+    #   (b) CONSTANT COLUMNS satisfy EVERY rung simultaneously, so their label is unfalsifiable by
+    #       construction (`n`, `pip_dense`, `net_pressure`, `echim_any`).
+    # Neither is an error by itself — both are REPORTED, never failed, because a genuinely gene-constant
+    # family property is legitimate. The point is that "CLEAN" must not be read as "tested".
+    warn = []
+    for _, r in R.iterrows():
+        c = r["column"]
+        if c not in d.columns:
+            continue
+        if d[c].nunique(dropna=True) <= 1:
+            warn.append((c, r["rung"], "CONSTANT — satisfies every rung vacuously"))
+        elif r["rung"] == "family" and card == "gene_family" and "gene" in d.columns:
+            nu = d.groupby("gene", dropna=False)[c].nunique(dropna=True)
+            if int((nu > 1).sum()) == 0:
+                warn.append((c, r["rung"], "declared family but CONSTANT WITHIN GENE — a broadcast "
+                                           "gene property; the family grain makes this untestable"))
+    if warn:
+        print(f"   ⚠ {len(warn)} column(s) whose rung is UNFALSIFIABLE on this card (reported, not failed):")
+        for c, rung, why in warn[:12]:
+            print(f"      ? {c:26s} rung={rung:<8s} {why}")
+        if len(warn) > 12:
+            print(f"      … and {len(warn)-12} more")
     return pd.DataFrame(out)
 
 

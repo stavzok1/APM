@@ -302,6 +302,56 @@ COLUMNS: dict[tuple[str, str], str] = {
     ("gene_family", "beta"): "FAMILY-rung coupling coefficient — `readouts.run(level='family')`, the "
                              "same-seed collapse APPLIED. Same estimator as the edge card's `beta`, "
                              "DIFFERENT UNIT. Do not place the two side by side without saying so.",
+    ("edge", "identified"): "`|z| > 2` on the UNCALIBRATED posterior SD, where `z = beta / beta_sd` "
+                            "(MH-83 records precision 0.86 / recall 0.89 against a held-out standard). "
+                            "⚠ The posterior SD is measured 1.18–1.34× too NARROW, so this over-admits: "
+                            "`cal_identified` is the honest version (19.9% [18.1–22.4] vs 24.8%). "
+                            "⚠ The `abs()` is vestigial — the half-normal slab makes β strictly positive, "
+                            "so `z` never goes below 0 (observed range 0.47…22.33).",
+    ("edge", "z"): "`beta / beta_sd` for the EDGE-level fit (`readouts.run(level='arm')`, the whole gene's "
+                   "arms as separate predictors). ⚠⚠ NOT the same as `z_arm`, which is a DIFFERENT fit — "
+                   "restricted to one (gene, seed_family) cell (`arm_rung.py`). They correlate 0.971 on the "
+                   "1,147 edges carrying both, but they answer different questions: `z` is 'is this arm "
+                   "identified against the gene's whole design', `z_arm` is 'is it separable from its "
+                   "same-seed mates'. Both are strictly positive (β cannot be negative).",
+    ("edge", "z_arm"): "`beta_arm / sd_arm` from the WITHIN-CELL fit (`arm_rung.py`) — the arm's z inside "
+                       "its (gene, seed_family) cell only, defined on the 20.3% of edges in multi-arm cells. "
+                       "Asks *which COPY of this seed carries the signal*, which is near-collinear by "
+                       "construction. ⛔ It does NOT replace the family β; the honest deliverable is "
+                       "`arm_resolvable` (a verdict on separability), not a confident per-arm β.",
+    ("edge", "n_arm_in_cell"): "How many arms sit in this edge's (gene, seed_family) CELL — i.e. how many "
+                               "of that family's members appear in THIS gene's design. ⚠ Not the family's "
+                               "total membership: that is `famrole_n_members` on the arm card / the "
+                               "seed_family card. >1 for 20.3% of edges; outside those the arm rung IS the "
+                               "family rung by construction.",
+    ("edge", "detection"): "Fraction of patients in which this ARM is measured at all (`readouts._detection`). "
+                           "⭐ MH-117: the ONE measurement proxy that arm-level β tracks within a family "
+                           "(+0.305, p=4e-3) — abundance (p=0.65) and variance (p=0.95) do not. Emitted so a "
+                           "reader can GATE on it; deliberately NOT used to drop arms (axiom 2a: flag, "
+                           "don't delete). Arm-rung, so it repeats across the arm's genes.",
+    ("edge", "spiker"): "`arm_pct_floor < 40 AND arm_iqr > 1.5` — the arm sits at/below the detection floor "
+                        "in most samples yet swings widely when present. Measured: spiker arms have median "
+                        "`arm_pct_floor` 22 vs 99 for the rest; True on 171 edges. A measurement-reliability "
+                        "warning, not biology — a coupling carried by a few spiking samples is fragile.",
+    ("edge", "n_HLY_meas"): "How many of this gene's arms have a MEASURED healthy (GTEx) level — as opposed "
+                            "to one manufactured by the multi-mapping collapse. ⛔ Read this BEFORE any "
+                            "`share_HLY` / `rank_HLY` / `d_rank_HLY_*`: GTEx v10's uniquely-mappable pipeline "
+                            "ZEROES the canonical member of several seed families (let-7a, miR-30a, miR-16, "
+                            "miR-17, miR-200b…), which forced share=0 → rank LAST → dHT maximally positive "
+                            "and FABRICATED healthy→tumour acquisition for 115 arms (MH-210). The `_meas` "
+                            "variants recompute over measured arms only.",
+    ("edge", "d_rank_HLY_TUM_meas"): "`d_rank_HLY_TUM` recomputed over arms with a MEASURED healthy level "
+                                     "only — the collapse-safe version. Prefer it over the bare column.",
+    ("edge", "dShare_M_own"): "Mean over the 103 paired patients of this arm's change in M-WEIGHTED share of "
+                              "its gene's total regulator dose, tumour minus that patient's OWN NAT. Built "
+                              "from linear RPM (2^x−1), column-normalised per patient so the gene's arms sum "
+                              "to 1, then weighted by the model's `M`. ⇒ shares sum to 1 within gene, so the "
+                              "dShares sum to ~0 — it is a REALLOCATION, not a level change. Defined only "
+                              "where a gene has ≥2 regulators. P-across rung (one value per edge, computed "
+                              "ACROSS patients — never a per-patient quantity).",
+    ("edge", "dShare_raw_own"): "As `dShare_M_own` but on RAW abundance share, with the model's `M` weights "
+                                "removed. ⭐ Read the PAIR: agreement means the reallocation is pure "
+                                "abundance; divergence means the model's weighting is doing the work.",
     ("edge", "identity"): "Shapley/LMG share of the gene's R^2 credited to this edge, with bagged-NNLS "
                           "weights. ⭐ WHO, not how much. NaN where NNLS zeroed every family — that is an "
                           "honest 'undefined', not missing data.",
@@ -313,8 +363,15 @@ COLUMNS: dict[tuple[str, str], str] = {
                                "most genes are dominated by one regulator family. ⚠ A concentration index "
                                "is bounded below by 1/k, so it is mechanically anti-correlated with design "
                                "width; use the normalised form before reading it as biology.",
-    ("gene", "w_max"): "Maximum curated EVIDENCE weight over the gene's regulators. ⛔ NOT a beta and NOT a "
-                       "dose share — `top_beta_frac` and `concentration` are the shares.",
+    ("gene", "w_max"): "The MAXIMUM curated evidence weight `w` over the gene's regulators "
+                       "(`gene_atlas`: `nanmax(w)`), where `w` comes from the same PMID-deduped ledger that "
+                       "feeds `lit_` and `fame_`. ⛔ NOT a β and NOT a dose share — `top_beta_frac` and "
+                       "`concentration` are the shares. ⚠⚠ It is therefore a STUDY-DEPTH quantity, and "
+                       "`w_max > median` is HALF the definition of `A_COMPETENT` — so the competence class "
+                       "is part fame axis. ⚠ It carries THREE rungs across the cards: gene here, gene on the "
+                       "edge card (repeated), and family on `gene_family` — where the label is WRONG "
+                       "(measured 2026-08-19: 0 of 1,549 genes have >1 distinct value across their "
+                       "families, so it is gene-rung repeated there too).",
     ("gene_family", "w_max"): "Maximum curated EVIDENCE weight for this (gene, family) cell. Family-rung "
                               "here; gene-rung on the gene card.",
     ("gene", "identity_eq_magnitude"): "Do the identity and magnitude answers name the SAME top family. "
