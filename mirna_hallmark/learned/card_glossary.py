@@ -72,19 +72,39 @@ BLOCKS: dict[tuple[str, str], str] = {
                        "collinearity-fair. ⭐ Genuinely different from magnitude: they disagree in ~24% of "
                        "multi-family genes, and identity can honestly return UNDEFINED where NNLS zeroed "
                        "every family (`beta` structurally cannot).",
-    ("", "lit_"): "Literature ground truth (`eval/lit_ground_truth.py`): the canonical family for this "
-                  "gene by distinct low-throughput functional PMID count, its margin over the runner-up, "
-                  "and its tier. sha256-stamped and mechanical — no hand curation. ⚠ Defined on 329 genes "
-                  "(21%) only; and PMID depth is a FAME axis, so any comparison against it needs a fame null.",
-    ("arm", "fame_npmid"): "Distinct PMIDs citing this arm. \u26a0 Bit-identical to `fame_led_n_pmid`. "
-                           "\u26d4 A FAME axis \u2014 control for it, never read it as biology.",
-    ("arm", "fame_assay_perturbation_studies"): "\u26d4 ALL ZERO \u2014 miRTarBase carries no perturbation-assay "
-                                                "class for these arms. Four sibling `perturbation__*` columns "
-                                                "and `binding__nonfunctional_mti_weak_studies` are also all "
-                                                "zero and bit-identical. Dead columns, kept for shape.",
-    ("arm", "arb_n_edges"): "Edges this arm regulates. \u26a0 **Bit-identical to `arb_n_genes` AND "
-                            "`arb_n_identity_reliable`** \u2014 all three are the same vector, so two of them "
-                            "are not measuring what their names say. Suspected producer defect (2026-08-19).",
+    ("", "lit_"): "⛔⛔ **A STUDY-COUNT AXIS, NOT A BIOLOGICAL GROUND TRUTH — read the name with "
+                  "suspicion.** `eval/lit_ground_truth.py` defines the 'canonical' family of a gene as the "
+                  "**argmax of DISTINCT PubMed IDs** carrying low-throughput functional evidence (reporter / "
+                  "western / proteomics; miRTarBase-Weak and TarBase-Positive excluded). That measures **how "
+                  "much a pair was PUBLISHED ON**, not how much it represses. Its virtue over what it replaced "
+                  "is AUDITABILITY — mechanical, versioned, sha256-stamped, and it displaced five hand lists "
+                  "with no producer in the repo — **not** that it is true. ⚠ It is the SAME KIND of quantity "
+                  "as the `fame_` block, which the doctrine says to control for and never read as biology; "
+                  "the difference is only that `fame_` is per-arm and this is an argmax per gene. ⚠ Defined "
+                  "on 329 genes (21%) / 92 families, and the independent unit is the FAMILY, not the gene. "
+                  "⚠ PMID depth tracks abundance, so this makes ABUNDANCE the baseline to beat and scaling n "
+                  "cannot fix it. ⇒ 'agrees with lit' means 'picks the most-published family', and any "
+                  "comparison against it needs a FAME NULL to carry meaning.",
+    ("gene", "lit_family"): "The most-published seed family for this gene by distinct low-throughput "
+                            "functional PMIDs. ⛔ A publication-depth argmax, not an established regulator.",
+    ("gene", "lit_n_pmid"): "Distinct low-throughput functional PMIDs behind `lit_family`. Median **3** — the "
+                            "'ground truth' rests on a handful of papers per gene.",
+    ("gene", "lit_margin"): "PMID count of `lit_family` minus the runner-up. Median **1** — for half the "
+                            "admitted genes the canonical family is decided by a SINGLE paper.",
+    ("arm", "fame_npmid"): "Distinct PMIDs citing this arm. \u26d4 A FAME axis \u2014 control for it, never "
+                           "read it as biology. (Its bit-identical twin `fame_led_n_pmid` was PRUNED "
+                           "2026-08-19; this is the surviving name.)",
+    ("arm", "arb_n_edges"): "Edges this arm regulates \u2014 equivalently the genes, since the source holds "
+                            "one row per (arm, gene). (`arb_n_genes` was PRUNED 2026-08-19 as bit-identical "
+                            "for that structural reason.)",
+    ("arm", "arb_n_identity_reliable"): "Edges of this arm whose `identity` share is usable "
+                                        "(`identity_reliable`). \u26d4 Until 2026-08-19 this was gated on "
+                                        "`beta_frac_reliable`, which admits 100% of rows since MH-124 made "
+                                        "\u03b2 strictly positive \u2014 so it equalled `arb_n_edges` and the "
+                                        "gate did nothing. Now gated on identity's own coherence.",
+    ("arm", "arb_max_identity"): "Largest usable `identity` share among this arm's edges. \u26d4 Read ONLY "
+                                 "because it is gated: ungated it reached **+740.0** (identity is a SIGNED "
+                                 "share summing to 1, 9.9% negative), now \u22120.255 \u2026 +1.000.",
     ("", "fame_"): "Study-attention axis for the arm — distinct PMIDs and distinct curated genes. "
                    "⛔ NOT a targetome measure: it correlates +0.75 with the curated degree and only +0.12 "
                    "with a sequence targetome (MH-208). Use it as a CONFOUND to control, never as biology.",
@@ -337,9 +357,11 @@ COLUMNS: dict[tuple[str, str], str] = {
                                      "'undefined', which the magnitude answer cannot express.",
     ("gene", "top_family_magnitude"): "The family with the largest beta. ⚠ This is argmax over a quantity "
                                       "that is never zero, so it always returns SOMETHING.",
-    ("gene", "lit_agrees_identity"): "Does the identity answer match the literature's canonical family. "
-                                     "True for 100/323 genes. ⚠ The literature set is defined by PMID "
-                                     "depth, which is a fame axis — read this only beside a fame null.",
+    ("gene", "lit_agrees_identity"): "Does `identity` name the same family as the **most-published** one for "
+                                     "this gene. True for 100/323. ⛔ NOT an accuracy measure — the reference "
+                                     "is a study count (see the `lit_` block). Against `magnitude` (96/329) "
+                                     "the contrast is **14 vs 9 discordant genes, McNemar exact p=0.405 — "
+                                     "a tie**.",
     ("edge", "shift_class"): "Cross-state class for the edge. ⚠ Its per-edge FDR labels rest on the "
                              "uncalibrated null (3–4x too narrow); read the classes, not their counts.",
     ("gene", "gene_repression_class"): "Cross-state repression class for the gene (never_repressed / "

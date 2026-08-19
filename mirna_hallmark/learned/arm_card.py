@@ -1176,8 +1176,12 @@ def _coverage_report(card: pd.DataFrame) -> None:
     """⚠ AXIOM 5 — report coverage on the denominator that MATTERS, not just the union."""
     sets = [("ALL arms", card),
             ("EXPRESSED (TCGA)", card[card.get("cov_expr", False)]),
-            ("MODEL arms (>=1 HE edge)", card[card.get("model_n_edges").notna()]
-             if "model_n_edges" in card.columns else card.iloc[:0])]
+            # ⚠ 2026-08-19: was keyed on `model_n_edges`, PRUNED as bit-identical to `model_n_genes`.
+            # The `else card.iloc[:0]` fallback would have silently reported this denominator as EMPTY
+            # rather than failing — a pruned column becoming a silent zero is exactly the ripple
+            # axiom 2 exists for. Repointed to the surviving twin.
+            ("MODEL arms (>=1 HE edge)", card[card.get("model_n_genes").notna()]
+             if "model_n_genes" in card.columns else card.iloc[:0])]
     flags = [c for c in card.columns if c.startswith("cov_")]
     print(f"\n{'denominator':<26s}{'n':>7s}  " + "  ".join(f"{f[4:]:>10s}" for f in flags))
     for lab, sub in sets:

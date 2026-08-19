@@ -152,11 +152,11 @@ AGG_OF = {"gene": {**{c: "arm" for c in ("cptac_prosp_agg_rho_rna", "cptac_prosp
           # EDGES (or, for aid_*, over the multi-arm cells it sits in). `bc_*` is the OPPOSITE relation
           # — inherited from a HIGHER unit — and is carried by the prefix, not here.
           "arm": {**{c: "edge" for c in (
-                        "model_n_genes", "model_n_edges",
+                        "model_n_genes",
                         "cur_he_degree", "cur_he_degree_expr", "fame_npmid", "fame_n_genes_curated",
-                        "fame_led_n_pmid", "fame_led_n_ltfunc_pmid", "fame_led_n_classes",
+                        "fame_led_n_ltfunc_pmid", "fame_led_n_classes",
                         "fame_led_frac_ltfunc", "fame_led_n_weak",
-                        "arb_n_edges", "arb_n_genes", "arb_mean_abs_beta", "arb_max_abs_beta",
+                        "arb_n_edges", "arb_mean_abs_beta", "arb_max_abs_beta",
                         "arb_n_identified", "arb_frac_identified", "arb_n_comp_explained",
                         "arb_max_identity", "arb_n_identity_reliable",
                         "chim_manakov_n_genes", "chim_manakov_weight",

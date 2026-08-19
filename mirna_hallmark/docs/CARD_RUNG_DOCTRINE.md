@@ -101,6 +101,19 @@ card's key**:
 4. **Both annotation passes run.** `realization.edge_card()`/`gene_card()` call `card_context.annotate()`
    **and** `card_ladders.annotate()` by default (MH-222/227). Writing a card without them silently drops
    ~57 columns.
+   ⛔⛔ **AND THE ARM CARD IS WORSE, BECAUSE IT HAS NO SUCH DEFAULT — added 2026-08-19 after hitting it.**
+   `python -m mirna_hallmark.learned.arm_card` does **NOT** call either annotator. `card_ladders.annotate()`
+   attaches the arm block at its own call site (`_annotate(OUT/"arm_card.tsv", [(arm_admissibility_rollup(),
+   ["arm"])])`), so a bare arm-card rebuild **silently drops `adm_n_edges` / `adm_n_with_site` /
+   `adm_n_admissible` / `adm_frac_with_site`** — the arm rollup of `adm_has_site`, which MH-216 calls *the
+   project's single most load-bearing conditioning variable*. It reappears only after:
+   ```
+   .venv/bin/python3 -m mirna_hallmark.learned.arm_card            # 287 -> 283 cols  ⚠ adm_* GONE
+   .venv/bin/python3 -m mirna_hallmark.learned.card_ladders --annotate   # 283 -> 287, "bit-identical"
+   ```
+   **RULE: after ANY card rebuild — arm included — re-run `card_ladders --annotate`, then
+   `card_rungs --check`, then `gen_cards --build`.** The annotator prints
+   *"pre-existing columns bit-identical"*, which is the confirmation to look for.
 5. ⚠ **`gene_family_card.tsv` has no `_finish_card` call site** — adding columns there means extending
    `readouts.py`'s promotion or adding one, **plus** registering in `CARDS["family"]["explicit"]`.
 
