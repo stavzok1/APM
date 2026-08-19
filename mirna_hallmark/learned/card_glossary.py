@@ -969,6 +969,18 @@ COLUMNS.update({
     ("gene", "disc_n_gold_edges"): "How many of the 157 discovery-queue edges name this gene (max 4). "
                                    "⛔ Only **39 of the 90** gold genes appear on this card, so this "
                                    "accounts for **63 of 157** edges — a 0 is NOT evidence of absence.",
+    # ── UNIT 27 (2026-08-19) — the long tail (55 blocks, 88 cols). Scanned for constants, empties and
+    # bit-identical pairs; only these three came back, and none is a defect.
+    ("edge", "retention_reliable"): "Is this edge's `retention` ratio trustworthy — i.e. does it have a "
+        "real denominator? ⚠ **BIT-IDENTICAL to `identified` on all 5,644 rows** (and to the "
+        "gene_family twin on 5,117). ⭐ **Not a bug and deliberately NOT pruned**: `readouts.py:124` "
+        "defines it as *'the core β is identified (|z|>2), so the ratio has a real denominator'*, which IS "
+        "`identified` — the two names make DIFFERENT CLAIMS about the same test, and this one has live "
+        "consumers (`analyses/cptac/composition_pinpoint_report.py`). ⚠ But **never treat them as two "
+        "pieces of evidence**: a filter on both is a filter on one.",
+    ("edge", "prior_pi"): "The Gibbs sampler's inclusion prior — **CONSTANT 0.05** across the card. Kept "
+        "as provenance, like `pip_dense` and `ago_dom_src`: it records a MODELLING CHOICE, and a reader "
+        "reconstructing the fit needs it. A constant column is dead only when it records a defunct CHECK.",
     # ── UNIT 26 (2026-08-19) — edge `d_`/`share_`/`rank_`/`family_`, gene `tcga_`/`dominant_`, arm `aid_`.
     ("edge", "family_size"): "Members of this arm's seed family **THAT ARE IN THIS GENE'S DESIGN** — 1 on "
         "**4,497 of 5,644 edges (79.7%)**. ⛔⛔ **NOT the family's membership**, and the difference is the "
