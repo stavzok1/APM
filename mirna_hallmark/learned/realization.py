@@ -205,8 +205,8 @@ def _realize(g: str, arms, M: pd.Series, dX: pd.DataFrame, dY: pd.DataFrame,
     # four other modules gated the identical ratio at 0.05. Applying the project's own constant drops
     # 22.3% of rows, collapses max|x| 720.8 -> 4.55, and moves the median only +0.610 -> +0.625.
     from mirna_hallmark.config import RHO_GATE
-    ret = (float(rho_adj / rho_raw)
-           if (rho_raw and np.isfinite(rho_raw) and abs(rho_raw) >= RHO_GATE) else np.nan)
+    from mirna_hallmark.learned import retention as _RET
+    ret = _RET.scalar(rho_adj, rho_raw, gate=RHO_GATE, name="realized_retention")
     return {"n_pairs": int(m.sum()), "n_reg": len(regs), "rho_raw": _r3(rho_raw), "rho_adj": _r3(rho_adj),
             "retention": _r2(ret), "composition_explained": bool(ret == ret and ret < 0.4),
             "mean_dPred": _r2(float(np.nanmean(pred[m]))), "mean_dTarget": _r2(float(np.nanmean(dy[m])))}

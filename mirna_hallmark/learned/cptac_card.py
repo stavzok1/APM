@@ -319,7 +319,9 @@ def build_gene() -> pd.DataFrame:
         for k, v in cols.items():
             res[k] = v
         rp, rr = res[f"{pref}_agg_rho_prot"], res[f"{pref}_agg_rho_prot_raw"]
-        res[f"{pref}_agg_ret_prot"] = np.where(rr.abs() >= RHO_GATE, rp / rr, np.nan)
+        from mirna_hallmark.learned import retention as _RET
+        res[f"{pref}_agg_ret_prot"] = _RET.ratio(rp, rr, gate=RHO_GATE,
+                                                 name=f"{pref}_agg_ret_prot").to_numpy()
         # ⚠ a FLOOR, not a control — see the docstring
         # ⛔⛔ FIXED 2026-08-19 (column review unit 17): this was a BARE `<`, and `NaN < NaN` is **False**,
         # not NaN — so a gene whose protein coupling was never computed read as "beta does NOT beat

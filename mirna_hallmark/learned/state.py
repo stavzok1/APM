@@ -122,7 +122,16 @@ def cross_state_transfer(gene: str, *, alpha: float = 0.01, family: bool = True)
     top_delta = delta.reindex(delta.abs().sort_values(ascending=False).index).head(4)
     # retention = healthy coupling as a FRACTION of the n-matched in-state control (both n=ng, held-out).
     # ~1 ⇒ healthy weights transfer ⇒ Δ≈0 (only abundance is state-dependent); <0.75 ⇒ M is state-dependent.
-    retention = float(rho_H / rho_Tsub) if (rho_Tsub and rho_Tsub == rho_Tsub) else np.nan
+    # ⛔ GATED 2026-08-19 (MH-258): this had **NO denominator gate at all** — only a NaN check — so
+    # `rho_H / rho_Tsub` was unbounded whenever the n-matched in-state control coupled near zero.
+    # ⚠⚠ **THE IMPACT IS UNMEASURED**: no current output file carries `rho_Tsub_ho`, so unlike the
+    # other nine sites this one could not be checked against delivered values. Treat the first run
+    # after this change as a re-measurement, not a reproduction.
+    # ⚠ NOTE this is the STATE estimand (healthy vs an n-matched tumour control), NOT adjusted/raw —
+    # a fourth quantity sharing the name `retention`. See `learned/retention.py`.
+    from mirna_hallmark.config import RHO_GATE
+    from mirna_hallmark.learned import retention as _RET
+    retention = _RET.scalar(rho_H, rho_Tsub, gate=RHO_GATE, name="state_retention")
     return {"gene": gene, "n_tum": len(Yt), "n_gtex": ng, "n_pred": Xtz.shape[1],
             "rho_T_full": round(float(rho_T), 3), "rho_Tsub_ho": round(float(rho_Tsub), 3),
             "rho_H_ho": round(float(rho_H), 3), "retention": round(retention, 2),

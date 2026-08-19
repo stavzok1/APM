@@ -1085,3 +1085,45 @@ no census version, no download date, no refresh path, and no way to tell what a 
 ⚠ The **continuous** counterpart `load_gene_dependency` (DepMap, ~18.5k genes) is unaffected and is the
 better instrument where a binary role is not required — **CGC does not replace it.**
 
+---
+
+## ⬜ EXAMINE: LEFTY2 / miR-302 — the minimal case where β, identity and sd_arm tell three different stories
+
+**User-flagged 2026-08-19** ("interesting, should be noted for future examination"), surfaced by
+`ratio_blowup_audit` as the largest `sd_arm` on the edge card. It is worth a look because it is **the whole
+magnitude-vs-identity question compressed into three rows**, on a biologically coherent pair.
+
+| arm | β | `beta_arm` | `sd_arm` | z | `identity` | `coupling_tum` |
+|---|---|---|---|---|---|---|
+| hsa-miR-302a-3p | **0.91840** | 1.093 | **1.302** | 0.94 | **0.0** | −0.154 |
+| hsa-miR-302d-3p | **0.91885** | 1.056 | **1.097** | 1.01 | **0.0** | −0.104 |
+| hsa-miR-373-3p | **0.03470** | 0.022 | 0.014 | 1.53 | **1.0** | +0.103 |
+
+**What makes it a clean test case.** LEFTY2 has exactly **3 edges, all in ONE seed family**
+(`miR-302-3p/372-3p/373-3p/520-3p`, `n_arm_in_cell = 3`) — so there is no cross-family confounding to
+unpick. Within it:
+- **β says** miR-302a and miR-302d dominate, at values agreeing to **four decimals** (0.91840 / 0.91885).
+- **`sd_arm` says** neither is identified: the posterior SD (1.302, 1.097) **exceeds the estimate**, and
+  1.302 is close to the largest β anywhere on the card (1.521). z ≈ 1 for both.
+- **`identity` says** miR-373-3p is the *entire* story (1.0) while the two high-β arms get **0.0** — the arm
+  with a **26× smaller** β takes all the attribution credit.
+
+**The questions to answer, in order.**
+1. ⭐ **Is `identity = 0.0` here CORRECT or DEGENERATE?** Shapley/LMG is collinearity-fair by design, so two
+   indistinguishable arms *should* split credit — but splitting should give ~0.5 each, not 0.0 each. A
+   Shapley value of exactly 0 for the two largest coefficients wants explaining before it is trusted.
+   ⇒ read `identity_coherence` and the NNLS weights for this gene; check whether the pair cancels rather
+   than splits (memory `ratio-readouts-need-a-denominator-gate` — a value outside a model's own support is
+   a bug report, not a finding).
+2. **Does the sign disagreement matter?** `coupling_tum` is **negative for both miR-302 arms** (−0.154,
+   −0.104) and **positive for miR-373-3p** (+0.103) — the arm receiving all the identity credit is the one
+   whose observed coupling runs the *wrong way* for repression.
+3. **Is the biology real?** miR-302 is the ESC/pluripotency cluster and LEFTY2 is a Nodal antagonist in
+   TGF-β signalling — a coherent pairing, which is exactly why an unidentified β here is worth resolving
+   rather than filtering away.
+
+⚠ **Do not "fix" this by gating `sd_arm`** — it is not a ratio and its tail is real (MH-257). The wide
+posterior is the *finding*: it says the design cannot separate these two arms, which is a statement about
+identifiability, not noise. ⇒ this is a candidate for the **arm-resolution** machinery
+(`armres_*`, `arm_sep_z`) and for the within-family refit that is default-OFF.
+

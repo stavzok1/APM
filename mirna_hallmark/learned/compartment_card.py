@@ -53,6 +53,7 @@ OUT = C.REPO_ROOT / "mirna_hallmark/output/learned"
 LONG = OUT / "compartment_profile.tsv"
 SUMM = OUT / "compartment_summary.tsv"
 from mirna_hallmark.config import RHO_GATE   # ⭐ ONE home (MH-257); was a local 0.05 here
+from mirna_hallmark.learned import retention as _RET   # ⭐ ONE implementation (MH-258)
 
 
 def _sp(a, b):
@@ -155,7 +156,8 @@ def build() -> pd.DataFrame:
                 ra = _sp(_resid1(bud, Cn[c]), _resid1(y, Cn[c]))
                 rows.append({"cohort": tag, "gene": g, "compartment": c,
                              "r_target": rt, "r_budget": rb, "rho_raw": raw, "rho_alone": ra,
-                             "retention_alone": ra / raw if abs(raw) >= RHO_GATE else np.nan,
+                             "retention_alone": _RET.scalar(ra, raw, gate=RHO_GATE,
+                                                            name="retention_alone"),
                              "product": rt * rb})
     P = pd.DataFrame(rows)
     P.to_csv(LONG, sep="\t", index=False)

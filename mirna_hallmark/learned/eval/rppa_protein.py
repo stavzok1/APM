@@ -138,7 +138,13 @@ def _one(gene: str):
                 f"rho_abund_prot_{blk}": ab_ref, f"n_{blk}": n, f"n_fam_{blk}": len(fams),
                 "antibody": use[0], "is_phospho": use[0] in R["phospho"]}
     r0 = out.get("rho_prot_core")
-    out["retention_prot"] = (out.get("rho_prot_deconv") / r0) if r0 and abs(r0) > 0.02 else np.nan
+    # ⭐ MH-258: canonical implementation, but the 0.02 gate VALUE is deliberately KEPT rather than
+    # raised to RHO_GATE. Checked first: this output is well-behaved (`retention_prot` n=154, median
+    # +0.681, **max 2.44** — no blow-up), so 0.02 is doing its job at this scale and raising it would
+    # drop rows to fix nothing. ⚠ A gate is a claim about the DENOMINATOR'S scale, not a house style.
+    from mirna_hallmark.learned import retention as _RET
+    out["retention_prot"] = _RET.scalar(out.get("rho_prot_deconv"), r0, gate=0.02,
+                                        name="retention_prot")
     return out
 
 
