@@ -46,7 +46,36 @@ BLOCKS: dict[tuple[str, str], str] = {
     ("", "ctx_"): "Gene-design context from the decoy/atlas layer (`learned/analyses/gene_atlas.py` via "
                   "`card_context`): how wide and how measurable this gene's regulator design is, and the "
                   "real-vs-decoy gap measured on it. Gene-rung wherever it appears — on an edge or family "
-                  "row it REPEATS by construction.",
+                  "row it REPEATS by construction. ⛔⛔ **AND THE COST OF FORGETTING THAT IS LARGE — "
+                  "MEASURED 2026-08-19, not asserted.** An EDGE-row statistic over any `ctx_` column "
+                  "weights each gene by its DESIGN WIDTH (5,649 rows over 1,420 genes; up to **91 edges on "
+                  "one gene**), and ceiling / gap / abundance all TRACK width — so the weighting is not "
+                  "neutral, **it IS the confound**. Same column, two rungs, different answers:\n"
+                  "        ctx_ceiling     edge-row median 0.0809  vs gene-row 0.0138   (~6x)\n"
+                  "        ctx_n_abund                     4.00           vs      1.00   (4x)\n"
+                  "        ctx_dose_max                   13.06           vs      8.97\n"
+                  "        ctx_gap_deconv                 -0.0196         vs     -0.0085 (2.3x)\n"
+                  "        ctx_gap_core                   -0.0186         vs     -0.0148\n"
+                  "⇒ **compute every `ctx_` statistic on the GENE card, or de-duplicate to one row per "
+                  "gene first.** Two of these are load-bearing: the decoy gap and the measurability "
+                  "ceiling.",
+    ("edge", "ctx_arm_dose"): "The ARM's dose in this gene's design context. ⚠ **ARM rung, not gene** — "
+                              "unlike the rest of the `ctx_` block it is constant within ARM across genes "
+                              "(verified 0/737 violations), so it repeats down the arm's rows instead of "
+                              "the gene's.",
+    ("edge", "ctx_arm_abundant"): "Is this ARM above the design's abundance threshold. ⚠ **ARM rung, not "
+                                  "gene** — the other exception in this block (verified 0/737).",
+    ("edge", "ctx_collapse"): "Mean arms collapsed per family in this gene's design (median 1.07) — how "
+                              "much the seed-family collapse actually merged. Near 1 means the collapse "
+                              "was almost a no-op for this gene.",
+    ("edge", "ctx_d_fam"): "Design-WIDTH asymmetry between the real design and its matched decoy "
+                           "(real minus fake families). ⚠ Median 1 — curation bundles same-seed mates and "
+                           "fakes do not; MH-167 bounded the contamination this causes at <=0.0025 rho.",
+    ("edge", "ctx_d_collin"): "Within-design COLLINEARITY asymmetry, real minus decoy. The second "
+                              "design-match axis MH-167 tested; also bounded and not moving the gap.",
+    ("edge", "ctx_gap_d_dose"): "Dose asymmetry between the real and decoy designs (median −0.43). ⚠ This "
+                                "is the ONE design axis with a detectable effect on the gap, and it is "
+                                "already corrected for in the headline number.",
     ("", "gctx_"): "Genomic context of the arm's precursor locus (`genomic_context.classify_he_arms`): "
                    "host gene, sense/antisense orientation, intron-vs-exon, promoter class. Strand-aware.",
     ("", "comp_"): "Cell-composition drivers of this gene's coupling (`compartment_*`): which deconvolved "

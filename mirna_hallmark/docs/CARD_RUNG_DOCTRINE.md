@@ -48,6 +48,31 @@ quantity is a property of the family alone (size, seed heterogeneity, member com
   `cptac_prosp_agg_rho_prot` is `rung=gene, agg_of=arm`: one row per gene, but computed by summing
   `β·X` over the gene's ARMS, so **it inherits the arm rung's caveats**.
 
+### ⛔⛔ THE COST OF A BROADCAST COLUMN — measured 2026-08-19, and it is large
+
+A column whose rung is **coarser than the card's key** repeats down the rows. Everyone knows that. What
+was never quantified is what it does to a statistic computed over those rows:
+
+> **A row-wise statistic over a broadcast column weights each parent unit by HOW MANY ROWS IT HAS.**
+
+On the edge card that is the gene's **design width** — 5,649 rows over 1,420 genes, up to **91 edges on a
+single gene**. And ceiling, dose, abundance and the decoy gap all TRACK width, so the weighting is not a
+harmless imprecision: **it is the confound itself**. Same column, two rungs, two answers:
+
+| column | edge-row median | gene-row median | |
+|---|---|---|---|
+| `ctx_ceiling` | **0.0809** | **0.0138** | **~6×** |
+| `ctx_n_abund` | 4.00 | 1.00 | 4× |
+| `ctx_dose_max` | 13.06 | 8.97 | |
+| `ctx_gap_deconv` | −0.0196 | −0.0085 | 2.3× |
+| `ctx_gap_core` | −0.0186 | −0.0148 | |
+
+**RULE: compute a broadcast column's statistic on the card that OWNS its rung, or de-duplicate to one row
+per parent first.** Two of the columns above are load-bearing — the decoy gap and the measurability
+ceiling — and a 6× shift in the ceiling would silently move any claim conditioned on measurability.
+*(Checked: the MH-248 decoy stratification used the gene card and reproduces exactly at −0.0148; on edge
+rows it would have read −0.0186.)*
+
 ⚠ **A `domain` entry is not a rung.** Domain says *where a column is defined*; rung says *what unit it
 lives on*. `--check` needs both (MH-214).
 
