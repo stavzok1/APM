@@ -27,7 +27,7 @@ print(f"   partial_coupling median {num(gs.partial_coupling).median():+.4f}   nu
 print(f"   q_bh: min {num(gs.q_bh).min():.3g}  frac<0.05 {(num(gs.q_bh)<0.05).mean():.1%}  <- per-edge FDR is EMPTY by construction")
 
 print("\n" + "="*92); print("B. ⭐ THE CONVERGENT EVIDENCE LADDER — rebuilt on the EDGE CARD (n=5,649)"); print("="*92)
-e["cpl"] = num(e["coupling_tum"]); e["site"] = num(e["adm_has_site"]); e["chim"] = num(e["echim_any"])
+e["cpl"] = num(e["coupling_tum"]); e["site"] = num(e["adm_has_site"]); e["chim"] = num(e["echim_n_sources"].notna())   # ⛔ was `echim_any`, pruned unit 21 (identical mask)
 e["kd"] = num(e["kd_affinity_pct"]); e["nsrc"] = num(e["echim_n_sources"]); e["abund"] = num(e["arm_med_rpm"])
 print("\n(1) SITE PRESENT vs ABSENT")
 for lab, s in [("has site", e[e.site==1]), ("seedless", e[e.site==0])]:

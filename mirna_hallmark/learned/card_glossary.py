@@ -969,6 +969,40 @@ COLUMNS.update({
     ("gene", "disc_n_gold_edges"): "How many of the 157 discovery-queue edges name this gene (max 4). "
                                    "⛔ Only **39 of the 90** gold genes appear on this card, so this "
                                    "accounts for **63 of 157** edges — a 0 is NOT evidence of absence.",
+    # ── UNIT 25 (2026-08-19) — arm `isoc_`/`iso_`/`tier_`/`chim_`/`cnvc_`/`field_`/`abund_`, edge `adm_`.
+    ("arm", "field_retention"): "⛔⛔ **NOT A RETENTION RATIO — a FIFTH sense of the word in this "
+        "codebase.** Measured: it equals **`field_r_own − field_r_perm`** (exact within rounding on 100% "
+        "of 571 arms, max residual 0.001), i.e. the arm's field correlation MINUS its permutation null — a "
+        "permutation-corrected EXCESS, not `adjusted / raw`. ⚠ It is bounded like a correlation "
+        "([−0.361, +0.615]) so it never trips `ratio_blowup_audit`; the true ratio `r_adj/r_own` would span "
+        "[−47.5, +50.0]. ⇒ `CARD_RUNG_DOCTRINE` §5 says *retention names two unrelated quantities*; with "
+        "MH-258's four plus this one it names **five**. Read the estimator, never the name.",
+    ("arm", "field_r_perm"): "The permutation null for `field_r_own` — median **0.000**, range "
+        "[−0.11, +0.09]. ⭐ A properly centred null, and the reference `field_retention` subtracts. "
+        "`field_r_own` sits at median +0.11, so the field effect is real but small.",
+    ("edge", "adm_expr_tcga"): "Is the arm expressed above floor in TCGA? ⭐ **`adm_expressed` was PRUNED "
+        "2026-08-19 as BIT-IDENTICAL to this (100.00% on 4,937 edges)** — it said *expressed* without "
+        "saying where, while this name pairs with `adm_expr_gtex`. **True on 3,154 of 4,937 edges.**",
+    ("edge", "adm_admissible"): "The admissibility verdict: site + evidence + expression. **True on 2,981 "
+        "of 4,937 edges (60.4%)** — but see `adm_n_admissible` on the arm card: **69.9% of ARMS have zero**, "
+        "so the edge and arm views of this filter differ 2× (MH-259).",
+    ("arm", "iso_total_rpm"): "⚠ **A SUM ACROSS SAMPLES, not a per-sample RPM — the name misleads.** Max "
+        "**270,988,199**, which is impossible for a per-million unit; divided by `iso_n_samples` the scale "
+        "is sane (median **57**, max 251,381). ⇒ **always divide by `iso_n_samples`** before comparing arms, "
+        "since the sample count ranges 3 → 1,078.",
+    ("arm", "tier_class"): "Expression tier — **`silent` on 1,518 of 2,236 arms (67.9%)**, `conditional` "
+        "476, the rest robust. ⚠ With `tier_frac_expressed` at median **0.00**, the majority of the arm "
+        "universe is below floor in most samples: any arm-level statistic is dominated by arms that are "
+        "not expressed. Gate on `tier_expressed` (True on 718).",
+    ("arm", "isoc_med_reads"): "Median isomiR reads for this arm — **median 1.00, max 528,927**. ⚠ A "
+        "median of 1 read means half the arms rest on a single read; treat the isomiR block as a "
+        "case series on the well-covered tail, not a distribution.",
+    ("arm", "abund_sd_tertile"): "Dispersion tertile — **718 / 716 / 718 by construction**, so it carries "
+        "no information beyond `abund_sd`'s rank. ⭐ Useful only as a ready-made stratifier; never report "
+        "the tertile counts as a finding.",
+    ("arm", "cnvc_partial_q"): "BH q for the arm's CN-coupling partial correlation. Median **0.39**; "
+        "`cnvc_partial_rho` median **+0.05** against `cnvc_spearman_rho` **+0.06** ⇒ conditioning barely "
+        "moves it, i.e. the CN association is not being carried by the covariates.",
     # ── UNIT 24 (2026-08-19) — edge `cptac_`/`gene_`, gene `armres_`, arm `wshift_`/`sub_`/`famrole_`.
     ("edge", "heur_gene_nreg"): "Regulator count for this gene from the §6b-RETIRED heuristic lane. "
         "⛔ **RENAMED from `gene_nreg` 2026-08-19: it is 100% BIT-IDENTICAL to the gene card's "

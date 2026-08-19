@@ -209,6 +209,22 @@ card's key**:
    **RULE: after ANY card rebuild — arm included — re-run `card_ladders --annotate`, then
    `card_rungs --check`, then `gen_cards --build`.** The annotator prints
    *"pre-existing columns bit-identical"*, which is the confirmation to look for.
+5b. ⛔⛔ **A PRUNE MUST RUN AFTER THE LAST THING THAT CAN RE-INTRODUCE THE COLUMN — and "it printed
+   DROPPED" is not evidence it is gone.** *(Added 2026-08-19, unit 25, after two silent failures.)*
+   `_annotate` **preserves every pre-existing column** by design. So a prune placed in a normaliser (which
+   runs FIRST) is undone for any column that lives on the BASE card: the run prints `✅ DROPPED`, the
+   annotator re-reads the file, and the column is still delivered. `adm_expressed` survived two such
+   attempts before the prune was moved to a **post-annotation** step.
+   **RULE — a column can enter the card from three places, and a prune has to cover the one it uses:**
+   | where it comes from | where to prune |
+   |---|---|
+   | an annotation block (`card_ladders`) | the block's own `keep`/`return` |
+   | the BASE card (`canonical_card` / `realization`) | the **post-annotation** step, and the base builder |
+   | a normaliser-owned rename | the normaliser |
+   ⇒ **verify by re-reading the delivered file, never by trusting the print.** Both are now in place for
+   `adm_expressed`: `edge_admissibility()` no longer emits it, and the post-prune covers the stale base
+   until the rebuild.
+
 5. ⚠ **`gene_family_card.tsv` has no `_finish_card` call site** — ⛔⛔ **AND THIS BIT, EXACTLY AS
    WRITTEN (2026-08-19).** Column-review unit C pruned `p_fam` and renamed `n`→`n_samples`; that landed via
    `realization._normalise_edge_names`, which funnels the **edge card only**, so the family card kept BOTH
@@ -233,7 +249,14 @@ card's key**:
   gated one and recompute it** — `top_identity_gated` / `arb_max_identity` now do. And ship the gated
   version BESIDE the raw column, never over it: silently rewriting a value another module wrote is how
   provenance rots.
-- **`retention` names two unrelated quantities** — see `PATIENT_QUESTION_TAXONOMY.md` §5.
+- ⛔⛔ **`retention` names FIVE unrelated quantities, not two.** MH-258 found four estimands sharing
+  the name (`β_deconv/β_core` · `ρ_adj/ρ_raw` · `gap_deconv/gap_core` · `state.py`'s `ρ_H/ρ_Tsub`), and
+  unit 25 found a fifth: **`field_retention` is not a ratio at all** — it equals `field_r_own −
+  field_r_perm`, a permutation-corrected EXCESS (verified exact within rounding on 571 arms). ⚠ Because
+  it is bounded like a correlation it never trips `ratio_blowup_audit`, so **the tooling cannot find this
+  class — only reading the estimator can.** `learned/retention.py` is the home for the four true ratios;
+  this one is deliberately NOT in it.
+- **`retention` (original note) names two unrelated quantities** — see `PATIENT_QUESTION_TAXONOMY.md` §5.
 - **An arm-rung column must be constant within arm ACROSS genes.** If it varies by gene it is not an arm
   property, whatever its name suggests (MH-214).
 

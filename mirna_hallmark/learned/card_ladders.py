@@ -727,7 +727,12 @@ def edge_admissibility() -> pd.DataFrame:
     if not p.exists():
         return pd.DataFrame()
     d = pd.read_csv(p, sep="\t")
-    keep = [c for c in ("has_site", "expr_tcga", "expr_gtex", "expressed", "admissible")
+    # ⛔ `expressed` DROPPED 2026-08-19 (unit 25): once prefixed it became `adm_expressed`, which is
+    # **BIT-IDENTICAL to `adm_expr_tcga`** (100.00% on 4,937 edges) and says *expressed* without saying
+    # where. The explicit pair `adm_expr_tcga` / `adm_expr_gtex` names the cohort. ⚠ Dropped HERE, at the
+    # block that creates it — an earlier attempt to drop it from the delivered card failed silently because
+    # `_annotate` re-adds every block AFTER the normalisers run. **Prune at the producer, not at the file.**
+    keep = [c for c in ("has_site", "expr_tcga", "expr_gtex", "admissible")
             if c in d.columns]
     return (d[["gene", "arm"] + keep]
             .rename(columns={c: f"adm_{c}" for c in keep})
@@ -876,10 +881,19 @@ def seedless_chimeric_candidates(strong: float = -0.10) -> pd.DataFrame:
         return pd.DataFrame()
     s = e[e["adm_has_site"].notna() & e["coupling_tum"].notna()]
     s = s[~s["adm_has_site"].astype(bool) & (s["coupling_tum"] < strong)]
-    if "echim_any" in s.columns:
-        s = s[s["echim_any"].fillna(False).astype(bool)]
+    # ⛔⛔ RIPPLE FIX 2026-08-19 (unit 25): this used to read `if "echim_any" in s.columns: s = s[...]`.
+    # `echim_any` was PRUNED in unit 21 (a literal `True` carrying 0 bits) — and because the guard is
+    # DEFENSIVE (`if ... in s.columns`), the prune did not raise: it silently DELETED this filter, so the
+    # function began returning un-filtered rows. **A defensive guard converts a prune into a silent
+    # behaviour change** — exactly what axiom 2 (trace the downstream ripple) exists to catch, and I missed
+    # it when pruning. `echim_n_sources.notna()` is the verified-identical replacement (same mask on all
+    # 1,449 rows), and it is NOT defensive: if that column ever goes, this raises.
+    s = s[s["echim_n_sources"].notna()]
     keep = [c for c in ("gene", "arm", "seed_family", "coupling_tum", "coupling_p_tum", "beta",
-                        "adm_expressed", "echim_manakov_w", "echim_tarbase_w", "echim_n_sources",
+                        # ⛔ was `adm_expressed` — BIT-IDENTICAL to `adm_expr_tcga` (100.00% on 4,937
+                        # edges) but ambiguously named: "expressed" where? The explicit pair
+                        # `adm_expr_tcga` / `adm_expr_gtex` says which cohort. Unit 25.
+                        "adm_expr_tcga", "echim_manakov_w", "echim_tarbase_w", "echim_n_sources",
                         "kd_affinity_pct", "kd_repression", "retention_rho") if c in s.columns]
     return s[keep].sort_values("coupling_tum")
 
@@ -975,6 +989,25 @@ def _run(*, annotate_cards: bool) -> None:
     _annotate(OUT / "arm_card.tsv", [(arm_admissibility_rollup(), ["arm"]),
                                      (family_state_shift(), ["arm"]),
                                      (discovery_queue_rollup("arm"), ["arm"])])
+    # ⛔⛔ POST-ANNOTATION PRUNES (unit 25). These MUST run after every `_annotate` call, not before.
+    # ⚠ Learned the hard way: `adm_expressed` was dropped in `normalise_flag_cards()` (which runs FIRST),
+    # the run printed "DROPPED", and the column was still on the delivered card — because it is baked into
+    # the STALE BASE card and `_annotate` preserves every pre-existing column. Two earlier attempts failed
+    # silently this way. ⇒ **a prune has to happen after the last thing that can re-introduce the column**,
+    # and for a base-card column that is here. (The producer `edge_admissibility()` is fixed too, so the
+    # rebuild will not reintroduce it either.)
+    _post = {"realization/edge_card.tsv": ["adm_expressed"]}
+    for _rel, _cols in _post.items():
+        _p = OUT / _rel
+        if not _p.exists():
+            continue
+        _d = pd.read_csv(_p, sep="\t", low_memory=False)
+        _gone = [c for c in _cols if c in _d.columns]
+        if _gone:
+            _d.drop(columns=_gone).to_csv(_p, sep="\t", index=False)
+            print(f"  ✅ post-prune {_rel}: dropped {_gone} "
+                  f"({_d.shape[1]} -> {_d.shape[1]-len(_gone)} cols)")
+
     # ⭐ MH-218: give MH-217's candidates a FILE, not just a count in a chat log.
     cand = seedless_chimeric_candidates()
     if len(cand):

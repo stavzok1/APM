@@ -35,8 +35,13 @@ for gene, sub in e.groupby("gene"):
                   "reg_promisc_min": np.min(pf), "reg_promisc_sd": np.std(pf),
                   "reg_promisc_hhi": GA.hhi(np.expm1(pf))})
     # arm-within-family identifiability (the user's explicit sub-question)
+    # ⛔ RIPPLE FIX 2026-08-19 (unit 25): `echim_any` was PRUNED (unit 21 — a literal `True` carrying
+    # 0 bits) and `n_regulators`/`n_dense_included` were renamed/dropped. Both call sites here are
+    # GUARDED (`if c in sub.columns` / a `[c for c in CARD if ...]` filter), so nothing raised — the
+    # axes simply stopped being built. **A guarded reference converts a prune into a silently
+    # missing AXIS**, which in a scan reads as 'tested and null'.
     for c, nm in [("arm_resolvable","armres_frac"),("adm_has_site","site_frac"),
-                  ("adm_admissible","adm_frac"),("echim_any","chim_frac")]:
+                  ("adm_admissible","adm_frac"),("echim_n_sources","chim_frac")]:
         if c in sub.columns:
             v = sub[c]
             v = v.map({True:1.0,False:0.0,"True":1.0,"False":0.0}).astype(float) if v.dtype==object else v.astype(float)
@@ -51,11 +56,14 @@ for gene, sub in e.groupby("gene"):
 R = pd.DataFrame(rows).set_index("gene")
 
 # ---- card_* / ident_* / self_* from the gene card ----
-CARD = ["n_arms","n_fam","n_regulators","n_identified","frac_identified","concentration",
+CARD = ["n_arms","n_fam","n_identified","frac_identified","concentration",
         "top_beta_frac","total_pressure","top_beta","w_max","ctx_ceiling","ctx_dose_max",
         "ctx_dose_med","ctx_n_abund","ctx_frac_abund","ctx_n_fam_multi","ctx_d_collin",
         "median_retention","realized_retention","realized_n_reg","greal_n_scored",
-        "greal_med_coupling","greal_frac_c10","n_hallmark_sets","n_dense_included"]
+        # ⛔ `n_dense_included` DROPPED (bit-identical to `n_fam`, already in this list) and
+        # `n_regulators` -> `heur_n_regulators` (the §6b-RETIRED lane; `n_arms` is the fit's own width and
+        # is already here). Both were silently absent from the axis set until 2026-08-19.
+        "greal_med_coupling","greal_frac_c10","n_hallmark_sets", "heur_n_regulators"]
 IDENT = ["top_identity","max_beta_frac_sd"]
 A = g[[c for c in CARD if c in g.columns]].add_prefix("card_")
 A = A.join(g[[c for c in IDENT if c in g.columns]].add_prefix("ident_"))
