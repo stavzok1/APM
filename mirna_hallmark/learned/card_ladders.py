@@ -229,7 +229,12 @@ def normalise_flag_cards() -> None:
         if not path.exists():
             continue
         d = pd.read_csv(path, sep="\t", low_memory=False)
-        if _repair_nan_flags(d, card):
+        moved = _repair_nan_flags(d, card)
+        # ⛔ unit 21: drop the pruned constant from the delivered card too
+        if card == "edge" and "echim_any" in d.columns:
+            d = d.drop(columns=["echim_any"]); moved += 1
+            print("  ✅ edge.echim_any DROPPED (constant True, 0 bits beyond echim_n_sources.notna())")
+        if moved:
             d.to_csv(path, sep="\t", index=False)
 
 
@@ -811,7 +816,13 @@ def edge_chimeric() -> pd.DataFrame:
          .rename(columns={"manakov": "echim_manakov_w", "tarbase": "echim_tarbase_w"}))
     n = d.groupby(["gene", "arm"])["source"].nunique().rename("echim_n_sources")
     out = w.join(n).reset_index()
-    out["echim_any"] = True
+    # ⛔ PRUNED 2026-08-19 (column review unit 21): `out["echim_any"] = True` — a literal constant on
+    # a frame that only ever holds edges WITH chimeric evidence, so it carried **0 bits**: its
+    # non-null mask is IDENTICAL to `echim_n_sources`'s (verified on all 1,449 rows) and its only
+    # value is True. It was the original exemplar of "a flag that can never say unknown" (MH-256);
+    # the honest fix is deletion, not masking — `echim_n_sources.notna()` already answers "any?".
+    # ⚠ Do NOT re-add it as a True/False over ALL edges without deciding what a False means:
+    # "no chimeric evidence" and "not scanned for chimeric evidence" are different claims.
     return out.drop_duplicates(subset=["gene", "arm"])
 
 

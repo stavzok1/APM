@@ -975,6 +975,41 @@ COLUMNS.update({
     ("gene", "n_hallmark_sets"): "How many MSigDB Hallmark programs this gene belongs to.",
     ("edge", "n_HLY_meas"): "How many of the gene's arms have a MEASURED (not imputed, not "
                             "multi-mapping-collapsed) healthy level. Read before any `share_HLY`/`rank_HLY`.",
+    # ── UNIT 21 (2026-08-19) — arm `sdsz_`/`gctx_`/`cnv_`/`seq_`/`foc_`/`ts_`/`bc_meth_`, edge `echim_`.
+    ("arm", "seq_n_genes_any"): "Genes with ANY scanMiR K_D site — ⛔⛔ **median 10,485 of ~12,700, i.e. "
+        "this arm 'targets' 83% of the transcriptome.** It is a sequence-scan ceiling, not a targetome. "
+        "⭐⭐ **SIX targetome universes sit on this card and they span 276× (median 38 → 10,485), with "
+        "pairwise spearman from +0.029 to +0.966** — `seq_n_genes_any` vs `fame_n_genes_curated` is "
+        "**+0.029, essentially UNRELATED** ⇒ curation is not sampling the predicted targetome. **Never "
+        "blend them, and always name which universe a 'targetome' number came from.**",
+    ("arm", "seq_n_genes_strong"): "Genes with a STRONG scanMiR K_D site — median 3,632, spearman **+0.822** "
+        "with `sdsz_N_eff` and **+0.797** with `site_n_genes_canonical`, but only **+0.566** with "
+        "`ts_n_genes`. The strong cut makes scanMiR behave like the seed scans; the `any` cut does not "
+        "(+0.231 with `ts_n_genes`).",
+    ("arm", "sdsz_N_eff"): "Effective seed-site count over the scanned universe (median 2,094, fill "
+        "**96.7%** — the best-covered targetome axis). ⛔ **Spearman +0.966 with `site_n_genes_canonical`** "
+        "at 6.6× the scale ⇒ **one axis, two scales — do not scan both** (the `comp_*_driver_share` lesson).",
+    ("arm", "ts_n_genes"): "Genes with a TargetScan context++ site — median 497, fill **12.9%, the "
+        "SPARSEST universe on the card**. Correlates +0.726 with the MANE seed scan and only **+0.231** "
+        "with scanMiR-any. ⚠ A statement about 'the targetome' computed here covers 13% of arms.",
+    ("arm", "ts_ctx_best"): "Best (most negative) TargetScan context++ score for this arm — range "
+        "[−2.02, −0.34], **all negative by construction** (context++ scores repression as a negative "
+        "number). ⚠ A MIN over a set whose size varies 5→2,366 genes, so it partly measures how many sites "
+        "were drawn; read `ts_n_sites` beside it.",
+    ("arm", "gctx_coord_source"): "Provenance of the genomic-context coordinates. ⚠ **CONSTANT "
+        "(`gencode`, 714 rows)** — kept, not pruned, for the same reason as `ago_dom_src` and `pip_dense`: "
+        "it records a SOURCE decision and would vary if a second annotation were wired.",
+    ("arm", "cnv_pct_deep_del"): "Percent of samples with a deep deletion at this arm's locus. ⚠ **Only 8 "
+        "distinct values and 0.0 on 722 of 855 defined arms (84%)** — effectively a rare-event indicator, "
+        "not a continuous covariate. Do not use it as a regressor without collapsing it to a flag.",
+    ("arm", "bc_meth_direction"): "Tumour-vs-normal methylation direction at this arm's locus. ⚠ **`none` "
+        "on 287 of 343 (83.7%)**, `hypo` 46, `hyper` 10 ⇒ the effective n for any direction contrast is "
+        "**56 arms**. Quote that n whenever this column is stratified on.",
+    ("edge", "echim_n_sources"): "How many chimeric-eCLIP sources support this edge (1 on 1,151 · 2 on 262 "
+        "· 3 on 34). ⭐ **Its `notna()` is the 'any chimeric evidence?' answer** — the former `echim_any` "
+        "column was a literal `True` on exactly these rows, carrying **0 bits**, and was PRUNED 2026-08-19. "
+        "⚠ Do not re-add a True/False over ALL edges without deciding what False means: *no chimeric "
+        "evidence* and *not scanned* are different claims.",
     # ── UNIT 20 (2026-08-19) — arm `fame_` (28) + arm `adm_` (4).
     ("arm", "adm_n_admissible"): "Edges of this arm that pass admissibility (`adm_has_site` + the "
         "evidence bar) — MH-216's single most load-bearing conditioning variable, rolled up per arm. "
