@@ -59,9 +59,19 @@ no-domain columns are **91–100%** populated (arm card 1.000, edge 0.995, gene_
 with-domain columns are **44–77%** — exactly what the definition predicts.
 ⛔ **Do not "fill in the missing domains".** Reading the field name rather than its values made me
 report a nonexistent "179 undescribed columns" gap twice; the check that refuted it was one query.
-**There is separately NO per-column MEANING documentation anywhere** — not in the registry, not in the
-generated `docs/derived/cards/*.html` viewer (which carries `rung` but zero `domain`/`description`).
-That meaning lives only in the producing modules' docstrings. It is a real gap; `domain` is not it.
+✅ **THE MEANING GAP IS CLOSED (2026-08-18).** This block used to end *"there is separately NO per-column
+MEANING documentation anywhere ... it lives only in the producing modules' docstrings."* `learned/card_glossary.py`
+now carries one for **all 702 columns (100%)**, and it is **CARD-SCOPED for the same reason `domain_of` is**:
+`describe("beta", card="edge")` and `describe("beta", card="gene_family")` return *different* text, because
+they are different quantities. Resolution order: exact `(card, column)` override → the card's own prefix
+block → the global prefix block → **`None`, counted as missing and never guessed**.
+```
+python3 -m mirna_hallmark.learned.card_glossary            # coverage report
+python3 -m mirna_hallmark.learned.card_glossary --emit     # -> output/learned/card_glossary.tsv
+python3 -m mirna_hallmark.learned.card_glossary --col beta # one column, every card it lives on
+```
+⚠ Still true, and the reason the glossary is a THIRD field rather than a rename: `domain` is
+row-applicability, `rung` is the unit, `description` is the meaning. Three orthogonal facts.
 
 ## 3. ⭐ The labels are TESTED, not asserted
 
