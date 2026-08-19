@@ -714,10 +714,26 @@ COLUMNS.update({
 
 
 def describe(col: str, card: str = "") -> str | None:
-    """Description for one column, CARD-SCOPED. Exact override first, then the card's own prefix
-    entry, then the global prefix entry. Returns None when nothing is recorded — never a guess."""
-    if (card, col) in COLUMNS:
-        return COLUMNS[(card, col)]
+    """Description for one column, CARD-SCOPED. Resolution order, most specific first:
+
+        COLUMNS[(card, col)]   this card's exact override
+        COLUMNS[("", col)]     an ALL-CARDS exact entry            <- added 2026-08-19
+        BLOCKS[(card, prefix)] this card's prefix block, longest prefix wins
+        BLOCKS[("", prefix)]   the all-cards prefix block
+        None                   nothing recorded — never a guess
+
+    ⭐ **THE `("", col)` STEP EXISTS BECAUSE ITS ABSENCE WAS A TRAP (user-directed).** `BLOCKS` is
+    PREFIX-matched and `COLUMNS` is EXACT-matched, so an `("", name)` key was meaningful in one table and
+    silently inert in the other: written into `COLUMNS`, it could never be found, because lookup asks for
+    `("arm", name)` / `("gene", name)`. **That mistake was made three times in one session**
+    (`detection`/`spiker`, the `n`/`p_fam` batch, `disc_gold_families`) and each time the only symptom was
+    a coverage number one or two short of 100%. Accepting `("", col)` here makes an all-cards exact entry
+    mean what it looks like it means, in BOTH tables.
+    ⚠ A per-card entry still wins over an all-cards one — that is the point of card-scoping (MH-220).
+    """
+    for key in ((card, col), ("", col)):
+        if key in COLUMNS:
+            return COLUMNS[key]
     for key_card in (card, ""):
         hits = [(p, t) for (c, p), t in BLOCKS.items() if c == key_card and col.startswith(p)]
         if hits:
