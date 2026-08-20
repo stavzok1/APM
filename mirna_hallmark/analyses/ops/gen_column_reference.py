@@ -276,11 +276,20 @@ def _load() -> pd.DataFrame:
     # summary and shown ONCE; a column then carries only what is TRUE OF IT ALONE. A column with no own
     # text is not blank — it still shows its rung, type, range and coverage, and the block summary above
     # explains the family.
+    # ⛔ FIXED (user-caught): this used to flag only the block's MODAL description, so a text shared by a
+    # NON-modal pair slipped through and still printed twice — `fam_ctx_composition` and its sibling being
+    # the reported case. ANY description occurring more than once within a (card, block) is shared.
     g["shared"] = False
     for (card, blk), sub in g.groupby(["card", "block"]):
         counts = sub.description.value_counts()
+        rep = set(counts[counts > 1].index)
+        if rep:
+            g.loc[sub.index[sub.description.isin(rep)], "shared"] = True
+    g["_modal"] = False
+    for (card, blk), sub in g.groupby(["card", "block"]):
+        counts = sub.description.value_counts()
         if len(counts) and counts.iloc[0] > 1:
-            g.loc[sub.index[sub.description == counts.index[0]], "shared"] = True
+            g.loc[sub.index[sub.description == counts.index[0]], "_modal"] = True
     return g
 
 
@@ -490,7 +499,7 @@ def build() -> pathlib.Path:
 
             # ── BLOCK SUMMARY: the text every column in this block shared, hoisted and shown ONCE,
             #    plus what the block looks like as a whole.
-            shared_rows = rows[rows.shared]
+            shared_rows = rows[rows._modal]
             types = rows.vtype.value_counts()
             typemix = " · ".join(f"{n}&times; {html.escape(t)}" for t, n in types.items())
             cov = rows.fill.dropna()

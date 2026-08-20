@@ -1191,7 +1191,11 @@ and without it the next drift is silent again.
 
 ---
 
-## ⬜ WRITE THE 79 MISSING COLUMN DESCRIPTIONS (surfaced by the reference, MH-273)
+## ✅ DONE (MH-274) — WRITE THE MISSING COLUMN DESCRIPTIONS (surfaced by the reference, MH-273)
+
+> **Closed 2026-08-19.** The count was actually **82**, not 79 — the dedupe rule that produced the
+> original list only flagged a block's MODAL description. All are now authored, written from the
+> producers; `gen_column_reference --gaps` returns empty and every row is badged authored or derived.
 
 `gen_column_reference --gaps` lists **79 columns with no column-specific glossary entry and no decodable
 token** — they fall back to their block's description, which is why the reference badges them
