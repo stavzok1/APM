@@ -124,9 +124,12 @@ ANNOT_PREFIXES = ("ctx_", "cptac_", "tcga_", "comp_", "cal_")
 # could not catch it, because a stripped column is no longer in `before` to compare against.
 ATLAS_COLS = ("n_fam", "w_max")
 
+#: ⭐ MH-269 renamed `arm_resolvable` -> `cell_arms_resolvable` (a CELL verdict, not a per-arm property).
+#: BOTH are listed: this tuple is a membership test, so keeping the old name costs nothing and a card built
+#: before the rename still classifies correctly.
 ARM_RUNG_COLS = ("n_arm_in_cell", "beta_arm", "sd_arm", "z_arm", "arm_dbeta", "arm_sep_z",
-                 "oof_rho_arm", "oof_rho_fam", "oof_drho", "arm_resolvable", "coupling_fam",
-                 "arm_credit_share")
+                 "oof_rho_arm", "oof_rho_fam", "oof_drho", "cell_arms_resolvable", "arm_resolvable",
+                 "coupling_fam", "arm_credit_share")
 
 # ⭐ POSTERIOR-WIDTH CALIBRATION CONSTANT (MH-185, 2026-08-01). `calibration.posterior_calibration`
 # compares the reported posterior SD against the TRUE sampling SD from INDEPENDENT half-cohorts.

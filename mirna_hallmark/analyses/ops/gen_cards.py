@@ -498,7 +498,7 @@ def roundtrip(card: str, *, sigfig: int = 4, verbose: bool = True) -> list[str]:
 BLOCKS: list[tuple[str, str, tuple, tuple]] = [
     ("identity",   "Identity & locus",
      ("arm_", "seed_", "family_", "gene_", "gctx_", "field_", "tier_", "n_"),
-     ("detection", "role", "arms", "n", "identified", "spiker")),
+     ("detection", "gene_cancer_role", "arms", "n", "identified", "spiker")),
     ("admiss",     "Admissibility", ("adm_",), ()),
     ("abundance",  "Abundance & dose",
      ("abund_", "dose_", "grank_", "rank_", "healthy_", "hly_", "ago_", "aid_", "pressure_"),

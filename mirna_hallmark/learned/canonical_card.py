@@ -177,11 +177,14 @@ def _join_and_write(attr: pd.DataFrame, prog: pd.DataFrame) -> pd.DataFrame:
     # ⭐ DEDUCIBLE within-family identity allocation (MH-166 follow-up). β/identity are broadcast equally to same-seed
     # members; where the family is dose-DOMINATED the credit is deducibly the dominant arm's, so null it on the phantom
     # (below-floor) minor. `co` (dose-balanced) arms carry an UNVALIDATED arm split (needs breast chimeric/knockdown).
-    if "identity" in card and "family_role" in card:
-        _minor = card["family_role"].eq("minor")
+    # ⭐ MH-269: `family_role` -> `arm_role_in_family` (it is the ARM's dose role, not the family's role in
+    # the gene). Both names accepted through the transition — a card built before the rename still works.
+    _rolecol = next((c for c in ("arm_role_in_family", "family_role") if c in card), None)
+    if "identity" in card and _rolecol:
+        _minor = card[_rolecol].eq("minor")
         card["identity_allocated"] = card["identity"].mask(_minor, 0.0)          # phantom minors → 0; else family identity
         card["arm_id_status"] = np.select(
-            [card["family_role"].eq("co"), card["family_role"].eq("sole")],
+            [card[_rolecol].eq("co"), card[_rolecol].eq("sole")],
             ["unvalidated_balanced", "singleton"], default="resolved_by_dose")   # dominant/minor = dose-resolved
     card = card.sort_values(["gene", "beta"], ascending=[True, False], na_position="last")
     card.to_csv(OUT_CARD, sep="\t", index=False, float_format="%.5f")

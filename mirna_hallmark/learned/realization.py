@@ -917,7 +917,10 @@ def edge_card(*, annotate: bool = True) -> pd.DataFrame:
         m = m.merge(fr, on=["gene", "seed_family"], how="left")
     roles = GR.load_gene_roles(list(m.gene.unique())).set_index("gene")["role"]
     cp = cor.set_index("gene")
-    m["role"] = m.gene.map(roles).fillna("unknown")
+    # ⭐ MH-269: named `gene_cancer_role` on the card. Bare `role` on an EDGE card reads as the ARM's role;
+    # it is the GENE's oncogene/TSG call. ⚠ `gene_roles`' own frame keeps `role` — that name is correct in
+    # its own scope, and renaming a source to fix a card is how a second collision starts.
+    m["gene_cancer_role"] = m.gene.map(roles).fillna("unknown")
     m["gene_nreg"] = m.gene.map(cp["n_regulators"])
     m["gene_repr_class"] = m.gene.map(cp["gene_repression_class"])
     m["gene_net_repr"] = m.gene.map(cp["gene_net_repressed_tumor"])

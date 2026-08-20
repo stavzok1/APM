@@ -29,7 +29,7 @@ print(f"   => identity net {len(w)-len(l):+d} genes over magnitude against the l
 
 print("\n" + "="*95); print("2. ARM-IN-FAMILY — the genes where resolving the arm matters MOST"); print("="*95)
 mm = e[num(e.n_arm_in_cell)>1].copy(); mm["dr"] = num(mm.oof_drho)
-top = mm.nsmallest(15,"dr")[["gene","arm","seed_family","oof_drho","arm_sep_z","arm_resolvable","n_arm_in_cell","coupling_tum"]]
+top = mm.nsmallest(15,"dr")[["gene","arm","seed_family","oof_drho","arm_sep_z","cell_arms_resolvable","n_arm_in_cell","coupling_tum"]]
 print(top.to_string(index=False))
 
 print("\n" + "="*95); print("3. PROTEIN — the strongest protein-coupled genes, and prospective-vs-t105 agreement"); print("="*95)

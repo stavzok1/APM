@@ -383,7 +383,7 @@ BLOCKS: dict[tuple[str, str], str] = {
     # cannot serve both, so the seven get exact entries here — which beat any prefix, on every card.
     ("", "arm_med_rpm"): "The arm's MEDIAN RPM across tumour samples — its abundance level, gene-free. "
                          "Defined on the 19.8% of arms with tumour expression data.",
-    ("", "arm_pct_floor"): "⛔ **THE NAME READS BACKWARDS.** Computed as `100·mean(x > FLOOR)` — the percent "
+    ("", "arm_pct_above_floor"): "⛔ **THE NAME READS BACKWARDS.** Computed as `100·mean(x > FLOOR)` — the percent "
                            "of samples ABOVE the detection floor, i.e. **HIGH = WELL DETECTED**, not "
                            "'percent at the floor'. Verified: ρ=**+0.917** with `arm_med_rpm`. "
                            "Median arm sits at **5%**; 162 arms at 0%, 91 at 100%. Feeds `arm_spiker` "
@@ -554,7 +554,7 @@ COLUMNS: dict[tuple[str, str], str] = {
     ("edge", "arm_iqr"): "Interquartile range of the arm's abundance — its DYNAMIC RANGE. ⭐ Dispersion is "
                          "usually the informative half against level (axiom 8), though it did NOT separate "
                          "diluting from improving mates in MH-248 (q=0.47).",
-    ("edge", "arm_pct_floor"): "Percent of samples in which the arm sits above the detection floor "
+    ("edge", "arm_pct_above_floor"): "Percent of samples in which the arm sits above the detection floor "
                                "(median 99). Feeds `arm_spiker` together with `arm_iqr`.",
     ("", "arm_lfc_"): "Log fold-change of the ARM's abundance between two states. ⚠⚠ **ONLY "
                       "`arm_lfc_NAT_TUM` IS SAME-PLATFORM (TCGA→TCGA). Every `HLY` leg crosses "
@@ -589,7 +589,7 @@ COLUMNS: dict[tuple[str, str], str] = {
     ("edge", "arm_sep_z"): "`arm_dbeta` in units of the cell's own pooled posterior SD — can these "
                            "same-seed arms be told apart at all. ⚠⚠ **Also a CELL quantity, constant "
                            "within all 467 cells.** Median 1.59.",
-    ("edge", "arm_resolvable"): "Are the cell's arms separable AND does splitting them help out-of-fold. "
+    ("edge", "cell_arms_resolvable"): "Are the cell's arms separable AND does splitting them help out-of-fold. "
                                 "True for 31.7% of edges in multi-arm cells. ⚠⚠ **A CELL verdict, constant "
                                 "within all 467 cells** — not a property of the individual arm.",
     ("edge", "z_arm"): "`beta_arm / sd_arm` from the WITHIN-CELL fit (`arm_rung.py`) — the arm's z inside "
@@ -982,18 +982,18 @@ COLUMNS.update({
         "as provenance, like `pip_dense` and `ago_dom_src`: it records a MODELLING CHOICE, and a reader "
         "reconstructing the fit needs it. A constant column is dead only when it records a defunct CHECK.",
     # ── UNIT 26 (2026-08-19) — edge `d_`/`share_`/`rank_`/`family_`, gene `tcga_`/`dominant_`, arm `aid_`.
-    ("edge", "family_size"): "Members of this arm's seed family **THAT ARE IN THIS GENE'S DESIGN** — 1 on "
+    ("edge", "n_family_in_design"): "Members of this arm's seed family **THAT ARE IN THIS GENE'S DESIGN** — 1 on "
         "**4,497 of 5,644 edges (79.7%)**. ⛔⛔ **NOT the family's membership**, and the difference is the "
         "whole of MH-248: a gene's design holds a median 0.67 of its seed family. ⇒ `family_size == 1` with "
         "`family_role` of `co`/`minor` on **1,077 edges** is NOT a contradiction — it is one design member "
         "carrying a minority of the FULL family's dose. ✅ Agrees with `n_arm_in_cell` wherever that is "
         "defined (it is domain-gated to multi-arm cells; this one is defined everywhere).",
-    ("edge", "family_role"): "⛔ **The ARM's DOSE role inside its seed family — NOT the family's role in "
+    ("edge", "arm_role_in_family"): "⛔ **The ARM's DOSE role inside its seed family — NOT the family's role in "
         "the gene**, which is what the name suggests. Verified against `family_dose_share`: `sole` 1.000 · "
         "`dominant` 0.940 · `co` 0.430 · `minor` 0.040. ⚠ It is nearly INDEPENDENT of the gene's family "
         "count — `sole` implies `n_fam == 1` on only **13.7%** of edges. ⇒ read it with `family_size`, and "
         "see that entry for why size 1 + role `minor` is coherent.",
-    ("edge", "family_dose_share"): "The arm's share of its seed family's TOTAL dose — denominator is the "
+    ("edge", "arm_share_of_family_dose"): "The arm's share of its seed family's TOTAL dose — denominator is the "
         "**full family**, not the design (median 0.69). The quantity `family_role` is cut from.",
     ("edge", "share_HLY"): "The arm's share of the gene's healthy (GTEx) pressure budget, median **0.129**. "
         "⛔⛔ **IMPUTED — invisible arms are ZEROED, not abstained**, which spreads each visible arm's share "
@@ -1016,7 +1016,7 @@ COLUMNS.update({
         "identifiability block is the sparsest on the card). `aid_frac_resolvable` median **0.19** ⇒ even "
         "among arms that HAVE a multi-arm cell, most cells do not resolve.",
     # ── UNIT 25 (2026-08-19) — arm `isoc_`/`iso_`/`tier_`/`chim_`/`cnvc_`/`field_`/`abund_`, edge `adm_`.
-    ("arm", "field_retention"): "⛔⛔ **NOT A RETENTION RATIO — a FIFTH sense of the word in this "
+    ("arm", "field_excess_over_perm"): "⛔⛔ **NOT A RETENTION RATIO — a FIFTH sense of the word in this "
         "codebase.** Measured: it equals **`field_r_own − field_r_perm`** (exact within rounding on 100% "
         "of 571 arms, max residual 0.001), i.e. the arm's field correlation MINUS its permutation null — a "
         "permutation-corrected EXCESS, not `adjusted / raw`. ⚠ It is bounded like a correlation "
@@ -1032,7 +1032,7 @@ COLUMNS.update({
     ("edge", "adm_admissible"): "The admissibility verdict: site + evidence + expression. **True on 2,981 "
         "of 4,937 edges (60.4%)** — but see `adm_n_admissible` on the arm card: **69.9% of ARMS have zero**, "
         "so the edge and arm views of this filter differ 2× (MH-259).",
-    ("arm", "iso_total_rpm"): "⚠ **A SUM ACROSS SAMPLES, not a per-sample RPM — the name misleads.** Max "
+    ("arm", "iso_rpm_summed"): "⚠ **A SUM ACROSS SAMPLES, not a per-sample RPM — the name misleads.** Max "
         "**270,988,199**, which is impossible for a per-million unit; divided by `iso_n_samples` the scale "
         "is sane (median **57**, max 251,381). ⇒ **always divide by `iso_n_samples`** before comparing arms, "
         "since the sample count ranges 3 → 1,078.",
@@ -1424,7 +1424,7 @@ COLUMNS.update({
     ("arm", "fst_share_HLY"): "Share of family dose in GTEx-healthy, from `hly_gtex_median` (fill "
         "**17.0%** — the sparsest leg). Same singleton degeneracy; and cross-platform, so contrast only.",
     # ── UNIT 14 (2026-08-19) — the BARE-name columns, the six that collide across cards.
-    ("edge", "role"): "⛔ **NOT the arm's role — the GENE's cancer role** (`oncogene` / `tsg` / "
+    ("edge", "gene_cancer_role"): "⛔ **NOT the arm's role — the GENE's cancer role** (`oncogene` / `tsg` / "
                       "`oncogene/tsg` / `unknown`), from `gene_roles.load_gene_roles`. Rung is **gene**, "
                       "verified constant within gene (max 1 distinct value). ⚠⚠ **COVERAGE IS 11.1%: "
                       "`unknown` on 1,262 of 1,420 genes.** The source is a **232-gene dictionary "
@@ -1468,7 +1468,7 @@ COLUMNS.update({
     ("edge", "arm_iqr"): "Interquartile range of the arm's abundance — its DYNAMIC RANGE. ⭐ Dispersion is "
                          "usually the informative half against level (axiom 8), though it did NOT separate "
                          "diluting from improving mates in MH-248 (q=0.47).",
-    ("edge", "arm_pct_floor"): "Percent of samples in which the arm sits above the detection floor "
+    ("edge", "arm_pct_above_floor"): "Percent of samples in which the arm sits above the detection floor "
                                "(median 99). Feeds `arm_spiker` together with `arm_iqr`.",
     ("", "arm_lfc_"): "Log fold-change of the ARM's abundance between two states. ⚠⚠ **ONLY "
                       "`arm_lfc_NAT_TUM` IS SAME-PLATFORM (TCGA→TCGA). Every `HLY` leg crosses "
@@ -1503,7 +1503,7 @@ COLUMNS.update({
     ("edge", "arm_sep_z"): "`arm_dbeta` in units of the cell's own pooled posterior SD — can these "
                            "same-seed arms be told apart at all. ⚠⚠ **Also a CELL quantity, constant "
                            "within all 467 cells.** Median 1.59.",
-    ("edge", "arm_resolvable"): "Are the cell's arms separable AND does splitting them help out-of-fold. "
+    ("edge", "cell_arms_resolvable"): "Are the cell's arms separable AND does splitting them help out-of-fold. "
                                 "True for 31.7% of edges in multi-arm cells. ⚠⚠ **A CELL verdict, constant "
                                 "within all 467 cells** — not a property of the individual arm.",
 })

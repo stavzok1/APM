@@ -47,8 +47,12 @@ CARDS = {"edge": "realization/edge_card.tsv", "gene": "realization/gene_card.tsv
          "seed_family": "seed_family_card.tsv"}
 TAIL_THR = 5.0
 # counts, reads, distances and PMID tallies are honestly heavy-tailed — excluded unless --counts
+#: ⚠ `_summed$` was added 2026-08-19 by MH-269: renaming `iso_total_rpm` -> `iso_rpm_summed` moved it out
+#: of `_rpm$` and it surfaced as a fresh "blow-up" (tail 5.9). It is an honest SUM across samples — which is
+#: exactly what the new name now says. ⇒ **a rename can change what a name-based rule matches; re-run the
+#: audits after one, and fix the RULE rather than accepting the column.**
 COUNTY = re.compile(r"(^n_|_n_|_n$|_reads$|_count$|_studies$|_pmid|_degree|_size$|_len$|_dist$|_bp$"
-                    r"|_rpm$|_targetome|_w$)")
+                    r"|_rpm$|_summed$|_targetome|_w$)")
 # ⛔ NOTE WHAT IS *NOT* HERE: `*_ret` / `*_retention`. The first version of this module bounded them to
 # [0,1] and produced 14 false positives at the top of the queue. **RETENTION IS NOT BOUNDED** — a sign flip
 # under adjustment gives a negative value and amplification gives >1, both real (MH-253: 21.8% flip, 21.5%

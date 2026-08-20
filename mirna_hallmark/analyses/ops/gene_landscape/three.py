@@ -11,7 +11,7 @@ def num(s):
 print("="*78); print("(a) ARM vs FAMILY — where does resolving arms WITHIN a family buy anything?"); print("="*78)
 sub = e.copy()
 sub["n_arm_in_cell"] = num(sub["n_arm_in_cell"]); sub["oof_drho"]=num(sub["oof_drho"])
-sub["arm_resolvable"]=num(sub["arm_resolvable"]); sub["arm_sep_z"]=num(sub["arm_sep_z"])
+sub["cell_arms_resolvable"]=num(sub["cell_arms_resolvable"]); sub["arm_sep_z"]=num(sub["arm_sep_z"])
 sub["oof_rho_arm"]=num(sub["oof_rho_arm"]); sub["oof_rho_fam"]=num(sub["oof_rho_fam"])
 multi = sub[sub["n_arm_in_cell"]>1]
 print(f"edges total {len(sub)} | in MULTI-ARM family cells {len(multi)} ({len(multi)/len(sub):.1%}) "
@@ -24,11 +24,11 @@ w = stats.wilcoxon(d) if len(d)>10 else None
 print(f"  Wilcoxon vs 0: stat={w.statistic:.0f} p={w.pvalue:.3g}" if w else "")
 print(f"  ** the TAIL (never quote the median): p05={d.quantile(.05):+.4f}  p95={d.quantile(.95):+.4f} "
       f" max|gain|={d.abs().max():.4f}")
-r = multi["arm_resolvable"].dropna()
+r = multi["cell_arms_resolvable"].dropna()
 print(f"\narm_resolvable in multi-arm cells: {r.mean():.1%} of {len(r)} edges")
 for lo,hi,lab in [(1,1,"1 arm"),(2,2,"2 arms"),(3,3,"3 arms"),(4,99,"4+ arms")]:
     m = sub[(sub["n_arm_in_cell"]>=lo)&(sub["n_arm_in_cell"]<=hi)]
-    dd = m["oof_drho"].dropna(); rr = m["arm_resolvable"].dropna()
+    dd = m["oof_drho"].dropna(); rr = m["cell_arms_resolvable"].dropna()
     print(f"  {lab:8s} n={len(m):5d}  oof_drho med={dd.median() if len(dd) else float('nan'):+.4f}"
           f"  resolvable={rr.mean() if len(rr) else float('nan'):.1%}")
 

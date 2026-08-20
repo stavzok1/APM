@@ -234,6 +234,46 @@ card's key**:
    The original note stands too: — adding columns there means extending
    `readouts.py`'s promotion or adding one, **plus** registering in `CARDS["family"]["explicit"]`.
 
+## 4c. ⭐⭐ NAME THE ENTITY, NOT THE NEIGHBOURHOOD — and a glossary warning is a patch, not a fix
+
+*(Added 2026-08-19, MH-269, user-directed.)* A column name is read far more often than its glossary entry,
+so a name that says the wrong thing costs a reader every time. **The test is mechanical, not aesthetic:**
+
+> **If a column's own documentation has to begin *"NOT the …"*, the NAME is the defect.**
+
+Scanning all 711 glossary entries for that admission returned 47 candidates. ⚠ **Most were USAGE caveats**
+(*"not a continuous covariate"*, *"not the point"*) — those are fine and were left alone. **Nine named the
+WRONG ENTITY** — a different unit, owner, or operation than the value carries — and were renamed:
+
+| was | now | what the old name got wrong |
+|---|---|---|
+| `family_size` | `n_family_in_design` | counts members **in this gene's design**, not the family |
+| `family_role` | `arm_role_in_family` | the **ARM's** dose role, not the family's role in the gene |
+| `family_dose_share` | `arm_share_of_family_dose` | denominator is the **full family**, not the design |
+| `role` | `gene_cancer_role` | the **GENE's** oncogene/TSG call, on an EDGE card |
+| `arm_resolvable` | `cell_arms_resolvable` | a **CELL** verdict, constant within the cell |
+| `arm_pct_floor` | `arm_pct_above_floor` | `100·mean(x > FLOOR)` — HIGH means **well detected** |
+| `field_retention` | `field_excess_over_perm` | `r_own − r_perm`; **not a retention ratio at all** |
+| `iso_total_rpm` | `iso_rpm_summed` | a **SUM across samples**, not a per-sample RPM |
+
+**THE RENAME PROCEDURE — all five steps, or the rename is worse than the bad name:**
+1. **Rename POST-annotation** (§4.5b) *and* at the producer. `_annotate` re-adds base blocks under their old
+   names, so a rename placed earlier is silently undone.
+2. **Keep BOTH names registered** in `card_rungs` — the tuples are membership tests, so a card built before
+   the rename still validates.
+3. **Add an `_alias()` shim** wherever code must work across the transition.
+4. ⛔⛔ **RUN `column_ref_audit` — this is the step that matters.** MH-269 went from **0 to 95 open
+   references**, and among them were **the producer of two of the renamed columns** and **four
+   `gene_landscape` axes** that would have silently stopped being built. Hand-grepping had missed all of
+   them.
+5. **Re-run every audit.** A rename changes what NAME-BASED rules match: `iso_rpm_summed` fell out of
+   `ratio_blowup_audit`'s `_rpm$` count-exclusion and surfaced as a false blow-up. **Fix the rule, do not
+   accept the column.**
+
+⚠ **Rename the CARD copy only.** `role` stayed `role` inside `gene_roles.py` and every analysis reading its
+frame — that name is correct in that scope. **Renaming a source to fix a card is how a second collision
+starts.**
+
 ## 5. Traps with a recorded cost
 
 - **`w_max` is the max curated EVIDENCE weight**, not a β or dose share (`top_beta_frac` /

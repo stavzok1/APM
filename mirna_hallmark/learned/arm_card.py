@@ -743,10 +743,13 @@ def _arm_identifiability() -> pd.DataFrame:
     d = d[d._k.notna()]
     g = d.groupby("_k")
     out = pd.DataFrame({"aid_n_cells": g.size()})
-    for c, name in (("arm_resolvable", "aid_frac_resolvable"), ("arm_sep_z", "aid_med_arm_sep_z"),
+    # ⭐ MH-269: `arm_resolvable` -> `cell_arms_resolvable` (it is a CELL verdict, constant within the cell,
+    # not a property of the individual arm). Both accepted so a pre-rename card still rolls up.
+    _res = next((c for c in ("cell_arms_resolvable", "arm_resolvable") if c in d.columns), None)
+    for c, name in ((_res, "aid_frac_resolvable"), ("arm_sep_z", "aid_med_arm_sep_z"),
                     ("oof_drho", "aid_med_oof_drho")):
-        if c in d.columns:
-            out[name] = g[c].mean() if c == "arm_resolvable" else g[c].median()
+        if c and c in d.columns:
+            out[name] = g[c].mean() if name == "aid_frac_resolvable" else g[c].median()
     return out.rename_axis("arm")
 
 
@@ -1077,7 +1080,7 @@ def _cptac_cov() -> pd.Series:
 # --------------------------------------------------------------------------- #
 # EDGE-CARD LIFT
 # --------------------------------------------------------------------------- #
-_LIFT = ("arm_med_rpm", "arm_pct_floor", "arm_iqr", "spiker", "detection", "healthy_leg",
+_LIFT = ("arm_med_rpm", "arm_pct_above_floor", "arm_iqr", "spiker", "detection", "healthy_leg",
          "healthy_potential", "healthy_uninformative", "surrogate_instrument", "surrogate_corr",
          "dose_comp_retention", "dose_prolif_retention", "dose_confounded",
          "arm_lfc_NAT_TUM", "arm_lfc_HLY_TUM_QN", "arm_lfc_HLY_TUM_raw", "arm_lfc_HLY_NAT_raw",

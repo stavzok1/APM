@@ -138,7 +138,10 @@ def gene_arm_resolution() -> pd.DataFrame:
     out = pd.DataFrame({
         "armres_n_multi_cells": cells.groupby("gene").size(),
         "armres_n_arms_split": multi.groupby("gene")["arm"].nunique(),
-        "armres_frac_resolvable": multi.groupby("gene")["arm_resolvable"].apply(lambda s: num(s).mean()),
+        # ⭐ MH-269: `arm_resolvable` -> `cell_arms_resolvable`; `_alias` accepts either so a card built
+        # before the rename still rolls up rather than silently losing the axis (the MH-266 failure class).
+        "armres_frac_resolvable": multi.groupby("gene")[_alias(multi, "cell_arms_resolvable")
+                                                        or "cell_arms_resolvable"].apply(lambda s: num(s).mean()),
         "armres_med_sep_z": multi.groupby("gene")["arm_sep_z"].apply(lambda s: num(s).median()),
         "armres_best_drho": multi.groupby("gene")["oof_drho"].apply(lambda s: num(s).min()),
         "armres_med_drho": multi.groupby("gene")["oof_drho"].apply(lambda s: num(s).median()),
@@ -162,7 +165,7 @@ def gene_arm_resolution() -> pd.DataFrame:
 _NAN_FLAG_REPAIRS = {
     "edge": [("gene_dominated", ["share_TUM"], "group_max"),
              ("healthy_uninformative", ["healthy_potential"], "all"),
-             ("arm_spiker", ["arm_pct_floor", "arm_iqr"], "all"),
+             ("arm_spiker", ["arm_pct_above_floor", "arm_iqr"], "all"),
              ("ctx_measurable", ["ctx_ceiling"], "all")],
     "gene": [("ctx_measurable", ["ctx_ceiling"], "all")],
     "family": [("ctx_measurable", ["ctx_ceiling"], "all")],
@@ -178,8 +181,28 @@ _NAN_FLAG_REPAIRS = {
             ("famrole_is_dominant", ["famrole_abund_share"], "all"),
             ("dose_confounded", ["dose_comp_retention", "dose_prolif_retention"], "any"),
             ("hly_from_seedmate", ["hly_baseline_src"], "all"),
-            ("arm_spiker", ["arm_pct_floor", "arm_iqr"], "all")],
+            ("arm_spiker", ["arm_pct_above_floor", "arm_iqr"], "all")],
 }
+
+
+def _alias(d: pd.DataFrame, name: str) -> str | None:
+    """Resolve a column that may still carry its PRE-MH-269 name, or already carry the explicit one.
+
+    ⛔ **WHY THIS EXISTS.** The explicit renames land POST-annotation, but `_annotate` re-adds base-card
+    blocks under their OLD names on every run — so within a single pass a column can appear under either.
+    Without this, `_NAN_FLAG_REPAIRS`'s `arm_pct_floor` inputs would simply stop matching and the repair
+    would **silently stop applying**: precisely the guarded-reference failure MH-266 recorded three times.
+    ⇒ resolve both directions, and let the rename be the only thing that decides the delivered name.
+    """
+    if name in d.columns:
+        return name
+    for _tab in EXPLICIT_RENAMES.values():
+        for old, new in _tab.items():
+            if name == new and old in d.columns:
+                return old
+            if name == old and new in d.columns:
+                return new
+    return None
 
 
 def _repair_nan_flags(d: pd.DataFrame, card: str) -> int:
@@ -189,6 +212,8 @@ def _repair_nan_flags(d: pd.DataFrame, card: str) -> int:
     if card == "edge":
         _rules += _NAN_FLAG_REPAIRS.get("edge_extra", [])
     for flag, ins, mode in _rules:
+        flag = _alias(d, flag) or flag
+        ins = [_alias(d, i) or i for i in ins]
         if flag not in d.columns or not all(i in d.columns for i in ins):
             continue
         ok = None
@@ -228,6 +253,40 @@ def _repair_ratio_gates(d: pd.DataFrame, card: str) -> None:
         if int(now.notna().sum()) != was:
             print(f"  ✅ {card}.{col}: gated at |{den}| >= {RHO_GATE} — {was} -> {int(now.notna().sum())} "
                   f"rows, max|x| {wmax:.1f} -> {float(now.abs().max()):.2f}")
+
+
+#: ⭐⭐ EXPLICIT COLUMN NAMES (MH-269, user-directed 2026-08-19: *"we need to make column names explicit and
+#: not ambiguous ... on these specific columns and in general"*).
+#:
+#: ⛔ **HOW THE SET WAS CHOSEN — measured, not by taste.** Every column whose OWN glossary entry already had
+#: to say *"NOT the …"* / *"the name misleads"* is, by construction, a name that failed a reader once.
+#: Scanning the 711 entries for that admission returned 47 candidates; **most were USAGE caveats** ("not a
+#: continuous covariate", "not the point") rather than naming faults, and were left alone. What survives is
+#: the set where **the name names the WRONG ENTITY** — a different unit, a different owner, or a different
+#: operation than the value actually carries. A glossary warning is a patch over a bad name; the name is
+#: the fix.
+#:
+#: ⚠ Applied POST-ANNOTATION for the reason doctrine §4.5b records: `_annotate` re-adds every block, so a
+#: rename placed earlier is silently undone for anything that lives on the base card. Renamed at source too
+#: where the producer is in-repo, so the rebuild does not reintroduce the old name.
+#: ⚠ The OLD name is deliberately kept registered in `card_rungs` so a card built before this still
+#: validates — see `_GENE_ROLLUP`'s note.
+EXPLICIT_RENAMES: dict[str, dict[str, str]] = {
+    "realization/edge_card.tsv": {
+        # `family_*` read as properties OF THE FAMILY. Two of the three are not.
+        "family_size":       "n_family_in_design",        # members IN THIS GENE'S DESIGN, not the family
+        "family_role":       "arm_role_in_family",        # the ARM's dose role, not the family's in the gene
+        "family_dose_share": "arm_share_of_family_dose",  # denominator is the FULL family — say so
+        "role":              "gene_cancer_role",          # the GENE's oncogene/TSG call, not the arm's
+        "arm_resolvable":    "cell_arms_resolvable",      # a CELL verdict, constant within the cell
+        "arm_pct_floor":     "arm_pct_above_floor",       # 100*mean(x > FLOOR): HIGH = well detected
+    },
+    "arm_card.tsv": {
+        "field_retention":   "field_excess_over_perm",    # r_own - r_perm; not a retention RATIO at all
+        "iso_total_rpm":     "iso_rpm_summed",            # a SUM across samples, not a per-sample RPM
+        "arm_pct_floor":     "arm_pct_above_floor",
+    },
+}
 
 
 def normalise_flag_cards() -> None:
@@ -1019,6 +1078,18 @@ def _run(*, annotate_cards: bool) -> None:
             _d.drop(columns=_gone).to_csv(_p, sep="\t", index=False)
             print(f"  ✅ post-prune {_rel}: dropped {_gone} "
                   f"({_d.shape[1]} -> {_d.shape[1]-len(_gone)} cols)")
+
+    for _rel in EXPLICIT_RENAMES:
+        _p = OUT / _rel
+        if not _p.exists():
+            continue
+        _d = pd.read_csv(_p, sep="\t", low_memory=False)
+        _map = {o: n for o, n in EXPLICIT_RENAMES[_rel].items()
+                if o in _d.columns and n not in _d.columns}
+        if _map:
+            _d.rename(columns=_map).to_csv(_p, sep="\t", index=False)
+            for _o, _n in _map.items():
+                print(f"  ✅ post-rename {_rel}: {_o} -> {_n}")
 
     # ⭐ MH-218: give MH-217's candidates a FILE, not just a count in a chat log.
     cand = seedless_chimeric_candidates()

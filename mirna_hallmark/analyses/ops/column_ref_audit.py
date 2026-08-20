@@ -61,6 +61,20 @@ RETIRED = {
     "model_n_edges":        "pruned (bit-identical to model_n_genes)",
     "family_n_arms_card":   "pruned (bit-identical to famrole_n_members)",
     "fame_assay_perturbation_studies": "pruned - miRTarBase carries no perturbation assay",
+    # ── MH-269 explicit renames. Each old name is still legitimately referenced in ONE of two ways:
+    # a deliberate both-names transition shim, or a DIFFERENT frame that owns the name in its own scope.
+    "family_size":       "renamed n_family_in_design (MH-269); only the rename table names it",
+    "family_role":       "renamed arm_role_in_family; canonical_card accepts both through the transition",
+    "family_dose_share": "renamed arm_share_of_family_dose; rename table + transition shim only",
+    "arm_resolvable":    "renamed cell_arms_resolvable; card_context/arm_card/rung_parity/_alias accept both",
+    "arm_pct_floor":     "renamed arm_pct_above_floor; card.py + _alias accept both",
+    "field_retention":   "renamed field_excess_over_perm (it is r_own - r_perm, not a ratio)",
+    "iso_total_rpm":     "renamed iso_rpm_summed (a SUM across samples)",
+    # ⚠ `role` is NOT a stale card reference in most of its hits: `gene_roles.py` and every analysis reading
+    # ITS frame own the name `role` in their own scope, correctly. Only the CARD copy became
+    # `gene_cancer_role`. Renaming a source to fix a card is how a second collision starts.
+    "role":              "CARD copy renamed gene_cancer_role (MH-269); gene_roles.py and its readers keep "
+                         "`role` in their own frame — correct in that scope, not a stale card reference",
 }
 SKIP_DIRS = {"__pycache__", "archive", "docs"}
 DEFENSIVE = re.compile(r"(\bin\s+\w+\.columns\b|\.get\(|\bif\b.*\bin\b|\bhasattr\()")

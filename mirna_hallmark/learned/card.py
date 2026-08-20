@@ -265,7 +265,8 @@ def _shift_class(row) -> str:
     dose = row.get("arm_lfc_NAT_TUM", np.nan)                    # SAME-PLATFORM NAT→tumour level shift
     dose_gain = (dose == dose) and dose > 0.3
     if not t:                                                    # not calibrated-repressor in tumour
-        if spk or (row["arm_pct_floor"] == row["arm_pct_floor"] and row["arm_pct_floor"] < 30):
+        _pf = row.get("arm_pct_above_floor", row.get("arm_pct_floor"))   # MH-269: either name
+        if spk or (_pf == _pf and _pf < 30):
             return "undetectable"
         if dose_gain and not (h or n):
             return "dose_acquired_uncoupled"                    # ⭐ dose up, no realized repression (potential only)
@@ -452,7 +453,11 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
                      "arm_lfc_HLY_TUM_raw": lfc_ht_raw, "arm_lfc_HLY_NAT_raw": lfc_hn_raw,
                      "gene_lfc_NAT_TUM": gene_lfc,
                      "coupling_hly": round(ch, 3) if ch == ch else np.nan,
-                     "arm_med_rpm": round(med, 1), "arm_pct_floor": round(pct, 0) if pct == pct else np.nan,
+                     "arm_med_rpm": round(med, 1),
+                     # ⭐ MH-269: `arm_pct_floor` read as "percent AT the floor". It is
+                     # `100*mean(x > FLOOR)` — percent ABOVE it, so HIGH = WELL DETECTED
+                     # (verified rho=+0.917 with arm_med_rpm). The name now says which.
+                     "arm_pct_above_floor": round(pct, 0) if pct == pct else np.nan,
                      "arm_iqr": round(iqr, 1), "spiker": spiker,
                      "coupling_tum": round(ct, 3) if ct == ct else np.nan,
                      "coupling_nat": round(cn, 3) if cn == cn else np.nan,
@@ -470,8 +475,10 @@ def gene_card(gene: str, *, alpha: float = 0.005) -> pd.DataFrame:
                      "term_WIRING": round(t_wi, 3) if t_wi == t_wi else np.nan,
                      "term_INTERACT": round(t_in, 3) if t_in == t_in else np.nan,
                      "wiring_frac": round(wf, 2) if wf == wf else np.nan,
-                     "family_dose_share": _family_alloc_map().get(arm, (np.nan, "sole"))[0],  # within-family dose fraction
-                     "family_role": _family_alloc_map().get(arm, (np.nan, "sole"))[1],        # sole|dominant|minor|co
+                     # ⭐ MH-269: explicit names — the SHARE is the arm's out of the FULL family's dose, and the
+                     # ROLE is the ARM's, not the family's role in the gene.
+                     "arm_share_of_family_dose": _family_alloc_map().get(arm, (np.nan, "sole"))[0], dose fraction
+                     "arm_role_in_family": _family_alloc_map().get(arm, (np.nan, "sole"))[1],   # sole|dominant|co|minor|minor|co
                      "healthy_leg": _healthy_leg_map()[0].get(arm, "true_absent"),  # GTEx-collapse provenance (miTED-aware)
                      "healthy_potential": round(_healthy_leg_map()[1].get(arm, np.nan), 2),  # imputed healthy level (potential)
                      "dose_comp_retention": _dose_retention_map().get(arm, (np.nan, np.nan))[0],   # dose | composition

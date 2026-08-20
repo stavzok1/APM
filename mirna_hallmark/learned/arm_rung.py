@@ -148,7 +148,7 @@ def _one(gene: str):
                          "arm_dbeta": dbeta, "arm_sep_z": sep,
                          "oof_rho_arm": r_arm, "oof_rho_fam": r_fam, "oof_drho": dr,
                          # ⭐ BOTH conditions: distinguishable AND the split pays out-of-fold
-                         "arm_resolvable": bool(np.isfinite(sep) and sep > SEP_Z
+                         "cell_arms_resolvable": bool(np.isfinite(sep) and sep > SEP_Z
                                                 and np.isfinite(dr) and dr < 0)})
     return rows
 

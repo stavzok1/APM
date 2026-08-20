@@ -56,8 +56,10 @@ _READOUTS = ("beta", "beta_sd", "z", "identified", "identity", "identity_deconv"
 # (it was silently filtered before), so the edge card gained a gene-rung `w_max` broadcast to its rows.
 # ⛔ 2026-08-19 column review: `p_fam` PRUNED from both cards (not a p-value — the design
 # dimension; == n_arms on edge, == n_fam on gene_family). `n` -> `n_samples` (constant 1,040).
-_GENE_DESC = ("n_samples", "role", "n_arms", "n_fam", "w_max")
-_ARM_DESC = ("arm_med_rpm", "arm_pct_floor", "arm_iqr", "arm_id_status", "ago_loading",
+#: ⭐ MH-269: `role` -> `gene_cancer_role` on the card (it is the GENE's oncogene/TSG call,
+#: not the arm's). Both registered so a pre-rename card still validates.
+_GENE_DESC = ("n_samples", "role", "gene_cancer_role", "n_arms", "n_fam", "w_max")
+_ARM_DESC = ("arm_med_rpm", "arm_pct_floor", "arm_pct_above_floor", "arm_iqr", "arm_id_status", "ago_loading",
              # ⭐ MH-214: ARM rung like the column it qualifies — derived from the arm alone, so it is
              # constant within arm across genes. A DOMAIN entry alone is not enough: domain says WHERE a
              # column is defined, rung says WHAT UNIT it lives on, and `--check` needs both.
@@ -92,7 +94,7 @@ _EDGE_ONLY = (# ⭐ MH-210's un-imputed healthy leg. EDGE rung, NOT arm: `states
               # the HLY-leg disagreement flag (column review unit 5) — per (gene, arm), since the
               # two legs are compared row-wise; it is NOT an arm property.
               "hly_leg_concordant")
-_FAMILY_ATTR = ("family_size", "coupling_fam", "family_rho_adj", "seed_family", "arms")
+_FAMILY_ATTR = ("family_size", "n_family_in_design", "coupling_fam", "family_rho_adj", "seed_family", "arms")
 # ⭐ RELABELLED 2026-08-19 (column review unit 5) — and the CHECK found them, not I.
 # `arm-in-family` had NO entry in `verify()`'s group map, so it was the THIRD unfalsifiable rung: every
 # declaration passed untested. Giving it its testable NEGATIVE — an arm-relative quantity must actually
@@ -100,10 +102,10 @@ _FAMILY_ATTR = ("family_size", "coupling_fam", "family_rho_adj", "seed_family", 
 # every one of the 295 multi-arm cells. They describe the CELL, not the arm within it, so they are
 # `family` rung. ⚠ I had hand-identified only three of the seven; the other four (`n_arm_in_cell` and the
 # three `oof_*`) would have been missed. Build the check, do not hand-move the columns.
-_CELL_LEVEL = ("arm_dbeta", "arm_sep_z", "arm_resolvable", "n_arm_in_cell",
+_CELL_LEVEL = ("arm_dbeta", "arm_sep_z", "arm_resolvable", "cell_arms_resolvable", "n_arm_in_cell",
                "oof_rho_arm", "oof_rho_fam", "oof_drho")
 # these DO vary inside a cell — verified, so they are genuinely arm-relative (MH-166 allocation work)
-_ARM_IN_FAM = ("arm_credit_share", "arm_id_status", "family_dose_share", "family_role")
+_ARM_IN_FAM = ("arm_credit_share", "arm_id_status", "family_dose_share", "arm_share_of_family_dose", "family_role", "arm_role_in_family")
 # ⚠ `gene_nreg` was RENAMED `heur_gene_nreg` 2026-08-19 (unit 24) — it is bit-identical to the gene
 # card's `heur_n_regulators`, i.e. the §6b-RETIRED heuristic lane under a third name. Both names are
 # listed so a card built before the rename still validates.
@@ -212,7 +214,7 @@ AGG_OF = {"gene": {**{c: "arm" for c in ("cptac_prosp_agg_rho_rna", "cptac_prosp
 # pattern at 98.6-100% for every entry below, so these NaNs are STRUCTURAL.
 DOMAIN = {
     "multi-arm cells only (n_arm_in_cell > 1) — 20.3% of edges": (
-        "arm_dbeta", "arm_sep_z", "arm_resolvable", "n_arm_in_cell", "oof_rho_arm", "oof_rho_fam",
+        "arm_dbeta", "arm_sep_z", "arm_resolvable", "cell_arms_resolvable", "n_arm_in_cell", "oof_rho_arm", "oof_rho_fam",
         "oof_drho", "beta_arm", "sd_arm", "z_arm", "arm_credit_share"),
     "arms with a same-seed SURROGATE (MH-166) — 3.6% of edges": (
         "surrogate_instrument", "surrogate_corr", "coupling_hly_surrogate",
@@ -235,8 +237,8 @@ DOMAIN = {
         "arm_lfc_NAT_TUM", "share_NAT", "rank_NAT", "dose_rank_NAT", "d_rank_NAT_TUM",
         "dose_comp_retention", "dose_prolif_retention", "dose_confounded"),
     "edges present in the progression panel (arm expressed + state measured)": (
-        "grank_TUM", "share_TUM", "rank_TUM", "dose_rank_TUM", "arm_med_rpm", "arm_pct_floor",
-        "arm_iqr", "arm_spiker", "arm_id_status", "family_dose_share", "family_role", "wiring_frac",
+        "grank_TUM", "share_TUM", "rank_TUM", "dose_rank_TUM", "arm_med_rpm", "arm_pct_floor", "arm_pct_above_floor",
+        "arm_iqr", "arm_spiker", "arm_id_status", "family_dose_share", "arm_share_of_family_dose", "family_role", "arm_role_in_family", "wiring_frac",
         "term_ABUND", "term_WIRING", "term_INTERACT", "realization_score", "dose_class",
         "shift_class", "coupling_tum", "coupling_p_tum", "coupling_z_tum", "retention_rho"),
     "genes in the CPTAC-PROTEIN compartment analysis (protein layer, n~101)": ("comp_cptac_prot_",),
@@ -319,7 +321,7 @@ DOMAIN = {
     "arms present on the EDGE card (729 of 2,450) — lifted arm-rung columns, names preserved": (
         "detection", "ctx_arm_dose", "ctx_arm_abundant", "spiker", "healthy_leg", "healthy_potential",
         "healthy_uninformative", "surrogate_instrument", "surrogate_corr", "arm_med_rpm",
-        "arm_pct_floor", "arm_iqr", "dose_comp_retention", "dose_prolif_retention", "dose_confounded"),
+        "arm_pct_floor", "arm_pct_above_floor", "arm_iqr", "dose_comp_retention", "dose_prolif_retention", "dose_confounded"),
     # ⭐ MH-210's un-imputed healthy leg on the EDGE card (its own rung — see _EDGE_ONLY).
     "edges whose gene has ≥1 GTEx-MEASURED regulator — ⚠ NaN = GTEx cannot see it (abstention), NOT 0": (
         "share_HLY_meas", "rank_HLY_meas", "d_rank_HLY_TUM_meas", "n_HLY_meas"),

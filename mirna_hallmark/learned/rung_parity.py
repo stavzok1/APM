@@ -152,8 +152,11 @@ def run(genes=None, workers: int = 8) -> pd.DataFrame:
 
 def report(R: pd.DataFrame) -> None:
     card = pd.read_csv(OUT / "realization/edge_card.tsv", sep="\t", low_memory=False,
-                       usecols=lambda c: c in ("gene", "arm", "coupling_tum", "arm_resolvable",
-                                               "arm_sep_z", "n_arm_in_cell"))
+                       usecols=lambda c: c in ("gene", "arm", "coupling_tum", "cell_arms_resolvable",
+                                               "arm_resolvable", "arm_sep_z", "n_arm_in_cell"))
+    # ⭐ MH-269: `arm_resolvable` -> `cell_arms_resolvable`; accept either so a pre-rename card still reports.
+    if "arm_resolvable" in card.columns and "cell_arms_resolvable" not in card.columns:
+        card = card.rename(columns={"arm_resolvable": "cell_arms_resolvable"})
     d = R.merge(card, on=["gene", "arm"], how="left")
 
     print("\n=== (1) THE COUPLING RUNG: arm-level (card default) vs FAMILY pool ===")
@@ -170,10 +173,10 @@ def report(R: pd.DataFrame) -> None:
     q = d.dropna(subset=["arm_credit_share"])
     cell = q.groupby(["gene", "arm"]).first().reset_index()
     top = q.groupby(["gene"]).arm_credit_share.max()
-    res = q.dropna(subset=["arm_resolvable"])
+    res = q.dropna(subset=["cell_arms_resolvable"])
     if len(res):
-        a = res[res.arm_resolvable == True].groupby("gene").arm_credit_share.max()
-        b = res[res.arm_resolvable == False].groupby("gene").arm_credit_share.max()
+        a = res[res.cell_arms_resolvable == True].groupby("gene").arm_credit_share.max()
+        b = res[res.cell_arms_resolvable == False].groupby("gene").arm_credit_share.max()
         if len(a) > 5 and len(b) > 5:
             u = stats.mannwhitneyu(a, b, alternative="greater")
             print(f"  max within-cell share — RESOLVABLE cells {a.mean():.3f} (n={len(a)})  "

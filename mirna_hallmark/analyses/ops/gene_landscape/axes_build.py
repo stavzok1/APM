@@ -40,7 +40,7 @@ for gene, sub in e.groupby("gene"):
     # GUARDED (`if c in sub.columns` / a `[c for c in CARD if ...]` filter), so nothing raised — the
     # axes simply stopped being built. **A guarded reference converts a prune into a silently
     # missing AXIS**, which in a scan reads as 'tested and null'.
-    for c, nm in [("arm_resolvable","armres_frac"),("adm_has_site","site_frac"),
+    for c, nm in [("cell_arms_resolvable","armres_frac"),("adm_has_site","site_frac"),
                   ("adm_admissible","adm_frac"),("echim_n_sources","chim_frac")]:
         if c in sub.columns:
             v = sub[c]
@@ -48,7 +48,7 @@ for gene, sub in e.groupby("gene"):
             d[nm] = v.mean(skipna=True)
     for c, nm in [("oof_drho","armgain_med"),("arm_sep_z","armsep_med"),
                   ("n_arm_in_cell","narm_cell_max"),("kd_affinity_pct","kd_pct_med"),
-                  ("family_dose_share","famdose_share_max")]:
+                  ("arm_share_of_family_dose","famdose_share_max")]:
         if c in sub.columns:
             s = pd.to_numeric(sub[c], errors="coerce")
             d[nm] = (s.max() if nm.endswith("_max") else s.median())
