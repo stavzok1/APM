@@ -61,6 +61,47 @@ the family itself.** That is exactly why `seed_family_card` was split off as the
 quantity is a property of the family alone (size, seed heterogeneity, member composition), it belongs on
 `seed_family_card`, not `family_card`.
 
+## 1b. ⭐⭐ THE ARM UNIVERSE — what a row on the arm card actually is, and how few carry a claim
+
+*(Added 2026-08-19, user-asked: "what is the universe of arms we are dealing with?" — the numbers existed
+on the card but had never been stated anywhere, so every reader had to infer them.)*
+
+**`arm_card.tsv` holds 2,450 rows — one per mature miRNA arm.** That is the universe the annotation blocks
+are computed over, and it is NOT the universe any claim rests on. The funnel:
+
+| stage | arms | of universe | test |
+|---|---|---|---|
+| **on the arm card** | **2,450** | 100% | one row per mature arm |
+| with any curated literature | 2,350 | 95.9% | `fame_npmid` present |
+| scanned for expression | 2,231 | 91.1% | `cov_expr` |
+| with AGO-CLIP reads | 1,471 | 60.0% | `ago_reads` present |
+| in a multi-member seed family | 811 | 33.1% | `famrole_n_members > 1` |
+| **on the delivered edge card** | **737** | 30.1% | distinct `arm` values |
+| **with any model edge** | **728** | 29.7% | `arb_n_edges` present |
+| **EXPRESSED above floor** | **718** | 29.3% | `tier_expressed` |
+| in MirGeneDB (high-confidence) | 526 | 21.5% | `gctx_mirgenedb` |
+| **with an ADMISSIBLE edge** | **211** | **8.6%** | `adm_n_admissible > 0` |
+
+⛔⛔ **THE TWO FACTS TO CARRY:**
+1. **Only 480 arms are BOTH expressed and in the model** — that is the set a coupling claim can rest on,
+   **19.6% of the card**.
+2. **Every arm-level statistic computed over the whole card is dominated by the 1,732 arms that are not
+   expressed** (70.7%). A median, a fraction or a correlation over `arm_card.tsv` without a
+   `tier_expressed` gate is mostly measuring the unexpressed majority.
+
+⚠ **And admissibility narrows it much further than the edge-level figure suggests.** 60.4% of EDGES are
+admissible but only **211 arms (8.6%)** carry one, because admissible edges concentrate on the
+high-degree famous arms (MH-259: miR-21-5p alone holds 70). An arm-rung claim conditioned on
+admissibility is about a heavily selected 8.6%, not the 60% the edge figure implies.
+
+**SEED FAMILIES — `seed_family_card.tsv` holds 1,959 rows** covering all 2,450 arms. **1,639 (83.7%) are
+SINGLETONS**, 320 are multi-member, and the largest holds 22. ⇒ for 84% of families every "family-level"
+statistic is trivially its one member's value; `fam_single_member` is the mask, and MH-215's dominance
+result only means anything on the 320.
+
+⇒ **Before quoting any arm-level number, say which of these sets it is over.** The card is the widest of
+them and almost never the right one.
+
 ## 2. Two orthogonal facts per column — do not conflate them
 
 - **`rung`** — the unit the value is **defined on**: `key` / `gene` / `family` / `arm` / `edge` /

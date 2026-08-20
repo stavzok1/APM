@@ -1,5 +1,27 @@
 """Assemble per-gene axes from the cards and scan the four outcomes the user asked about."""
 import pandas as pd, numpy as np, pathlib, json, warnings
+
+def _require(frame, col: str, axis: str) -> None:
+    """⛔⛔ FAIL LOUDLY when a source column is missing — this file is a REPEAT OFFENDER.
+
+    **Three separate renames have silently killed an axis here** (MH-266 `echim_any` + `n_regulators`,
+    MH-269 `arm_resolvable` + `family_dose_share`, MH-279 `arm_sep_z`). Every one was invisible because the
+    reference sat behind `if c in sub.columns`: the column vanished, the branch was skipped, and the axis
+    **stopped being built** — which in an FDR scan reads as *tested and null*, the most expensive possible
+    failure mode for a discovery tool.
+
+    ⚠ A defensive guard is the right idiom when a column is genuinely OPTIONAL. Not one of these is: every
+    axis in this builder is meant to exist, so absence is a BUG and must stop the run. `gene_axes` is the
+    standing directive for any per-gene question (axiom 8) — a quietly missing axis there is worse than a
+    crash, because a crash gets fixed.
+    """
+    if col not in frame.columns:
+        raise KeyError(
+            f"axes_build: source column '{col}' is missing, so axis '{axis}' cannot be built. "
+            f"This file has lost an axis to a silent rename three times (MH-266/269/279) — it now RAISES. "
+            f"Fix the reference (check `analyses/ops/column_ref_audit.py` for the new name), do not "
+            f"re-add a defensive guard.")
+
 warnings.filterwarnings("ignore")
 from mirna_hallmark.learned import gene_axes as GA
 
@@ -40,18 +62,20 @@ for gene, sub in e.groupby("gene"):
     # GUARDED (`if c in sub.columns` / a `[c for c in CARD if ...]` filter), so nothing raised — the
     # axes simply stopped being built. **A guarded reference converts a prune into a silently
     # missing AXIS**, which in a scan reads as 'tested and null'.
-    for c, nm in [("cell_arms_resolvable","armres_frac"),("adm_has_site","site_frac"),
-                  ("adm_admissible","adm_frac"),("echim_n_sources","chim_frac")]:
-        if c in sub.columns:
-            v = sub[c]
-            v = v.map({True:1.0,False:0.0,"True":1.0,"False":0.0}).astype(float) if v.dtype==object else v.astype(float)
-            d[nm] = v.mean(skipna=True)
-    for c, nm in [("oof_drho","armgain_med"),("cell_arm_sep_z","armsep_med")   # ⛔ MH-279 rename; was arm_sep_z,
-                  ("n_arm_in_cell","narm_cell_max"),("kd_affinity_pct","kd_pct_med"),
-                  ("arm_share_of_family_dose","famdose_share_max")]:
-        if c in sub.columns:
-            s = pd.to_numeric(sub[c], errors="coerce")
-            d[nm] = (s.max() if nm.endswith("_max") else s.median())
+    for c, nm in [("cell_arms_resolvable", "armres_frac"), ("adm_has_site", "site_frac"),
+                  ("adm_admissible", "adm_frac"), ("echim_n_sources", "chim_frac")]:
+        _require(sub, c, nm)
+        v = sub[c]
+        v = (v.map({True: 1.0, False: 0.0, "True": 1.0, "False": 0.0}).astype(float)
+             if v.dtype == object else v.astype(float))
+        d[nm] = v.mean(skipna=True)
+    for c, nm in [("oof_drho", "armgain_med"),
+                  ("cell_arm_sep_z", "armsep_med"),          # MH-279 rename; was arm_sep_z
+                  ("n_arm_in_cell", "narm_cell_max"), ("kd_affinity_pct", "kd_pct_med"),
+                  ("arm_share_of_family_dose", "famdose_share_max")]:
+        _require(sub, c, nm)
+        s = pd.to_numeric(sub[c], errors="coerce")
+        d[nm] = (s.max() if nm.endswith("_max") else s.median())
     rows.append(d)
 R = pd.DataFrame(rows).set_index("gene")
 
