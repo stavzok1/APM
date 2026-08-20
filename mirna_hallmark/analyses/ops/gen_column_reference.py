@@ -86,6 +86,24 @@ CURATED_FLOOR = {
     ("edge", "echim_"): (0.80, "chimeric evidence: the convergent-evidence ladder's independent rung"),
     ("gene", "comp_"): (0.82, "axiom 8: `comp_*_driver_share` is the composition GATE that predicts SIGN"),
 }
+#: ⭐ CROSS-CARD RELATION per block, from the audit — doctrine §2b's three relations, each VERIFIED rather
+#: than assumed. A prefix appearing on two cards is not automatically the same thing.
+XCARD = {
+    ("arm", "adm_"): "AGGREGATE of the edge block — verified: n_with_site and n_admissible reproduce a "
+                     "direct rollup on 100% of arms (n_edges only 77.5%, the MH-252 universe gap)",
+    ("edge", "adm_"): "per-edge FLAGS; the arm card carries their rollup",
+    ("gene", "cptac_"): "AGGREGATE of the edge block via an agg_/abund_ infix — NOT derivable (MH-262)",
+    ("edge", "cptac_"): "per-edge; the gene card aggregates it",
+    ("gene", "ctx_"): "SUBSET of the edge block, identical rungs",
+    ("gene_family", "ctx_"): "SUBSET of the edge block, identical rungs",
+    ("arm", "ctx_arm_"): "the two ARM-RUNG members of ctx_, which the other cards do not carry",
+    ("arm", "ago_"): "⚠ arm.ago_dom and edge.ago_loading are RANK-IDENTICAL (spearman +1.000, equal on "
+                     "73.2%) — one quantity, two names. Never scan both.",
+    ("edge", "ago_"): "⚠ ago_loading is rank-identical to the arm card's ago_dom — one quantity, two names",
+    ("arm", "healthy_"): "identical column set to the edge block",
+    ("edge", "healthy_"): "identical column set to the arm block",
+    ("arm", "dose_"): "SUBSET of the edge block",
+}
 MARK = re.compile(r"[⛔⚠⭐]")
 
 
@@ -107,6 +125,26 @@ def _block(col: str) -> str:
     """
     m = re.match(r"^([A-Za-z]+_)", col)
     return m.group(1) if m else "(bare)"
+
+
+def _refine_blocks(g: pd.DataFrame) -> pd.DataFrame:
+    """⭐ Promote a block to its LONGEST shared prefix when every member has one.
+
+    ⛔ The audit found four blocks one token short of the real convention: `arm.ctx_` is really `ctx_arm_`,
+    `arm.cur_` is `cur_he_`, `edge.d_` is `d_rank_`, `gene.acquired_` is `acquired_vs_`. Taking only the
+    first token merged distinct conventions and, worse, made `arm.ctx_` look like a 2-column remnant of the
+    18-column `edge.ctx_` block when it is a different thing entirely.
+    """
+    for (card, blk), sub in list(g.groupby(["card", "block"])):
+        if blk == "(bare)" or len(sub) < 2:
+            continue
+        rests = [c[len(blk):] for c in sub.column]
+        if not all("_" in r for r in rests):
+            continue
+        first = {r.split("_")[0] for r in rests}
+        if len(first) == 1:
+            g.loc[sub.index, "block"] = f"{blk}{first.pop()}_"
+    return g
 
 
 def _split(t: str) -> tuple[str, str]:
@@ -280,6 +318,7 @@ def _load() -> pd.DataFrame:
           for c, col in zip(g.card, g.column)]
     g["vtype"] = [a for a, _ in tv]
     g["vhint"] = [b for _, b in tv]
+    g = _refine_blocks(g)
     lead_rest = [_split(t) for t in g.description]
     g["lead"] = [a for a, _ in lead_rest]
     g["caveat"] = [b for _, b in lead_rest]
@@ -403,6 +442,7 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .blead strong{color:var(--ink)}
 .bstats{margin:2px 0 0;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
 .bstats b{color:var(--ink-2)}
+.bstats b.warn{color:var(--seed)}
 .tag.ty{border-color:var(--accent);color:var(--accent)}
 .lead.sh{color:var(--ink-3)}
 .prov{font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;
@@ -519,6 +559,15 @@ def build() -> pathlib.Path:
             typemix = " · ".join(f"{n}&times; {html.escape(t)}" for t, n in types.items())
             cov = rows.fill.dropna()
             bits = [f"<b>{len(rows)}</b> columns"]
+            rungs = sorted({x for x in rows.rung if x})
+            if len(rungs) > 1:
+                bits.append('<b class="warn">spans ' + ", ".join(html.escape(x) for x in rungs)
+                            + "</b> — this prefix groups columns living on DIFFERENT units")
+            elif rungs:
+                bits.append(f"rung <b>{html.escape(rungs[0])}</b>")
+            rel = XCARD.get((card, b))
+            if rel:
+                bits.append(html.escape(rel))
             if len(cov):
                 bits.append(f"coverage <b>{cov.min():.0%}–{cov.max():.0%}</b> (median {cov.median():.0%})")
             if len(shared_rows):

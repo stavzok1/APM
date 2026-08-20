@@ -979,6 +979,21 @@ COLUMNS.update({
         "within-family correlation — the family's redundancy-corrected size (mode **2.0**, 50 distinct "
         "values). ⚠ **Fill is only 4.3% (84 families)**: it needs a within-family correlation fit, so read "
         "it as a case series on the well-covered families, never as a distribution over the universe.",
+    # ── MH-276: the block audit promoted `ctx_arm_` to its own block and exposed that these two
+    # ARM-RUNG columns were being described by the GENE-DESIGN `ctx_` block text.
+    ("arm", "ctx_arm_dose"): "This arm's median **log2(RPM+1)** across tumour samples (0.13 – 17.92, "
+        "median 1.08). ⛔ **ARM-rung, unlike the rest of the `ctx_` family, which is GENE-design context** "
+        "— it says how much of this arm there is, not how wide or measurable a gene's design is. That "
+        "mismatch is why it now sits in its own `ctx_arm_` block.",
+    ("edge", "ctx_arm_dose"): "This arm's median log2(RPM+1) — see the arm card's entry. ⚠ ARM-rung on an "
+        "EDGE card, so it repeats down every edge of the same arm; a row-wise statistic over it weights "
+        "each arm by its design width (`CARD_RUNG_DOCTRINE` §2, the broadcast-cost rule).",
+    ("arm", "ctx_arm_abundant"): "Is `ctx_arm_dose >= log2(11)`, i.e. is this arm abundant enough to "
+        "plausibly repress? **Median 0.00 — most arms are NOT.** ⭐ The abundance gate behind the "
+        "repression-potential argument: AGO/RISC loading saturates, so a low-dose arm has low repression "
+        "potential whatever its coupling looks like. ⚠ Masked where the dose is missing (MH-256).",
+    ("edge", "ctx_arm_abundant"): "`ctx_arm_dose >= log2(11)` — the arm-abundance gate, ARM-rung on an "
+        "edge card. See the arm card's entry.",
     # ── MH-274 (2026-08-19, user-directed): AUTHORED entries for every column that previously
     # fell back to its block description. Written from the PRODUCERS, not from the names.
     ("arm", "bc_meth_dbeta"): "Tumour-minus-normal methylation beta at this arm's locus (median −0.03, range −0.32…+0.23). ⚠ The effective n is **56 arms** — `bc_meth_direction` is `none` on 83.7%.",
