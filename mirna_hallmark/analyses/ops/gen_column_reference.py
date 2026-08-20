@@ -235,6 +235,15 @@ TOKENS = {
     "deconv": "composition-adjusted (deconvolution block)", "core": "core confounder block",
     "agg": "β-weighted aggregate", "abund": "unweighted abundance-sum reference",
     "gated": "gated", "perm": "permutation null", "oof": "out-of-fold", "meas": "measured only (un-imputed)",
+    # ⛔ ADDED (user-caught): `ret` and `driver` were MISSING, so `cptac_prosp_ret_prot` composed to
+    # "CPTAC prospective · against protein" — dropping the fact that it is a RETENTION RATIO, which is the
+    # whole meaning. A decoder gap is silent by construction: the line still reads fluently.
+    "ret": "RETENTION = adjusted / unadjusted", "driver": "WHICH compartment drives it",
+    "budget": "the gene's miRNA pressure budget", "target": "the target gene's expression",
+    "collin": "collinearity", "ceiling": "measurability ceiling", "hhi": "concentration (HHI)",
+    "credit": "attribution credit", "sep": "separation", "dbeta": "β difference",
+    "spiker": "spike-driven flag", "detection": "detection rate", "resolvable": "resolvability",
+    "lfc": "log fold-change", "rpm": "reads per million", "floor": "detection floor",
     "fam": "per seed family", "arm": "per arm", "gene": "per gene", "cell": "per family cell",
     "edge": "per edge", "genes": "genes", "arms": "arms", "members": "family members",
     "top": "the top-ranked", "best": "the best", "dominant": "the dominant one",
@@ -302,6 +311,46 @@ def _vtype(s: pd.Series, name: str) -> tuple[str, str]:
     return ("real ≥ 0" if lo >= 0 else "real, signed"), f"{lo:.3g} – {hi:.3g}"
 
 
+#: how many distinct values are worth printing before a list stops being a list
+_MAX_LEVELS = 8
+
+
+def _levels(s: pd.Series) -> str:
+    """The column's POSSIBLE VALUES with their counts — a categorical column is unusable without them."""
+    v = s.dropna()
+    if v.empty or v.nunique() > _MAX_LEVELS:
+        return ""
+    vc = v.value_counts()
+    return " · ".join(f"{k} ({n:,})" for k, n in vc.items())
+
+
+def _example(d: pd.DataFrame, col: str) -> str:
+    """⭐ A WORKED EXAMPLE: one REAL row, keyed, with its value (user-asked).
+
+    A range tells a reader the scale; it does not tell them what a value MEANS on a concrete unit. This
+    picks an actual row — preferring a recognisable key so the example is checkable against the card — and
+    prints `key → value`. ⚠ It is drawn from the DATA, never composed: an invented example in a reference
+    would be indistinguishable from a real one.
+    """
+    v = d[col].dropna()
+    if v.empty:
+        return ""
+    keys = [k for k in ("gene", "arm", "seed_family", "family") if k in d.columns and k != col]
+    if not keys:
+        # the column IS the card's only key — an example keyed by itself would be circular, so show a value
+        return str(v.iloc[len(v) // 2])
+    sub = d.loc[v.index, keys + [col]].copy()
+    # prefer a row whose key is one a reader will recognise, else the median-|value| row for numerics
+    pref = sub[sub[keys[0]].astype(str).isin(
+        ["MYC", "PTEN", "ESR1", "CDH1", "hsa-miR-21-5p", "hsa-miR-200c-3p", "hsa-let-7a-5p"])]
+    row = pref.iloc[0] if len(pref) else sub.iloc[len(sub) // 2]
+    key = " / ".join(str(row[k]) for k in keys[:2])
+    val = row[col]
+    if isinstance(val, float):
+        val = f"{val:.4g}"
+    return f"{key} → {val}"
+
+
 def _load() -> pd.DataFrame:
     g = pd.read_csv(OUT / "card_glossary.tsv", sep="\t", dtype=str).fillna("")
     fills, nrows, frames = {}, {}, {}
@@ -316,6 +365,13 @@ def _load() -> pd.DataFrame:
     g["nrows"] = [nrows.get(c, 0) for c in g.card]
     tv = [_vtype(frames[c][col], col) if c in frames and col in frames[c] else ("—", "")
           for c, col in zip(g.card, g.column)]
+    # ⭐ LEVELS (user-asked): a categorical column is unusable without its possible values.
+    lv, ex = [], []
+    for c, col in zip(g.card, g.column):
+        lv.append(_levels(frames[c][col]) if c in frames and col in frames[c] else "")
+        ex.append(_example(frames[c], col) if c in frames and col in frames[c] else "")
+    g["levels"] = lv
+    g["example"] = ex
     g["vtype"] = [a for a, _ in tv]
     g["vhint"] = [b for _, b in tv]
     g = _refine_blocks(g)
@@ -425,6 +481,9 @@ details[open] summary::before{content:"▾ "}
 .cav{color:var(--ink-3);font-size:13px;max-width:82ch;margin-top:4px;padding-left:11px;
      border-left:2px solid var(--rule)}
 .cav strong{color:var(--ink-2)}
+.lv{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-top:3px;line-height:1.5}
+.lv b{font-family:var(--cond);font-weight:600;color:var(--ink-2);letter-spacing:.02em}
+.lv.ex{color:var(--accent)}
 a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent}
 a:hover,a:focus-visible{border-bottom-color:var(--accent)}
 a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -468,7 +527,8 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .prov{font-size:6.4pt;border:1px solid var(--rule);background:none}
   details{display:block}                     /* caveats PRINT — collapsed only on screen */
   summary{display:none}
-  .cav{font-size:7.8pt;color:var(--ink-3);max-width:none}   /* token — print redefines it above */
+  .cav{font-size:7.8pt;color:var(--ink-3);max-width:none}
+  .lv{font-size:7.4pt}   /* token — print redefines it above */
   a{color:var(--ink);border:none}
   @page{margin:14mm 13mm}
 }
@@ -610,6 +670,11 @@ def build() -> pathlib.Path:
                         body = (f'<div class="lead sh">{_md(_split(r.description)[0])}'
                                 f'<span class="prov gap" title="no column-specific entry exists yet — '
                                 f'this is the BLOCK description">block-level</span></div>')
+                extra = ""
+                if r.levels:
+                    extra += f'<div class="lv"><b>values:</b> {_md(r.levels)}</div>'
+                if r.example:
+                    extra += f'<div class="lv ex"><b>example:</b> {_md(r.example)}</div>'
                 cav = ""
                 if not r.shared and r.caveat:
                     cav = (f'<details><summary>caveats</summary><div class="cav">{_md(r.caveat)}'
@@ -619,7 +684,7 @@ def build() -> pathlib.Path:
                     cav = f'<div class="cav"><em>Defined on: {_md(r.domain)}</em></div>'
                 P.append(f'<div class="col"><div><div class="cname">{html.escape(r.column)}</div>'
                          f'<div class="tags">{"".join(tags)}</div></div>'
-                         f'<div>{body}{cav}</div></div>')
+                         f'<div>{body}{extra}{cav}</div></div>')
         P.append("</section>")
 
     P.append("</div>")

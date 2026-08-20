@@ -979,6 +979,37 @@ COLUMNS.update({
         "within-family correlation — the family's redundancy-corrected size (mode **2.0**, 50 distinct "
         "values). ⚠ **Fill is only 4.3% (84 families)**: it needs a within-family correlation fit, so read "
         "it as a case series on the well-covered families, never as a distribution over the universe.",
+    # ── MH-277 (user-caught): the `comp_` correlations and the CPTAC edge-rung retentions decoded to
+    # fluent-but-empty lines. A token decoder cannot say what a correlation is BETWEEN.
+    ("", "comp_tcga_mrna_top_budget_r"): "Correlation between the gene's **miRNA PRESSURE BUDGET** and the "
+        "fraction of the compartment that budget loads on most (`comp_tcga_mrna_top_budget`), in TCGA "
+        "mRNA. Median **+0.121**, range −0.561…+0.530. ⇒ a POSITIVE value means the gene's regulators are "
+        "abundant in the same samples that are rich in that cell type — the REGULATOR side of the "
+        "composition confound.",
+    ("", "comp_tcga_mrna_top_target_r"): "Correlation between the **TARGET GENE's own expression** and the "
+        "fraction of the compartment it loads on most. Median **+0.311** — higher than the budget twin, "
+        "because a gene's expression tracks its cell type more tightly than its regulators do. ⚠ All 11 "
+        "loading axes were NULL under FDR in MH-201; the DRIVER axis is what predicts, not this.",
+    ("", "comp_cptac_prot_top_budget_r"): "As the TCGA mRNA twin, on CPTAC protein — the budget-vs-"
+        "compartment correlation. Median **−0.118**, i.e. it runs the OPPOSITE way to mRNA (+0.121).",
+    ("", "comp_cptac_prot_top_target_r"): "As the TCGA mRNA twin, on CPTAC protein — the target-vs-"
+        "compartment correlation. Median **+0.203**.",
+    ("", "comp_cptac_prot_driver"): "WHICH deconvolved compartment most explains this gene's PROTEIN "
+        "coupling — `prolif` 219 · `CAFs` 173 · `purity` 140 · `PVL` 77 · `Endothelial` 67. ⭐⭐ **NOT the "
+        "same as either `top_` column**: the driver is neither the budget's nor the target's top "
+        "compartment on **41.9%** of genes (MH-265). *Is this gene expressed by stroma* is not *is this "
+        "gene's miRNA-target relationship an artifact of stroma*.",
+    ("edge", "cptac_prosp_ret_prot"): "**RETENTION at EDGE rung** — this edge's composition-ADJUSTED "
+        "protein coupling divided by its UNADJUSTED one, in the CPTAC prospective cohort. ⭐ 1.0 = the "
+        "confounder block changed nothing; <1 = attenuated; **<0 = the coupling FLIPPED SIGN** under "
+        "adjustment. ⚠ Range −6.53…+6.66 and **it is NOT bounded to [0,1]** — sign flips and amplification "
+        "are real (MH-253). ⚠⚠ Cross-cohort reproducibility of this ratio is **+0.062**, essentially "
+        "nothing — do not read a single edge's retention as a property of the edge.",
+    ("edge", "cptac_t105_ret_prot"): "Retention at edge rung on the TCGA-overlap cohort — see the "
+        "prospective twin. ⚠ Reproducibility between the two cohorts is **+0.062**.",
+    ("edge", "cptac_prosp_ret_rna"): "As `cptac_prosp_ret_prot` but against **mRNA** rather than protein: "
+        "adjusted ÷ unadjusted mRNA coupling for this edge, prospective cohort.",
+    ("edge", "cptac_t105_ret_rna"): "As the prospective mRNA twin, on the TCGA-overlap cohort.",
     # ── MH-276: the block audit promoted `ctx_arm_` to its own block and exposed that these two
     # ARM-RUNG columns were being described by the GENE-DESIGN `ctx_` block text.
     ("arm", "ctx_arm_dose"): "This arm's median **log2(RPM+1)** across tumour samples (0.13 – 17.92, "
