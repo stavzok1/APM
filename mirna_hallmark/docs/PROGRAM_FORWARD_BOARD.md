@@ -1152,3 +1152,40 @@ against `prospective` is the strongest clue: whatever differs is **cohort-specif
 prospective cohort is unaffected. ⚠ Note this is *separate* from MH-253 (the `NaN < NaN` mask on
 `agg_beats_abund_prot`) and from the 2026-08-04 card staleness — both were checked and neither explains it.
 
+---
+
+## ⬜ STAMP THE BASE CARD — a freshness contract, not a merge (user-asked 2026-08-19)
+
+**The question was whether the base card can be retired and everything collapsed into one card design.**
+Measured first: it cannot, and the reason is worth recording so nobody re-opens it.
+
+| layer | cols | owns | cost to rebuild |
+|---|---|---|---|
+| **base** `edge_card_base.tsv` | **84 of 186 (45%)** | the **FITTED** quantities — `coupling_` 12, `beta_` 7, `dose_` 7, `share_`/`rank_`/`d_` 12, `retention_` 3 | multi-worker per-gene build over 1,549 genes (warm-then-fork) |
+| **annotation** `card_ladders` / `card_context` | **102 (55%)** | context and joins — `cptac_` 20, `ctx_` 18, `esub_` 8, `cal_` 7, `adm_` 4 | seconds; additive, aborts if a pre-existing column changes |
+
+⇒ **one card design would not simplify anything** — it would move the expensive per-gene fit into the layer
+that currently runs in seconds on every annotate. **The base is a cache of the expensive thing, and that is
+the right shape.**
+
+⛔⛔ **THE REAL DEFECT IS ONE LEVEL DOWN: it is a cache with NO FRESHNESS CONTRACT.**
+`edge_card_base_provenance.tsv` records what each column *is* (column → block → estimator, 93 rows) but
+**nothing about WHEN it was built or FROM WHICH INPUTS**, so nothing can invalidate it. That single gap
+produced four separate defects already recorded:
+
+- **MH-252** — 129 genes carry model output with zero edge rows (gene card 1,549 vs edge card 1,420).
+- **MH-266** — prunes that printed `✅ DROPPED` and did not take, because `_annotate` re-adds base blocks.
+- **MH-269** — the renames needed a post-annotation mechanism for the same reason.
+- The delivered card silently mixes a **2026-08-04** base with same-day annotations.
+
+**THE FIX — a stamp, not a merge:**
+1. On `canonical_card.build()`, write `edge_card_base_manifest.json`: the build timestamp, the mtime + size
+   of every input it read, the universe size, and a hash of the gene list.
+2. In `_annotate`, compare that manifest against the inputs' current state. **Refuse (or warn loudly and
+   stamp the output) when the base is older than an input it was built from.**
+3. Surface the base's vintage on the card browser and in the dossier, so a reader never has to infer it from
+   an mtime.
+
+⚠ **Do this BEFORE the rebuild, not after** — the rebuild is the moment the manifest is cheapest to write,
+and without it the next drift is silent again.
+

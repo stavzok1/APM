@@ -209,10 +209,10 @@ footer p{max-width:var(--measure)}
   <table>
     <thead><tr><th>Document</th><th>Role</th><th class="n">Current through</th><th class="n">Lag</th></tr></thead>
     <tbody>
-      <tr><td class="k">DISCOVERY_REGISTRY.md</td><td>Source of truth, append-only</td><td class="n">MH-261</td><td class="n">&mdash;</td></tr>
+      <tr><td class="k">DISCOVERY_REGISTRY.md</td><td>Source of truth, append-only</td><td class="n">MH-269</td><td class="n">&mdash;</td></tr>
       <tr><td class="k">ANALYSIS_RUN_LEDGER.md</td><td>One row per run</td><td class="n">2026-08-19</td><td class="n">current</td></tr>
-      <tr><td class="k">STATE_OF_PLAY.md</td><td>Per-axis verdicts</td><td class="n">MH-207</td><td class="n">54 rows</td></tr>
-      <tr><td class="k">PROGRAM_FORWARD_BOARD.md</td><td>The single forward doc</td><td class="n">MH-207 + 3 items</td><td class="n">54 rows</td></tr>
+      <tr><td class="k">STATE_OF_PLAY.md</td><td>Per-axis verdicts</td><td class="n">MH-207</td><td class="n">62 rows</td></tr>
+      <tr><td class="k">PROGRAM_FORWARD_BOARD.md</td><td>The single forward doc</td><td class="n">MH-207 + 5 items</td><td class="n">62 rows</td></tr>
       <tr><td class="k">ARCHITECTURE.md</td><td>Generated axes &times; models map</td><td class="n">180 findings, 2026-07-18</td><td class="n">~67</td></tr>
       <tr><td class="k">CARD_RUNG_DOCTRINE.md</td><td>What unit a number lives on</td><td class="n">2026-08-19</td><td class="n">current</td></tr>
     </tbody>
@@ -241,9 +241,8 @@ footer p{max-width:var(--measure)}
     <li><strong>The paired per-patient axis</strong> <span class="mh">MH-228 … MH-247</span> — twenty rows on
       the 103 matched NAT/tumour patients, mostly well-designed negatives, ending on a settled positive:
       NAT&rarr;tumour retention is measurement reliability, not biology.</li>
-    <li><strong>The column review and the two sweeps</strong> <span class="mh">MH-248 … MH-261</span> —
-      a block-by-block audit of all 712 columns that turned into two systematic defect hunts. This is the
-      newest arc and the one <a href="#defects">§07</a> exists to carry.</li>
+    <li><strong>The column review and the two sweeps</strong> <span class="mh">MH-248 … MH-269</span> —
+      a block-by-block audit of all 711 columns that turned into three systematic defect hunts and a naming pass. **The review is COMPLETE** (27 units); <a href="#defects">§07</a> carries what it produced.</li>
   </ul>
 </section>
 
@@ -511,6 +510,27 @@ footer p{max-width:var(--measure)}
 
 <section id="index">
   <h2><span class="num">04 &mdash; Column index</span>Every column on every card, with its rung and how full it is</h2>
+  <div class="call">
+    <p class="h">Where a column&rsquo;s description lives</p>
+    <p><code>learned/card_glossary.py</code> is the source: <strong>card-scoped</strong>, so
+    <code>describe("beta", card="edge")</code> and <code>describe("beta", card="gene_family")</code> return
+    <em>different</em> text, because they are different quantities. Resolution order is exact
+    <code>(card, column)</code> &rarr; the card&rsquo;s own prefix block &rarr; the global prefix block
+    &rarr; <strong><code>None</code>, counted as missing and never guessed</strong>.</p>
+    <p style="margin-top:8px">For reading rather than coding, the flat table is easier:
+    <code>output/learned/card_glossary.tsv</code> &mdash; 711 rows &times; 6 columns
+    (<code>card, column, rung, agg_of, domain, description</code>), which joins straight onto
+    <code>card_registry.tsv</code>. The searchable index below is generated from it.</p>
+    <pre><code>python3 -m mirna_hallmark.learned.card_glossary            # coverage
+python3 -m mirna_hallmark.learned.card_glossary --emit     # -&gt; the flat TSV
+python3 -m mirna_hallmark.learned.card_glossary --col beta # one column, every card it lives on</code></pre>
+    <p class="note">⚠ Honest about the shape: entries run a median of <strong>231 characters</strong>, but
+    <strong>14% exceed 600</strong> and the longest reach <strong>1,667</strong>. The long ones are the
+    load-bearing columns (<code>coupling_*</code>), where the caveat <em>is</em> the content &mdash; but they
+    are reference text, not a summary. Read the first sentence for what the column is; the rest is why you
+    might be about to misuse it.</p>
+  </div>
+
   <p class="lede">Search by column name, domain text, or rung. Fill is the fraction of rows where the column is
   non-null, measured on the cards as they stand. The offline browser at
   <code>docs/derived/cards/index.html</code> renders individual card values; this index answers
@@ -1057,15 +1077,78 @@ footer p{max-width:var(--measure)}
     The rule was removed.</p>
   </div>
 
+  <h3>Class three &mdash; code that still names a column you removed</h3>
+  <p>A prune or rename is not finished when the tests pass; it is finished when nothing still names the old
+  column. Defensive access is idiomatic and usually right &mdash; <code>if c in d.columns</code>,
+  <code>.get(c)</code> &mdash; but it converts a <em>removed</em> column from a loud <code>KeyError</code>
+  into a <strong>silently skipped branch</strong>. The safer the code looks, the quieter the failure.</p>
+
+  <div class="call warn">
+    <p class="h">Three failures from one session's own prunes</p>
+    <p>A filter in <code>seedless_chimeric_candidates()</code> stopped applying, so the function returned
+    un-filtered rows. Two <code>gene_landscape</code> axes stopped being built &mdash; which in an FDR scan
+    reads as <em>tested and null</em>. And <code>adm_expressed</code> was &ldquo;pruned&rdquo; twice, printed
+    <code>&#10003; DROPPED</code> both times, and was still delivered.</p>
+  </div>
+
+  <p><strong>The check:</strong> <code>analyses/ops/column_ref_audit.py</code>. Two designs failed first: a
+  prefix heuristic gave <strong>5,393 hits, essentially all false</strong> (<code>is_</code> and
+  <code>w_</code> are live card prefixes), and the registry is gitignored so it has <strong>no git
+  history</strong> to diff. Detection is a diff against <code>docs/derived/card_columns.txt</code>, a
+  <strong>tracked snapshot</strong> &mdash; no heuristic, no hand-maintained list, and a prune shows up as a
+  reviewable diff.</p>
+  <p class="note"><code>--selftest</code> simulates a prune: <strong>36 call sites detected, 2 guarded, 0
+  open when restored.</strong> It earned its keep immediately &mdash; see the rename pass below.</p>
+
+  <h3>The naming pass &mdash; nine columns that named the wrong thing</h3>
+  <p>A column name is read far more often than its glossary entry, so a name that says the wrong thing costs
+  a reader every time. The set was chosen mechanically, not by taste:</p>
+  <div class="call">
+    <p class="h">The test</p>
+    <p>If a column&rsquo;s own documentation has to begin <em>&ldquo;NOT the &hellip;&rdquo;</em>, the
+    <strong>name</strong> is the defect. Scanning all 711 entries returned 47 candidates; most were
+    <em>usage</em> caveats and were left alone. Nine named the wrong <strong>entity</strong>.</p>
+  </div>
+  <div class="tablewrap"><table class="small">
+    <thead><tr><th>was</th><th>now</th><th>what the old name got wrong</th></tr></thead>
+    <tbody>
+      <tr><td class="k">family_size</td><td class="k">n_family_in_design</td><td>counts members <strong>in this gene&rsquo;s design</strong>, not the family</td></tr>
+      <tr><td class="k">family_role</td><td class="k">arm_role_in_family</td><td>the <strong>arm&rsquo;s</strong> dose role, not the family&rsquo;s role in the gene</td></tr>
+      <tr><td class="k">family_dose_share</td><td class="k">arm_share_of_family_dose</td><td>denominator is the <strong>full family</strong></td></tr>
+      <tr><td class="k">role</td><td class="k">gene_cancer_role</td><td>the <strong>gene&rsquo;s</strong> oncogene/TSG call &mdash; on an edge card</td></tr>
+      <tr><td class="k">arm_resolvable</td><td class="k">cell_arms_resolvable</td><td>a <strong>cell</strong> verdict, constant within the cell</td></tr>
+      <tr><td class="k">arm_pct_floor</td><td class="k">arm_pct_above_floor</td><td><code>100&middot;mean(x &gt; FLOOR)</code> &mdash; high means <strong>well detected</strong></td></tr>
+      <tr><td class="k">field_retention</td><td class="k">field_excess_over_perm</td><td><code>r_own &minus; r_perm</code> &mdash; <strong>not a ratio at all</strong></td></tr>
+      <tr><td class="k">iso_total_rpm</td><td class="k">iso_rpm_summed</td><td>a <strong>sum across samples</strong>, not a per-sample RPM</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>The ripple is why this needed the check.</strong> <code>column_ref_audit</code> went from 0 to
+  <strong>95 open references</strong>, and caught what hand-grepping had missed: <code>card.py:478-479</code>,
+  the <em>producer</em> of two of the renamed columns, and four <code>gene_landscape</code> axes that would
+  have silently stopped being built. All repointed; audit back to <strong>0 open</strong>.</p>
+  <p class="note">⚠ <code>role</code> was renamed on the <strong>card only</strong> &mdash;
+  <code>gene_roles.py</code> and every analysis reading its frame own that name correctly in their own scope.
+  Renaming a source to fix a card is how a second collision starts. And one tool assumption broke:
+  <code>iso_rpm_summed</code> fell out of <code>ratio_blowup_audit</code>&rsquo;s <code>_rpm$</code>
+  count-exclusion and surfaced as a false blow-up &mdash; <strong>a rename changes what name-based rules
+  match.</strong> The rule was fixed, not the column accepted.</p>
+
   <h3>How to run them</h3>
   <pre><code>.venv/bin/python3 -m mirna_hallmark.analyses.ops.nan_bool_audit
 .venv/bin/python3 -m mirna_hallmark.analyses.ops.ratio_blowup_audit
-.venv/bin/python3 -m mirna_hallmark.analyses.ops.ratio_blowup_audit --validate   # re-check the calibration
-.venv/bin/python3 -m mirna_hallmark.analyses.ops.dup_keys                        # duplicate dict keys</code></pre>
+.venv/bin/python3 -m mirna_hallmark.analyses.ops.column_ref_audit
+.venv/bin/python3 -m mirna_hallmark.analyses.ops.dup_keys       # duplicate + cross-merge shadowed keys
+
+# each check validates itself &mdash; run these before trusting a clean report
+.venv/bin/python3 -m mirna_hallmark.analyses.ops.ratio_blowup_audit --validate
+.venv/bin/python3 -m mirna_hallmark.analyses.ops.column_ref_audit --selftest
+.venv/bin/python3 -m mirna_hallmark.analyses.ops.column_ref_audit --update   # re-baseline after a prune</code></pre>
   <p class="note">Both emit a <strong>review queue, not a verdict</strong> &mdash; read the producer before
   changing anything. Each carries an accept-list with a recorded reason per known column, so the report
-  converges on what is actually open rather than becoming a wall nobody reads. Current state: both
-  <strong>0 open</strong>.</p>
+  converges on what is actually open rather than becoming a wall nobody reads. Current state: all three
+  <strong>0 open</strong>. ⚠ And a clean report is only clean <em>for the state it was run on</em> &mdash;
+  &ldquo;ORPHAN 0&rdquo; was once asserted here from a stale run and was wrong by seven flags. Re-run; do
+  not quote.</p>
 </section>
 
 <section id="graveyard">
@@ -1119,6 +1202,39 @@ footer p{max-width:var(--measure)}
         runs</strong>: three ratio gates, several boolean masks, and the <code>own_specific_frac</code> /
         <code>retention_rho</code> denominators.</li>
     </ul>
+    <h4 style="margin:18px 0 6px;font-size:14px;letter-spacing:.02em">Why there are two layers, and why the base cannot simply be retired</h4>
+    <p>The delivered edge card is <strong>186 columns</strong> assembled from two layers, and the split is
+    not arbitrary:</p>
+    <div class="tablewrap"><table class="small">
+      <thead><tr><th>layer</th><th class="n">cols</th><th>what it owns</th><th>cost to rebuild</th></tr></thead>
+      <tbody>
+        <tr><td><strong>base</strong> <code>edge_card_base.tsv</code></td><td class="n">84 (45%)</td>
+            <td>the <strong>FITTED</strong> quantities &mdash; <code>coupling_</code> 12, <code>beta_</code> 7,
+            <code>dose_</code> 7, <code>share_</code>/<code>rank_</code>/<code>d_</code> 12,
+            <code>retention_</code> 3</td>
+            <td>multi-worker per-gene build over 1,549 genes (warm-then-fork)</td></tr>
+        <tr><td><strong>annotation</strong> <code>card_ladders</code>/<code>card_context</code></td><td class="n">102 (55%)</td>
+            <td>context and joins &mdash; <code>cptac_</code> 20, <code>ctx_</code> 18, <code>esub_</code> 8,
+            <code>cal_</code> 7, <code>adm_</code> 4</td>
+            <td>seconds; additive, aborts if a pre-existing column changes</td></tr>
+      </tbody>
+    </table></div>
+    <p><strong>So &ldquo;one card design&rdquo; would not simplify anything</strong> &mdash; it would move the
+    expensive per-gene fit into the layer that currently runs in seconds on every annotate. The base is a
+    <em>cache of the expensive thing</em>, and that is the right shape.</p>
+    <div class="call warn">
+      <p class="h">But the instinct is right about the defect &mdash; it is just one level down</p>
+      <p>The base is a cache <strong>with no freshness contract</strong>. <code>edge_card_base_provenance.tsv</code>
+      records what each column <em>is</em> (column &rarr; block &rarr; estimator) but nothing about
+      <em>when</em> or <em>from which inputs</em>, so nothing can invalidate it. That single gap produced
+      four separate defects: the 129 missing genes, the prunes that printed success and did not take
+      (<code>_annotate</code> re-adds base blocks), the post-annotation machinery the renames needed, and a
+      16-day-old vintage silently mixed with same-day annotations.</p>
+      <p style="margin-top:8px"><strong>The fix is a stamp, not a merge:</strong> record the input mtimes and
+      a universe hash beside the base, and have <code>_annotate</code> <em>refuse</em> (or loudly warn) when
+      the base is older than its inputs. That is a small change and it retires the whole failure class.</p>
+    </div>
+
     <p class="note">Sequence: <code>canonical_card.build()</code> &rarr; <code>realization.edge_card()</code>
     &rarr; <code>card_ladders --annotate</code> &rarr; <code>card_rungs --check</code> &rarr;
     <code>gen_cards --build</code>. The arm-name normalisation should go in the same pass, since it is the one
