@@ -155,6 +155,63 @@ def _tier(score: float) -> tuple[str, str]:
 
 BOOLS = {"True", "False", "true", "false", "1.0", "0.0", "1", "0"}
 
+#: ⭐⭐ TOKEN DECODER — so **every row carries a line of its own**, not a pointer to the block.
+#:
+#: ⛔ The problem it solves: de-duplicating the block text (MH-272) left **425 columns with nothing but
+#: *"described by the block above"*** — which is worse for a lookup than the repetition was. But the
+#: glossary genuinely has no per-column text for them, so there is nothing to render. What IS knowable is
+#: what distinguishes a column from its block siblings: a systematic token. `share_NAT` differs from
+#: `share_TUM` by exactly one, and that token is the column's summary.
+#:
+#: ✅ Measured: **346 of the 425 (81%)** carry at least one known token. The remaining **79 are a REAL
+#: GLOSSARY GAP** and are listed by `--gaps`, not papered over — among them `ctx_ceiling`, one of the most
+#: cited columns in the program. Those fall back to the block lead, labelled as block-level.
+#:
+#: ⚠ Every rendered line says where it came from — **authored / derived / block-level** — because a
+#: mechanically composed line must never be mistaken for one somebody wrote and checked.
+TOKENS = {
+    "hly": "in the GTEx-healthy state", "nat": "in matched normal (NAT)", "tum": "in tumour",
+    "prosp": "CPTAC prospective cohort (n≈101)", "t105": "CPTAC TCGA-overlap cohort (n=105)",
+    "cptac": "CPTAC", "tcga": "TCGA", "buffa": "the Buffa cohort", "gtex": "GTEx",
+    "prot": "against protein", "rna": "against mRNA", "disc": "against the discovery layer",
+    "rho": "Spearman ρ", "r": "correlation", "p": "p-value", "q": "BH-adjusted q", "z": "z-score",
+    "sd": "standard deviation", "med": "median", "median": "median", "mean": "mean",
+    "max": "maximum", "min": "minimum", "frac": "fraction", "pct": "percent", "n": "count",
+    "sum": "sum", "total": "total", "iqr": "interquartile range", "rank": "rank",
+    "raw": "UNADJUSTED — no confounder block", "adj": "composition-adjusted",
+    "deconv": "composition-adjusted (deconvolution block)", "core": "core confounder block",
+    "agg": "β-weighted aggregate", "abund": "unweighted abundance-sum reference",
+    "gated": "gated", "perm": "permutation null", "oof": "out-of-fold", "meas": "measured only (un-imputed)",
+    "fam": "per seed family", "arm": "per arm", "gene": "per gene", "cell": "per family cell",
+    "edge": "per edge", "genes": "genes", "arms": "arms", "members": "family members",
+    "top": "the top-ranked", "best": "the best", "dominant": "the dominant one",
+    "8mer": "8mer sites", "7mer": "7mer sites", "6mer": "6mer sites",
+    "canonical": "canonical sites", "noncanon": "non-canonical sites",
+    "mti": "miRNA–target interaction evidence", "functional": "functional assays",
+    "weak": "weak evidence", "studies": "study count", "assay": "by assay class",
+    "pmid": "distinct publications", "chimeric": "chimeric duplex evidence",
+    "share": "share", "shift": "shift", "gap": "gap", "delta": "change", "d": "change",
+    "dose": "dose", "budget": "pressure budget", "retention": "retention",
+    "class": "class label", "src": "source", "beta": "β", "identity": "Shapley identity",
+}
+_THRESH = re.compile(r"^(c|b)(\d{2,3})$")
+
+
+def _decode(column: str, block: str) -> str:
+    """Compose a line from the tokens that distinguish this column from its block siblings."""
+    rest = column[len(block):] if block != "(bare)" else column
+    parts = []
+    for t in re.split(r"[_.]", rest):
+        if not t:
+            continue
+        tl = t.lower()
+        m = _THRESH.match(tl)
+        if m:
+            parts.append(f"at the {'−0.' if m.group(1) == 'c' else '0.'}{m.group(2)} threshold")
+        elif tl in TOKENS:
+            parts.append(TOKENS[tl])
+    return " · ".join(dict.fromkeys(parts))
+
 
 def _vtype(s: pd.Series, name: str) -> tuple[str, str]:
     """The VALUE TYPE a reader needs before using a column, inferred from the data. (label, range hint).
@@ -323,7 +380,12 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .bstats{margin:2px 0 0;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
 .bstats b{color:var(--ink-2)}
 .tag.ty{border-color:var(--accent);color:var(--accent)}
-.lead.sh{color:var(--ink-3);font-style:italic}
+.lead.sh{color:var(--ink-3)}
+.prov{font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;
+      margin-left:7px;padding:1px 4px;border-radius:2px;vertical-align:1px;white-space:nowrap}
+.prov.auth{color:var(--gene);background:color-mix(in srgb,var(--gene) 12%,transparent)}
+.prov.der{color:var(--ink-3);background:var(--rule-2)}
+.prov.gap{color:var(--seed);background:color-mix(in srgb,var(--seed) 12%,transparent)}
 .rng{font-family:var(--mono);font-style:normal;font-size:12px}
 @media print{
   :root{--paper:#fff;--panel:#fff;--ink:#000;--ink-2:#1e1e1e;--ink-3:#5a5a5a;--rule:#b4b4b4;
@@ -339,6 +401,7 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .cname{font-size:8.4pt}.lead{font-size:8.8pt;max-width:none}
   .blocksum{padding:7px 10px;margin-bottom:7px;break-inside:avoid}
   .blead{font-size:8.6pt;max-width:none}.bstats{font-size:7.4pt}
+  .prov{font-size:6.4pt;border:1px solid var(--rule);background:none}
   details{display:block}                     /* caveats PRINT — collapsed only on screen */
   summary{display:none}
   .cav{font-size:7.8pt;color:var(--ink-3);max-width:none}   /* token — print redefines it above */
@@ -457,10 +520,23 @@ def build() -> pathlib.Path:
                     tags.append(f'<span class="tag">agg {html.escape(r.agg_of)}</span>')
                 if r.fill is not None and r.fill == r.fill:
                     tags.append(f'<span class="tag">{r.fill:.0%}</span>')
-                # ⭐ a column that only carried the block text now shows its RANGE instead of repeating it
-                body = (f'<div class="lead">{_md(r.lead)}</div>' if not r.shared
-                        else f'<div class="lead sh">described by the block above · '
-                             f'<span class="rng">{html.escape(r.vhint)}</span></div>')
+                # ⭐ EVERY row gets a line, and every line says where it came from.
+                if not r.shared:
+                    body = (f'<div class="lead">{_md(r.lead)}'
+                            f'<span class="prov auth" title="written and checked by hand">authored</span>'
+                            f'</div>')
+                else:
+                    dec = _decode(r.column, r.block)
+                    if dec:
+                        body = (f'<div class="lead">{_md(dec)}'
+                                f'<span class="prov der" title="composed from the tokens that distinguish '
+                                f'this column from its block siblings — mechanical, not authored">'
+                                f'derived</span></div>')
+                    else:
+                        # ⚠ a REAL glossary gap — say so rather than implying a column-specific entry
+                        body = (f'<div class="lead sh">{_md(_split(r.description)[0])}'
+                                f'<span class="prov gap" title="no column-specific entry exists yet — '
+                                f'this is the BLOCK description">block-level</span></div>')
                 cav = ""
                 if not r.shared and r.caveat:
                     cav = (f'<details><summary>caveats</summary><div class="cav">{_md(r.caveat)}'
@@ -495,6 +571,14 @@ def to_pdf(src: pathlib.Path = DEST, dest: pathlib.Path = PDF) -> pathlib.Path |
 
 
 def main() -> int:
+    if "--gaps" in sys.argv:
+        g = _load()
+        rows = [r for r in g.itertuples() if r.shared and not _decode(r.column, r.block)]
+        print(f"⚠ {len(rows)} column(s) have NO column-specific glossary entry AND no decodable token.")
+        print("  These fall back to the BLOCK description in the reference. They are the real writing queue:\n")
+        for r in sorted(rows, key=lambda x: (x.card, x.column)):
+            print(f"  {r.card:<13}{r.column}")
+        return 0
     p = build()
     print(f"✅ {p.relative_to(ROOT.parent)}  ({p.stat().st_size/1024:.0f} KB)")
     if "--no-pdf" not in sys.argv:

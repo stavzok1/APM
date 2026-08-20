@@ -1189,3 +1189,28 @@ produced four separate defects already recorded:
 ⚠ **Do this BEFORE the rebuild, not after** — the rebuild is the moment the manifest is cheapest to write,
 and without it the next drift is silent again.
 
+---
+
+## ⬜ WRITE THE 79 MISSING COLUMN DESCRIPTIONS (surfaced by the reference, MH-273)
+
+`gen_column_reference --gaps` lists **79 columns with no column-specific glossary entry and no decodable
+token** — they fall back to their block's description, which is why the reference badges them
+`block-level`. This is the writing queue, and it is short enough to clear.
+
+⭐ **Start with `ctx_ceiling`.** It is the measurability ceiling that MH-144 turns on, it appears on the
+edge, gene and gene_family cards, and it has **never had an entry of its own** — every reader has been
+getting the `ctx_` block text. Its siblings `ctx_measurable` and `ctx_collapse` are in the same state.
+
+Others worth doing early because they are quoted: `healthy_leg` / `healthy_potential` /
+`healthy_uninformative` (the healthy-leg triage), `cal_identified_hi` / `_lo` (the calibration band),
+`echim_manakov_w` / `echim_tarbase_w` (evidence weights), `gene_net_repr` / `gene_dominated`,
+`term_WIRING` / `term_INTERACT`, `realization_score`, `frac_identified`.
+
+⚠ **Write the LEAD first and keep it short** — the reference splits at the first ⛔/⚠/⭐ marker, so a lead
+that opens with a caveat renders as a caveat. One plain sentence saying what the column *is*, then the
+warnings.
+
+⚠ **Do not batch-generate these.** The decoder already covers everything mechanically decodable; what is
+left needs someone to read the producer. A generated sentence here would be indistinguishable from an
+authored one in the badge, which is precisely the confusion the badges exist to prevent.
+
