@@ -153,4 +153,4 @@
 4. **The doc protocol fans out with no consolidation rule** — "update EVERY applicable canonical home"
    means a finding lands in N places and its later retraction lands in 1. That is the mechanism behind
    MH-38 being dead in MH-114's row and alive in its own.
-| `docs/derived/COLUMN_REFERENCE.html` | derived | ⭐ **Every card column as a document** — 711 entries by card then block, with rung, coverage and meaning. Print/Save-as-PDF ready. Regenerate: `analyses/ops/gen_column_reference.py`. Do not hand-edit. |
+| `docs/derived/COLUMN_REFERENCE.html` + `.pdf` | derived | ⭐ **Every card column as a document** — 711 entries, card → block, blocks in measured-importance order, contents per card, short lead + folded caveats. The PDF is 59 pages. Regenerate: `analyses/ops/gen_column_reference.py`. Do not hand-edit. |
