@@ -41,6 +41,7 @@ import subprocess
 import sys
 from collections import defaultdict
 
+import numpy as np
 import pandas as pd
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -152,21 +153,77 @@ def _tier(score: float) -> tuple[str, str]:
     return TIERS[-1][1], TIERS[-1][2]
 
 
+BOOLS = {"True", "False", "true", "false", "1.0", "0.0", "1", "0"}
+
+
+def _vtype(s: pd.Series, name: str) -> tuple[str, str]:
+    """The VALUE TYPE a reader needs before using a column, inferred from the data. (label, range hint).
+
+    ⚠ **ORDER MATTERS — three rules were mis-ordered on the first pass and validation caught all three:**
+    `constant` must precede `boolean` (`pip_dense` is 1.0 everywhere and read as boolean); the p-value and
+    percent NAME-hints must precede the integer check (`arm_pct_above_floor` is 0–100 integers and read as
+    a count); and `identifier` keys on the distinct COUNT, not a share of rows (`gene` has 1,420 distinct
+    in 5,649 rows = 25%, under a 50% threshold). ✅ Validated 10/10 against columns whose type is known.
+    """
+    v = s.dropna()
+    if v.empty:
+        return "empty", "no values"
+    if v.nunique() == 1:
+        return "constant", f"= {v.iloc[0]}"
+    if set(map(str, v.unique())) <= BOOLS and v.nunique() <= 2:
+        t = int(v.astype(str).isin({"True", "true", "1", "1.0"}).sum())
+        return "boolean", f"{t:,} true / {len(v)-t:,} false"
+    n = pd.to_numeric(v, errors="coerce")
+    if n.notna().mean() < 0.9:
+        k = v.nunique()
+        return ("identifier", f"{k:,} distinct") if k > 50 else \
+               ("categorical", f"{k} level" + ("s" if k != 1 else ""))
+    n = n.dropna()
+    lo, hi = float(n.min()), float(n.max())
+    if re.search(r"(^|_)(p|q)(_|$)|_p$|_q$|_pval", name) and 0 <= lo and hi <= 1.0001:
+        return "p-value", f"{lo:.3g} – {hi:.3g}"
+    if re.search(r"pct|percent", name) and 0 <= lo and hi <= 100.001:
+        return "percent", f"{lo:.3g} – {hi:.3g}"
+    if bool(np.allclose(n, n.round())) and lo >= 0:
+        return "count", f"{lo:g} – {hi:g}"
+    if -1.0001 <= lo and hi <= 1.0001:
+        return ("fraction 0–1", f"{lo:.3g} – {hi:.3g}") if lo >= -1e-9 else \
+               ("signed −1…1", f"{lo:+.3g} – {hi:+.3g}")
+    return ("real ≥ 0" if lo >= 0 else "real, signed"), f"{lo:.3g} – {hi:.3g}"
+
+
 def _load() -> pd.DataFrame:
     g = pd.read_csv(OUT / "card_glossary.tsv", sep="\t", dtype=str).fillna("")
-    fills, nrows = {}, {}
+    fills, nrows, frames = {}, {}, {}
     for card, rel, _, _ in CARDS:
         p = OUT / rel
         if p.exists():
             d = pd.read_csv(p, sep="\t", low_memory=False)
-            fills[card], nrows[card] = d.notna().mean(), len(d)
+            fills[card], nrows[card], frames[card] = d.notna().mean(), len(d), d
     g["block"] = g.column.map(_block)
     g["fill"] = [float(fills[c].get(col)) if c in fills and col in fills[c] else None
                  for c, col in zip(g.card, g.column)]
     g["nrows"] = [nrows.get(c, 0) for c in g.card]
+    tv = [_vtype(frames[c][col], col) if c in frames and col in frames[c] else ("—", "")
+          for c, col in zip(g.card, g.column)]
+    g["vtype"] = [a for a, _ in tv]
+    g["vhint"] = [b for _, b in tv]
     lead_rest = [_split(t) for t in g.description]
     g["lead"] = [a for a, _ in lead_rest]
     g["caveat"] = [b for _, b in lead_rest]
+
+    # ⛔⛔ DE-DUPLICATION. `describe()` falls back to a PREFIX BLOCK when a column has no exact entry, so
+    # every column in a block inherits the same text. Measured: **437 of 711 rows (61%)** repeated a
+    # sibling's description — **159,456 characters** printed over and over — and **all 74 repeat groups were
+    # exactly one block**. ⇒ the shared text is a property of the BLOCK, so it is hoisted into a block
+    # summary and shown ONCE; a column then carries only what is TRUE OF IT ALONE. A column with no own
+    # text is not blank — it still shows its rung, type, range and coverage, and the block summary above
+    # explains the family.
+    g["shared"] = False
+    for (card, blk), sub in g.groupby(["card", "block"]):
+        counts = sub.description.value_counts()
+        if len(counts) and counts.iloc[0] > 1:
+            g.loc[sub.index[sub.description == counts.index[0]], "shared"] = True
     return g
 
 
@@ -259,6 +316,15 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .toc{background:var(--panel);border:1px solid var(--rule);border-radius:2px;padding:15px 17px;margin:22px 0}
 .toc ul{margin:7px 0 0;padding-left:18px;columns:2;column-gap:32px}
 .toc li{font-family:var(--mono);font-size:12.5px;margin:2px 0;break-inside:avoid}
+.blocksum{background:var(--panel);border:1px solid var(--rule);border-left:3px solid var(--k);
+          border-radius:2px;padding:11px 14px;margin:0 0 10px}
+.blead{margin:0 0 6px;color:var(--ink-2);font-size:14px;max-width:82ch}
+.blead strong{color:var(--ink)}
+.bstats{margin:2px 0 0;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.bstats b{color:var(--ink-2)}
+.tag.ty{border-color:var(--accent);color:var(--accent)}
+.lead.sh{color:var(--ink-3);font-style:italic}
+.rng{font-family:var(--mono);font-style:normal;font-size:12px}
 @media print{
   :root{--paper:#fff;--panel:#fff;--ink:#000;--ink-2:#1e1e1e;--ink-3:#5a5a5a;--rule:#b4b4b4;
         --rule-2:#dcdcdc;--accent:#00595a;--accent-soft:#eef1f1;
@@ -271,6 +337,8 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   h3,.tierline,.card-head,.cardtoc{break-after:avoid}
   .col{grid-template-columns:minmax(150px,185px) 1fr;gap:12px;padding:5px 0}
   .cname{font-size:8.4pt}.lead{font-size:8.8pt;max-width:none}
+  .blocksum{padding:7px 10px;margin-bottom:7px;break-inside:avoid}
+  .blead{font-size:8.6pt;max-width:none}.bstats{font-size:7.4pt}
   details{display:block}                     /* caveats PRINT — collapsed only on screen */
   summary{display:none}
   .cav{font-size:7.8pt;color:var(--ink-3);max-width:none}   /* token — print redefines it above */
@@ -356,26 +424,53 @@ def build() -> pathlib.Path:
             P.append(f'<h3 id="{card}-{b.strip("_") or "bare"}">{html.escape(b)} '
                      f'<span class="cnt">· {len(rows)}</span></h3>'
                      f'<p class="tierline">{tier} — {blurb}</p>')
+
+            # ── BLOCK SUMMARY: the text every column in this block shared, hoisted and shown ONCE,
+            #    plus what the block looks like as a whole.
+            shared_rows = rows[rows.shared]
+            types = rows.vtype.value_counts()
+            typemix = " · ".join(f"{n}&times; {html.escape(t)}" for t, n in types.items())
+            cov = rows.fill.dropna()
+            bits = [f"<b>{len(rows)}</b> columns"]
+            if len(cov):
+                bits.append(f"coverage <b>{cov.min():.0%}–{cov.max():.0%}</b> (median {cov.median():.0%})")
+            if len(shared_rows):
+                bits.append(f"<b>{len(shared_rows)}</b> share the block description")
+            summ = ""
+            if len(shared_rows):
+                lead, cav = _split(shared_rows.description.iloc[0])
+                summ = (f'<p class="blead">{_md(lead)}</p>'
+                        + (f'<details><summary>block caveats</summary>'
+                           f'<div class="cav">{_md(cav)}</div></details>' if cav else ""))
+            P.append(f'<div class="blocksum">{summ}'
+                     f'<p class="bstats">{" &nbsp;·&nbsp; ".join(bits)}</p>'
+                     f'<p class="bstats">{typemix}</p></div>')
+
             for r in rows.itertuples():
                 tags = []
                 if r.rung:
                     tags.append(f'<span class="tag rung" title="{html.escape(RUNG_NOTE.get(r.rung,""))}">'
                                 f'{html.escape(r.rung)}</span>')
+                tags.append(f'<span class="tag ty" title="{html.escape(r.vhint)}">'
+                            f'{html.escape(r.vtype)}</span>')
                 if r.agg_of:
                     tags.append(f'<span class="tag">agg {html.escape(r.agg_of)}</span>')
                 if r.fill is not None and r.fill == r.fill:
                     tags.append(f'<span class="tag">{r.fill:.0%}</span>')
+                # ⭐ a column that only carried the block text now shows its RANGE instead of repeating it
+                body = (f'<div class="lead">{_md(r.lead)}</div>' if not r.shared
+                        else f'<div class="lead sh">described by the block above · '
+                             f'<span class="rng">{html.escape(r.vhint)}</span></div>')
                 cav = ""
-                if r.caveat:
-                    cav = (f'<details><summary>caveats</summary>'
-                           f'<div class="cav">{_md(r.caveat)}'
+                if not r.shared and r.caveat:
+                    cav = (f'<details><summary>caveats</summary><div class="cav">{_md(r.caveat)}'
                            + (f'<br><em>Defined on: {_md(r.domain)}</em>' if r.domain else "")
                            + "</div></details>")
                 elif r.domain:
                     cav = f'<div class="cav"><em>Defined on: {_md(r.domain)}</em></div>'
                 P.append(f'<div class="col"><div><div class="cname">{html.escape(r.column)}</div>'
                          f'<div class="tags">{"".join(tags)}</div></div>'
-                         f'<div><div class="lead">{_md(r.lead)}</div>{cav}</div></div>')
+                         f'<div>{body}{cav}</div></div>')
         P.append("</section>")
 
     P.append("</div>")
