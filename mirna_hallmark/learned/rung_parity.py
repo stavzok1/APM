@@ -153,7 +153,7 @@ def run(genes=None, workers: int = 8) -> pd.DataFrame:
 def report(R: pd.DataFrame) -> None:
     card = pd.read_csv(OUT / "realization/edge_card.tsv", sep="\t", low_memory=False,
                        usecols=lambda c: c in ("gene", "arm", "coupling_tum", "cell_arms_resolvable",
-                                               "arm_resolvable", "arm_sep_z", "n_arm_in_cell"))
+                                               "arm_resolvable", "cell_arm_sep_z", "arm_sep_z", "n_arm_in_cell"))
     # ⭐ MH-269: `arm_resolvable` -> `cell_arms_resolvable`; accept either so a pre-rename card still reports.
     if "arm_resolvable" in card.columns and "cell_arms_resolvable" not in card.columns:
         card = card.rename(columns={"arm_resolvable": "cell_arms_resolvable"})

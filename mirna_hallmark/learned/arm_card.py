@@ -746,7 +746,7 @@ def _arm_identifiability() -> pd.DataFrame:
     # ⭐ MH-269: `arm_resolvable` -> `cell_arms_resolvable` (it is a CELL verdict, constant within the cell,
     # not a property of the individual arm). Both accepted so a pre-rename card still rolls up.
     _res = next((c for c in ("cell_arms_resolvable", "arm_resolvable") if c in d.columns), None)
-    for c, name in ((_res, "aid_frac_resolvable"), ("arm_sep_z", "aid_med_arm_sep_z"),
+    for c, name in ((_res, "aid_frac_resolvable"), (_alias(d, "cell_arm_sep_z") or "cell_arm_sep_z", "aid_med_arm_sep_z"),
                     ("oof_drho", "aid_med_oof_drho")):
         if c and c in d.columns:
             out[name] = g[c].mean() if name == "aid_frac_resolvable" else g[c].median()

@@ -145,7 +145,7 @@ def _one(gene: str):
             rows.append({"gene": gene, "arm": m, "seed_family": cell, "n_arm_in_cell": len(members),
                          "beta_arm": float(B[m]), "sd_arm": float(S[m]),
                          "z_arm": float(B[m] / S[m]) if S[m] > 1e-12 else np.nan,
-                         "arm_dbeta": dbeta, "arm_sep_z": sep,
+                         "cell_beta_spread": dbeta, "cell_arm_sep_z": sep,
                          "oof_rho_arm": r_arm, "oof_rho_fam": r_fam, "oof_drho": dr,
                          # ⭐ BOTH conditions: distinguishable AND the split pays out-of-fold
                          "cell_arms_resolvable": bool(np.isfinite(sep) and sep > SEP_Z

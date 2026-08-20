@@ -42,7 +42,6 @@ arb_n_identified
 arb_n_identity_reliable
 arm
 arm_credit_share
-arm_dbeta
 arm_detection
 arm_id_status
 arm_iqr
@@ -53,7 +52,6 @@ arm_lfc_NAT_TUM
 arm_med_rpm
 arm_pct_above_floor
 arm_role_in_family
-arm_sep_z
 arm_share_of_family_dose
 arm_spiker
 armres_best_drho
@@ -105,7 +103,9 @@ cal_identified
 cal_identified_hi
 cal_identified_lo
 cal_z
+cell_arm_sep_z
 cell_arms_resolvable
+cell_beta_spread
 chim_manakov_n_genes
 chim_manakov_weight
 chim_n_sources

@@ -46,7 +46,7 @@ for gene, sub in e.groupby("gene"):
             v = sub[c]
             v = v.map({True:1.0,False:0.0,"True":1.0,"False":0.0}).astype(float) if v.dtype==object else v.astype(float)
             d[nm] = v.mean(skipna=True)
-    for c, nm in [("oof_drho","armgain_med"),("arm_sep_z","armsep_med"),
+    for c, nm in [("oof_drho","armgain_med"),("cell_arm_sep_z","armsep_med")   # ⛔ MH-279 rename; was arm_sep_z,
                   ("n_arm_in_cell","narm_cell_max"),("kd_affinity_pct","kd_pct_med"),
                   ("arm_share_of_family_dose","famdose_share_max")]:
         if c in sub.columns:

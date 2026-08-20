@@ -67,6 +67,8 @@ RETIRED = {
     "family_role":       "renamed arm_role_in_family; canonical_card accepts both through the transition",
     "family_dose_share": "renamed arm_share_of_family_dose; rename table + transition shim only",
     "arm_resolvable":    "renamed cell_arms_resolvable; card_context/arm_card/rung_parity/_alias accept both",
+    "arm_dbeta":         "renamed cell_beta_spread (MH-279); rename table + both-names registrations only",
+    "arm_sep_z":         "renamed cell_arm_sep_z (MH-279); rename table + both-names registrations only",
     "arm_pct_floor":     "renamed arm_pct_above_floor; card.py + _alias accept both",
     "field_retention":   "renamed field_excess_over_perm (it is r_own - r_perm, not a ratio)",
     "iso_total_rpm":     "renamed iso_rpm_summed (a SUM across samples)",

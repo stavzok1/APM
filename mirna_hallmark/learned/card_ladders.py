@@ -142,7 +142,7 @@ def gene_arm_resolution() -> pd.DataFrame:
         # before the rename still rolls up rather than silently losing the axis (the MH-266 failure class).
         "armres_frac_resolvable": multi.groupby("gene")[_alias(multi, "cell_arms_resolvable")
                                                         or "cell_arms_resolvable"].apply(lambda s: num(s).mean()),
-        "armres_med_sep_z": multi.groupby("gene")["arm_sep_z"].apply(lambda s: num(s).median()),
+        "armres_med_sep_z": multi.groupby("gene")[_alias(multi, "cell_arm_sep_z") or "cell_arm_sep_z"].apply(lambda s: num(s).median()),
         "armres_best_drho": multi.groupby("gene")["oof_drho"].apply(lambda s: num(s).min()),
         "armres_med_drho": multi.groupby("gene")["oof_drho"].apply(lambda s: num(s).median()),
     })
@@ -280,6 +280,12 @@ EXPLICIT_RENAMES: dict[str, dict[str, str]] = {
         "role":              "gene_cancer_role",          # the GENE's oncogene/TSG call, not the arm's
         "arm_resolvable":    "cell_arms_resolvable",      # a CELL verdict, constant within the cell
         "arm_pct_floor":     "arm_pct_above_floor",       # 100*mean(x > FLOOR): HIGH = well detected
+        # ⛔ FINISHING MH-269 (user-caught: "why is arm_dbeta in arm?"). These two are CELL verdicts —
+        # VERIFIED constant within a (gene, seed_family) cell (max 1 distinct value) and varying across
+        # genes for the same arm (up to 39). Exactly what `arm_resolvable` was, and I renamed one of the
+        # three and left these. A rename that fixes one member of a family is a half-fix.
+        "arm_dbeta":         "cell_beta_spread",          # max−min β across the cell's member arms
+        "arm_sep_z":         "cell_arm_sep_z",            # that spread in the cell's own posterior SDs
     },
     "arm_card.tsv": {
         "field_retention":   "field_excess_over_perm",    # r_own - r_perm; not a retention RATIO at all

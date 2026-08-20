@@ -102,7 +102,7 @@ _FAMILY_ATTR = ("family_size", "n_family_in_design", "coupling_fam", "family_rho
 # every one of the 295 multi-arm cells. They describe the CELL, not the arm within it, so they are
 # `family` rung. ⚠ I had hand-identified only three of the seven; the other four (`n_arm_in_cell` and the
 # three `oof_*`) would have been missed. Build the check, do not hand-move the columns.
-_CELL_LEVEL = ("arm_dbeta", "arm_sep_z", "arm_resolvable", "cell_arms_resolvable", "n_arm_in_cell",
+_CELL_LEVEL = ("arm_dbeta", "cell_beta_spread", "arm_sep_z", "cell_arm_sep_z", "arm_resolvable", "cell_arms_resolvable", "n_arm_in_cell",
                "oof_rho_arm", "oof_rho_fam", "oof_drho")
 # these DO vary inside a cell — verified, so they are genuinely arm-relative (MH-166 allocation work)
 _ARM_IN_FAM = ("arm_credit_share", "arm_id_status", "family_dose_share", "arm_share_of_family_dose", "family_role", "arm_role_in_family")
@@ -214,7 +214,7 @@ AGG_OF = {"gene": {**{c: "arm" for c in ("cptac_prosp_agg_rho_rna", "cptac_prosp
 # pattern at 98.6-100% for every entry below, so these NaNs are STRUCTURAL.
 DOMAIN = {
     "multi-arm cells only (n_arm_in_cell > 1) — 20.3% of edges": (
-        "arm_dbeta", "arm_sep_z", "arm_resolvable", "cell_arms_resolvable", "n_arm_in_cell", "oof_rho_arm", "oof_rho_fam",
+        "arm_dbeta", "cell_beta_spread", "arm_sep_z", "cell_arm_sep_z", "arm_resolvable", "cell_arms_resolvable", "n_arm_in_cell", "oof_rho_arm", "oof_rho_fam",
         "oof_drho", "beta_arm", "sd_arm", "z_arm", "arm_credit_share"),
     "arms with a same-seed SURROGATE (MH-166) — 3.6% of edges": (
         "surrogate_instrument", "surrogate_corr", "coupling_hly_surrogate",

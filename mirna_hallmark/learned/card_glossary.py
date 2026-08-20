@@ -572,9 +572,6 @@ COLUMNS: dict[tuple[str, str], str] = {
                                     "supports. Gate any cross-state claim on it rather than resting on an "
                                     "arbitrary choice of leg, and remember both legs cross GTEx→TCGA "
                                     "while only `arm_lfc_NAT_TUM` is same-platform.",
-    ("edge", "arm_credit_share"): "This arm's share of its (gene, seed_family) cell's credit. ✅ Verified "
-                                  "to sum to 1.0000 within every one of the 467 multi-arm cells, and it "
-                                  "genuinely varies PER ARM inside the cell (467/467).",
     ("edge", "arm_id_status"): "How the arm's identity within its cell was resolved: `resolved_by_dose` "
                                "2,344 · `singleton` 2,260 · `unvalidated_balanced` 1,045. ⚠ **Fill is 1.0 "
                                "while its arm-in-family siblings are 0.203** — because `singleton` is a "
@@ -582,13 +579,6 @@ COLUMNS: dict[tuple[str, str], str] = {
                                "siblings are NaN. Same rung, different domain. ⛔ `unvalidated_balanced` "
                                "means dose CANNOT resolve which arm acts — it needs a breast chimeric-eCLIP "
                                "or a per-arm knockdown, not more modelling.",
-    ("edge", "arm_dbeta"): "max−min β across the cell's member arms. ⚠⚠ **A CELL quantity REPEATED across "
-                           "the cell's arms — verified constant within all 467 multi-arm cells.** Reading "
-                           "it as a per-arm fact double-counts; the per-arm quantities are `beta_arm` / "
-                           "`z_arm` / `arm_credit_share`, which do vary (467/467).",
-    ("edge", "arm_sep_z"): "`arm_dbeta` in units of the cell's own pooled posterior SD — can these "
-                           "same-seed arms be told apart at all. ⚠⚠ **Also a CELL quantity, constant "
-                           "within all 467 cells.** Median 1.59.",
     ("edge", "cell_arms_resolvable"): "Are the cell's arms separable AND does splitting them help out-of-fold. "
                                 "True for 31.7% of edges in multi-arm cells. ⚠⚠ **A CELL verdict, constant "
                                 "within all 467 cells** — not a property of the individual arm.",
@@ -979,6 +969,10 @@ COLUMNS.update({
         "within-family correlation — the family's redundancy-corrected size (mode **2.0**, 50 distinct "
         "values). ⚠ **Fill is only 4.3% (84 families)**: it needs a within-family correlation fit, so read "
         "it as a case series on the well-covered families, never as a distribution over the universe.",
+    # ── MH-279 (user questions): credit, the cell verdicts, and the family denominator.
+    ("edge", "arm_credit_share"): "⭐⭐ **NOT 'which arm is the real regulator' — that reading is exactly why it was renamed away from `identity_arm` (MH-188).** It is an exact Shapley over the cell's arm columns on R²(arms, y|C); the shares sum to **1.0000 on 100% of cells** (verified), and it is defined ONLY on multi-arm cells — 1,147 edges, 20.3%. ⛔⛔ **THE SEMANTICS ARE INVERTED FROM THE INTUITION:** a HIGH share means one arm carries the cell's signal and its partner is INERT, so the family POOL is essentially that arm and **pooling is SAFE**. An EVEN split means the arms carry DIFFERENT signal, so pooling averages them away. ⇒ **concentration marks POOLING-SAFETY and is the OPPOSITE of resolvability** — verified spearman(max share, `oof_drho`) = **+0.133, p=0.027**, and it is ~orthogonal to `cell_arm_sep_z` (+0.039, p=0.52) because the two respond to opposite features. Observed range **0.000 – 0.996**.",
+    ("edge", "cell_arm_sep_z"): "`cell_beta_spread` in units of the cell's pooled posterior SD — **can these same-seed arms be told apart at all?** ⛔ A CELL verdict, not per-arm (renamed from `arm_sep_z`; constant within cell, up to 39 distinct values across genes for one arm). ⭐ Strongly validated against the independent arbiter: spearman(`cell_arm_sep_z`, `oof_drho`) = **−0.475, p=6.1e-17**, and above the sep_z > 2 threshold a split pays out-of-fold in **71%** of cells versus **31%** below (MWU p=1.5e-12).",
+    ("edge", "cell_beta_spread"): "max − min β across the arms in this family CELL — how far apart the cell's members are estimated to be. ⛔ **A CELL verdict, NOT a per-arm property** (renamed from `arm_dbeta`): VERIFIED constant within a (gene, seed_family) cell — max **1** distinct value — while varying across genes for the same arm, up to **39**. `cell_arm_sep_z` scales it by the cell's own posterior SD and is the one to threshold on.",
     # ── MH-278 pass 4 — the last ten.
     ("seed_family", "fam_n_guide"): "How many members are classed GUIDE strand by AGO loading (0 – 9). ⭐ The guide/passenger split is an identity axis and is coupling-INERT — it earns its place as QC, not prediction.",
     ("seed_family", "fam_n_model_edges"): "How many edges the family holds in the LEARNED MODEL's design (0 – 209). ⚠ The model-native universe, which is wider than the delivered edge card by 129 genes (MH-252).",
@@ -1958,9 +1952,6 @@ COLUMNS.update({
                                     "supports. Gate any cross-state claim on it rather than resting on an "
                                     "arbitrary choice of leg, and remember both legs cross GTEx→TCGA "
                                     "while only `arm_lfc_NAT_TUM` is same-platform.",
-    ("edge", "arm_credit_share"): "This arm's share of its (gene, seed_family) cell's credit. ✅ Verified "
-                                  "to sum to 1.0000 within every one of the 467 multi-arm cells, and it "
-                                  "genuinely varies PER ARM inside the cell (467/467).",
     ("edge", "arm_id_status"): "How the arm's identity within its cell was resolved: `resolved_by_dose` "
                                "2,344 · `singleton` 2,260 · `unvalidated_balanced` 1,045. ⚠ **Fill is 1.0 "
                                "while its arm-in-family siblings are 0.203** — because `singleton` is a "
@@ -1968,13 +1959,6 @@ COLUMNS.update({
                                "siblings are NaN. Same rung, different domain. ⛔ `unvalidated_balanced` "
                                "means dose CANNOT resolve which arm acts — it needs a breast chimeric-eCLIP "
                                "or a per-arm knockdown, not more modelling.",
-    ("edge", "arm_dbeta"): "max−min β across the cell's member arms. ⚠⚠ **A CELL quantity REPEATED across "
-                           "the cell's arms — verified constant within all 467 multi-arm cells.** Reading "
-                           "it as a per-arm fact double-counts; the per-arm quantities are `beta_arm` / "
-                           "`z_arm` / `arm_credit_share`, which do vary (467/467).",
-    ("edge", "arm_sep_z"): "`arm_dbeta` in units of the cell's own pooled posterior SD — can these "
-                           "same-seed arms be told apart at all. ⚠⚠ **Also a CELL quantity, constant "
-                           "within all 467 cells.** Median 1.59.",
     ("edge", "cell_arms_resolvable"): "Are the cell's arms separable AND does splitting them help out-of-fold. "
                                 "True for 31.7% of edges in multi-arm cells. ⚠⚠ **A CELL verdict, constant "
                                 "within all 467 cells** — not a property of the individual arm.",

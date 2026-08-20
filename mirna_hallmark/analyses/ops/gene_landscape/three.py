@@ -11,7 +11,7 @@ def num(s):
 print("="*78); print("(a) ARM vs FAMILY — where does resolving arms WITHIN a family buy anything?"); print("="*78)
 sub = e.copy()
 sub["n_arm_in_cell"] = num(sub["n_arm_in_cell"]); sub["oof_drho"]=num(sub["oof_drho"])
-sub["cell_arms_resolvable"]=num(sub["cell_arms_resolvable"]); sub["arm_sep_z"]=num(sub["arm_sep_z"])
+sub["cell_arms_resolvable"]=num(sub["cell_arms_resolvable"]); sub["cell_arm_sep_z"]=num(sub["cell_arm_sep_z"])
 sub["oof_rho_arm"]=num(sub["oof_rho_arm"]); sub["oof_rho_fam"]=num(sub["oof_rho_fam"])
 multi = sub[sub["n_arm_in_cell"]>1]
 print(f"edges total {len(sub)} | in MULTI-ARM family cells {len(multi)} ({len(multi)/len(sub):.1%}) "
