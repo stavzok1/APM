@@ -89,8 +89,23 @@ CURATED_FLOOR = {
 MARK = re.compile(r"[⛔⚠⭐]")
 
 
+def _anchor(card: str, block: str) -> str:
+    """A safe fragment id. `(bare)` used to produce `edge-(bare)` — parentheses in an id are legal HTML5
+    but break naive selectors and were silently unlinkable from the contents list."""
+    return f"{card}-" + (re.sub(r"[^A-Za-z0-9]+", "", block) or "bare")
+
+
 def _block(col: str) -> str:
-    m = re.match(r"^([a-z]+_)", col)
+    """The column's block = its first underscore-delimited token.
+
+    ⛔ **CASE-INSENSITIVE, and it was not (user-caught).** `^([a-z]+_)` fails on a camelCase prefix — the
+    `G` in `dGlobal_HLY_NAT` breaks the match — so **8 columns (`dGlobal_*`, `dShare_*`) fell into
+    `(bare)`**. Worse, three of them share one description, which then became the MODAL text for `(bare)`
+    and was printed as that block's SUMMARY: a specific sentence about cohort-wide dose rank presented as
+    the description of every unprefixed column. ⇒ a naming convention the code half-recognises is worse
+    than one it ignores entirely.
+    """
+    m = re.match(r"^([A-Za-z]+_)", col)
     return m.group(1) if m else "(bare)"
 
 
@@ -484,7 +499,7 @@ def build() -> pathlib.Path:
         for i, b in enumerate(blocks, 1):
             tier, _ = _tier(float(imp.get((card, b), 0)))
             n = int((sub.block == b).sum())
-            items.append(f'<li><a href="#{card}-{b.strip("_") or "bare"}">{html.escape(b)}</a> '
+            items.append(f'<li><a href="#{_anchor(card, b)}">{html.escape(b)}</a> '
                          f'<span class="tg">{n} · {tier}</span></li>')
         P.append(f'<div class="cardtoc"><p class="t">Contents — {len(blocks)} blocks, most important first</p>'
                  f'<ol>{"".join(items)}</ol></div>')
@@ -493,7 +508,7 @@ def build() -> pathlib.Path:
             score = float(imp.get((card, b), 0))
             tier, blurb = _tier(score)
             rows = sub[sub.block == b].sort_values("column")
-            P.append(f'<h3 id="{card}-{b.strip("_") or "bare"}">{html.escape(b)} '
+            P.append(f'<h3 id="{_anchor(card, b)}">{html.escape(b)} '
                      f'<span class="cnt">· {len(rows)}</span></h3>'
                      f'<p class="tierline">{tier} — {blurb}</p>')
 

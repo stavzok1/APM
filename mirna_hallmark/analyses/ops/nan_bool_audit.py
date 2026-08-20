@@ -48,7 +48,10 @@ ACCEPTED = {
 
 
 def _block(col: str) -> str:
-    m = re.match(r"^([a-z]+_)", col)
+    # ⛔ CASE-INSENSITIVE (fixed 2026-08-19, user-caught in the column reference): `^([a-z]+_)` fails on a
+    # camelCase prefix — the `G` in `dGlobal_HLY_NAT` breaks it — so those columns fell into `(bare)` and
+    # were compared against the WRONG sibling set by the ORPHAN test.
+    m = re.match(r"^([A-Za-z]+_)", col)
     return m.group(1) if m else "(bare)"
 
 

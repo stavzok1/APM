@@ -52,8 +52,13 @@ def _load(card: str) -> pd.DataFrame:
 
 
 def _block_of(col: str) -> str:
-    """The block a column belongs to = its prefix, or '(bare)' for the un-prefixed lifted columns."""
-    m = re.match(r"^((?:bc_|hx_|cov_)?[a-z]+_)", col)
+    """The block a column belongs to = its prefix, or '(bare)' for the un-prefixed lifted columns.
+
+    ⛔ CASE-INSENSITIVE (fixed 2026-08-19, user-caught): a camelCase prefix such as `dGlobal_` / `dShare_`
+    does not match `[a-z]+_`, so those columns were filed as un-prefixed. The `bc_|hx_|cov_` alternation
+    stays — those are genuine two-token prefixes that would otherwise truncate to their first token.
+    """
+    m = re.match(r"^((?:bc_|hx_|cov_)?[A-Za-z]+_)", col)
     return m.group(1) if m else "(bare)"
 
 
