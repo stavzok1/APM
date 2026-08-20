@@ -1027,6 +1027,14 @@ def main() -> None:
 
 
 def _run(*, annotate_cards: bool) -> None:
+    # ⭐ MH-270: say the base's vintage OUT LOUD before layering fresh annotations over it. This is the
+    # condition that was silently true for 16 days — the delivered edge card mixing a 2026-08-04 base with
+    # same-day joins — and it is exactly what MH-252 / MH-266 / MH-269 all trace back to.
+    # ⚠ WARNS, never raises: a hard stop would block every annotate on a repo whose base is legitimately
+    # older than a cosmetic input change, and the recorded cost of the SILENT version is the drift itself.
+    if annotate_cards:
+        from mirna_hallmark.learned import card_stamp as _ST
+        _ST.check_base(loud=True)
     gl = gene_realization_ladder()
     st = edge_subtype()
     if len(gl):

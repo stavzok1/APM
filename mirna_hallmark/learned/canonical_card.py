@@ -189,6 +189,18 @@ def _join_and_write(attr: pd.DataFrame, prog: pd.DataFrame) -> pd.DataFrame:
     card = card.sort_values(["gene", "beta"], ascending=[True, False], na_position="last")
     card.to_csv(OUT_CARD, sep="\t", index=False, float_format="%.5f")
     _provenance(list(attr.columns), list(prog.columns)).to_csv(OUT_PROV, sep="\t", index=False)
+    # ⭐ MH-270: a BUILD-TIME freshness stamp. `_provenance` records what each column IS (column -> block ->
+    # estimator); it has never recorded WHEN or FROM WHAT, so nothing could invalidate this card. That gap
+    # let a 2026-08-04 base sit under same-day annotations for 16 days (MH-252, MH-266, MH-269 all trace to
+    # it). ⚠ Only a stamp written HERE can support a freshness claim — a backfilled one cannot.
+    try:
+        from mirna_hallmark.learned import card_stamp as _ST
+        _ins = [p for p in (OUT_DIR / "readouts_arm_edges.tsv", OUT_DIR / "attribution_edges.tsv",
+                            OUT_DIR / "progression_edges.tsv") if p.exists()]
+        _ST.write(OUT_CARD, inputs=_ins, universe=genes, note="canonical_card.build()")
+        print(f"[canonical_card] ⭐ freshness stamp written beside the card ({len(_ins)} input(s) recorded)")
+    except Exception as _ex:                                   # never let stamping break a 40-minute build
+        print(f"[canonical_card] ⚠ stamp not written: {_ex}")
     n_join = card.dropna(subset=["beta", "shift_class"]).shape[0] if "shift_class" in card else 0
     print(f"[canonical_card] {len(card)} (gene,arm) rows | {card['gene'].nunique()} genes | "
           f"both-block rows {n_join} -> {OUT_CARD}\n  provenance -> {OUT_PROV}")
